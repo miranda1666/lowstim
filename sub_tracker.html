@@ -142,6 +142,8 @@
     DK:"DKK", PL:"PLN", CZ:"CZK", HU:"HUF", RO:"RON", TR:"TRY"
   };
 
+  const resetBtn = document.getElementById("resetBtn");
+
   function getRegionFromLocale(locale){
     try{
       if (typeof Intl !== "undefined" && Intl.Locale){
@@ -317,6 +319,12 @@
 
       renderAll();
     });
+
+    resetBtn.onclick = () => {
+  state = defaultState();
+  localStorage.setItem(KEY, JSON.stringify(state));
+  render();
+};
 
     $("resetBtn").addEventListener("click", ()=>{
 localStorage.removeItem(KEY);

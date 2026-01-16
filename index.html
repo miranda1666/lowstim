@@ -121,9 +121,11 @@
   const CUR_KEY = "purchase_log_currency_pref_v1";
   const $ = (id)=>document.getElementById(id);
 
+
   function todayISO(){ return new Date().toISOString().slice(0,10); }
   function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
   function monthKey(dIso){ return (dIso || "").slice(0,7); } // YYYY-MM
+
 
   // Best-effort locale -> currency inference (not perfect; picker overrides and is saved)
   const REGION_TO_CURRENCY = {
@@ -135,6 +137,7 @@
     GH:"GHS", BR:"BRL", MX:"MXN", CH:"CHF", SE:"SEK", NO:"NOK",
     DK:"DKK", PL:"PLN", CZ:"CZK", HU:"HUF", RO:"RON", TR:"TRY"
   };
+
 
   function getRegionFromLocale(locale){
     try{
@@ -148,19 +151,23 @@
     return (parts[1] || "").toUpperCase();
   }
 
+
   function autoCurrency(){
     const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || "";
     const region = getRegionFromLocale(locale);
     return REGION_TO_CURRENCY[region] || ""; // if unknown, we’ll fall back to plain local number
   }
 
+
   function moneyLocal(n){
     const v = Number(n||0);
     if(!isFinite(v)) return "0";
     const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || undefined;
 
+
     const pref = localStorage.getItem(CUR_KEY) || "AUTO";
     const cur = (pref === "AUTO") ? autoCurrency() : pref;
+
 
     try{
       if(cur){
@@ -172,6 +179,7 @@
     }
   }
 
+
   function defaultState(){
     return {
       selectedDate: todayISO(),
@@ -180,7 +188,9 @@
     };
   }
 
+
   let state = load();
+
 
   function load(){
     try{
@@ -197,14 +207,17 @@
     }
   }
 
+
   function save(){
     localStorage.setItem(KEY, JSON.stringify(state));
   }
+
 
   function getDayList(date){
     if(!state.byDate[date]) state.byDate[date] = [];
     return state.byDate[date];
   }
+
 
   function computeMonthTotal(mk){
     let total = 0;
@@ -216,11 +229,13 @@
     return total;
   }
 
+
   function ensureMonthSnapshotExists(mk){
     if(state.monthlyTotals[mk] == null){
       state.monthlyTotals[mk] = computeMonthTotal(mk);
     }
   }
+
 
   function setSelectedDate(date){
     state.selectedDate = date || todayISO();
@@ -229,11 +244,13 @@
     renderAll(); // clears UI and re-renders for that day
   }
 
+
   /* --------- Currency picker init --------- */
   (function initCurrencyPicker(){
     const sel = $("currency");
     const saved = localStorage.getItem(CUR_KEY) || "AUTO";
     sel.value = saved;
+
 
     // If AUTO but we can infer, the display will be correct; if not, user can pick.
     sel.addEventListener("change", ()=>{
@@ -242,13 +259,16 @@
     });
   })();
 
+
   /* --------- Actions --------- */
   $("pDate").value = state.selectedDate;
   ensureMonthSnapshotExists(monthKey(state.selectedDate));
 
+
   $("pDate").addEventListener("change", (e)=>{
     setSelectedDate(e.target.value);
   });
+
 
   $("pAdd").onclick = ()=>{
     const date = $("pDate").value || todayISO();
@@ -256,40 +276,51 @@
     const category = $("pCat").value;
     const type = $("pType").value;
 
+
     if(!isFinite(amount) || amount <= 0) return alert("Enter a valid amount.");
+
 
     const entry = { id: uid(), amount, category, type, createdAt: new Date().toISOString() };
     const list = getDayList(date);
     list.unshift(entry);
 
+
     state.byDate[date] = list;
     state.selectedDate = date;
+
 
     const mk = monthKey(date);
     ensureMonthSnapshotExists(mk);
     state.monthlyTotals[mk] = computeMonthTotal(mk);
+
 
     save();
     $("pAmt").value = "";
     renderAll();
   };
 
+
   $("pClearDay").onclick = ()=>{
     const date = $("pDate").value || todayISO();
     if(!confirm(`Clear all purchases for ${date}?`)) return;
 
+
     state.byDate[date] = [];
+
 
     const mk = monthKey(date);
     ensureMonthSnapshotExists(mk);
     state.monthlyTotals[mk] = computeMonthTotal(mk);
 
+
     save();
     renderAll();
   };
 
+
   $("btnReset").onclick = ()=>{
     if(!confirm("Reset ALL saved purchase logs?")) return;
+
 
     localStorage.removeItem(KEY);
     // Keep currency preference (picker) intact.
@@ -299,33 +330,40 @@
     renderAll();
   };
 
+
   function removePurchase(date, id){
     const list = getDayList(date).filter(p=>p.id !== id);
     state.byDate[date] = list;
+
 
     const mk = monthKey(date);
     ensureMonthSnapshotExists(mk);
     state.monthlyTotals[mk] = computeMonthTotal(mk);
 
+
     save();
     renderAll();
   }
+
 
   /* --------- Render --------- */
   function renderKPIs(){
     const date = state.selectedDate;
     const list = getDayList(date);
 
+
     const totalDay = list.reduce((a,p)=>a + Number(p.amount||0), 0);
     const impulse = list.filter(p=>p.type==="impulse").reduce((a,p)=>a + Number(p.amount||0), 0);
     const planned = list.filter(p=>p.type==="planned").reduce((a,p)=>a + Number(p.amount||0), 0);
     const impulseShare = totalDay>0 ? Math.round((impulse/totalDay)*100) : 0;
+
 
     const mk = monthKey(date);
     ensureMonthSnapshotExists(mk);
     const monthTotal = computeMonthTotal(mk);
     state.monthlyTotals[mk] = monthTotal; // keep updated
     save();
+
 
     $("kpis").innerHTML = `
       <div class="box"><div class="num">${moneyLocal(totalDay)}</div><div class="lab">Total for ${date}</div></div>
@@ -335,16 +373,19 @@
     `;
   }
 
+
   function renderList(){
     const date = state.selectedDate;
     const list = getDayList(date);
     const root = $("purchaseList");
     root.innerHTML = "";
 
+
     if(list.length === 0){
       root.innerHTML = `<div class="tiny">No purchases saved for <b>${date}</b>. Add one above.</div>`;
       return;
     }
+
 
     for(const p of list){
       const el = document.createElement("div");
@@ -364,13 +405,17 @@
     }
   }
 
+
   function renderAll(){
     $("pDate").value = state.selectedDate;
     renderKPIs();
     renderList();
   }
 
+
   renderAll();
 </script>
+</body>
+</html>
 </body>
 </html>

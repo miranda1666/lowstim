@@ -312,14 +312,6 @@
       render();
     });
 
-    $("resetAll").addEventListener("click", ()=>{
-      if(!confirm("Reset savings garden?")) return;
-      localStorage.removeItem(KEY);
-      state = defaultState();
-      save();
-      render();
-    });
-
     render();
   }
 

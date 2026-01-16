@@ -303,37 +303,6 @@ document.getElementById("btnReset").addEventListener("click", () => {
     save();
     $("pAmt").value = "";
     renderAll();
-  };
-
-
-  $("pClearDay").onclick = ()=>{
-    const date = $("pDate").value || todayISO();
-    if(!confirm(`Clear all purchases for ${date}?`)) return;
-
-
-    state.byDate[date] = [];
-
-
-    const mk = monthKey(date);
-    ensureMonthSnapshotExists(mk);
-    state.monthlyTotals[mk] = computeMonthTotal(mk);
-
-
-    save();
-    renderAll();
-  };
-
-
-  $("btnReset").onclick = ()=>{
-    if(!confirm("Reset ALL saved purchase logs?")) return;
-
-
-    // Keep currency preference (picker) intact.
-    state = defaultState();
-    $("pDate").value = state.selectedDate;
-    ensureMonthSnapshotExists(monthKey(state.selectedDate));
-    renderAll();
-  };
 
 
   function removePurchase(date, id){

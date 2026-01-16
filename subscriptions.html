@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Subscriptions Tracker</title>
+  <style>
+    :root{
+      --bg:#fbfaf8; --card:#ffffffcc; --stroke:#e9e4dd; --ink:#2b2a28;
+      --muted:#6a665f; --soft:#f3efe9; --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink); background:
+        radial-gradient(1200px 800px at 20% 0%, #fff 0%, transparent 60%),
+        radial-gradient(1200px 800px at 80% 20%, #fff 0%, transparent 60%),
+        var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{max-width:900px; margin:0 auto;}
+    h1{margin:0; font-size:18px}
+    .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
+    .card{
+      background:var(--card); border:1px solid var(--stroke); border-radius:var(--r);
+      box-shadow:var(--shadow); padding:14px; backdrop-filter: blur(8px);
+    }
+    .title{display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin-bottom:10px}
+    .title h2{margin:0; font-size:14px; font-weight:650; letter-spacing:.2px}
+    .hint{color:var(--muted); font-size:12px}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    button, input, select{
+      font:inherit; border:1px solid var(--stroke); background:#fff; color:var(--ink);
+      border-radius:12px; padding:10px 12px; outline:none;
+    }
+    button{cursor:pointer}
+    button.soft{background:var(--soft)}
+    button:active{transform:translateY(1px)}
+    .divider{height:1px; background:var(--stroke); margin:12px 0}
+    .kpi{
+      display:flex; gap:12px; flex-wrap:wrap;
+    }
+    .kpi .box{
+      flex:1; min-width:180px; background:var(--soft);
+      border:1px solid var(--stroke); border-radius:14px; padding:10px;
+    }
+    .kpi .num{font-weight:750; font-size:16px}
+    .kpi .lab{font-size:12px; color:var(--muted)}
+    .list{display:flex; flex-direction:column; gap:8px}
+    .item{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:14px; border:1px solid var(--stroke); background:#fff;
+    }
+    .item .meta{display:flex; flex-direction:column; gap:2px}
+    .item .meta b{font-size:13px}
+    .item .meta span{font-size:12px; color:var(--muted)}
+    .tag{
+      font-size:11px; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--stroke); background:var(--soft); cursor:pointer; user-select:none;
+    }
+    .tag.off{opacity:.65}
+    .right{display:flex; gap:8px; align-items:center}
+    .smallbtn{padding:8px 10px; border-radius:12px}
+    .danger{border-color:#efc2c2}
+    .tiny{font-size:12px; color:var(--muted)}
+    label.tiny{display:inline-flex; align-items:center; gap:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Subscriptions</h1>
+
+    <section class="card">
+      <div class="title">
+        <h2>Add a subscription</h2>
+      </div>
+
+      <div class="row">
+        <input id="subName" placeholder="Name (e.g., Spotify)">
+        <input id="subCost" type="number" step="0.01" placeholder="Monthly cost">
+        <input id="subRenew" type="number" min="1" max="31" placeholder="Renew day (1–31)">
+
+        <label class="tiny">
+          Currency
+          <select id="currency">
+            <option value="AUTO">Auto (from locale)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="NGN">NGN (₦)</option>
+            <option value="CAD">CAD ($)</option>
+            <option value="AUD">AUD ($)</option>
+            <option value="JPY">JPY (¥)</option>
+            <option value="ZAR">ZAR (R)</option>
+          </select>
+        </label>
+
+        <button id="subAdd">Add</button>
+        <button class="danger" id="resetBtn" type="button">Reset</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="kpi">
+        <div class="box">
+          <div class="num" id="kTotal">—</div>
+          <div class="lab">Total monthly cost</div>
+        </div>
+        <div class="box">
+          <div class="num" id="kCount">—</div>
+          <div class="lab">Subscriptions</div>
+        </div>
+        <div class="box">
+          <div class="num" id="kSoon">—</div>
+          <div class="lab">Next renewal</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="list" id="subsList"></div>
+      <div class="tiny" style="margin-top:10px">Tip: Toggle the badge to mark “Still worth it?” vs “Not sure”.</div>
+    </section>
+  </div>
+
+<script>
+(function(){
+  const KEY = "subscriptions_tracker_v1";
+  const CUR_KEY = "subscriptions_currency_pref_v1";
+  const $ = (id)=>document.getElementById(id);
+
+  // Currency inference (best effort; picker overrides)
+  const REGION_TO_CURRENCY = {
+    GB:"GBP", US:"USD", CA:"CAD", AU:"AUD", NZ:"NZD",
+    IE:"EUR", FR:"EUR", DE:"EUR", ES:"EUR", IT:"EUR", NL:"EUR", PT:"EUR",
+    BE:"EUR", AT:"EUR", FI:"EUR", GR:"EUR", CY:"EUR", MT:"EUR",
+    SK:"EUR", SI:"EUR", EE:"EUR", LV:"EUR", LT:"EUR", LU:"EUR",
+    JP:"JPY", CN:"CNY", IN:"INR", NG:"NGN", ZA:"ZAR", KE:"KES",
+    GH:"GHS", BR:"BRL", MX:"MXN", CH:"CHF", SE:"SEK", NO:"NOK",
+    DK:"DKK", PL:"PLN", CZ:"CZK", HU:"HUF", RO:"RON", TR:"TRY"
+  };
+
+  function getRegionFromLocale(locale){
+    try{
+      if (typeof Intl !== "undefined" && Intl.Locale){
+        const loc = new Intl.Locale(locale);
+        if (loc.region) return loc.region.toUpperCase();
+      }
+    }catch(e){}
+    const norm = String(locale || "").replace("_","-");
+    const parts = norm.split("-");
+    return (parts[1] || "").toUpperCase();
+  }
+
+  function autoCurrency(){
+    const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || "";
+    const region = getRegionFromLocale(locale);
+    return REGION_TO_CURRENCY[region] || "";
+  }
+
+  function money(n){
+    const v = Number(n||0);
+    if(!isFinite(v)) return "0";
+    const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || undefined;
+    const pref = localStorage.getItem(CUR_KEY) || "AUTO";
+    const cur = (pref === "AUTO") ? autoCurrency() : pref;
+
+    try{
+      if(cur){
+        return new Intl.NumberFormat(locale, { style:"currency", currency: cur }).format(v);
+      }
+      return new Intl.NumberFormat(locale, { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v);
+    }catch(e){
+      return v.toFixed(2);
+    }
+  }
+
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function defaultState(){
+    return { subs: [] }; // {id,name,cost,renewDay,worthIt}
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      return raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState();
+    }catch(e){
+      return defaultState();
+    }
+  }
+
+  let state = load();
+
+  function save(){
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function daysUntilRenew(renewDay){
+    // Approx: assume "renewDay" occurs monthly; compare to today-of-month
+    const now = new Date();
+    const d = now.getDate();
+    let diff = renewDay - d;
+    if(diff < 0) diff += 31; // rough month wrap; good enough for "gentle reminder"
+    return diff;
+  }
+
+  function sortByNextRenew(subs){
+    return [...subs].sort((a,b)=> daysUntilRenew(a.renewDay) - daysUntilRenew(b.renewDay));
+  }
+
+  function renderKPIs(sorted){
+    const total = sorted.reduce((a,s)=>a + Number(s.cost||0), 0);
+    $("kTotal").textContent = money(total);
+    $("kCount").textContent = String(sorted.length);
+
+    if(sorted.length === 0){
+      $("kSoon").textContent = "—";
+      return;
+    }
+    const next = sorted[0];
+    const inDays = daysUntilRenew(next.renewDay);
+    const soonTxt = inDays === 0 ? "Today" : inDays === 1 ? "Tomorrow" : `In ${inDays} days`;
+    $("kSoon").textContent = `${next.name} · ${soonTxt}`;
+  }
+
+  function renderList(sorted){
+    const root = $("subsList");
+    root.innerHTML = "";
+
+    if(sorted.length === 0){
+      root.innerHTML = `<div class="tiny">No subscriptions added yet.</div>`;
+      return;
+    }
+
+    for(const s of sorted){
+      const inDays = daysUntilRenew(s.renewDay);
+      const soon = inDays === 0 ? "renews today" : inDays === 1 ? "renews tomorrow" : `renews in ${inDays} days`;
+      const el = document.createElement("div");
+      el.className = "item";
+      el.innerHTML = `
+        <div class="meta">
+          <b>${s.name} · ${money(s.cost)}/mo</b>
+          <span>Renews day ${s.renewDay} · ${soon}</span>
+        </div>
+        <div class="right">
+          <span class="tag ${s.worthIt ? "" : "off"}" data-toggle="${s.id}">
+            ${s.worthIt ? "Still worth it" : "Not sure"}
+          </span>
+          <button class="smallbtn" data-del="${s.id}" title="Remove" type="button">✕</button>
+        </div>
+      `;
+      root.appendChild(el);
+    }
+
+    root.querySelectorAll("[data-toggle]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-toggle");
+        const sub = state.subs.find(x=>x.id===id);
+        if(!sub) return;
+        sub.worthIt = !sub.worthIt;
+        save();
+        renderAll();
+      });
+    });
+
+    root.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-del");
+        state.subs = state.subs.filter(x=>x.id!==id);
+        save();
+        renderAll();
+      });
+    });
+  }
+
+  function renderAll(){
+    const sorted = sortByNextRenew(state.subs);
+    renderKPIs(sorted);
+    renderList(sorted);
+  }
+
+  function init(){
+    // currency picker
+    const savedCur = localStorage.getItem(CUR_KEY) || "AUTO";
+    $("currency").value = savedCur;
+    $("currency").addEventListener("change", ()=>{
+      localStorage.setItem(CUR_KEY, $("currency").value);
+      renderAll();
+    });
+
+    $("subAdd").addEventListener("click", ()=>{
+      const name = $("subName").value.trim();
+      const cost = Number($("subCost").value);
+      const renewDay = Number($("subRenew").value);
+
+      if(!name) return alert("Name is required.");
+      if(!isFinite(cost) || cost <= 0) return alert("Enter a valid monthly cost.");
+      if(!Number.isFinite(renewDay) || renewDay < 1 || renewDay > 31) return alert("Renew day must be 1–31.");
+
+      state.subs.unshift({ id: uid(), name, cost, renewDay, worthIt: true });
+      save();
+
+      $("subName").value = "";
+      $("subCost").value = "";
+      $("subRenew").value = "";
+
+      renderAll();
+    });
+
+    $("resetBtn").addEventListener("click", ()=>{
+      if(!confirm("Reset all subscriptions?")) return;
+      localStorage.removeItem(KEY);
+      state = defaultState();
+      save();
+      renderAll();
+    });
+
+    renderAll();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

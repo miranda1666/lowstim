@@ -319,8 +319,10 @@
     });
 
     $("resetBtn").addEventListener("click", ()=>{
-      if(!confirm("Reset all subscriptions?")) return;
-      localStorage.removeItem(KEY);
+localStorage.removeItem(KEY);
+state = defaultState();
+save();
+renderAll();
       state = defaultState();
       save();
       renderAll();

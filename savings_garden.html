@@ -164,6 +164,8 @@
   const MS_KEY  = "savings_garden_milestone_v1";
   const $ = (id)=>document.getElementById(id);
 
+  const resetBtn = document.getElementById("resetBtn");
+
   // Currency inference (best effort; user picker overrides)
   const REGION_TO_CURRENCY = {
     GB:"GBP", US:"USD", CA:"CAD", AU:"AUD", NZ:"NZD",
@@ -324,6 +326,12 @@
 
     render();
   }
+
+  resetBtn.onclick = () => {
+  state = defaultState();
+  localStorage.setItem(KEY, JSON.stringify(state));
+  render();
+};
 
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", init);

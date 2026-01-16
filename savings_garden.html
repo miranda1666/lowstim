@@ -114,7 +114,7 @@
             <option value="ZAR">ZAR (R)</option>
           </select>
         </span>
-
+      </div>
 
       <div class="divider"></div>
 
@@ -159,8 +159,6 @@
   const CUR_KEY = "savings_garden_currency_pref_v1";
   const MS_KEY  = "savings_garden_milestone_v1";
   const $ = (id)=>document.getElementById(id);
-
-  const resetBtn = document.getElementById("resetBtn");
 
   // Currency inference (best effort; user picker overrides)
   const REGION_TO_CURRENCY = {
@@ -208,11 +206,10 @@
     }
   }
 
-  // Garden visuals
   const PLANTS = ["🌱","🌿","🍃","🌸","🌼","🌷","🌳","🪴"];
 
   function defaultState(){
-    return { total: 0, history: [] }; // history stores deltas for Undo
+    return { total: 0, history: [] };
   }
 
   function load(){
@@ -242,7 +239,6 @@
     const step = getMilestone();
     const plants = Math.floor(total / step);
 
-    // next threshold + progress
     const nextTarget = (plants + 1) * step;
     const intoThis = total - (plants * step);
     const ratio = Math.max(0, Math.min(1, intoThis / step));
@@ -254,7 +250,6 @@
     $("progTxt").textContent = `${money(intoThis)} / ${money(step)}`;
     $("fill").style.width = Math.max(2, Math.round(ratio * 100)) + "%";
 
-    // garden display
     const garden = $("garden");
     garden.innerHTML = "";
     if(plants <= 0){
@@ -275,9 +270,7 @@
     }
   }
 
-  // Init controls
   function init(){
-    // milestone preference
     const msSaved = localStorage.getItem(MS_KEY);
     if(msSaved) $("milestone").value = msSaved;
 
@@ -286,7 +279,6 @@
       render();
     });
 
-    // currency preference
     const curSaved = localStorage.getItem(CUR_KEY) || "AUTO";
     $("currency").value = curSaved;
     $("currency").addEventListener("change", ()=>{
@@ -296,7 +288,7 @@
 
     $("savBtn").addEventListener("click", ()=>{
       const v = Number($("savAdd").value);
-      if(!isFinite(v) || v <= 0) return alert("Enter a valid savings amount.");
+      if(!isFinite(v) || v <= 0) return; // no alert (Notion-friendly)
       state.total = Number(state.total||0) + v;
       state.history.unshift(v);
       save();
@@ -315,12 +307,6 @@
     render();
   }
 
-  resetBtn.onclick = () => {
-  state = defaultState();
-  localStorage.setItem(KEY, JSON.stringify(state));
-  render();
-};
-
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", init);
   }else{
@@ -330,3 +316,4 @@
 </script>
 </body>
 </html>
+

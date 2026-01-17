@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Recovery Score Tile</title>
+  <meta name="description" content="Recovery check-in widget." />
+  <style>
+    :root{
+      --bg:#ffffff;
+      --cream:#e6d8cc;
+      --stone:#c9beb6;
+      --text:#1f1f1f;
+      --muted:#6b625c;
+      --shadow: 0 10px 28px rgba(0,0,0,0.08);
+      --shadow-soft: 0 4px 14px rgba(0,0,0,0.06);
+      --radius:18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      display:flex;
+      min-height:100vh;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{
+      width:100%;
+      max-width:560px;
+    }
+    .card{
+      background:var(--bg);
+      border:1px solid var(--stone);
+      border-radius:var(--radius);
+      padding:18px 18px 14px;
+      box-shadow:var(--shadow);
+    }
+    .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:10px;
+    }
+    .kicker{
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+    .status{
+      font-size:28px;
+      line-height:1.1;
+      font-weight:680;
+      letter-spacing:-0.02em;
+    }
+    .tip{
+      font-size:13px;
+      color:#5e564f;
+      line-height:1.45;
+      margin:10px 0 14px;
+    }
+    .ring{
+      position:relative;
+      width:92px;
+      height:92px;
+      flex:0 0 auto;
+    }
+    .ring-label{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      letter-spacing:.03em;
+      color:var(--muted);
+      user-select:none;
+    }
+    .groups{
+      display:grid;
+      gap:12px;
+    }
+    .group-title{
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .pills{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .pill{
+      appearance:none;
+      border:1px solid var(--stone);
+      background:var(--bg);
+      color:var(--text);
+      padding:9px 12px;
+      border-radius:999px;
+      font-size:13px;
+      line-height:1;
+      cursor:pointer;
+      box-shadow:var(--shadow-soft);
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      user-select:none;
+    }
+    .pill:hover{ transform:translateY(-1px); }
+    .pill[data-active="true"]{
+      background:var(--cream);
+      box-shadow:0 8px 18px rgba(0,0,0,0.08);
+      transform:translateY(-1px);
+    }
+    .footer{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:14px;
+      padding-top:12px;
+      border-top:1px solid rgba(201,190,182,0.55);
+    }
+    .suggested{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .clear{
+      appearance:none;
+      border:1px solid var(--stone);
+      background:var(--cream);
+      color:var(--text);
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow:var(--shadow-soft);
+      transition: transform 160ms ease, box-shadow 160ms ease;
+      user-select:none;
+    }
+    .clear:hover{
+      transform:translateY(-1px);
+      box-shadow:0 8px 18px rgba(0,0,0,0.08);
+    }
+    .note{
+      margin-top:10px;
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.4;
+    }
+    /* Small screens */
+    @media (max-width:420px){
+      .row{ align-items:flex-start; }
+      .status{ font-size:24px; }
+      .ring{ width:86px; height:86px; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <section class="card" aria-label="Recovery Score Tile">
+      <div class="row">
+        <div>
+          <div class="kicker">Recovery</div>
+          <div id="status" class="status">Maintain</div>
+        </div>
+
+        <div class="ring" aria-hidden="true">
+          <svg width="92" height="92" viewBox="0 0 92 92">
+            <!-- Track -->
+            <circle cx="46" cy="46" r="34"
+              fill="none" stroke="var(--cream)" stroke-width="10" opacity="0.9"></circle>
+
+            <!-- Progress -->
+            <circle id="ring"
+              cx="46" cy="46" r="34"
+              fill="none" stroke="var(--stone)" stroke-width="10"
+              stroke-linecap="round"
+              transform="rotate(-90 46 46)"
+              stroke-dasharray="213.628"
+              stroke-dashoffset="85.451"
+              style="transition: stroke-dashoffset 420ms ease;"></circle>
+          </svg>
+          <div id="ringLabel" class="ring-label">2/3</div>
+        </div>
+      </div>
+
+
+      <div class="groups">
+        <div class="group">
+          <div class="group-title">Sleep quality</div>
+          <div class="pills">
+            <button class="pill" type="button" data-group="sleep" data-value="1">🌙 Poor</button>
+            <button class="pill" type="button" data-group="sleep" data-value="2">🌤 Okay</button>
+            <button class="pill" type="button" data-group="sleep" data-value="3">✨ Restful</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group-title">Body feel</div>
+          <div class="pills">
+            <button class="pill" type="button" data-group="body" data-value="1">Tight</button>
+            <button class="pill" type="button" data-group="body" data-value="2">Neutral</button>
+            <button class="pill" type="button" data-group="body" data-value="3">Loose</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group-title">Mental energy</div>
+          <div class="pills">
+            <button class="pill" type="button" data-group="mind" data-value="1">Drained</button>
+            <button class="pill" type="button" data-group="mind" data-value="2">Steady</button>
+            <button class="pill" type="button" data-group="mind" data-value="3">Energized</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div id="suggested" class="suggested">Suggested: Technique / moderate lift</div>
+        <button id="clear" class="clear" type="button">Clear</button>
+      </div>
+
+      <div class="note">
+        Click the same option again to unselect it.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      // State
+      const state = { sleep: null, body: null, mind: null };
+
+      // Elements
+      const statusEl = document.getElementById("status");
+      const tipEl = document.getElementById("tip");
+      const suggestedEl = document.getElementById("suggested");
+      const ringEl = document.getElementById("ring");
+      const ringLabelEl = document.getElementById("ringLabel");
+      const clearBtn = document.getElementById("clear");
+      const pills = Array.from(document.querySelectorAll(".pill"));
+
+      // Ring math
+      const R = 34;
+      const C = 2 * Math.PI * R;
+      ringEl.setAttribute("stroke-dasharray", String(C));
+
+      function selectedCount() {
+        return ["sleep", "body", "mind"].reduce((acc, k) => acc + (state[k] ? 1 : 0), 0);
+      }
+
+      function totalScore() {
+        return (state.sleep || 0) + (state.body || 0) + (state.mind || 0);
+      }
+
+      function statusFrom(score, count) {
+        if (count === 0) {
+          return {
+            label: "Maintain",
+            tip: "Tap a few check-ins to get a gentle read.",
+            suggested: "Suggested: Light walk + stretch"
+          };
+        }
+
+        const avg = score / count; // 1..3
+        if (avg < 1.67) {
+          return {
+            label: "Restore",
+            tip: "Today is great for mobility, walking, or rest.",
+            suggested: "Suggested: Mobility / easy walk"
+          };
+        }
+        if (avg < 2.34) {
+          return {
+            label: "Maintain",
+            tip: "A steady session will feel best today.",
+            suggested: "Suggested: Technique / moderate lift"
+          };
+        }
+        return {
+          label: "Ready",
+          tip: "Your body feels ready to push a little.",
+          suggested: "Suggested: Strength / intervals"
+        };
+      }
+
+      function ringStep(score, count) {
+        if (count === 0) return { step: 2, pct: 0.60 };
+
+        const avg = score / count;
+        if (avg < 1.67) return { step: 1, pct: 0.30 };
+        if (avg < 2.34) return { step: 2, pct: 0.60 };
+        return { step: 3, pct: 1.00 };
+      }
+
+      function setActive(group) {
+        pills
+          .filter(b => b.dataset.group === group)
+          .forEach(b => {
+            const v = Number(b.dataset.value);
+            b.dataset.active = String(state[group] === v);
+          });
+      }
+
+      function render() {
+        const count = selectedCount();
+        const score = totalScore();
+
+        const s = statusFrom(score, count);
+        statusEl.textContent = s.label;
+        tipEl.textContent = s.tip;
+        suggestedEl.textContent = s.suggested;
+
+        const r = ringStep(score, count);
+        const dashOffset = C * (1 - r.pct);
+        ringEl.setAttribute("stroke-dashoffset", String(dashOffset));
+        ringLabelEl.textContent = r.step + "/3";
+
+        setActive("sleep");
+        setActive("body");
+        setActive("mind");
+      }
+
+      pills.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const group = btn.dataset.group;
+          const val = Number(btn.dataset.value);
+          state[group] = (state[group] === val) ? null : val; // toggle
+          render();
+        });
+      });
+
+      clearBtn.addEventListener("click", () => {
+        state.sleep = null;
+        state.body = null;
+        state.mind = null;
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Resource Vault</title>
+  <style>
+    :root{
+      --bg: #f6f4f1;
+      --panel: rgba(255,255,255,.65);
+      --panel2: rgba(255,255,255,.82);
+      --text: #2b2b2b;
+      --muted: #6f6a63;
+      --line: rgba(43,43,43,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --shadow2: 0 12px 40px rgba(0,0,0,.12);
+      --radius: 18px;
+      --radius2: 14px;
+      --focus: rgba(43,43,43,.18);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(255,255,255,.9) 0%, rgba(255,255,255,0) 60%),
+        radial-gradient(900px 600px at 85% 15%, rgba(255,255,255,.65) 0%, rgba(255,255,255,0) 55%),
+        linear-gradient(180deg, #f2eee8 0%, var(--bg) 40%, #f2efe9 100%);
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+
+    /* Header */
+    .top{
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .title{
+      display: grid;
+      gap: 6px;
+    }
+    .title h1{
+      font-size: clamp(22px, 2.6vw, 32px);
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: -.02em;
+    }
+    .title p{
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 52ch;
+    }
+
+    .actions{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn{
+      appearance: none;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.65));
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,.08); border-color: rgba(43,43,43,.18); }
+    .btn:active{ transform: translateY(0px); }
+    .btn:focus-visible{
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .btn.primary{
+      border-color: rgba(43,43,43,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.72));
+    }
+    .btn.danger{
+      border-color: rgba(160, 60, 60, .2);
+    }
+
+    /* Controls */
+    .controls{
+      display: grid;
+      grid-template-columns: 1.2fr .8fr .6fr;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 860px){
+      .controls{ grid-template-columns: 1fr; }
+      .actions{ justify-content: flex-start; }
+      .top{ flex-direction: column; align-items: stretch; }
+    }
+
+    .field{
+      position: relative;
+      display: grid;
+      gap: 6px;
+    }
+    label{
+      font-size: 12px;
+      color: var(--muted);
+      padding-left: 6px;
+    }
+    .input, select{
+      width: 100%;
+      padding: 12px 12px 12px 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.75);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    select{
+      padding-left: 12px;
+    }
+    .input:focus, select:focus{
+      border-color: rgba(43,43,43,.22);
+      box-shadow: 0 0 0 3px rgba(43,43,43,.10);
+    }
+    .icon{
+      position: absolute;
+      left: 12px;
+      top: 36px;
+      width: 16px;
+      height: 16px;
+      opacity: .65;
+      pointer-events: none;
+    }
+
+    /* Shelf area */
+    .shelf{
+      margin-top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .shelfHead{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(43,43,43,.08);
+    }
+    .meta{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      border: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.65);
+      padding: 6px 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    .grid{
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 620px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    /* Cards (books/folders vibe) */
+    .card{
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(43,43,43,.10);
+      border-radius: var(--radius2);
+      box-shadow: 0 8px 20px rgba(0,0,0,.06);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      min-height: 92px;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .card:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(0,0,0,.09);
+      border-color: rgba(43,43,43,.16);
+    }
+
+    .spine{
+      background: linear-gradient(180deg, rgba(240,236,231,.95), rgba(226,219,212,.85));
+      border-right: 1px solid rgba(43,43,43,.10);
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+    .spine::after{
+      content:"";
+      position:absolute;
+      left: 10px;
+      right: 10px;
+      height: 1px;
+      bottom: 12px;
+      background: rgba(43,43,43,.10);
+    }
+    .badge{
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      border: 1px solid rgba(43,43,43,.10);
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.7);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      font-size: 15px;
+    }
+
+    .content{
+      padding: 12px 12px 10px;
+      display: grid;
+      gap: 6px;
+    }
+    .row1{
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .name{
+      font-weight: 650;
+      font-size: 14px;
+      letter-spacing: -.01em;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .sub{
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.25;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .tags{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .tag{
+      font-size: 11px;
+      color: rgba(43,43,43,.78);
+      background: rgba(255,255,255,.65);
+      border: 1px solid rgba(43,43,43,.08);
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+    .cardActions{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .iconBtn{
+      appearance: none;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.7);
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+    .iconBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(43,43,43,.18);
+      box-shadow: 0 10px 20px rgba(0,0,0,.08);
+    }
+    .iconBtn:active{ transform: translateY(0); }
+    .iconBtn:focus-visible{
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    .iconBtn svg{ width: 16px; height: 16px; opacity: .75; }
+
+    /* Bottom "wood" shelf lip */
+    .lip{
+      height: 18px;
+      background:
+        linear-gradient(180deg, rgba(212,199,188,.8), rgba(188,171,156,.75));
+      border-top: 1px solid rgba(43,43,43,.12);
+    }
+
+    /* Empty state */
+    .empty{
+      padding: 46px 18px 50px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 12px;
+      color: var(--muted);
+    }
+    .empty .big{
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.7);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 12px 30px rgba(0,0,0,.06);
+      font-size: 22px;
+    }
+    .empty h2{
+      margin: 0;
+      color: var(--text);
+      font-size: 16px;
+      letter-spacing: -.01em;
+    }
+    .empty p{
+      margin: 0;
+      max-width: 50ch;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    /* Modal */
+    .modalBackdrop{
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(20,18,16,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+    .modalBackdrop.show{ display: grid; }
+
+    .modal{
+      width: min(720px, 100%);
+      background: rgba(255,255,255,.86);
+      border: 1px solid rgba(43,43,43,.14);
+      border-radius: 20px;
+      box-shadow: var(--shadow2);
+      overflow: hidden;
+    }
+    .modalHead{
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.72);
+    }
+    .modalHead h3{
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: -.01em;
+    }
+    .modalBody{
+      padding: 14px 16px 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .formGrid{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 700px){
+      .formGrid{ grid-template-columns: 1fr; }
+    }
+
+    .input2, .textarea, .select2{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.78);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    .textarea{
+      min-height: 90px;
+      resize: vertical;
+    }
+    .input2:focus, .textarea:focus, .select2:focus{
+      border-color: rgba(43,43,43,.22);
+      box-shadow: 0 0 0 3px rgba(43,43,43,.10);
+    }
+
+    .help{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -6px;
+    }
+
+    .modalFoot{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px 14px;
+      border-top: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.70);
+      flex-wrap: wrap;
+    }
+    .leftFoot{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .tiny{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .sr{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+
+    a.link{
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(43,43,43,.22);
+    }
+    a.link:hover{
+      border-bottom-color: rgba(43,43,43,.45);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">
+        <h1>Resource Vault</h1>
+        <p>A shelf for your links, PDFs, notes, and references. Searchable and taggable!</p>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="addBtn" type="button" title="Add a resource">
+          <span aria-hidden="true">＋</span>
+          Add resource
+        </button>
+        <button class="btn" id="exportBtn" type="button" title="Export resources to JSON">
+          <span aria-hidden="true">⤓</span>
+          Export
+        </button>
+        <button class="btn danger" id="clearBtn" type="button" title="Clear all resources">
+          <span aria-hidden="true">✕</span>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <section class="controls" aria-label="Vault controls">
+      <div class="field">
+        <label for="search">Search</label>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <input class="input" id="search" type="search" placeholder="Title, description, tags, URL…" autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label for="tagFilter">Tag filter</label>
+        <select id="tagFilter" aria-label="Tag filter">
+          <option value="">All tags</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="sortBy">Sort</label>
+        <select id="sortBy" aria-label="Sort resources">
+          <option value="updated_desc">Recently updated</option>
+          <option value="created_desc">Recently added</option>
+          <option value="title_asc">Title A → Z</option>
+          <option value="type_asc">Type</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="shelf" aria-label="Resource shelf">
+      <div class="shelfHead">
+        <div class="meta">
+          <span class="pill" id="countPill">0 items</span>
+          <span class="pill" id="tagPill">0 tags</span>
+        </div>
+        <div class="meta" id="filteredMeta" aria-live="polite"></div>
+      </div>
+
+      <div id="contentArea">
+        <!-- grid / empty injected here -->
+      </div>
+
+      <div class="lip" aria-hidden="true"></div>
+    </section>
+  </div>
+
+  <!-- Modal -->
+  <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="modalTitle">Add resource</h3>
+        <button class="iconBtn" id="closeModalBtn" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <form class="modalBody" id="resourceForm">
+        <input type="hidden" id="editId" value="" />
+
+        <div class="formGrid">
+          <div class="field">
+            <label for="rTitle">Title</label>
+            <input class="input2" id="rTitle" required maxlength="80" placeholder="e.g., Linear Algebra Notes" />
+          </div>
+
+          <div class="field">
+            <label for="rType">Type</label>
+            <select class="select2" id="rType" required>
+              <option value="link">Link</option>
+              <option value="paper">Paper</option>
+              <option value="lecture">Lecture</option>
+              <option value="dataset">Dataset</option>
+              <option value="book">Book</option>
+              <option value="tool">Tool</option>
+              <option value="note">Note</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="formGrid">
+          <div class="field">
+            <label for="rUrl">URL (optional)</label>
+            <input class="input2" id="rUrl" type="url" placeholder="https://…" />
+            <div class="help">If it’s a note-only entry, leave URL blank.</div>
+          </div>
+
+          <div class="field">
+            <label for="rTags">Tags</label>
+            <input class="input2" id="rTags" placeholder="comma-separated (e.g., calculus, finals, week-3)" />
+            <div class="help">Tags make filtering super easy. Keep them short if you can!</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="rDesc">Description</label>
+          <textarea class="textarea" id="rDesc" placeholder="What is this for? When will you use it? Any key notes?"></textarea>
+        </div>
+
+        <div class="modalFoot">
+          <div class="leftFoot">
+          </div>
+          <div class="leftFoot">
+            <button class="btn" type="button" id="cancelBtn">Cancel</button>
+            <button class="btn primary" type="submit" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // -----------------------------
+    // Resource Vault (single-file)
+    // - LocalStorage persistence
+    // - Search + tag filter + sorting
+    // - Add/Edit/Delete + Export/Clear
+    // -----------------------------
+
+    const LS_KEY = "resource_vault_v1";
+
+    const els = {
+      contentArea: document.getElementById("contentArea"),
+      countPill: document.getElementById("countPill"),
+      tagPill: document.getElementById("tagPill"),
+      filteredMeta: document.getElementById("filteredMeta"),
+
+      search: document.getElementById("search"),
+      tagFilter: document.getElementById("tagFilter"),
+      sortBy: document.getElementById("sortBy"),
+
+      addBtn: document.getElementById("addBtn"),
+      exportBtn: document.getElementById("exportBtn"),
+      clearBtn: document.getElementById("clearBtn"),
+
+      modalBackdrop: document.getElementById("modalBackdrop"),
+      closeModalBtn: document.getElementById("closeModalBtn"),
+      cancelBtn: document.getElementById("cancelBtn"),
+
+      resourceForm: document.getElementById("resourceForm"),
+      editId: document.getElementById("editId"),
+      modalTitle: document.getElementById("modalTitle"),
+      rTitle: document.getElementById("rTitle"),
+      rType: document.getElementById("rType"),
+      rUrl: document.getElementById("rUrl"),
+      rTags: document.getElementById("rTags"),
+      rDesc: document.getElementById("rDesc"),
+      saveBtn: document.getElementById("saveBtn"),
+      seedDemo: document.getElementById("seedDemo"),
+    };
+
+    const typeIcon = (type) => {
+      // Icons for the spine badge
+      const map = {
+        link: "↗",
+        paper: "⟡",
+        lecture: "▷",
+        dataset: "▦",
+        book: "⌁",
+        tool: "✶",
+        note: "✎",
+        other: "◻"
+      };
+      return map[type] || "◻";
+    };
+
+    const safeUrl = (url) => {
+      try {
+        if (!url) return "";
+        const u = new URL(url);
+        return u.toString();
+      } catch {
+        return "";
+      }
+    };
+
+    const normalizeTags = (raw) => {
+      if (!raw) return [];
+      const parts = raw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+      // de-dup
+      return [...new Set(parts)].slice(0, 12);
+    };
+
+    const nowISO = () => new Date().toISOString();
+
+    const load = () => {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+      } catch {
+        return [];
+      }
+    };
+
+    const save = (items) => {
+      localStorage.setItem(LS_KEY, JSON.stringify(items));
+    };
+
+    let items = load();
+
+    // UI state
+    let state = {
+      q: "",
+      tag: "",
+      sort: "updated_desc",
+    };
+
+    // -------- Rendering --------
+    const buildTagOptions = (allItems) => {
+      const tagSet = new Set();
+      allItems.forEach(it => (it.tags || []).forEach(t => tagSet.add(t)));
+      const tags = [...tagSet].sort((a,b) => a.localeCompare(b));
+
+      // preserve selected
+      const selected = els.tagFilter.value;
+
+      els.tagFilter.innerHTML = `<option value="">All tags</option>` +
+        tags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+
+      if ([...els.tagFilter.options].some(o => o.value === selected)) {
+        els.tagFilter.value = selected;
+      }
+
+      els.tagPill.textContent = `${tags.length} tag${tags.length === 1 ? "" : "s"}`;
+    };
+
+    const escapeHtml = (s) =>
+      String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    const matches = (it, q) => {
+      if (!q) return true;
+      const hay = [
+        it.title,
+        it.type,
+        it.url,
+        it.description,
+        ...(it.tags || [])
+      ].join(" ").toLowerCase();
+      return hay.includes(q.toLowerCase());
+    };
+
+    const applyFilters = (allItems) => {
+      const q = state.q.trim();
+      const tag = state.tag;
+
+      let out = allItems.filter(it => matches(it, q));
+      if (tag) out = out.filter(it => (it.tags || []).includes(tag));
+
+      // sort
+      out.sort((a,b) => {
+        switch(state.sort){
+          case "title_asc": return (a.title || "").localeCompare(b.title || "");
+          case "type_asc": return (a.type || "").localeCompare(b.type || "");
+          case "created_desc": return (b.createdAt || "").localeCompare(a.createdAt || "");
+          case "updated_desc":
+          default: return (b.updatedAt || "").localeCompare(a.updatedAt || "");
+        }
+      });
+
+      return out;
+    };
+
+    const render = () => {
+      buildTagOptions(items);
+
+      const filtered = applyFilters(items);
+
+      els.countPill.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
+
+      // filtered meta
+      const parts = [];
+      if (state.q) parts.push(`Search: “${state.q}”`);
+      if (state.tag) parts.push(`Tag: ${state.tag}`);
+      if (parts.length) {
+        els.filteredMeta.textContent = `${filtered.length} match${filtered.length === 1 ? "" : "es"} · ` + parts.join(" · ");
+      } else {
+        els.filteredMeta.textContent = `${filtered.length} shown`;
+      }
+
+      if (items.length === 0){
+        els.contentArea.innerHTML = `
+          <div class="empty">
+            <div class="big" aria-hidden="true">▢</div>
+            <h2>Your shelf is empty</h2>
+            <p>Add links, papers, lecture notes, datasets—anything you want to find again instantly.</p>
+            <button class="btn primary" type="button" id="emptyAddBtn">＋ Add your first resource</button>
+          </div>
+        `;
+        document.getElementById("emptyAddBtn").addEventListener("click", openAddModal);
+        return;
+      }
+
+      if (filtered.length === 0){
+        els.contentArea.innerHTML = `
+          <div class="empty">
+            <div class="big" aria-hidden="true">⌕</div>
+            <h2>No matches</h2>
+            <p>Try a different search, clear the tag filter, or add a new resource.</p>
+            <button class="btn" type="button" id="clearFiltersBtn">Clear filters</button>
+          </div>
+        `;
+        document.getElementById("clearFiltersBtn").addEventListener("click", () => {
+          state.q = "";
+          state.tag = "";
+          els.search.value = "";
+          els.tagFilter.value = "";
+          render();
+        });
+        return;
+      }
+
+      const gridHtml = `
+        <div class="grid">
+          ${filtered.map(cardHtml).join("")}
+        </div>
+      `;
+
+      els.contentArea.innerHTML = gridHtml;
+
+      // attach events
+      filtered.forEach(it => {
+        const edit = document.getElementById(`edit_${it.id}`);
+        const del = document.getElementById(`del_${it.id}`);
+        const open = document.getElementById(`open_${it.id}`);
+
+        if (edit) edit.addEventListener("click", () => openEditModal(it.id));
+        if (del) del.addEventListener("click", () => deleteItem(it.id));
+        if (open) open.addEventListener("click", () => {
+          if (it.url) window.open(it.url, "_blank", "noopener,noreferrer");
+        });
+      });
+    };
+
+    const cardHtml = (it) => {
+      const url = it.url ? it.url : "";
+      const urlHost = url ? (() => { try { return new URL(url).host; } catch { return ""; } })() : "";
+      const desc = it.description ? it.description : (urlHost ? urlHost : "—");
+      const tags = (it.tags || []).slice(0, 6);
+
+      return `
+        <article class="card" aria-label="${escapeHtml(it.title)}">
+          <div class="spine" aria-hidden="true">
+            <div class="badge" title="${escapeHtml(it.type)}">${escapeHtml(typeIcon(it.type))}</div>
+          </div>
+          <div class="content">
+            <div class="row1">
+              <div style="min-width:0;">
+                <p class="name">${escapeHtml(it.title)}</p>
+                <p class="sub">${escapeHtml(desc)}</p>
+              </div>
+              <div class="cardActions">
+                <button class="iconBtn" type="button" id="open_${it.id}" aria-label="Open" ${url ? "" : "disabled"} title="${url ? "Open link" : "No URL"}" style="${url ? "" : "opacity:.5;cursor:not-allowed;"}">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M10 8h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M10 14 16 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 10v8a2 2 0 0 0 2 2h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <button class="iconBtn" type="button" id="edit_${it.id}" aria-label="Edit" title="Edit">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 20h4l10.5-10.5a1.8 1.8 0 0 0 0-2.5l-1.5-1.5a1.8 1.8 0 0 0-2.5 0L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M13.5 6.5 17.5 10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <button class="iconBtn" type="button" id="del_${it.id}" aria-label="Delete" title="Delete">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M6 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="tags" aria-label="Tags">
+              ${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
+              ${it.tags && it.tags.length > tags.length ? `<span class="tag">+${it.tags.length - tags.length}</span>` : ""}
+            </div>
+          </div>
+        </article>
+      `;
+    };
+
+    // -------- CRUD --------
+    const upsertItem = (payload) => {
+      const idx = items.findIndex(x => x.id === payload.id);
+      if (idx >= 0){
+        items[idx] = payload;
+      } else {
+        items.unshift(payload);
+      }
+      save(items);
+      render();
+    };
+
+    const deleteItem = (id) => {
+      const it = items.find(x => x.id === id);
+      const name = it ? it.title : "this item";
+      if (!confirm(`Delete "${name}"?`)) return;
+      items = items.filter(x => x.id !== id);
+      save(items);
+      render();
+    };
+
+    const clearAll = () => {
+      if (!items.length) return;
+      if (!confirm("Clear all resources? This cannot be undone.")) return;
+      items = [];
+      save(items);
+      render();
+    };
+
+    const exportJson = () => {
+      const data = JSON.stringify(items, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "resource-vault.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    // -------- Modal --------
+    let lastFocusEl = null;
+
+    const openModal = () => {
+      lastFocusEl = document.activeElement;
+      els.modalBackdrop.classList.add("show");
+      // Focus first input
+      setTimeout(() => els.rTitle.focus(), 0);
+      document.addEventListener("keydown", onModalKeydown);
+    };
+
+    const closeModal = () => {
+      els.modalBackdrop.classList.remove("show");
+      document.removeEventListener("keydown", onModalKeydown);
+      if (lastFocusEl && typeof lastFocusEl.focus === "function") lastFocusEl.focus();
+      resetForm();
+    };
+
+    const onModalKeydown = (e) => {
+      if (e.key === "Escape") closeModal();
+      // simple focus trap
+      if (e.key === "Tab"){
+        const focusables = els.modalBackdrop.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const list = [...focusables].filter(x => !x.disabled && x.offsetParent !== null);
+        if (!list.length) return;
+
+        const first = list[0];
+        const last = list[list.length - 1];
+        if (e.shiftKey && document.activeElement === first){
+          e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && document.activeElement === last){
+          e.preventDefault(); first.focus();
+        }
+      }
+    };
+
+    const resetForm = () => {
+      els.editId.value = "";
+      els.modalTitle.textContent = "Add resource";
+      els.saveBtn.textContent = "Save";
+      els.rTitle.value = "";
+      els.rType.value = "link";
+      els.rUrl.value = "";
+      els.rTags.value = "";
+      els.rDesc.value = "";
+    };
+
+    const openAddModal = () => {
+      resetForm();
+      openModal();
+    };
+
+    const openEditModal = (id) => {
+      const it = items.find(x => x.id === id);
+      if (!it) return;
+
+      els.editId.value = it.id;
+      els.modalTitle.textContent = "Edit resource";
+      els.saveBtn.textContent = "Update";
+
+      els.rTitle.value = it.title || "";
+      els.rType.value = it.type || "link";
+      els.rUrl.value = it.url || "";
+      els.rTags.value = (it.tags || []).join(", ");
+      els.rDesc.value = it.description || "";
+
+      openModal();
+    };
+
+    // -------- Demo seed --------
+    const seedDemo = () => {
+      const demo = [
+        {
+          title: "Spaced repetition planner",
+          type: "tool",
+          url: "https://apps.ankiweb.net/",
+          tags: ["study", "memory", "anki"],
+          description: "Use for active recall + spaced repetition.",
+        },
+        {
+          title: "Course paper: Attention Is All You Need",
+          type: "paper",
+          url: "https://arxiv.org/abs/1706.03762",
+          tags: ["ml", "paper", "transformers"],
+          description: "Foundational transformer paper (skim + notes).",
+        },
+        {
+          title: "Lecture playlist — Linear Algebra",
+          type: "lecture",
+          url: "https://www.youtube.com/playlist?list=PL49CF3715CB9EF31D",
+          tags: ["math", "linear-algebra"],
+          description: "Reference lectures for tricky topics.",
+        },
+        {
+          title: "Dataset: Iris (toy)",
+          type: "dataset",
+          url: "https://archive.ics.uci.edu/dataset/53/iris",
+          tags: ["dataset", "stats"],
+          description: "Quick dataset for practicing classification.",
+        },
+        {
+          title: "Thesis ideas scratchpad",
+          type: "note",
+          url: "",
+          tags: ["research", "ideas"],
+          description: "Collect sparks + directions here.",
+        }
+      ];
+
+      const existing = new Set(items.map(x => x.title.toLowerCase().trim()));
+      demo.forEach(d => {
+        if (existing.has(d.title.toLowerCase().trim())) return;
+        items.unshift({
+          id: crypto.randomUUID(),
+          title: d.title,
+          type: d.type,
+          url: safeUrl(d.url),
+          tags: d.tags,
+          description: d.description,
+          createdAt: nowISO(),
+          updatedAt: nowISO(),
+        });
+      });
+
+      save(items);
+      render();
+      closeModal();
+    };
+
+    // -------- Events --------
+    els.addBtn.addEventListener("click", openAddModal);
+    els.exportBtn.addEventListener("click", exportJson);
+    els.clearBtn.addEventListener("click", clearAll);
+
+    els.closeModalBtn.addEventListener("click", closeModal);
+    els.cancelBtn.addEventListener("click", closeModal);
+    els.modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === els.modalBackdrop) closeModal();
+    });
+
+    els.resourceForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const title = els.rTitle.value.trim();
+      const type = els.rType.value;
+      const url = safeUrl(els.rUrl.value.trim());
+      const tags = normalizeTags(els.rTags.value);
+      const description = els.rDesc.value.trim();
+
+      if (!title) return;
+
+      const id = els.editId.value || crypto.randomUUID();
+      const existing = items.find(x => x.id === id);
+
+      const payload = {
+        id,
+        title,
+        type,
+        url,
+        tags,
+        description,
+        createdAt: existing ? existing.createdAt : nowISO(),
+        updatedAt: nowISO(),
+      };
+
+      upsertItem(payload);
+      closeModal();
+    });
+
+    els.seedDemo.addEventListener("click", (e) => {
+      e.preventDefault();
+      seedDemo();
+    });
+
+    els.search.addEventListener("input", () => {
+      state.q = els.search.value;
+      render();
+    });
+
+    els.tagFilter.addEventListener("change", () => {
+      state.tag = els.tagFilter.value;
+      render();
+    });
+
+    els.sortBy.addEventListener("change", () => {
+      state.sort = els.sortBy.value;
+      render();
+    });
+
+    // Keyboard shortcut: "/" focuses search (like Notion)
+    document.addEventListener("keydown", (e) => {
+      if (els.modalBackdrop.classList.contains("show")) return;
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey){
+        const active = document.activeElement;
+        const typing = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+        if (!typing){
+          e.preventDefault();
+          els.search.focus();
+        }
+      }
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>

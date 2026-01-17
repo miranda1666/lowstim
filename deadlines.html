@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Deadline Horizon</title>
+  <style>
+    :root{
+      --bg: #f6f4f1;
+      --panel: rgba(255,255,255,.65);
+      --text: #2b2b2b;
+      --muted: #6f6a63;
+      --line: rgba(43,43,43,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --shadow2: 0 16px 50px rgba(0,0,0,.14);
+      --radius: 18px;
+      --radius2: 14px;
+      --focus: rgba(43,43,43,.18);
+      --horizon: rgba(43,43,43,.16);
+      --dot: rgba(43,43,43,.70);
+      --dotSoft: rgba(43,43,43,.40);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(255,255,255,.9) 0%, rgba(255,255,255,0) 60%),
+        radial-gradient(900px 600px at 85% 15%, rgba(255,255,255,.65) 0%, rgba(255,255,255,0) 55%),
+        linear-gradient(180deg, #f2eee8 0%, var(--bg) 40%, #f2efe9 100%);
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+
+    /* Header */
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .title{
+      display:grid;
+      gap: 6px;
+      min-width: 260px;
+    }
+    .title h1{
+      font-size: clamp(22px, 2.6vw, 32px);
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: -.02em;
+    }
+    .title p{
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 62ch;
+      line-height: 1.4;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn{
+      appearance:none;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.68));
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      font-size: 13px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,.08); border-color: rgba(43,43,43,.18); }
+    .btn:active{ transform: translateY(0px); }
+    .btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .btn.primary{ border-color: rgba(43,43,43,.14); }
+    .btn.danger{ border-color: rgba(160, 60, 60, .20); }
+
+    /* Controls */
+    .controls{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr .6fr;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    @media (max-width: 860px){
+      .controls{ grid-template-columns: 1fr; }
+      .actions{ width: 100%; justify-content: flex-start; }
+    }
+
+    .field{ position: relative; display:grid; gap: 6px; }
+    label{ font-size: 12px; color: var(--muted); padding-left: 6px; }
+    .input, select{
+      width:100%;
+      padding: 12px 12px 12px 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.75);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    select{ padding-left: 12px; }
+    .input:focus, select:focus{
+      border-color: rgba(43,43,43,.22);
+      box-shadow: 0 0 0 3px rgba(43,43,43,.10);
+    }
+    .icon{
+      position:absolute;
+      left: 12px;
+      top: 36px;
+      width: 16px;
+      height: 16px;
+      opacity: .65;
+      pointer-events:none;
+    }
+
+    /* Horizon panel */
+    .panel{
+      margin-top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+    .panelHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(43,43,43,.08);
+      flex-wrap: wrap;
+    }
+    .meta{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      border: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.65);
+      padding: 6px 10px;
+      border-radius: 999px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    /* Horizon canvas area */
+    .vizWrap{
+      padding: 14px;
+    }
+    .viz{
+      width: 100%;
+      height: 260px;
+      border-radius: var(--radius2);
+      border: 1px solid rgba(43,43,43,.10);
+      background:
+        radial-gradient(500px 220px at 50% 35%, rgba(255,255,255,.65) 0%, rgba(255,255,255,0) 70%),
+        linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.30) 60%, rgba(255,255,255,.50) 100%);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+    }
+    /* Subtle horizon line + haze */
+    .viz::before{
+      content:"";
+      position:absolute;
+      left: 8%;
+      right: 8%;
+      top: 62%;
+      height: 1px;
+      background: var(--horizon);
+      opacity: .85;
+      filter: blur(.1px);
+    }
+    .viz::after{
+      content:"";
+      position:absolute;
+      left: 0;
+      right: 0;
+      top: 52%;
+      height: 32%;
+      background: linear-gradient(180deg, rgba(246,244,241,0), rgba(246,244,241,.55));
+      pointer-events:none;
+    }
+
+    /* Dot */
+    .dot{
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      background: var(--dot);
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.10),
+        0 0 0 4px rgba(43,43,43,.06);
+      opacity: 0;
+      animation: fadeIn .35s ease forwards;
+      cursor: pointer;
+    }
+    .dot.soft{
+      background: var(--dotSoft);
+      box-shadow:
+        0 8px 18px rgba(0,0,0,.08),
+        0 0 0 3px rgba(43,43,43,.05);
+    }
+    .dot.urgent{
+      width: 18px;
+      height: 18px;
+      box-shadow:
+        0 12px 28px rgba(0,0,0,.12),
+        0 0 0 6px rgba(43,43,43,.08);
+    }
+    .dot:focus-visible{
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+    @keyframes fadeIn{
+      from{ opacity: 0; transform: translate(-50%, -50%) scale(.92); }
+      to{ opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* Tooltip */
+    .tooltip{
+      position:absolute;
+      min-width: 210px;
+      max-width: 320px;
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(43,43,43,.12);
+      border-radius: 14px;
+      box-shadow: var(--shadow2);
+      padding: 10px 10px 9px;
+      transform: translate(-50%, -110%);
+      pointer-events:none;
+      opacity: 0;
+      transition: opacity .12s ease, transform .12s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+    .tooltip.show{
+      opacity: 1;
+      transform: translate(-50%, -118%);
+    }
+    .ttTitle{
+      margin: 0;
+      font-size: 13px;
+      font-weight: 750;
+      letter-spacing: -.01em;
+      line-height: 1.2;
+    }
+    .ttSub{
+      margin: 4px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .ttChips{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .chip{
+      font-size: 11px;
+      color: rgba(43,43,43,.78);
+      background: rgba(255,255,255,.65);
+      border: 1px solid rgba(43,43,43,.08);
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    /* List */
+    .list{
+      padding: 0 14px 14px;
+      display:grid;
+      gap: 10px;
+    }
+    .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(43,43,43,.10);
+      box-shadow: 0 8px 22px rgba(0,0,0,.06);
+    }
+    .rowLeft{ min-width: 0; display:grid; gap: 4px; }
+    .rowTitle{
+      margin: 0;
+      font-size: 13.5px;
+      font-weight: 720;
+      line-height: 1.2;
+      letter-spacing: -.01em;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 64ch;
+    }
+    .rowMeta{
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.35;
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .smallPill{
+      border: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.65);
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: rgba(43,43,43,.80);
+    }
+    .rowActions{
+      display:flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+    .iconBtn{
+      appearance:none;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.72);
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      cursor: pointer;
+      display:grid;
+      place-items:center;
+      transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+    .iconBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(43,43,43,.18);
+      box-shadow: 0 10px 20px rgba(0,0,0,.08);
+    }
+    .iconBtn:active{ transform: translateY(0); }
+    .iconBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .iconBtn svg{ width: 16px; height: 16px; opacity: .75; }
+
+    /* Empty */
+    .empty{
+      padding: 40px 18px 44px;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      gap: 12px;
+      color: var(--muted);
+    }
+    .empty .big{
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.7);
+      display:grid;
+      place-items:center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 12px 30px rgba(0,0,0,.06);
+      font-size: 22px;
+    }
+    .empty h2{ margin: 0; color: var(--text); font-size: 16px; letter-spacing: -.01em; }
+    .empty p{
+      margin: 0;
+      max-width: 60ch;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    /* Modal */
+    .modalBackdrop{
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(20,18,16,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+    .modalBackdrop.show{ display: grid; }
+
+    .modal{
+      width: min(760px, 100%);
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(43,43,43,.14);
+      border-radius: 20px;
+      box-shadow: var(--shadow2);
+      overflow: hidden;
+    }
+    .modalHead{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.72);
+    }
+    .modalHead h3{ margin: 0; font-size: 15px; letter-spacing: -.01em; }
+    .modalBody{
+      padding: 14px 16px 16px;
+      display:grid;
+      gap: 12px;
+    }
+    .formGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 740px){ .formGrid{ grid-template-columns: 1fr; } }
+
+    .input2, .textarea, .select2{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.78);
+      font-size: 14px;
+      color: var(--text);
+      outline:none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    .textarea{ min-height: 88px; resize: vertical; }
+    .input2:focus, .textarea:focus, .select2:focus{
+      border-color: rgba(43,43,43,.22);
+      box-shadow: 0 0 0 3px rgba(43,43,43,.10);
+    }
+    .help{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -6px;
+      line-height: 1.35;
+    }
+
+    .modalFoot{
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px 14px;
+      border-top: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.70);
+      flex-wrap: wrap;
+    }
+    .tiny{ font-size: 12px; color: var(--muted); }
+    a.link{
+      color: inherit;
+      text-decoration:none;
+      border-bottom: 1px solid rgba(43,43,43,.22);
+    }
+    a.link:hover{ border-bottom-color: rgba(43,43,43,.45); }
+
+    .floor{
+      height: 18px;
+      background: linear-gradient(180deg, rgba(212,199,188,.8), rgba(188,171,156,.75));
+      border-top: 1px solid rgba(43,43,43,.12);
+    }
+
+    kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(43,43,43,.14);
+      background: rgba(255,255,255,.7);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">
+        <h1>Deadline Horizon</h1>
+        <p>Deadlines appear as dots on a fading horizon. Closer items feel larger, clearer, and lower on the line.</p>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="addBtn" type="button" title="Add a deadline">
+          <span aria-hidden="true">＋</span>
+          Add deadline
+        </button>
+        <button class="btn" id="exportBtn" type="button" title="Export deadlines to JSON">
+          <span aria-hidden="true">⤓</span>
+          Export
+        </button>
+        <button class="btn danger" id="clearBtn" type="button" title="Clear all deadlines">
+          <span aria-hidden="true">✕</span>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <section class="controls" aria-label="Horizon controls">
+      <div class="field">
+        <label for="search">Search</label>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <input class="input" id="search" type="search" placeholder="Title, course, tags…" autocomplete="off"/>
+      </div>
+
+      <div class="field">
+        <label for="tagFilter">Tag filter</label>
+        <select id="tagFilter" aria-label="Tag filter">
+          <option value="">All tags</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="range">Horizon range</label>
+        <select id="range" aria-label="Horizon range">
+          <option value="14">Next 14 days</option>
+          <option value="30" selected>Next 30 days</option>
+          <option value="60">Next 60 days</option>
+          <option value="120">Next 120 days</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Deadline horizon panel">
+      <div class="panelHead">
+        <div class="meta">
+          <span class="pill" id="countPill">0 deadlines</span>
+          <span class="pill" id="tagPill">0 tags</span>
+          <span class="pill" id="hintPill">Tip: hover / tap dots</span>
+        </div>
+        <div class="meta" id="filteredMeta" aria-live="polite"></div>
+      </div>
+
+      <div class="vizWrap">
+        <div class="viz" id="viz" aria-label="Horizon visualization">
+          <div class="tooltip" id="tooltip" role="status" aria-live="polite">
+            <p class="ttTitle" id="ttTitle"></p>
+            <p class="ttSub" id="ttSub"></p>
+            <div class="ttChips" id="ttChips"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="listArea"></div>
+      <div class="floor" aria-hidden="true"></div>
+    </section>
+  </div>
+
+  <!-- Modal -->
+  <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="modalTitle">Add deadline</h3>
+        <button class="iconBtn" id="closeModalBtn" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <form class="modalBody" id="deadlineForm">
+        <input type="hidden" id="editId" value="" />
+
+        <div class="formGrid">
+          <div class="field">
+            <label for="dTitle">Title</label>
+            <input class="input2" id="dTitle" required maxlength="90" placeholder="e.g., History essay draft" />
+          </div>
+
+          <div class="field">
+            <label for="dDue">Due date</label>
+            <input class="input2" id="dDue" type="date" required />
+            <div class="help">Time is optional but the visual is date-based by default.</div>
+          </div>
+        </div>
+
+        <div class="formGrid">
+          <div class="field">
+            <label for="dCourse">Course / context</label>
+            <input class="input2" id="dCourse" maxlength="70" placeholder="e.g., PSY101 • Week 6" />
+          </div>
+
+          <div class="field">
+            <label for="dTags">Tags</label>
+            <input class="input2" id="dTags" placeholder="comma-separated (e.g., essay, finals, reading)" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="dNotes">Notes (optional)</label>
+          <textarea class="textarea" id="dNotes" placeholder="What’s the next step? Any constraints?"></textarea>
+        </div>
+
+        <div class="modalFoot">
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" type="button" id="cancelBtn">Cancel</button>
+            <button class="btn primary" type="submit" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+ <script>
+
+  const LS_KEY = "deadline_horizon_v1";
+
+  const els = {
+    viz: document.getElementById("viz"),
+    tooltip: document.getElementById("tooltip"),
+    ttTitle: document.getElementById("ttTitle"),
+    ttSub: document.getElementById("ttSub"),
+    ttChips: document.getElementById("ttChips"),
+
+    listArea: document.getElementById("listArea"),
+
+    countPill: document.getElementById("countPill"),
+    tagPill: document.getElementById("tagPill"),
+    filteredMeta: document.getElementById("filteredMeta"),
+
+    search: document.getElementById("search"),
+    tagFilter: document.getElementById("tagFilter"),
+    range: document.getElementById("range"),
+
+    addBtn: document.getElementById("addBtn"),
+    exportBtn: document.getElementById("exportBtn"),
+    clearBtn: document.getElementById("clearBtn"),
+
+    modalBackdrop: document.getElementById("modalBackdrop"),
+    closeModalBtn: document.getElementById("closeModalBtn"),
+    cancelBtn: document.getElementById("cancelBtn"),
+
+    deadlineForm: document.getElementById("deadlineForm"),
+    editId: document.getElementById("editId"),
+    modalTitle: document.getElementById("modalTitle"),
+    saveBtn: document.getElementById("saveBtn"),
+
+    dTitle: document.getElementById("dTitle"),
+    dDue: document.getElementById("dDue"),
+    dCourse: document.getElementById("dCourse"),
+    dTags: document.getElementById("dTags"),
+    dNotes: document.getElementById("dNotes"),
+  };
+
+  const nowISO = () => new Date().toISOString();
+
+  const save = (items) => {
+    const data = JSON.stringify(items);
+    try { localStorage.setItem(LS_KEY, data); return; } catch {}
+    try { sessionStorage.setItem(LS_KEY, data); return; } catch {}
+  };
+
+  const load = () => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    try {
+      const raw = sessionStorage.getItem(LS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return [];
+  };
+
+  // ---------- In-page confirm ----------
+  const escapeHtml = (s) =>
+    String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+  const askConfirm = (message, { okText="Confirm", cancelText="Cancel", danger=false } = {}) =>
+    new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.style.position = "fixed";
+      wrap.style.inset = "0";
+      wrap.style.zIndex = "9999";
+      wrap.style.display = "grid";
+      wrap.style.placeItems = "center";
+      wrap.style.padding = "18px";
+      wrap.style.background = "rgba(20,18,16,.35)";
+      wrap.style.backdropFilter = "blur(8px)";
+
+      wrap.innerHTML = `
+        <div style="
+          width:min(520px,100%);
+          background:rgba(255,255,255,.92);
+          border:1px solid rgba(43,43,43,.14);
+          border-radius:20px;
+          box-shadow:0 12px 40px rgba(0,0,0,.12);
+          overflow:hidden;">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(43,43,43,.10);font-weight:650;">
+            Confirm
+          </div>
+          <div style="padding:14px 16px;line-height:1.45;">
+            ${escapeHtml(message)}
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;
+            padding:12px 16px;border-top:1px solid rgba(43,43,43,.10);">
+            <button class="btn" id="cnlBtn">${escapeHtml(cancelText)}</button>
+            <button class="btn ${danger ? "danger" : "primary"}" id="okBtn">${escapeHtml(okText)}</button>
+          </div>
+        </div>
+      `;
+
+      const close = (v) => { wrap.remove(); resolve(v); };
+
+      wrap.addEventListener("click", e => { if (e.target === wrap) close(false); });
+      wrap.querySelector("#cnlBtn").onclick = () => close(false);
+      wrap.querySelector("#okBtn").onclick = () => close(true);
+
+      document.body.appendChild(wrap);
+    });
+
+  // ---------- App state ----------
+  let items = load();
+  let state = { q:"", tag:"", rangeDays:30 };
+
+  const startOfToday = () => {
+    const d = new Date(); d.setHours(0,0,0,0); return d;
+  };
+  const daysBetween = (a,b) => Math.round((b-a)/(86400000));
+  const parseDate = (s) => {
+    const [y,m,d] = (s||"").split("-").map(Number);
+    if(!y||!m||!d) return null;
+    const dt = new Date(y,m-1,d); dt.setHours(0,0,0,0); return dt;
+  };
+
+  const normalizeTags = (raw) =>
+    raw ? [...new Set(raw.split(",").map(s=>s.trim().toLowerCase()).filter(Boolean))].slice(0,14) : [];
+
+  // ---------- CRUD ----------
+  const upsert = (payload) => {
+    const i = items.findIndex(x=>x.id===payload.id);
+    if(i>=0) items[i]=payload; else items.unshift(payload);
+    save(items); render();
+  };
+
+  const deleteItem = async (id) => {
+    const it = items.find(x=>x.id===id);
+    const ok = await askConfirm(`Delete "${it?.title || "this deadline"}"?`, {
+      okText:"Delete", danger:true
+    });
+    if(!ok) return;
+    items = items.filter(x=>x.id!==id);
+    save(items); render();
+  };
+
+  const clearAll = async () => {
+    if(!items.length) return;
+    const ok = await askConfirm(
+      "Clear all deadlines? This cannot be undone.",
+      { okText:"Yes, clear", danger:true }
+    );
+    if(!ok) return;
+    items=[]; save(items); render();
+  };
+
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(items,null,2)],{type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download="deadline-horizon.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  // ---------- Modal ----------
+  let lastFocus=null;
+  const openModal=()=>{ lastFocus=document.activeElement; els.modalBackdrop.classList.add("show"); setTimeout(()=>els.dTitle.focus(),0); };
+  const closeModal=()=>{ els.modalBackdrop.classList.remove("show"); lastFocus?.focus(); resetForm(); };
+
+  const resetForm=()=>{
+    els.editId.value="";
+    els.modalTitle.textContent="Add deadline";
+    els.saveBtn.textContent="Save";
+    els.dTitle.value=els.dDue.value=els.dCourse.value=els.dTags.value=els.dNotes.value="";
+  };
+
+  const openAddModal=()=>{ resetForm(); openModal(); };
+  const openEditModal=(id)=>{
+    const it=items.find(x=>x.id===id); if(!it) return;
+    els.editId.value=it.id;
+    els.modalTitle.textContent="Edit deadline";
+    els.saveBtn.textContent="Update";
+    els.dTitle.value=it.title||"";
+    els.dDue.value=it.due||"";
+    els.dCourse.value=it.course||"";
+    els.dTags.value=(it.tags||[]).join(", ");
+    els.dNotes.value=it.notes||"";
+    openModal();
+  };
+
+  // ---------- Render ----------
+
+  render();
+
+  // ---------- Events ----------
+  els.addBtn.onclick=openAddModal;
+  els.exportBtn.onclick=exportJson;
+  els.clearBtn.onclick=clearAll;
+  els.closeModalBtn.onclick=closeModal;
+  els.cancelBtn.onclick=closeModal;
+
+  els.deadlineForm.onsubmit=(e)=>{
+    e.preventDefault();
+    const title=els.dTitle.value.trim();
+    const due=els.dDue.value;
+    if(!title||!due) return;
+
+    const id=els.editId.value||crypto.randomUUID();
+    const existing=items.find(x=>x.id===id);
+
+    upsert({
+      id,
+      title,
+      due,
+      course:els.dCourse.value.trim(),
+      tags:normalizeTags(els.dTags.value),
+      notes:els.dNotes.value.trim(),
+      createdAt: existing?existing.createdAt:nowISO(),
+      updatedAt: nowISO()
+    });
+
+    closeModal();
+  };
+</script>
+</body>
+</html>

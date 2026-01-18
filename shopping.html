@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Weekly Shopping List</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --cream:#e6d8cc;
+      --stone:#c9beb6;
+      --text:#1f1f1f;
+      --muted:#6b625c;
+
+      --border: rgba(201,190,182,0.85);
+      --borderSoft: rgba(201,190,182,0.55);
+      --creamSoft: rgba(230,216,204,0.20);
+
+      --shadow: 0 10px 26px rgba(0,0,0,0.06);
+      --shadowSoft: 0 3px 10px rgba(0,0,0,0.05);
+
+      --rOuter: 18px;
+      --rInner: 16px;
+      --rPill: 999px;
+
+      --fsKicker: 12px;
+      --fsLabel: 11px;
+      --fsBody: 13px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      padding:26px;
+    }
+    .wrap{ max-width:1050px; margin:0 auto; }
+
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:14px;
+    }
+    .kicker{
+      font-size:var(--fsKicker);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+      padding-top:4px;
+    }
+    .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(201,190,182,0.85);
+      background:#fff;
+      color:var(--text);
+      border-radius:999px;
+      padding:9px 14px;
+      font-size:12px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .btn.primary{ background:var(--cream); }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap:14px;
+      align-items:start;
+    }
+    .card{
+      background:#fff;
+      border:1px solid rgba(201,190,182,0.85);
+      border-radius:18px;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.06);
+      padding:14px;
+      min-width:0;
+    }
+    .cardHead{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .cardTitle{
+      font-size:14px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0;
+    }
+    .meta{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.04em;
+      white-space:nowrap;
+    }
+
+    /* Inputs */
+    .label{
+      display:block;
+      font-size:var(--fsLabel);
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0 0 6px 0;
+    }
+    .input, .select{
+      width:100%;
+      border:1px solid rgba(201,190,182,0.85);
+      background:#fff;
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:var(--fsBody);
+      outline:none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      height:36px;
+    }
+    .input:focus, .select:focus{
+      box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
+      border-color: rgba(201,190,182,1);
+    }
+
+    .addRow{
+      display:grid;
+      grid-template-columns: 1.2fr 0.75fr 0.55fr auto;
+      gap:10px;
+      align-items:end;
+      margin-bottom:12px;
+    }
+    .iconBtn{
+      appearance:none;
+      border:1px solid rgba(201,190,182,0.85);
+      background:#fff;
+      border-radius:12px;
+      width:44px;
+      height:36px;
+      cursor:pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      font-size:18px;
+      line-height:1;
+    }
+    .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .iconBtn.primary{ background:var(--cream); }
+
+    /* List */
+    .listWrap{
+      border:1px solid rgba(201,190,182,0.55);
+      border-radius:16px;
+      padding:12px;
+      background: linear-gradient(180deg, rgba(230,216,204,0.18), rgba(255,255,255,0));
+    }
+    .items{
+      display:grid;
+      gap:10px;
+    }
+    .item{
+      display:grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap:10px;
+      align-items:center;
+      border:1px solid rgba(201,190,182,0.55);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .check{
+      width:18px; height:18px;
+      border-radius:6px;
+      border:1px solid rgba(201,190,182,0.95);
+      background:#fff;
+      cursor:pointer;
+      position:relative;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .check[data-on="true"]{
+      background: rgba(230,216,204,0.65);
+    }
+    .check[data-on="true"]::after{
+      content:"";
+      position:absolute;
+      inset:3px;
+      border-radius:4px;
+      background: var(--stone);
+      opacity:0.75;
+    }
+    .name{
+      font-size:13px;
+      line-height:1.25;
+      min-width:0;
+    }
+    .name.done{
+      color:#7a716a;
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+    .tag{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid rgba(201,190,182,0.55);
+      border-radius:999px;
+      padding:5px 8px;
+      background:#fff;
+      white-space:nowrap;
+      user-select:none;
+    }
+    .qty{
+      font-size:12px;
+      color:#5e564f;
+      white-space:nowrap;
+    }
+    .del{
+      appearance:none;
+      border:1px solid rgba(201,190,182,0.85);
+      background:#fff;
+      border-radius:12px;
+      width:40px;
+      height:34px;
+      cursor:pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      transition: transform 140ms ease, box-shadow 140ms ease;
+      user-select:none;
+    }
+    .del:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .del.danger{ background: rgba(230,216,204,0.30); }
+
+    /* Sidebar */
+    .box{
+      border:1px solid rgba(201,190,182,0.55);
+      border-radius:16px;
+      padding:12px;
+      background: linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0));
+      margin-bottom:12px;
+    }
+    .boxTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .boxLabel{
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .big{
+      font-size:26px;
+      font-weight:740;
+      letter-spacing:-0.02em;
+    }
+    .hint{
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.4;
+      margin:0;
+    }
+    .filters{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .chip{
+      appearance:none;
+      border:1px solid rgba(201,190,182,0.85);
+      background:#fff;
+      color:var(--text);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      cursor:pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      height:34px;
+    }
+    .chip:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .chip[data-active="true"]{
+      background: var(--cream);
+      box-shadow:0 10px 18px rgba(0,0,0,0.08);
+      transform:translateY(-1px);
+    }
+
+    @media (max-width: 1020px){
+      .grid{ grid-template-columns: 1fr; }
+      .addRow{ grid-template-columns: 1fr; }
+      .iconBtn{ width:100%; }
+      .item{ grid-template-columns: auto 1fr auto; }
+      .tag{ display:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div class="kicker">Weekly Shopping List</div>
+      <div class="btns">
+        <button id="prevWeek" class="btn" type="button">◀ PREV</button>
+        <button id="nextWeek" class="btn" type="button">NEXT ▶</button>
+        <button id="clearWeek" class="btn primary" type="button">CLEAR WEEK</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Left: List -->
+      <section class="card" aria-label="Shopping list">
+        <div class="cardHead">
+          <h2 class="cardTitle">List</h2>
+          <div id="weekMeta" class="meta"></div>
+        </div>
+
+        <div class="addRow" aria-label="Add item">
+          <div>
+            <label class="label" for="itemName">Item</label>
+            <input id="itemName" class="input" type="text" />
+          </div>
+
+          <div>
+            <label class="label" for="itemCategory">Category</label>
+            <select id="itemCategory" class="select">
+              <option value="Produce">Produce</option>
+              <option value="Protein">Protein</option>
+              <option value="Carbs">Carbs</option>
+              <option value="Dairy">Dairy</option>
+              <option value="Snacks">Snacks</option>
+              <option value="Frozen">Frozen</option>
+              <option value="Pantry">Pantry</option>
+              <option value="Drinks">Drinks</option>
+              <option value="Household">Household</option>
+              <option value="Other" selected>Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="label" for="itemQty">Qty</label>
+            <input id="itemQty" class="input" type="text"/>
+          </div>
+
+          <button id="addItem" class="iconBtn primary" type="button" title="Add">+</button>
+        </div>
+
+        <div class="listWrap">
+          <div id="items" class="items"></div>
+        </div>
+
+        <p class="hint" style="margin-top:10px;">Suggestion: Use the category filter to shop aisle-by-aisle.</p>
+      </section>
+
+      <!-- Right: Summary -->
+      <aside class="card" aria-label="Summary and filters">
+        <div class="cardHead">
+          <h2 class="cardTitle">Summary</h2>
+        </div>
+
+        <div class="box">
+          <div class="boxTop">
+            <div class="boxLabel">Items</div>
+            <div id="countAll" class="big">0</div>
+          </div>
+          <p id="countHint" class="hint">0 remaining · 0 done</p>
+        </div>
+
+        <div class="box">
+          <div class="boxTop">
+            <div class="boxLabel">View</div>
+            <div class="big" style="font-size:18px;">Filters</div>
+          </div>
+
+          <div class="filters" aria-label="Filter chips">
+            <button class="chip" type="button" data-filter="all" data-active="true">All</button>
+            <button class="chip" type="button" data-filter="todo" data-active="false">To buy</button>
+            <button class="chip" type="button" data-filter="done" data-active="false">Bought</button>
+          </div>
+
+          <div style="height:10px;"></div>
+
+          <label class="label" for="categoryFilter">Category filter</label>
+          <select id="categoryFilter" class="select">
+            <option value="__all__" selected>All categories</option>
+            <option value="Produce">Produce</option>
+            <option value="Protein">Protein</option>
+            <option value="Carbs">Carbs</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Snacks">Snacks</option>
+            <option value="Frozen">Frozen</option>
+            <option value="Pantry">Pantry</option>
+            <option value="Drinks">Drinks</option>
+            <option value="Household">Household</option>
+            <option value="Other">Other</option>
+          </select>
+
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      // ---- Date helpers (Monday-start) ----
+      const MS_DAY = 86400000;
+
+      function startOfWeek(date){
+        const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const js = d.getDay(); // Sun=0..Sat=6
+        const mondayOffset = (js === 0) ? -6 : (1 - js);
+        d.setDate(d.getDate() + mondayOffset);
+        d.setHours(0,0,0,0);
+        return d;
+      }
+      const pad2 = (n) => String(n).padStart(2,"0");
+      const isoKey = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      const fmtShort = (d) => `${d.getDate()} ${d.toLocaleString(undefined,{month:"short"})}`;
+      const fmtRange = (ws) => {
+        const end = new Date(ws.getTime() + 6*MS_DAY);
+        return `${fmtShort(ws)} — ${fmtShort(end)} · ${ws.getFullYear()}`;
+      };
+
+      // ---- Storage ----
+      const STORAGE_PREFIX = "weekly_shopping_v1_";
+      const weekKey = (ws) => STORAGE_PREFIX + isoKey(ws);
+
+      function loadWeek(ws){
+        const raw = localStorage.getItem(weekKey(ws));
+        if(!raw) return { items: [], ui: { view:"all", cat:"__all__" } };
+        try{
+          const parsed = JSON.parse(raw) || {};
+          return {
+            items: Array.isArray(parsed.items) ? parsed.items : [],
+            ui: {
+              view: parsed?.ui?.view || "all",
+              cat: parsed?.ui?.cat || "__all__"
+            }
+          };
+        }catch{
+          localStorage.removeItem(weekKey(ws));
+          return { items: [], ui: { view:"all", cat:"__all__" } };
+        }
+      }
+
+      function saveWeek(ws, data){
+        localStorage.setItem(weekKey(ws), JSON.stringify(data));
+      }
+
+      // ---- Elements ----
+      const weekMeta = document.getElementById("weekMeta");
+      const itemsEl = document.getElementById("items");
+
+      const itemName = document.getElementById("itemName");
+      const itemCategory = document.getElementById("itemCategory");
+      const itemQty = document.getElementById("itemQty");
+      const addItemBtn = document.getElementById("addItem");
+
+      const prevWeek = document.getElementById("prevWeek");
+      const nextWeek = document.getElementById("nextWeek");
+      const clearWeek = document.getElementById("clearWeek");
+
+      const countAll = document.getElementById("countAll");
+      const countHint = document.getElementById("countHint");
+
+      const categoryFilter = document.getElementById("categoryFilter");
+      const chips = Array.from(document.querySelectorAll(".chip"));
+
+      // ---- State ----
+      let weekStart = startOfWeek(new Date());
+      let state = loadWeek(weekStart);
+
+      function setChipActive(view){
+        chips.forEach(c => c.dataset.active = String(c.dataset.filter === view));
+      }
+
+      function filteredItems(){
+        let list = [...state.items];
+
+        // view filter
+        if(state.ui.view === "todo") list = list.filter(x => !x.done);
+        if(state.ui.view === "done") list = list.filter(x => x.done);
+
+        // category filter
+        if(state.ui.cat !== "__all__") list = list.filter(x => x.category === state.ui.cat);
+
+        // sort: todo first, then by category, then createdAt
+        list.sort((a,b) => {
+          if(a.done !== b.done) return a.done ? 1 : -1;
+          if(a.category !== b.category) return a.category.localeCompare(b.category);
+          return (a.createdAt||0) - (b.createdAt||0);
+        });
+
+        return list;
+      }
+
+      function render(){
+        weekMeta.textContent = fmtRange(weekStart);
+
+        // Apply UI state to controls
+        setChipActive(state.ui.view);
+        categoryFilter.value = state.ui.cat;
+
+        // Summary counts
+        const total = state.items.length;
+        const done = state.items.filter(x => x.done).length;
+        const remaining = total - done;
+        countAll.textContent = String(total);
+        countHint.textContent = `${remaining} remaining · ${done} done`;
+
+        // List
+        itemsEl.innerHTML = "";
+        const list = filteredItems();
+
+        if(list.length === 0){
+          const empty = document.createElement("p");
+          empty.className = "hint";
+          empty.textContent = "No items to show. Add something above.";
+          itemsEl.appendChild(empty);
+        } else {
+          list.forEach(item => itemsEl.appendChild(renderItem(item)));
+        }
+
+        saveWeek(weekStart, state);
+      }
+
+      function renderItem(item){
+        const row = document.createElement("div");
+        row.className = "item";
+
+        const check = document.createElement("div");
+        check.className = "check";
+        check.dataset.on = String(!!item.done);
+        check.title = "Mark bought";
+
+        check.addEventListener("click", () => {
+          item.done = !item.done;
+          check.dataset.on = String(!!item.done);
+          render();
+        });
+
+        const name = document.createElement("div");
+        name.className = "name" + (item.done ? " done" : "");
+        name.textContent = item.name;
+
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.gap = "10px";
+        right.style.alignItems = "center";
+        right.style.justifyContent = "flex-end";
+
+        const tag = document.createElement("div");
+        tag.className = "tag";
+        tag.textContent = item.category;
+
+        const qty = document.createElement("div");
+        qty.className = "qty";
+        qty.textContent = (item.qty || "").trim() ? `Qty: ${item.qty}` : "";
+
+        const del = document.createElement("button");
+        del.className = "del danger";
+        del.type = "button";
+        del.textContent = "✕";
+        del.title = "Remove";
+
+        del.addEventListener("click", () => {
+          state.items = state.items.filter(x => x.id !== item.id);
+          render();
+        });
+
+        right.appendChild(tag);
+        if(qty.textContent) right.appendChild(qty);
+        right.appendChild(del);
+
+        row.appendChild(check);
+        row.appendChild(name);
+        row.appendChild(right);
+
+        return row;
+      }
+
+      function addItem(){
+        const name = (itemName.value || "").trim();
+        if(!name) return;
+
+        const category = itemCategory.value || "Other";
+        const qty = (itemQty.value || "").trim();
+
+        const id = "i_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+        state.items.push({
+          id,
+          name,
+          category,
+          qty,
+          done:false,
+          createdAt: Date.now()
+        });
+
+        itemName.value = "";
+        itemQty.value = "";
+        itemName.focus();
+
+        render();
+      }
+
+      // ---- Events ----
+      addItemBtn.addEventListener("click", addItem);
+      itemName.addEventListener("keydown", (e) => {
+        if(e.key === "Enter"){
+          e.preventDefault();
+          addItem();
+        }
+      });
+      itemQty.addEventListener("keydown", (e) => {
+        if(e.key === "Enter"){
+          e.preventDefault();
+          addItem();
+        }
+      });
+
+      chips.forEach(chip => {
+        chip.addEventListener("click", () => {
+          state.ui.view = chip.dataset.filter;
+          render();
+        });
+      });
+
+      categoryFilter.addEventListener("change", () => {
+        state.ui.cat = categoryFilter.value;
+        render();
+      });
+
+      prevWeek.addEventListener("click", () => {
+        weekStart = new Date(weekStart.getTime() - 7*MS_DAY);
+        state = loadWeek(weekStart);
+        render();
+      });
+
+      nextWeek.addEventListener("click", () => {
+        weekStart = new Date(weekStart.getTime() + 7*MS_DAY);
+        state = loadWeek(weekStart);
+        render();
+      });
+
+      clearWeek.addEventListener("click", () => {
+        localStorage.removeItem(weekKey(weekStart));
+        state = loadWeek(weekStart);
+        render();
+      });
+
+      // ---- Init ----
+      render();
+    });
+  </script>
+</body>
+</html>

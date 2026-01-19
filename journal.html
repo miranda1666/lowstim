@@ -1,0 +1,1132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Journal</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --cream:#e6d8cc;
+      --stone:#c9beb6;
+      --text:#1f1f1f;
+      --muted:#6b625c;
+
+      --border: rgba(201,190,182,0.85);
+      --borderSoft: rgba(201,190,182,0.55);
+      --shadow: 0 18px 40px rgba(0,0,0,0.08);
+      --shadowSoft: 0 6px 18px rgba(0,0,0,0.06);
+
+      --rOuter: 18px;
+      --rInner: 16px;
+      --rPill: 999px;
+
+      --a5w: 420px;   /* A5-ish */
+      --a5h: 595px;   /* A5-ish */
+      --paper: #fffdfb;
+      --line: rgba(201,190,182,0.35);
+      --margin: rgba(230,216,204,0.65);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      padding:22px;
+    }
+
+    .wrap{ max-width: 1100px; margin: 0 auto; }
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .kicker{
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+      padding-top:4px;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      border-radius:999px;
+      padding:9px 14px;
+      font-size:12px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 14px 22px rgba(0,0,0,0.10); }
+    .btn.primary{ background:var(--cream); }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:14px;
+      align-items:start;
+    }
+
+    /* Notebook shell */
+    .notebookShell{
+      border:1px solid var(--border);
+      border-radius: var(--rOuter);
+      box-shadow: var(--shadow);
+      background:
+        linear-gradient(180deg, rgba(230,216,204,0.18), rgba(255,255,255,0)),
+        #fff;
+      padding:14px;
+      min-width:0;
+    }
+
+    .shellHead{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+
+    .dateRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    label.small{
+      font-size:11px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    .input, .select{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:13px;
+      outline:none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      height:36px;
+    }
+    .input:focus, .select:focus{
+      border-color: rgba(201,190,182,1);
+      box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
+    }
+
+    .pill{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--borderSoft);
+      border-radius:999px;
+      padding:6px 10px;
+      background:#fff;
+      line-height:1;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    /* A5 notebook stage */
+    .stage{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px 0 6px;
+    }
+
+    .book{
+      position:relative;
+      width: min(100%, var(--a5w));
+      height: var(--a5h);
+      border-radius: 14px;
+      background: var(--paper);
+      border:1px solid var(--borderSoft);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+      overflow:hidden;
+    }
+
+    /* Cute cover edge */
+    .book::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(18px 18px at 10% 8%, rgba(230,216,204,0.35), transparent 60%),
+        radial-gradient(18px 18px at 20% 14%, rgba(201,190,182,0.25), transparent 60%);
+      pointer-events:none;
+      opacity:0.55;
+    }
+
+    /* Spine / margin */
+    .spine{
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:0;
+      width:44px;
+      background: linear-gradient(180deg, rgba(230,216,204,0.65), rgba(230,216,204,0.25));
+      border-right: 1px solid rgba(201,190,182,0.45);
+    }
+    .spine::after{
+      content:"";
+      position:absolute;
+      left:12px;
+      top:18px;
+      bottom:18px;
+      width:2px;
+      background: rgba(201,190,182,0.55);
+      border-radius: 2px;
+      opacity:0.9;
+    }
+
+    /* Lined paper */
+    .paper{
+      position:absolute;
+      left:44px; right:0; top:0; bottom:0;
+      padding: 20px 20px 18px 18px;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 24px,
+          var(--line) 25px
+        );
+    }
+
+    .paperHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .paperTitle{
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .bookmarkTab{
+      width:18px;
+      height:34px;
+      border-radius: 10px 0 0 10px;
+      border:1px solid rgba(201,190,182,0.55);
+      background: rgba(230,216,204,0.45);
+      position:absolute;
+      right:-1px;
+      top:72px;
+      box-shadow: var(--shadowSoft);
+      display:none;
+    }
+    .bookmarkTab.on{ display:block; }
+
+    /* Editor */
+    .editorWrap{
+      position:relative;
+      height: calc(100% - 40px);
+      border-radius: 12px;
+    }
+    .editor{
+      width:100%;
+      height:100%;
+      padding: 6px 6px 6px 2px;
+      outline:none;
+      background: transparent;
+      overflow:auto;
+      font-size: 15px;
+      line-height: 25px; /* matches the lines */
+      color: var(--text);
+      border-radius: 12px;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    /* Stickers layer */
+    .stickerLayer{
+      position:absolute;
+      inset:0;
+      pointer-events:none; /* stickers themselves are draggable via JS on their own handles */
+    }
+    .sticker{
+      position:absolute;
+      pointer-events:auto;
+      cursor:grab;
+      user-select:none;
+      transform: translate(-50%, -50%);
+      font-size: 28px;
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,0.10));
+    }
+    .sticker:active{ cursor:grabbing; }
+    .sticker .x{
+      position:absolute;
+      top:-10px;
+      right:-10px;
+      width:22px; height:22px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      cursor:pointer;
+      box-shadow: 0 8px 14px rgba(0,0,0,0.10);
+    }
+
+    /* Toolbar */
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:12px;
+      padding:12px;
+      border:1px solid var(--borderSoft);
+      border-radius: var(--rInner);
+      background: linear-gradient(180deg, rgba(230,216,204,0.16), rgba(255,255,255,0));
+    }
+
+    .toolGroup{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .iconBtn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:12px;
+      width:40px;
+      height:36px;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+    }
+    .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 14px 22px rgba(0,0,0,0.10); }
+    .iconBtn.primary{ background: var(--cream); }
+    .iconBtn.on{
+      background: rgba(230,216,204,0.55);
+      transform: translateY(-1px);
+      box-shadow:0 14px 22px rgba(0,0,0,0.10);
+    }
+    .color{
+      width:44px;
+      height:36px;
+      padding:0;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+    }
+
+    .hint{
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.4;
+      margin:0;
+    }
+
+    /* Sidebar */
+    .side{
+      border:1px solid var(--border);
+      border-radius: var(--rOuter);
+      box-shadow: var(--shadow);
+      background:
+        linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0)),
+        #fff;
+      padding:14px;
+    }
+    .sideHead{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .sideTitle{
+      font-size:14px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0;
+    }
+
+    .list{
+      display:grid;
+      gap:10px;
+    }
+    .rowCard{
+      border:1px solid var(--borderSoft);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+    .rowCard:hover{ transform:translateY(-1px); box-shadow:0 14px 22px rgba(0,0,0,0.10); }
+    .rowCard small{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+    }
+    .rowCard .left{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+    .rowCard .title{
+      font-size:13px;
+      color:var(--text);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 250px;
+    }
+    .badge{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--borderSoft);
+      border-radius:999px;
+      padding:5px 8px;
+      background:#fff;
+      line-height:1;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .side{ order: 2; }
+      .notebookShell{ order: 1; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div class="kicker">My Journal</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+        <button id="prevPage" class="btn" type="button">◀ PREV PAGE</button>
+        <button id="nextPage" class="btn" type="button">NEXT PAGE ▶</button>
+        <button id="addPage" class="btn primary" type="button">ADD PAGE</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Notebook -->
+      <section class="notebookShell" aria-label="Notebook">
+        <div class="shellHead">
+          <div class="dateRow">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label class="small" for="datePick">Date</label>
+              <input id="datePick" class="input" type="date" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label class="small" for="pagePick">Page</label>
+              <select id="pagePick" class="select"></select>
+            </div>
+            <div class="pill" id="savePill">Saved</div>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+            <button id="toggleBookmark" class="btn" type="button">BOOKMARK</button>
+            <button id="deletePage" class="btn" type="button">DELETE PAGE</button>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="book" aria-label="A5 notebook">
+            <div class="spine"></div>
+
+            <div class="paper">
+              <div class="paperHeader">
+                <div class="paperTitle" id="paperTitle">Entry</div>
+                <div class="pill" id="pageInfo">Page 1</div>
+              </div>
+
+              <div id="bookmarkTab" class="bookmarkTab" title="Bookmarked page"></div>
+
+              <div class="editorWrap">
+                <div id="editor" class="editor" contenteditable="true" spellcheck="true"></div>
+                <div id="stickerLayer" class="stickerLayer"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar" aria-label="Editor tools">
+          <div class="toolGroup">
+            <button class="iconBtn" type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+            <button class="iconBtn" type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+            <button class="iconBtn" type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+          </div>
+
+          <div class="toolGroup">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label class="small" for="fontSel">Font</label>
+              <select id="fontSel" class="select" style="height:36px;">
+                <option value="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">System</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="'Times New Roman', Times, serif">Times</option>
+                <option value="Garamond, serif">Garamond</option>
+                <option value="'Courier New', Courier, monospace">Courier</option>
+                <option value="Verdana, Geneva, sans-serif">Verdana</option>
+                <option value="'Trebuchet MS', Trebuchet, sans-serif">Trebuchet</option>
+              </select>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label class="small" for="customFont">Custom font</label>
+              <input id="customFont" class="input" type="text" placeholder="e.g. 'Comic Sans MS'" />
+            </div>
+
+            <button id="applyCustomFont" class="btn primary" type="button" style="height:36px; padding:0 14px;">APPLY</button>
+          </div>
+
+          <div class="toolGroup">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label class="small" for="highlight">Highlight</label>
+              <input id="highlight" class="color" type="color" value="#fff59d" />
+            </div>
+            <button id="doHighlight" class="btn primary" type="button" style="height:36px; padding:0 14px;">HIGHLIGHT</button>
+            <button id="clearFormat" class="btn" type="button" style="height:36px; padding:0 14px;">CLEAR</button>
+          </div>
+
+          <div class="toolGroup">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label class="small" for="imgPick">Add image</label>
+              <input id="imgPick" class="input" type="file" accept="image/*" style="height:36px; padding-top:6px;" />
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label class="small">Stickers</label>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="iconBtn primary" type="button" data-sticker="✨" title="Sticker">✨</button>
+                <button class="iconBtn primary" type="button" data-sticker="🌿" title="Sticker">🌿</button>
+                <button class="iconBtn primary" type="button" data-sticker="⭐" title="Sticker">⭐</button>
+                <button class="iconBtn primary" type="button" data-sticker="🧸" title="Sticker">🧸</button>
+                <button class="iconBtn primary" type="button" data-sticker="🫶" title="Sticker">🫶</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="hint" style="margin-top:10px;">
+        </p>
+      </section>
+
+      <!-- Sidebar: Bookmarks + Pages overview -->
+      <aside class="side" aria-label="Pages and bookmarks">
+        <div class="sideHead">
+          <h2 class="sideTitle">Pages</h2>
+          <div class="pill" id="dayCountPill">0 pages</div>
+        </div>
+
+        <div class="list" id="pageList"></div>
+
+        <div style="height:12px;"></div>
+
+        <div class="sideHead">
+          <h2 class="sideTitle">Bookmarks</h2>
+          <div class="pill" id="bmCountPill">0</div>
+        </div>
+        <div class="list" id="bmList"></div>
+
+        <div style="height:10px;"></div>
+        <p class="hint">
+          Custom fonts only work if that font is installed on your device
+        </p>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      // -------------------------
+      // Model + storage
+      // -------------------------
+      // Structure:
+      // journal = {
+      //   "YYYY-MM-DD": {
+      //      pages: [
+      //        { html, font, customFont, bookmark:bool, title, images:[dataUrl...], stickers:[{id, emoji, x, y, size}] }
+      //      ]
+      //   }
+      // }
+      const STORE_KEY = "cute_notebook_journal_v1";
+
+      const pad2 = (n) => String(n).padStart(2,"0");
+      const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      function loadStore(){
+        const raw = localStorage.getItem(STORE_KEY);
+        if(!raw) return {};
+        try{ return JSON.parse(raw) || {}; }
+        catch{ localStorage.removeItem(STORE_KEY); return {}; }
+      }
+      function saveStore(store){
+        localStorage.setItem(STORE_KEY, JSON.stringify(store));
+      }
+
+      function defaultPage(){
+        return {
+          html: "",
+          font: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
+          customFont: "",
+          bookmark: false,
+          title: "Entry",
+          stickers: [], // {id, emoji, xPct, yPct, size}
+        };
+      }
+
+      const store = loadStore();
+
+      // -------------------------
+      // Elements
+      // -------------------------
+      const datePick = document.getElementById("datePick");
+      const pagePick = document.getElementById("pagePick");
+      const editor = document.getElementById("editor");
+      const stickerLayer = document.getElementById("stickerLayer");
+
+      const paperTitle = document.getElementById("paperTitle");
+      const pageInfo = document.getElementById("pageInfo");
+      const savePill = document.getElementById("savePill");
+      const bookmarkTab = document.getElementById("bookmarkTab");
+
+      const prevPageBtn = document.getElementById("prevPage");
+      const nextPageBtn = document.getElementById("nextPage");
+      const addPageBtn = document.getElementById("addPage");
+      const deletePageBtn = document.getElementById("deletePage");
+      const toggleBookmarkBtn = document.getElementById("toggleBookmark");
+
+      const fontSel = document.getElementById("fontSel");
+      const customFont = document.getElementById("customFont");
+      const applyCustomFont = document.getElementById("applyCustomFont");
+
+      const highlight = document.getElementById("highlight");
+      const doHighlight = document.getElementById("doHighlight");
+      const clearFormat = document.getElementById("clearFormat");
+
+      const imgPick = document.getElementById("imgPick");
+
+      const pageList = document.getElementById("pageList");
+      const bmList = document.getElementById("bmList");
+      const dayCountPill = document.getElementById("dayCountPill");
+      const bmCountPill = document.getElementById("bmCountPill");
+
+      // -------------------------
+      // State
+      // -------------------------
+      let currentDate = isoDay(today);
+      let currentPageIndex = 0;
+      let savingTimer = null;
+
+      function ensureDay(dateStr){
+        if(!store[dateStr]) store[dateStr] = { pages: [ defaultPage() ] };
+        if(!Array.isArray(store[dateStr].pages) || store[dateStr].pages.length === 0){
+          store[dateStr].pages = [ defaultPage() ];
+        }
+        return store[dateStr];
+      }
+
+      function getDay(){ return ensureDay(currentDate); }
+      function getPage(){ return getDay().pages[currentPageIndex]; }
+
+      // -------------------------
+      // Save helpers
+      // -------------------------
+      function markSaving(isSaving){
+        savePill.textContent = isSaving ? "Saving…" : "Saved";
+        savePill.style.background = isSaving ? "rgba(230,216,204,0.55)" : "#fff";
+      }
+
+      function scheduleSave(){
+        markSaving(true);
+        if(savingTimer) clearTimeout(savingTimer);
+        savingTimer = setTimeout(() => {
+          saveStore(store);
+          markSaving(false);
+          savingTimer = null;
+          renderSidebar();
+        }, 300);
+      }
+
+      // -------------------------
+      // Page navigation & rendering
+      // -------------------------
+      function setDate(dateStr){
+        currentDate = dateStr;
+        ensureDay(currentDate);
+        currentPageIndex = 0;
+        renderAll();
+      }
+
+      function setPage(index){
+        const pages = getDay().pages;
+        currentPageIndex = Math.max(0, Math.min(index, pages.length - 1));
+        renderAll();
+      }
+
+      function pageLabel(i){ return `Page ${i+1}`; }
+
+      function populatePageSelect(){
+        const pages = getDay().pages;
+        pagePick.innerHTML = "";
+        pages.forEach((_, i) => {
+          const opt = document.createElement("option");
+          opt.value = String(i);
+          opt.textContent = pageLabel(i);
+          if(i === currentPageIndex) opt.selected = true;
+          pagePick.appendChild(opt);
+        });
+        dayCountPill.textContent = `${pages.length} page${pages.length===1?"":"s"}`;
+      }
+
+      function applyFonts(page){
+        const f = (page.customFont && page.customFont.trim()) ? page.customFont.trim() : page.font;
+        editor.style.fontFamily = f;
+        fontSel.value = page.font || fontSel.value;
+        customFont.value = page.customFont || "";
+      }
+
+      function renderBookmarkUI(page){
+        bookmarkTab.className = "bookmarkTab" + (page.bookmark ? " on" : "");
+        toggleBookmarkBtn.classList.toggle("primary", page.bookmark);
+        toggleBookmarkBtn.textContent = page.bookmark ? "BOOKMARKED" : "BOOKMARK";
+      }
+
+      // Stickers
+      function clearStickers(){
+        stickerLayer.innerHTML = "";
+      }
+      function renderStickers(page){
+        clearStickers();
+        (page.stickers || []).forEach(s => {
+          const el = document.createElement("div");
+          el.className = "sticker";
+          el.dataset.id = s.id;
+          el.textContent = s.emoji;
+          el.style.left = (s.xPct ?? 50) + "%";
+          el.style.top = (s.yPct ?? 30) + "%";
+          el.style.fontSize = (s.size ?? 28) + "px";
+
+          const x = document.createElement("div");
+          x.className = "x";
+          x.textContent = "✕";
+          x.title = "Remove sticker";
+          x.addEventListener("click", (e) => {
+            e.stopPropagation();
+            page.stickers = (page.stickers || []).filter(t => t.id !== s.id);
+            scheduleSave();
+            renderStickers(page);
+          });
+          el.appendChild(x);
+
+          makeDraggable(el, page);
+          stickerLayer.appendChild(el);
+        });
+      }
+
+      function makeDraggable(el, page){
+        let dragging = false;
+        let startX=0, startY=0;
+        let startLeft=0, startTop=0;
+
+        function pctFromPx(px, total){
+          return (px / total) * 100;
+        }
+
+        el.addEventListener("mousedown", (e) => {
+          // don't start drag when clicking X
+          if(e.target && e.target.classList && e.target.classList.contains("x")) return;
+          dragging = true;
+          el.style.cursor = "grabbing";
+          startX = e.clientX;
+          startY = e.clientY;
+
+          const rect = stickerLayer.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          startLeft = elRect.left - rect.left + elRect.width/2;
+          startTop  = elRect.top  - rect.top  + elRect.height/2;
+
+          e.preventDefault();
+        });
+
+        window.addEventListener("mousemove", (e) => {
+          if(!dragging) return;
+          const rect = stickerLayer.getBoundingClientRect();
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          let x = startLeft + dx;
+          let y = startTop + dy;
+
+          // clamp within layer
+          x = Math.max(10, Math.min(x, rect.width - 10));
+          y = Math.max(10, Math.min(y, rect.height - 10));
+
+          el.style.left = pctFromPx(x, rect.width) + "%";
+          el.style.top  = pctFromPx(y, rect.height) + "%";
+        });
+
+        window.addEventListener("mouseup", () => {
+          if(!dragging) return;
+          dragging = false;
+          el.style.cursor = "grab";
+
+          // persist
+          const id = el.dataset.id;
+          const s = (page.stickers || []).find(t => t.id === id);
+          if(s){
+            s.xPct = parseFloat(el.style.left);
+            s.yPct = parseFloat(el.style.top);
+            scheduleSave();
+          }
+        });
+      }
+
+      function renderEditor(){
+        const page = getPage();
+        paperTitle.textContent = page.title || "Entry";
+        pageInfo.textContent = pageLabel(currentPageIndex);
+
+        // content
+        editor.innerHTML = page.html || "";
+
+        // fonts
+        applyFonts(page);
+
+        // bookmark
+        renderBookmarkUI(page);
+
+        // stickers
+        renderStickers(page);
+      }
+
+      function renderSidebar(){
+        const day = getDay();
+        const pages = day.pages;
+
+        // Pages list (with tiny preview)
+        pageList.innerHTML = "";
+        pages.forEach((p, i) => {
+          const card = document.createElement("div");
+          card.className = "rowCard";
+          card.addEventListener("click", () => setPage(i));
+
+          const left = document.createElement("div");
+          left.className = "left";
+
+          const title = document.createElement("div");
+          title.className = "title";
+          const previewText = (stripHtml(p.html || "") || "").trim();
+          title.textContent = previewText ? previewText.slice(0, 42) : "(empty page)";
+
+          const small = document.createElement("small");
+          small.textContent = pageLabel(i);
+
+          left.appendChild(small);
+          left.appendChild(title);
+
+          const right = document.createElement("div");
+          right.style.display = "flex";
+          right.style.gap = "8px";
+          right.style.alignItems = "center";
+
+          if(p.bookmark){
+            const b = document.createElement("div");
+            b.className = "badge";
+            b.textContent = "★";
+            right.appendChild(b);
+          }
+          if(i === currentPageIndex){
+            const cur = document.createElement("div");
+            cur.className = "badge";
+            cur.textContent = "Current";
+            right.appendChild(cur);
+          }
+
+          card.appendChild(left);
+          card.appendChild(right);
+          pageList.appendChild(card);
+        });
+
+        // Bookmarks list
+        const bookmarks = pages
+          .map((p, i) => ({ p, i }))
+          .filter(x => x.p.bookmark);
+
+        bmCountPill.textContent = String(bookmarks.length);
+        bmList.innerHTML = "";
+        if(bookmarks.length === 0){
+          const empty = document.createElement("p");
+          empty.className = "hint";
+          empty.textContent = "No bookmarks for this date yet.";
+          bmList.appendChild(empty);
+        } else {
+          bookmarks.forEach(({p,i}) => {
+            const card = document.createElement("div");
+            card.className = "rowCard";
+            card.addEventListener("click", () => setPage(i));
+
+            const left = document.createElement("div");
+            left.className = "left";
+
+            const title = document.createElement("div");
+            title.className = "title";
+            const previewText = (stripHtml(p.html || "") || "").trim();
+            title.textContent = previewText ? previewText.slice(0, 42) : "(empty bookmark)";
+
+            const small = document.createElement("small");
+            small.textContent = pageLabel(i);
+
+            left.appendChild(small);
+            left.appendChild(title);
+
+            const badge = document.createElement("div");
+            badge.className = "badge";
+            badge.textContent = "★";
+
+            card.appendChild(left);
+            card.appendChild(badge);
+
+            bmList.appendChild(card);
+          });
+        }
+      }
+
+      function renderAll(){
+        populatePageSelect();
+        renderEditor();
+        renderSidebar();
+        scheduleSave(); // ensure day exists is persisted
+      }
+
+      function stripHtml(html){
+        const tmp = document.createElement("div");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+      }
+
+      // -------------------------
+      // Editor actions
+      // -------------------------
+      // Use execCommand for simplicity & standalone 
+      function exec(cmd, value=null){
+        editor.focus();
+        try{
+          document.execCommand(cmd, false, value);
+        }catch{}
+      }
+
+      // Format buttons
+      document.querySelectorAll("[data-cmd]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          exec(btn.dataset.cmd);
+          scheduleSaveFromEditor();
+        });
+      });
+
+      // Highlight selected text
+      doHighlight.addEventListener("click", () => {
+        // hiliteColor works in many browsers; fallback to backColor
+        const c = highlight.value || "#fff59d";
+        editor.focus();
+        const ok = document.execCommand("hiliteColor", false, c);
+        if(!ok) document.execCommand("backColor", false, c);
+        scheduleSaveFromEditor();
+      });
+
+      clearFormat.addEventListener("click", () => {
+        exec("removeFormat");
+        scheduleSaveFromEditor();
+      });
+
+      // Font selection: apply to the page (entire editor)
+      fontSel.addEventListener("change", () => {
+        const page = getPage();
+        page.font = fontSel.value;
+        // keep custom font if present? if user chooses dropdown, clear custom
+        page.customFont = "";
+        applyFonts(page);
+        scheduleSave();
+      });
+
+      applyCustomFont.addEventListener("click", () => {
+        const page = getPage();
+        const val = (customFont.value || "").trim();
+        if(!val) return;
+        page.customFont = val;
+        applyFonts(page);
+        scheduleSave();
+      });
+
+      // Save editor on input
+      function scheduleSaveFromEditor(){
+        const page = getPage();
+        page.html = editor.innerHTML;
+        scheduleSave();
+      }
+
+      editor.addEventListener("input", scheduleSaveFromEditor);
+
+      // Image insert
+      imgPick.addEventListener("change", async () => {
+        const file = imgPick.files && imgPick.files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataURL(file);
+
+        // insert at cursor
+        editor.focus();
+        // keep image size cute & bounded
+        const imgHtml = `<img src="${dataUrl}" style="max-width:100%; border-radius:12px; border:1px solid rgba(201,190,182,0.55); box-shadow: 0 8px 18px rgba(0,0,0,0.08); margin: 6px 0;" />`;
+        exec("insertHTML", imgHtml);
+
+        imgPick.value = "";
+        scheduleSaveFromEditor();
+      });
+
+      function fileToDataURL(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
+      // Stickers
+      document.querySelectorAll("[data-sticker]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const page = getPage();
+          const emoji = btn.dataset.sticker;
+
+          const id = "s_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+          const s = { id, emoji, xPct: 70, yPct: 25, size: 28 };
+          page.stickers = page.stickers || [];
+          page.stickers.push(s);
+
+          scheduleSave();
+          renderStickers(page);
+        });
+      });
+
+      // Bookmark toggle
+      toggleBookmarkBtn.addEventListener("click", () => {
+        const page = getPage();
+        page.bookmark = !page.bookmark;
+        renderBookmarkUI(page);
+        scheduleSave();
+      });
+
+      // -------------------------
+      // Page controls
+      // -------------------------
+      addPageBtn.addEventListener("click", () => {
+        const day = getDay();
+        day.pages.push(defaultPage());
+        currentPageIndex = day.pages.length - 1;
+        renderAll();
+      });
+
+      deletePageBtn.addEventListener("click", () => {
+        const day = getDay();
+        if(day.pages.length <= 1){
+          // just clear instead
+          day.pages[0] = defaultPage();
+          currentPageIndex = 0;
+          renderAll();
+          return;
+        }
+        day.pages.splice(currentPageIndex, 1);
+        currentPageIndex = Math.max(0, currentPageIndex - 1);
+        renderAll();
+      });
+
+      prevPageBtn.addEventListener("click", () => {
+        setPage(currentPageIndex - 1);
+      });
+      nextPageBtn.addEventListener("click", () => {
+        setPage(currentPageIndex + 1);
+      });
+
+      pagePick.addEventListener("change", () => {
+        setPage(Number(pagePick.value || 0));
+      });
+
+      // Date picker
+      datePick.addEventListener("change", () => {
+        const v = datePick.value;
+        if(v) setDate(v);
+      });
+
+      // -------------------------
+      // Cursor-safe insertHTML helper
+      // -------------------------
+      // execCommand insertHTML may be blocked in some environments; this fallback inserts at end.
+      const originalExec = exec;
+      function safeInsertHTML(html){
+        editor.focus();
+        try{
+          const ok = document.execCommand("insertHTML", false, html);
+          if(!ok) throw new Error("insertHTML not supported");
+        }catch{
+          editor.insertAdjacentHTML("beforeend", html);
+        }
+      }
+      // override for insertHTML usage
+      function exec(cmd, value=null){
+        editor.focus();
+        try{
+          if(cmd === "insertHTML") return safeInsertHTML(value);
+          document.execCommand(cmd, false, value);
+        }catch{}
+      }
+
+      // -------------------------
+      // Init
+      // -------------------------
+      datePick.value = currentDate;
+      ensureDay(currentDate);
+      renderAll();
+      markSaving(false);
+    });
+  </script>
+</body>
+</html>

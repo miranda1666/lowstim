@@ -7,10 +7,10 @@
   <style>
     :root{
       --bg:#ffffff; --card:#ffffffcc; --stroke:#e9e4dd; --ink:#2b2a28;
-      --muted:#6a665f; --soft:#f3efe9; --shadow:0 10px 30px rgba(30,20,10,.06);
+      --muted:#; --soft:#f3efe9; --shadow:0 10px 30px rgba(30,20,10,.06);
       --r:18px;
 
-      --board-tint:#ffffff;
+      --board-tint:#;
       --board-tint-a:0.30;
       --board-image:none;
     }
@@ -137,7 +137,7 @@
       width:14px; height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
-      background: var(--board-tint);
+      background: var(--);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.30);
     }
     .bgPanel{
@@ -371,8 +371,8 @@
     const tint = bgState.tint || "#efe7e1";
     const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
 
-    document.documentElement.style.setProperty("--board-tint", tint);
-    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--", tint);
+    document.documentElement.style.setProperty("---a", String(strength));
     document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
 
     boardTintEl.style.background = hexToRgba(tint, strength);

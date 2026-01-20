@@ -58,11 +58,39 @@
       background: #fff;
       font-family: monospace;
       text-align: left;
+      min-width: 260px;
     }
+
+
+    .theme-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
     .theme-panel h3 {
-      margin: 0 0 10px;
+      margin: 0;
       font-size: 18px;
     }
+
+
+    #toggleTheme {
+      font-family: monospace;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    #toggleTheme:hover {
+      background: var(--hover-bg);
+      color: var(--hover-text);
+    }
+
     .theme-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -102,6 +130,11 @@
     .theme-actions button:hover {
       background: var(--hover-bg);
       color: var(--hover-text);
+    }
+
+
+    .theme-body[hidden] {
+      display: none !important;
     }
 
     .calculator {
@@ -164,7 +197,7 @@
       color: var(--accent-text);
     }
 
-    /* Special buttons */
+
     #clean, #rad, #deg {
       background: var(--special-bg);
       color: var(--special-text);
@@ -193,12 +226,12 @@
       transform: scale(0.8);
     }
 
-    /* ---- Reliable positioning (NO nth-child) ---- */
+
     .pos-l1 { grid-column: 1; }
     .pos-l2 { grid-column: 2; }
     .pos-r5 { grid-column: 5; }
 
-    /* Bottom row: move 0 one space right => put it in column 3 */
+
     .pos-zero { grid-column: 3; }
     .pos-eq   { grid-column: 4; }
     .pos-plus { grid-column: 5; }
@@ -207,42 +240,50 @@
 
 <body>
   <div class="theme-panel" aria-label="Theme settings">
-    <h3>Theme</h3>
-    <div class="theme-grid">
-      <div class="theme-row">
-        <label for="tCalcBg">Calculator</label>
-        <input id="tCalcBg" type="color" data-cssvar="--calc-bg" />
-      </div>
 
-      <div class="theme-row">
-        <label for="tBorder">Border</label>
-        <input id="tBorder" type="color" data-cssvar="--border" />
-      </div>
-
-      <div class="theme-row">
-        <label for="tBtnBg">Buttons</label>
-        <input id="tBtnBg" type="color" data-cssvar="--btn-bg" />
-      </div>
-
-      <div class="theme-row">
-        <label for="tBtnText">Button text</label>
-        <input id="tBtnText" type="color" data-cssvar="--btn-text" />
-      </div>
-
-      <div class="theme-row">
-        <label for="tAccent">Accent</label>
-        <input id="tAccent" type="color" data-cssvar="--accent-bg" />
-      </div>
-
-      <div class="theme-row">
-        <label for="tScreenText">Screen text</label>
-        <input id="tScreenText" type="color" data-cssvar="--screen-text" />
-      </div>
+    <div class="theme-header">
+      <h3>Theme</h3>
+      <button id="toggleTheme" type="button" aria-expanded="true">Hide theme</button>
     </div>
 
-    <div class="theme-actions">
-      <button id="resetTheme" type="button">Reset</button>
-      <button id="randomTheme" type="button">Random</button>
+
+    <div class="theme-body" id="themeBody">
+      <div class="theme-grid">
+        <div class="theme-row">
+          <label for="tCalcBg">Calculator</label>
+          <input id="tCalcBg" type="color" data-cssvar="--calc-bg" />
+        </div>
+
+        <div class="theme-row">
+          <label for="tBorder">Border</label>
+          <input id="tBorder" type="color" data-cssvar="--border" />
+        </div>
+
+        <div class="theme-row">
+          <label for="tBtnBg">Buttons</label>
+          <input id="tBtnBg" type="color" data-cssvar="--btn-bg" />
+        </div>
+
+        <div class="theme-row">
+          <label for="tBtnText">Button text</label>
+          <input id="tBtnText" type="color" data-cssvar="--btn-text" />
+        </div>
+
+        <div class="theme-row">
+          <label for="tAccent">Accent</label>
+          <input id="tAccent" type="color" data-cssvar="--accent-bg" />
+        </div>
+
+        <div class="theme-row">
+          <label for="tScreenText">Screen text</label>
+          <input id="tScreenText" type="color" data-cssvar="--screen-text" />
+        </div>
+      </div>
+
+      <div class="theme-actions">
+        <button id="resetTheme" type="button">Reset</button>
+        <button id="randomTheme" type="button">Random</button>
+      </div>
     </div>
   </div>
 
@@ -357,11 +398,8 @@
   });
 
   function syntaxError() {
-    try {
-      eval(display.value);
-    } catch (e) {
-      display.value = "Syntax Error";
-    }
+    try { eval(display.value); }
+    catch (e) { display.value = "Syntax Error"; }
   }
 
   function equals() {
@@ -483,6 +521,26 @@
     applyTheme(next);
     saveTheme(next);
     syncPickers();
+  });
+
+
+  const toggleBtn = document.getElementById("toggleTheme");
+  const themeBody = document.getElementById("themeBody");
+  const THEME_VIS_KEY = "calcThemePanelHidden";
+
+  function setThemePanelHidden(hidden) {
+    themeBody.hidden = hidden;
+    toggleBtn.textContent = hidden ? "Show theme" : "Hide theme";
+    toggleBtn.setAttribute("aria-expanded", String(!hidden));
+    localStorage.setItem(THEME_VIS_KEY, hidden ? "1" : "0");
+  }
+
+  // initial state from storage
+  const savedHidden = localStorage.getItem(THEME_VIS_KEY) === "1";
+  setThemePanelHidden(savedHidden);
+
+  toggleBtn.addEventListener("click", () => {
+    setThemePanelHidden(!themeBody.hidden);
   });
 </script>
 </body>

@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Savings Garden</title>
+  <style>
+    :root{
+      --bg:#ffffff; --card:#ffffffcc; --stroke:#e9e4dd; --ink:#2b2a28;
+      --muted:#6a665f; --soft:#f3efe9; --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      --board-tint:#ffffff;
+      --board-tint-a:0.30;
+      --board-image:none;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink); background:
+        var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{max-width:760px; margin:0 auto;}
+    h1{margin:0; font-size:18px}
+    .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
+
+
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.02);
+      z-index:0;
+      pointer-events:none;
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+      pointer-events:none;
+      z-index:0;
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+    }
+    .boardContent{
+      position:relative;
+      z-index:2;
+    }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+      backdrop-filter: blur(8px);
+    }
+
+    .title{display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin-bottom:10px}
+    .title h2{margin:0; font-size:14px; font-weight:650; letter-spacing:.2px}
+    .hint{color:var(--muted); font-size:12px}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    button, input, select{
+      font:inherit; border:1px solid var(--stroke); background:#fff; color:var(--ink);
+      border-radius:12px; padding:10px 12px; outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button{cursor:pointer}
+    button.soft{background:var(--soft)}
+    button:active{transform:translateY(1px)}
+    .divider{height:1px; background:var(--stroke); margin:12px 0}
+    .meter{
+      border:1px solid var(--stroke); border-radius:14px; padding:10px; background:#fff;
+    }
+    .track{
+      height:12px; border-radius:999px; background:var(--soft);
+      border:1px solid var(--stroke); overflow:hidden;
+    }
+    .fill{height:100%; width:0%; background:rgba(40,30,20,.12)}
+    .tiny{font-size:12px; color:var(--muted)}
+    .garden{
+      display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+      padding:10px; border:1px solid var(--stroke); border-radius:14px; background:#fff;
+      min-height:56px; font-size:18px;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke); background:#fff; border-radius:999px;
+      padding:8px 12px; font-size:13px;
+    }
+    .kpi{
+      display:flex; gap:12px; flex-wrap:wrap;
+    }
+    .kpi .box{
+      flex:1; min-width:160px; background:var(--soft);
+      border:1px solid var(--stroke); border-radius:14px; padding:10px;
+    }
+    .kpi .num{font-weight:750; font-size:16px}
+    .kpi .lab{font-size:12px; color:var(--muted)}
+    .right{margin-left:auto; display:flex; gap:8px; align-items:center}
+    .danger{border-color:#efc2c2}
+
+    
+    .bgWrap{ position:relative; }
+    .bgBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    }
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.30);
+    }
+    .bgPanel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 270px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+    }
+    .bgPanel.open{ display:block; }
+    .bgTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .bgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .bgRow label{ font-size:12px; color:var(--muted); }
+    .bgRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .bgRow input[type="range"]{ width: 150px; }
+    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgMiniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.95);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    }
+    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+    .bgHint{ font-size:11px; color:var(--muted); line-height:1.35; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Savings Garden</h1>
+    <div class="sub">Add savings and watch your garden grow 🌱</div>
+
+    
+    <div class="widgetBoard" id="widgetBoard" aria-label="Savings Garden widget board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+          <div class="title">
+
+            <div class="bgWrap" id="bgWrap">
+              <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
+                <div class="bgTitle">Background</div>
+
+                <div class="bgRow">
+                  <label for="bgColor">Tint</label>
+                  <input id="bgColor" type="color" value="#efe7e1" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgStrength">Strength</label>
+                  <input id="bgStrength" type="range" min="0" max="70" value="30" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow" style="align-items:flex-start;">
+                  <label for="bgImage">Image</label>
+                  <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+                </div>
+
+                <div class="bgRow">
+                  <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="hint" style="margin:-4px 0 10px;">Choose your milestone (e.g., every 10, 20, 30…)</div>
+
+          <div class="row">
+            <input type="number" id="savAdd" step="0.01" placeholder="Add savings">
+            <button id="savBtn">Add</button>
+            <button class="soft" id="savUndo" type="button">Undo</button>
+
+            <span class="pill">
+              Milestone
+              <select id="milestone">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50" selected>50</option>
+                <option value="75">75</option>
+                <option value="100">100</option>
+              </select>
+              <span class="tiny">per plant</span>
+            </span>
+
+            <span class="pill">
+              Currency
+              <select id="currency">
+                <option value="AUTO">Auto (from locale)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="NGN">NGN (₦)</option>
+                <option value="CAD">CAD ($)</option>
+                <option value="AUD">AUD ($)</option>
+                <option value="JPY">JPY (¥)</option>
+                <option value="ZAR">ZAR (R)</option>
+              </select>
+            </span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="num" id="totalTxt">—</div>
+              <div class="lab">Total saved</div>
+            </div>
+            <div class="box">
+              <div class="num" id="plantsTxt">—</div>
+              <div class="lab">Plants grown</div>
+            </div>
+            <div class="box">
+              <div class="num" id="nextTxt">—</div>
+              <div class="lab">Next plant at</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="meter">
+            <div class="row" style="justify-content:space-between">
+              <span class="tiny">Progress to next plant</span>
+              <span class="tiny"><b id="progTxt">—</b></span>
+            </div>
+            <div class="track"><div class="fill" id="fill"></div></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="tiny" style="margin-bottom:8px">Garden</div>
+          <div class="garden" id="garden"></div>
+
+          <div class="divider"></div>
+          <div class="tiny">Note: “Milestone” means how much you need to save to grow a plant.</div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+(function(){
+  const BG_KEY = "savings_garden_bg_v1";
+
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function loadBg(){
+    try{
+      const raw = localStorage.getItem(BG_KEY);
+      if(raw) return JSON.parse(raw) || null;
+    }catch{}
+    return null;
+  }
+  function saveBg(bg){
+    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+  }
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  const boardTintEl = document.getElementById("boardTint");
+  const bgBtn = document.getElementById("bgBtn");
+  const bgPanel = document.getElementById("bgPanel");
+  const bgColor = document.getElementById("bgColor");
+  const bgStrength = document.getElementById("bgStrength");
+  const bgImage = document.getElementById("bgImage");
+  const bgRemove = document.getElementById("bgRemove");
+  const bgDot = document.getElementById("bgDot");
+
+  if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+
+  const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
+
+  function applyBg(){
+    const tint = bgState.tint || "#efe7e1";
+    const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
+
+    boardTintEl.style.background = hexToRgba(tint, strength);
+
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+    }
+  }
+
+  bgColor.value = bgState.tint;
+  bgStrength.value = String(bgState.strength);
+  applyBg();
+
+  bgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    bgPanel.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(!bgPanel.classList.contains("open")) return;
+    const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+    if(!inside) bgPanel.classList.remove("open");
+  });
+
+  bgColor.addEventListener("input", () => {
+    bgState.tint = bgColor.value;
+    applyBg();
+    saveBg(bgState);
+  });
+
+  bgStrength.addEventListener("input", () => {
+    bgState.strength = Number(bgStrength.value);
+    applyBg();
+    saveBg(bgState);
+  });
+
+  bgImage.addEventListener("change", async () => {
+    const file = bgImage.files && bgImage.files[0];
+    if(!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    bgState.imageDataUrl = dataUrl;
+    applyBg();
+    saveBg(bgState);
+  });
+
+  bgRemove.addEventListener("click", () => {
+    bgState.imageDataUrl = null;
+    bgImage.value = "";
+    applyBg();
+    saveBg(bgState);
+  });
+})();
+
+
+(function(){
+  const KEY = "savings_garden_v1";
+  const CUR_KEY = "savings_garden_currency_pref_v1";
+  const MS_KEY  = "savings_garden_milestone_v1";
+  const $ = (id)=>document.getElementById(id);
+
+
+  const REGION_TO_CURRENCY = {
+    GB:"GBP", US:"USD", CA:"CAD", AU:"AUD", NZ:"NZD",
+    IE:"EUR", FR:"EUR", DE:"EUR", ES:"EUR", IT:"EUR", NL:"EUR", PT:"EUR",
+    BE:"EUR", AT:"EUR", FI:"EUR", GR:"EUR", CY:"EUR", MT:"EUR",
+    SK:"EUR", SI:"EUR", EE:"EUR", LV:"EUR", LT:"EUR", LU:"EUR",
+    JP:"JPY", CN:"CNY", IN:"INR", NG:"NGN", ZA:"ZAR", KE:"KES",
+    GH:"GHS", BR:"BRL", MX:"MXN", CH:"CHF", SE:"SEK", NO:"NOK",
+    DK:"DKK", PL:"PLN", CZ:"CZK", HU:"HUF", RO:"RON", TR:"TRY"
+  };
+
+  function getRegionFromLocale(locale){
+    try{
+      if (typeof Intl !== "undefined" && Intl.Locale){
+        const loc = new Intl.Locale(locale);
+        if (loc.region) return loc.region.toUpperCase();
+      }
+    }catch(e){}
+    const norm = String(locale || "").replace("_","-");
+    const parts = norm.split("-");
+    return (parts[1] || "").toUpperCase();
+  }
+
+  function autoCurrency(){
+    const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || "";
+    const region = getRegionFromLocale(locale);
+    return REGION_TO_CURRENCY[region] || "";
+  }
+
+  function money(n){
+    const v = Number(n||0);
+    if(!isFinite(v)) return "0";
+    const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || undefined;
+    const pref = localStorage.getItem(CUR_KEY) || "AUTO";
+    const cur = (pref === "AUTO") ? autoCurrency() : pref;
+
+    try{
+      if(cur){
+        return new Intl.NumberFormat(locale, { style:"currency", currency: cur }).format(v);
+      }
+      return new Intl.NumberFormat(locale, { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v);
+    }catch(e){
+      return v.toFixed(2);
+    }
+  }
+
+  const PLANTS = ["🌱","🌿","🍃","🌸","🌼","🌷","🌳","🪴"];
+
+  function defaultState(){
+    return { total: 0, history: [] };
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      return raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState();
+    }catch(e){ return defaultState(); }
+  }
+
+  let state = load();
+
+  function save(){
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function getMilestone(){
+    const v = Number(localStorage.getItem(MS_KEY) || $("milestone").value || 50);
+    return (isFinite(v) && v>0) ? v : 50;
+  }
+
+  function setMilestone(v){
+    localStorage.setItem(MS_KEY, String(v));
+  }
+
+  function render(){
+    const total = Number(state.total || 0);
+    const step = getMilestone();
+    const plants = Math.floor(total / step);
+
+    const nextTarget = (plants + 1) * step;
+    const intoThis = total - (plants * step);
+    const ratio = Math.max(0, Math.min(1, intoThis / step));
+
+    $("totalTxt").textContent = money(total);
+    $("plantsTxt").textContent = String(plants);
+    $("nextTxt").textContent = money(nextTarget);
+
+    $("progTxt").textContent = `${money(intoThis)} / ${money(step)}`;
+    $("fill").style.width = Math.max(2, Math.round(ratio * 100)) + "%";
+
+    const garden = $("garden");
+    garden.innerHTML = "";
+    if(plants <= 0){
+      garden.innerHTML = `<span class="tiny">Add savings to grow your first 🌱</span>`;
+      return;
+    }
+    const shown = Math.min(32, plants);
+    for(let i=0;i<shown;i++){
+      const s=document.createElement("span");
+      s.textContent = PLANTS[i % PLANTS.length];
+      garden.appendChild(s);
+    }
+    if(plants > shown){
+      const more=document.createElement("span");
+      more.className="tiny";
+      more.textContent = `+${plants - shown} more`;
+      garden.appendChild(more);
+    }
+  }
+
+  function init(){
+    const msSaved = localStorage.getItem(MS_KEY);
+    if(msSaved) $("milestone").value = msSaved;
+
+    $("milestone").addEventListener("change", ()=>{
+      setMilestone($("milestone").value);
+      render();
+    });
+
+    const curSaved = localStorage.getItem(CUR_KEY) || "AUTO";
+    $("currency").value = curSaved;
+    $("currency").addEventListener("change", ()=>{
+      localStorage.setItem(CUR_KEY, $("currency").value);
+      render();
+    });
+
+    $("savBtn").addEventListener("click", ()=>{
+      const v = Number($("savAdd").value);
+      if(!isFinite(v) || v <= 0) return;
+      state.total = Number(state.total||0) + v;
+      state.history.unshift(v);
+      save();
+      $("savAdd").value = "";
+      render();
+    });
+
+    $("savUndo").addEventListener("click", ()=>{
+      const last = state.history.shift();
+      if(!last) return;
+      state.total = Math.max(0, Number(state.total||0) - last);
+      save();
+      render();
+    });
+
+    render();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

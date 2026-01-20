@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dosis:wght@500&family=MuseoModerno:wght@300;400&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --board-tint:#efe7e1;
+      --board-tint-a:0.30;
+      --board-image:none;
+    }
+
+    body {
+      margin: 0 auto;
+      text-align: center;
+      font-size: 23px;
+      /* keep your page background untouched */
+      background:#fff;
+    }
+
+    .widgetBoard{
+      position:relative;
+      display:inline-block;
+      border-radius: 10px;
+      overflow:hidden;
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat:no-repeat;
+      transform: scale(1.02);
+      pointer-events:none;
+      z-index:0;
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 700px at 20% 0%, rgba(255,255,255,0.45), transparent 60%),
+        radial-gradient(900px 700px at 80% 20%, rgba(255,255,255,0.32), transparent 60%),
+        rgba(255,255,255,0.30);
+      pointer-events:none;
+      z-index:0;
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+    }
+    .boardContent{
+      position:relative;
+      z-index:2;
+    }
+
+
+    .bgWrap{ position:absolute; top:10px; right:10px; z-index:60; }
+    .bgBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid #d8ccc2;
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.10);
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(216,204,194,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.30);
+    }
+    .bgPanel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 270px;
+      border-radius: 16px;
+      border: 1px solid #d8ccc2;
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 18px 40px rgba(30,20,10,.14);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px;
+      display:none;
+    }
+    .bgPanel.open{ display:block; }
+    .bgTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(0,0,0,0.55);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      text-align:left;
+    }
+    .bgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .bgRow label{ font-size:12px; color: rgba(0,0,0,0.55); }
+    .bgRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid #d8ccc2;
+      background: transparent;
+      cursor:pointer;
+    }
+    .bgRow input[type="range"]{ width: 150px; }
+    .bgFile{ width:100%; font-size:12px; }
+    .bgMiniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid #d8ccc2;
+      background: rgba(255,255,255,0.95);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(0,0,0,0.65);
+      box-shadow: 0 2px 8px rgba(30,20,10,.08);
+      cursor:pointer;
+    }
+    .bgDiv{ height:1px; background: rgba(216,204,194,0.9); margin: 8px 0; }
+    .bgHint{ font-size:11px; color: rgba(0,0,0,0.5); line-height:1.35; margin-top:8px; text-align:left; }
+
+
+    .main { max-width: 10%; }
+
+    .button > .over {
+      text-decoration:overline;
+      display: inline-block;
+      position:relative;
+      top: 3px;
+      left: -4px;
+    }
+
+    .calculator {
+      display: inline-block;
+      background: white;
+      margin: 1% 0;
+      color: black;
+      border: 3px solid #d8ccc2;
+      border-radius: 5px;
+      box-shadow: 2px 2px 1px 0px #9f877e;
+      max-width: 240px;
+      position:relative; 
+    }
+
+    .calculator .button {
+      font-size: x-large;
+      width: 2em;
+      min-height: 2em;
+      margin: 0.8%;
+      border-radius: 15%;
+      border: 0.08em solid #9f877e;
+      font-family: monospace;
+      background: white;
+      box-shadow: 0.03em  0.03em 0.01em 0px #9f877e;
+    }
+
+    .calculator .accent{ background: #d8ccc2; }
+
+    .calculator .space {
+      font-size: x-large;
+      width: 2.4em;
+      min-height: 2.4em;
+      margin: 0.5%;
+      border-radius: 15%;
+      border: 0.08em solid #ffffff;
+      background: white;
+    }
+
+    .calculator button:hover,
+    #backspace:hover {
+      background: #d8ccc2;
+      color:#000000;
+      transform: scale(0.9);
+      border-radius: 20%;
+    }
+
+    .calculator #clear:hover , #rad:hover  ,#deg:hover{
+      background: rgb(0, 0, 0)!important;
+      color:#9f877e;
+      transform: scale(0.9);
+      border-radius: 20%;
+    }
+
+    .calculator button:focus,
+    #clear:focus,
+    #backspace:focus { outline: none; }
+
+    .button:active,
+    .button-active {
+      background: rgb(0, 0, 0);
+      color:#ffffff;
+      transform: scale(0.8);
+    }
+
+    #screen{
+      border: 3px solid #d8ccc2;
+      border-radius: 5px;
+      width: 80%;
+      height: 50px;
+      margin : 5%;
+      text-align: right;
+      overflow: auto;
+      overflow-wrap: break-word;
+      font-size: 30px;
+      font-family: monospace;
+      background-color: #ffffff;
+      color: #9f877e;
+    }
+
+    #clean, #rad, #deg {
+      background: rgb(159,135,126);
+      color:#ffffff;
+    }
+
+    .rows{ margin: 5%; }
+
+    .calculator__row1,
+    .calculator__row2,
+    .calculator__row3,
+    .calculator__row4,
+    .calculator__row5 {
+      display: flex;
+      margin: 0 auto;
+      justify-content: space-between;
+      align-items: center;
+      font-family: monospace;
+    }
+
+    .calculator__row5 { margin-bottom: 3%; }
+
+    .footer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <link href="https://fonts.googleapis.com/css?family=Libre+Barcode+128+Text" rel="stylesheet">
+
+
+  <div class="widgetBoard" id="widgetBoard" aria-label="Calculator widget board">
+    <div class="boardTint" id="boardTint"></div>
+    <div class="boardContent">
+      <div id="main">
+        <div class="calculator">
+
+
+          <div class="bgWrap" id="bgWrap">
+            <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+            </button>
+
+            <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
+              <div class="bgTitle">Background</div>
+
+              <div class="bgRow">
+                <label for="bgColor">Tint</label>
+                <input id="bgColor" type="color" value="#efe7e1" />
+              </div>
+
+              <div class="bgRow">
+                <label for="bgStrength">Strength</label>
+                <input id="bgStrength" type="range" min="0" max="70" value="30" />
+              </div>
+
+              <div class="bgDiv"></div>
+
+              <div class="bgRow" style="align-items:flex-start;">
+                <label for="bgImage">Image</label>
+                <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+              </div>
+
+              <div class="bgRow">
+                <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+              </div>
+
+            </div>
+          </div>
+
+          <input type="text" id="screen" />
+
+          <div class="rows">
+            <div class="calculator__row1">
+              <button class="button accent">(</button>
+              <button class="button accent">)</button>
+              <div class="space"></div>
+              <div class="space"></div>
+              <button class="button" id="clean">AC</button>
+            </div>
+
+            <div class="calculator__row2">
+              <button class="button accent">x^</button>
+              <button class="button">7</button>
+              <button class="button">8</button>
+              <button class="button">9</button>
+              <button class="button accent">*</button>
+            </div>
+
+            <div class="calculator__row3">
+              <button class="button accent">%</button>
+              <button class="button">4</button>
+              <button class="button">5</button>
+              <button class="button">6</button>
+              <button class="button accent">/</button>
+            </div>
+
+            <div class="calculator__row4">
+              <button class="button accent">&radic;<span class="over"></span></button>
+              <button class="button">1</button>
+              <button class="button">2</button>
+              <button class="button">3</button>
+              <button class="button accent">-</button>
+            </div>
+
+            <div class="calculator__row5">
+              <div class="space"></div>
+              <button class="button accent">.</button>
+              <button class="button">0</button>
+              <button class="button accent">=</button>
+              <button class="button accent">+</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    (function(){
+      const BG_KEY = "calculator_bg_v1";
+
+      function hexToRgba(hex, a){
+        const h = String(hex || "").replace("#","").trim();
+        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+        const num = parseInt(full || "efe7e1", 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${a})`;
+      }
+
+      function loadBg(){
+        try{
+          const raw = localStorage.getItem(BG_KEY);
+          if(raw) return JSON.parse(raw) || null;
+        }catch{}
+        return null;
+      }
+      function saveBg(bg){
+        try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+      }
+      function fileToDataUrl(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
+      const boardTintEl = document.getElementById("boardTint");
+      const bgBtn = document.getElementById("bgBtn");
+      const bgPanel = document.getElementById("bgPanel");
+      const bgColor = document.getElementById("bgColor");
+      const bgStrength = document.getElementById("bgStrength");
+      const bgImage = document.getElementById("bgImage");
+      const bgRemove = document.getElementById("bgRemove");
+      const bgDot = document.getElementById("bgDot");
+
+      if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+
+      const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
+
+      function applyBg(){
+        const tint = bgState.tint || "#efe7e1";
+        const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
+
+        document.documentElement.style.setProperty("--board-tint", tint);
+        document.documentElement.style.setProperty("--board-tint-a", String(strength));
+        document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
+
+        boardTintEl.style.background = hexToRgba(tint, strength);
+
+        if(bgDot){
+          bgDot.style.background = tint;
+          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+        }
+      }
+
+      bgColor.value = bgState.tint;
+      bgStrength.value = String(bgState.strength);
+      applyBg();
+
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if(!bgPanel.classList.contains("open")) return;
+        const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+        if(!inside) bgPanel.classList.remove("open");
+      });
+
+      bgColor.addEventListener("input", () => {
+        bgState.tint = bgColor.value;
+        applyBg();
+        saveBg(bgState);
+      });
+
+      bgStrength.addEventListener("input", () => {
+        bgState.strength = Number(bgStrength.value);
+        applyBg();
+        saveBg(bgState);
+      });
+
+      bgImage.addEventListener("change", async () => {
+        const file = bgImage.files && bgImage.files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataUrl(file);
+        bgState.imageDataUrl = dataUrl;
+        applyBg();
+        saveBg(bgState);
+      });
+
+      bgRemove.addEventListener("click", () => {
+        bgState.imageDataUrl = null;
+        bgImage.value = "";
+        applyBg();
+        saveBg(bgState);
+      });
+    })();
+
+
+    var display = document.getElementById("screen");
+    var buttons = document.getElementsByClassName("button");
+
+    Array.prototype.forEach.call(buttons, function(button) {
+      button.addEventListener("click", function() {
+        if (button.textContent != "=" &&
+          button.textContent != "AC" &&
+          button.textContent != "*" &&
+          button.textContent != "/" &&
+          button.textContent != "√" &&
+          button.textContent != "+" &&
+          button.textContent != "%" &&
+          button.textContent != "=" &&
+          button.textContent != "-" &&
+          button.textContent != "sin" &&
+          button.textContent != "cos" &&
+          button.textContent != "tan" &&
+          button.textContent != "log" &&
+          button.textContent != "ln" &&
+          button.textContent != "x^" &&
+          button.textContent != "x!" &&
+          button.textContent != "pi" &&
+          button.textContent != "Rad"
+          && button.textContent != "Deg") {
+          display.value += button.textContent;
+        } else if (button.textContent === "=") {
+          equals();
+        } else if (button.textContent === "AC") {
+          clear();
+        } else if (button.textContent === "*") {
+          multiply();
+        } else if (button.textContent === "/") {
+          divide();
+        } else if (button.textContent === "+") {
+          plus();
+        } else if (button.textContent === "-") {
+          Minus();
+        } else if (button.textContent === "%") {
+          percent();
+        } else if (button.textContent === "pi") {
+          pi();
+        } else if (button.textContent === "√") {
+          squareRoot();
+        } else if (button.textContent === "sin") {
+          sin();
+        } else if (button.textContent === "cos") {
+          cos();
+        } else if (button.textContent === "tan") {
+          tan();
+        } else if (button.textContent === "log") {
+          log();
+        } else if (button.textContent === "ln") {
+          ln();
+        } else if (button.textContent === "x^") {
+          exponent();
+        } else if (button.textContent === "x!") {
+          factorial();
+        } else if (button.textContent === "Rad") {
+          radians();
+        } else if (button.textContent === "Deg") {
+          degrees();
+        }
+      });
+    });
+
+    function syntaxError() {
+      if (eval(display.value) == SyntaxError || eval(display.value) == ReferenceError || eval(display.value) == TypeError) {
+        display.value == "Syntax Error";
+      }
+    }
+
+    function equals() {
+      if ((display.value).indexOf("^") > -1) {
+        var base = (display.value).slice(0, (display.value).indexOf("^"));
+        var exponent = (display.value).slice((display.value).indexOf("^") + 1);
+        display.value = eval("Math.pow(" + base + "," + exponent + ")");
+      } else {
+        display.value = eval(display.value)
+        syntaxError()
+      }
+    }
+
+    function clear() { display.value = ""; }
+    function multiply() { display.value += "*"; }
+    function divide() { display.value +=  "/"; }
+    function plus() { display.value +=  "+"; }
+    function Minus() { display.value +=  "-"; }
+
+    function factorial() {
+      var number = 1;
+      if (display.value === 0) {
+        display.value = "1";
+      } else if (display.value < 0) {
+        display.value = "undefined";
+      } else {
+        var number = 1;
+        for (var i = display.value; i > 0; i--) {
+          number *=  i;
+        }
+        display.value = number;
+      }
+    }
+
+    function pi() { display.value = (display.value * Math.PI); }
+    function square() { display.value = eval(display.value * display.value); }
+    function squareRoot() { display.value = Math.sqrt(display.value); }
+    function percent() { display.value = display.value / 100; }
+    function sin() { display.value = Math.sin(display.value); }
+    function cos() { display.value = Math.cos(display.value); }
+    function tan() { display.value = Math.tan(display.value); }
+    function log() { display.value = Math.log10(display.value); }
+    function ln() { display.value = Math.log(display.value); }
+    function exponent() { display.value += "^"; }
+    function radians() { display.value = display.value * (Math.PI / 180); }
+    function degrees() { display.value = display.value * (180 / Math.PI); }
+  </script>
+</body>
+</html>

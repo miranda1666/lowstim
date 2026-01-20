@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Dosis:wght@500&family=MuseoModerno:wght@300;400&display=swap" rel="stylesheet">
 
   <style>
-
     :root {
       --calc-bg: #ffffff;
       --calc-text: #000000;
@@ -31,7 +30,7 @@
       --screen-bg: #ffffff;
       --screen-text: #9f877e;
 
-      --danger-hover-bg: #000000; /* for AC/Rad/Deg hover */
+      --danger-hover-bg: #000000;
       --danger-hover-text: #9f877e;
     }
 
@@ -41,8 +40,6 @@
       font-size: 23px;
     }
 
-    .main { max-width: 10%; }
-
     .button > .over {
       text-decoration: overline;
       display: inline-block;
@@ -51,7 +48,7 @@
       left: -4px;
     }
 
-
+    /* Theme panel */
     .theme-panel {
       display: inline-block;
       margin: 16px auto 8px;
@@ -116,59 +113,7 @@
       border-radius: 5px;
       box-shadow: 2px 2px 1px 0px var(--shadow);
       max-width: 240px;
-    }
-
-.calculator .button {
-  font-size: x-large;
-  width: 100%;
-  min-height: 2.2em;
-  margin: 0;
-  border-radius: 15%;
-  border: 0.08em solid var(--btn-border);
-  font-family: monospace;
-  background: var(--btn-bg);
-  color: var(--btn-text);
-  box-shadow: 0.03em 0.03em 0.01em 0px var(--shadow);
-}
-
-
-    .calculator .accent {
-      background: var(--accent-bg);
-      color: var(--accent-text);
-    }
-
-    .calculator .space {
-  width: 2em;         
-  min-height: 2em;
-  visibility: hidden; 
-}
-
-    .calculator button:hover,
-    #backspace:hover {
-      background: var(--hover-bg);
-      color: var(--hover-text);
-      transform: scale(0.9);
-      border-radius: 20%;
-    }
-
-    .calculator #clear:hover, #rad:hover, #deg:hover {
-      background: var(--danger-hover-bg) !important;
-      color: var(--danger-hover-text);
-      transform: scale(0.9);
-      border-radius: 20%;
-    }
-
-    .calculator button:focus,
-    #clear:focus,
-    #backspace:focus {
-      outline: none;
-    }
-
-    .button:active,
-    .button-active {
-      background: rgb(0, 0, 0);
-      color: #ffffff;
-      transform: scale(0.8);
+      padding: 8px 0;
     }
 
     #screen {
@@ -186,51 +131,81 @@
       color: var(--screen-text);
     }
 
-    /* special buttons */
+    .rows { margin: 5%; }
+
+    /* Rows as 5-column grid */
+    .calculator__row1,
+    .calculator__row2,
+    .calculator__row3,
+    .calculator__row4,
+    .calculator__row5 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      align-items: center;
+      font-family: monospace;
+    }
+
+    .calculator .button {
+      font-size: x-large;
+      width: 100%;
+      min-height: 2.2em;
+      margin: 0;
+      border-radius: 15%;
+      border: 0.08em solid var(--btn-border);
+      font-family: monospace;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      box-shadow: 0.03em 0.03em 0.01em 0px var(--shadow);
+    }
+
+    .calculator .accent {
+      background: var(--accent-bg);
+      color: var(--accent-text);
+    }
+
+    /* Special buttons */
     #clean, #rad, #deg {
       background: var(--special-bg);
       color: var(--special-text);
     }
 
-    .rows { margin: 5%; }
-
-.calculator__row1,
-.calculator__row2,
-.calculator__row3,
-.calculator__row4,
-.calculator__row5 {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  align-items: center;
-  font-family: monospace;
-}
-
-
-    .calculator__row5 { margin-bottom: 3%; }
-
-.calculator__row1 .button:nth-child(1) { grid-column: 1; }
-.calculator__row1 .button:nth-child(2) { grid-column: 2; }
-.calculator__row1 #clean { grid-column: 5; }
-
-.calculator__row5 .button:nth-child(1) { grid-column: 1; }
-.calculator__row5 .button:nth-child(2) { grid-column: 2; }
-.calculator__row5 .button:nth-child(3) { grid-column: 4; }
-.calculator__row5 .button:nth-child(4) { grid-column: 5; }
-    
-    .footer {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
+    .calculator button:hover {
+      background: var(--hover-bg);
+      color: var(--hover-text);
+      transform: scale(0.9);
+      border-radius: 20%;
     }
+
+    .calculator #clear:hover, #rad:hover, #deg:hover {
+      background: var(--danger-hover-bg) !important;
+      color: var(--danger-hover-text);
+      transform: scale(0.9);
+      border-radius: 20%;
+    }
+
+    .calculator button:focus { outline: none; }
+
+    .button:active,
+    .button-active {
+      background: rgb(0, 0, 0);
+      color: #ffffff;
+      transform: scale(0.8);
+    }
+
+    /* ---- Reliable positioning (NO nth-child) ---- */
+    .pos-l1 { grid-column: 1; }
+    .pos-l2 { grid-column: 2; }
+    .pos-r5 { grid-column: 5; }
+
+    /* Bottom row: move 0 one space right => put it in column 3 */
+    .pos-zero { grid-column: 3; }
+    .pos-eq   { grid-column: 4; }
+    .pos-plus { grid-column: 5; }
   </style>
 </head>
 
 <body>
-  <link href="https://fonts.googleapis.com/css?family=Libre+Barcode+128+Text" rel="stylesheet">
-
-
   <div class="theme-panel" aria-label="Theme settings">
     <h3>Theme</h3>
     <div class="theme-grid">
@@ -277,10 +252,10 @@
 
       <div class="rows">
         <div class="calculator__row1">
-  <button class="button accent">(</button>
-  <button class="button accent">)</button>
-  <button class="button" id="clean">AC</button>
-</div>
+          <button class="button accent pos-l1">(</button>
+          <button class="button accent pos-l2">)</button>
+          <button class="button pos-r5" id="clean">AC</button>
+        </div>
 
         <div class="calculator__row2">
           <button class="button accent">x^</button>
@@ -306,22 +281,17 @@
           <button class="button accent">-</button>
         </div>
 
-       <div class="calculator__row5">
-  <button class="button accent">.</button> 
-         
-  <div class="space"></div>
-         
-  <button class="button">0</button>
-  <button class="button accent">=</button>
-  <button class="button accent">+</button>
-</div>
+        <div class="calculator__row5">
+          <button class="button accent pos-l1">.</button>
+          <button class="button pos-zero">0</button>
+          <button class="button accent pos-eq">=</button>
+          <button class="button accent pos-plus">+</button>
+        </div>
       </div>
     </div>
   </div>
-</body>
 
 <script>
-
   var display = document.getElementById("screen");
   var buttons = document.getElementsByClassName("button");
 
@@ -334,7 +304,6 @@
           button.textContent != "√" &&
           button.textContent != "+" &&
           button.textContent != "%" &&
-          button.textContent != "=" &&
           button.textContent != "-" &&
           button.textContent != "sin" &&
           button.textContent != "cos" &&
@@ -388,8 +357,10 @@
   });
 
   function syntaxError() {
-    if (eval(display.value) == SyntaxError || eval(display.value) == ReferenceError || eval(display.value) == TypeError) {
-      display.value == "Syntax Error";
+    try {
+      eval(display.value);
+    } catch (e) {
+      display.value = "Syntax Error";
     }
   }
 
@@ -399,8 +370,8 @@
       var exponent = (display.value).slice((display.value).indexOf("^") + 1);
       display.value = eval("Math.pow(" + base + "," + exponent + ")");
     } else {
-      display.value = eval(display.value)
-      syntaxError()
+      display.value = eval(display.value);
+      syntaxError();
     }
   }
 
@@ -417,7 +388,7 @@
     } else if (display.value < 0) {
       display.value = "undefined";
     } else {
-      var number = 1;
+      number = 1;
       for (var i = display.value; i > 0; i--) number *= i;
       display.value = number;
     }
@@ -435,7 +406,7 @@
   function radians() { display.value = display.value * (Math.PI / 180); }
   function degrees() { display.value = display.value * (180 / Math.PI); }
 
-
+  // Theme logic
   const themeInputs = document.querySelectorAll('[data-cssvar]');
   const rootStyle = document.documentElement.style;
 
@@ -447,11 +418,6 @@
     "--accent-bg": "#d8ccc2",
     "--screen-text": "#9f877e"
   };
-
-  function cssVarToPickerValue(value) {
-    // ensures we store hex for the color inputs
-    return value.trim();
-  }
 
   function applyTheme(themeObj) {
     Object.keys(themeObj).forEach((cssVar) => {
@@ -472,23 +438,18 @@
     }
   }
 
-  function syncPickersFromCSS() {
+  function syncPickers() {
+    const saved = loadTheme() || defaults;
     themeInputs.forEach((input) => {
       const cssVar = input.getAttribute("data-cssvar");
-      const computed = getComputedStyle(document.documentElement).getPropertyValue(cssVar);
-      // If computed is rgb(...) the input won't accept it; we rely on our stored hex defaults/saves.
-      // So we set from saved theme or defaults instead.
-      const saved = loadTheme() || defaults;
-      input.value = cssVarToPickerValue(saved[cssVar] || defaults[cssVar]);
+      input.value = (saved[cssVar] || defaults[cssVar]).trim();
     });
   }
 
-  // initial load
   const savedTheme = loadTheme();
   applyTheme(savedTheme || defaults);
-  syncPickersFromCSS();
+  syncPickers();
 
-  // live updates
   themeInputs.forEach((input) => {
     input.addEventListener("input", () => {
       const cssVar = input.getAttribute("data-cssvar");
@@ -499,14 +460,12 @@
     });
   });
 
-  // reset
   document.getElementById("resetTheme").addEventListener("click", () => {
     applyTheme(defaults);
     saveTheme(defaults);
-    syncPickersFromCSS();
+    syncPickers();
   });
 
-  // random (nice for testing)
   function randomHex() {
     return "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0");
   }
@@ -523,7 +482,8 @@
     };
     applyTheme(next);
     saveTheme(next);
-    syncPickersFromCSS();
+    syncPickers();
   });
 </script>
+</body>
 </html>

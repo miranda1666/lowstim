@@ -1,0 +1,1216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Recipe Book</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card: rgba(255,255,255,0.86);
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      /* Board background controls */
+      --board-tint:#efe7e1;
+      --board-tint-a:0.12;
+      --board-image:none;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background:var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{ max-width:1100px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
+
+    /* Board */
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.01);
+      z-index:0;
+      pointer-events:none;
+      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+      background: rgba(0,0,0,0);
+    }
+    .boardContent{ position:relative; z-index:2; }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button, input, select, textarea{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background:#fff;
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    textarea{ width:100%; resize:vertical; min-height:90px; }
+    button{ cursor:pointer; user-select:none; }
+    button.soft{ background:var(--soft); }
+    button.primary{ background: rgba(239,231,225,0.92); }
+    button:active{ transform:translateY(1px); }
+
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .tiny{ font-size:12px; color:var(--muted); }
+
+    /* Background settings */
+    .bgWrap{ position:relative; margin-left:auto; }
+    .bgBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    }
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+    .bgPanel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 290px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+    }
+    .bgPanel.open{ display:block; }
+    .bgTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .bgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .bgRow label{ font-size:12px; color:var(--muted); }
+    .bgRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .bgRow input[type="range"]{ width: 150px; }
+    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgMiniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.97);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    }
+    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    /* Shelf layout */
+    .shelfBar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .shelves{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:10px;
+    }
+    .shelf{
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background: rgba(255,255,255,0.92);
+      overflow:hidden;
+    }
+    .shelfHead{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      background: rgba(243,239,233,0.75);
+      border-bottom:1px solid var(--stroke);
+    }
+    .shelfName{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      min-width:0;
+      flex:1;
+    }
+    .shelfName input{
+      border-radius:10px;
+      padding:8px 10px;
+      width:100%;
+      min-width:180px;
+      background:#fff;
+    }
+    .shelfActions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    /* Recipe "books" on a shelf */
+    .recipesRow{
+      display:flex;
+      gap:12px;
+      padding:12px;
+      overflow:auto;
+      scroll-snap-type:x mandatory;
+      align-items:flex-start;
+    }
+    .recipeBook{
+      width:140px;
+      flex:0 0 auto;
+      scroll-snap-align:start;
+      cursor:pointer;
+      user-select:none;
+    }
+    .cover{
+      width:140px;
+      height:180px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      box-shadow: 0 12px 22px rgba(30,20,10,.10);
+      overflow:hidden;
+      position:relative;
+    }
+    .cover img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .cover .coverFallback{
+      width:100%;
+      height:100%;
+      padding:10px;
+      background: linear-gradient(135deg, rgba(239,231,225,0.95), rgba(255,255,255,1));
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .coverFallback .ctitle{
+      font-weight:900;
+      font-size:12px;
+      line-height:1.25;
+      overflow:hidden;
+      display:-webkit-box;
+      -webkit-line-clamp:4;
+      -webkit-box-orient:vertical;
+      color: rgba(43,42,40,0.92);
+    }
+    .coverFallback .cmeta{
+      font-size:10px;
+      color: rgba(106,102,95,0.95);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .bookLabel{
+      margin-top:8px;
+      font-size:12px;
+      color: rgba(43,42,40,0.9);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .bookMiniRow{
+      display:flex;
+      gap:6px;
+      margin-top:6px;
+    }
+    .miniBtn{
+      padding:6px 8px;
+      border-radius:10px;
+      font-size:11px;
+      border:1px solid var(--stroke);
+      background: rgba(243,239,233,0.9);
+    }
+    .miniBtn.danger{ border-color:#efc2c2; }
+
+    /* Internal editor / reader */
+    .editor{
+      display:none;
+      margin-top:12px;
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background: rgba(255,255,255,0.92);
+      overflow:hidden;
+    }
+    .editor.open{ display:block; }
+    .editorTop{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      background: rgba(243,239,233,0.75);
+      border-bottom:1px solid var(--stroke);
+    }
+    .editorTitle{
+      font-weight:900;
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width: 70%;
+    }
+    .editorBody{
+      padding:12px;
+      display:grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap:12px;
+    }
+    .panel{
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      background:#fff;
+      padding:10px;
+    }
+    .panel h3{
+      margin:0 0 8px 0;
+      font-size:12px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:10px;
+    }
+    .field label{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .chip{
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: var(--soft);
+      white-space:nowrap;
+    }
+
+    /* internal reset confirm */
+    .confirm{
+      display:none;
+      margin-top:10px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+    }
+    .confirm.open{ display:block; }
+    .confirmTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .confirmTitle{
+      margin:0;
+      font-weight:800;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    @media (max-width: 920px){
+      .editorBody{ grid-template-columns: 1fr; }
+      .recipeBook{ width:130px; }
+      .cover{ width:130px; height:170px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1></h1>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Kitchen recipe book board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+          <div class="title">
+            <div>
+              <h2>Recipes</h2>
+            </div>
+
+            <div class="bgWrap" id="bgWrap">
+              <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
+                <div class="bgTitle">Background</div>
+
+                <div class="bgRow">
+                  <label for="bgColor">Tint</label>
+                  <input id="bgColor" type="color" value="#efe7e1" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgStrength">Strength</label>
+                  <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow" style="align-items:flex-start;">
+                  <label for="bgImage">Image</label>
+                  <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+                </div>
+
+                <div class="bgRow">
+                  <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Add recipe -->
+          <div class="shelfBar" aria-label="Add recipe">
+            <div class="row" style="flex:1; min-width:260px;">
+              <input id="recipeTitle" style="flex:1; min-width:220px;" placeholder="Recipe title (e.g., Jollof Rice)..." />
+              <span class="pill">
+                Shelf
+                <select id="shelfSelect" style="min-width:200px;"></select>
+              </span>
+              <button id="addRecipe" class="primary" type="button">Add recipe</button>
+            </div>
+
+            <div class="row" style="justify-content:flex-end;">
+              <button id="addShelf" class="soft" type="button">Add shelf</button>
+              <button id="resetAll" class="danger" type="button">Reset kitchen</button>
+            </div>
+          </div>
+
+          <div id="resetConfirm" class="confirm" aria-label="Reset confirmation">
+            <div class="confirmTop">
+              <p class="confirmTitle">Reset all shelves and recipes?</p>
+              <span class="tiny">This can’t be undone.</span>
+            </div>
+            <div class="row">
+              <button id="resetYes" class="danger" type="button">Yes, reset</button>
+              <button id="resetNo" class="soft" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Shelves -->
+          <div class="shelves" id="shelves"></div>
+
+          <!-- Internal editor -->
+          <div class="editor" id="editor" aria-label="Recipe editor">
+            <div class="editorTop">
+              <div class="editorTitle" id="editorTitle">Recipe</div>
+              <div class="row" style="gap:8px;">
+                <button id="editorClose" class="soft" type="button">Close</button>
+              </div>
+            </div>
+
+            <div class="editorBody">
+              <div class="panel">
+                <h3>Recipe</h3>
+
+                <div class="field">
+                  <label for="eTitle">Title</label>
+                  <input id="eTitle" type="text" />
+                </div>
+
+                <div class="grid2">
+                  <div class="field">
+                    <label for="eShelf">Shelf</label>
+                    <select id="eShelf"></select>
+                  </div>
+                  <div class="field">
+                    <label for="eTags">Tags (comma-separated)</label>
+                    <input id="eTags" type="text" />
+                  </div>
+                </div>
+
+                <div class="grid2">
+                  <div class="field">
+                    <label for="eTime">Time</label>
+                    <input id="eTime" type="text" placeholder="e.g., 30 mins" />
+                  </div>
+                  <div class="field">
+                    <label for="eServes">Serves</label>
+                    <input id="eServes" type="text" />
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="eIngredients">Ingredients</label>
+                  <textarea id="eIngredients" placeholder="• ..."></textarea>
+                </div>
+
+                <div class="field">
+                  <label for="eSteps">Steps</label>
+                  <textarea id="eSteps" placeholder="1) ..."></textarea>
+                </div>
+
+                <div class="row">
+                  <button id="saveRecipe" class="primary" type="button">Save</button>
+                  <button id="deleteRecipe" class="danger" type="button">Delete</button>
+                </div>
+              </div>
+
+              <div class="panel">
+                <h3>Cover</h3>
+
+                <div class="field">
+                  <label>Cover preview</label>
+                  <div class="row" style="gap:12px; align-items:flex-start;">
+                    <div class="cover" style="width:160px; height:210px; cursor:default;">
+                      <img id="coverPreview" alt="Cover preview" style="display:none;" />
+                      <div id="coverFallback" class="coverFallback">
+                        <div class="ctitle" id="coverFallbackTitle">Recipe</div>
+                        <div class="cmeta" id="coverFallbackMeta">Kitchen</div>
+                      </div>
+                    </div>
+                    <div style="flex:1; min-width:220px;">
+                      <div class="tiny" style="margin-bottom:10px;">
+                      </div>
+                      <div class="field">
+                        <label for="coverInput">Upload cover image</label>
+                        <input id="coverInput" type="file" accept="image/*" />
+                      </div>
+                      <div class="row">
+                        <button id="setCover" class="primary" type="button">Set cover</button>
+                        <button id="clearCover" class="soft" type="button">Remove cover</button>
+                      </div>
+
+                      <div class="divider"></div>
+
+                      <h3 style="margin-top:0;">Details</h3>
+                      <div class="chips" id="chips"></div>
+                      <div class="tiny" style="margin-top:10px;">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="tiny">
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* --------------------------
+   Background settings module
+--------------------------- */
+(function(){
+  const BG_KEY = "kitchen_recipe_book_bg_v1";
+
+  const $ = (id)=>document.getElementById(id);
+
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function loadBg(){
+    try{
+      const raw = localStorage.getItem(BG_KEY);
+      if(raw) return JSON.parse(raw) || null;
+    }catch{}
+    return null;
+  }
+  function saveBg(bg){
+    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+  }
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function init(){
+    const boardTintEl = $("boardTint");
+    const bgBtn = $("bgBtn");
+    const bgPanel = $("bgPanel");
+    const bgColor = $("bgColor");
+    const bgStrength = $("bgStrength");
+    const bgImage = $("bgImage");
+    const bgRemove = $("bgRemove");
+    const bgDot = $("bgDot");
+
+    if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+
+    const bgState = loadBg() || { tint:"#efe7e1", strength:12, imageDataUrl:null };
+
+    function applyBg(){
+      const tint = bgState.tint || "#efe7e1";
+      const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
+
+      document.documentElement.style.setProperty("--board-tint", tint);
+      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+      document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
+
+      boardTintEl.style.background = hexToRgba(tint, strength);
+
+      if(bgDot){
+        bgDot.style.background = tint;
+        bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+      }
+    }
+
+    bgColor.value = bgState.tint;
+    bgStrength.value = String(bgState.strength);
+    applyBg();
+
+    bgBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      bgPanel.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if(!bgPanel.classList.contains("open")) return;
+      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      if(!inside) bgPanel.classList.remove("open");
+    });
+
+    bgColor.addEventListener("input", () => {
+      bgState.tint = bgColor.value;
+      applyBg();
+      saveBg(bgState);
+    });
+
+    bgStrength.addEventListener("input", () => {
+      bgState.strength = Number(bgStrength.value);
+      applyBg();
+      saveBg(bgState);
+    });
+
+    bgImage.addEventListener("change", async () => {
+      const file = bgImage.files && bgImage.files[0];
+      if(!file) return;
+      const dataUrl = await fileToDataUrl(file);
+      bgState.imageDataUrl = dataUrl;
+      applyBg();
+      saveBg(bgState);
+    });
+
+    bgRemove.addEventListener("click", () => {
+      bgState.imageDataUrl = null;
+      bgImage.value = "";
+      applyBg();
+      saveBg(bgState);
+    });
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+
+
+/* --------------------------
+   Kitchen Recipe Book module
+--------------------------- */
+(function(){
+  const KEY = "kitchen_recipe_book_v1";
+  const $ = (id)=>document.getElementById(id);
+
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function defaultState(){
+    const s1 = uid(), s2 = uid(), s3 = uid();
+    return {
+      shelves: [
+        { id: s1, name: "Weeknight" },
+        { id: s2, name: "Baking" },
+        { id: s3, name: "Special" }
+      ],
+      recipes: [
+        // {id, shelfId, title, time, serves, tags[], ingredients, steps, coverDataUrl, createdAt, updatedAt}
+      ],
+      ui: { openId: null }
+    };
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw) || {};
+      const base = defaultState();
+
+      base.shelves = Array.isArray(parsed.shelves) && parsed.shelves.length ? parsed.shelves : base.shelves;
+      base.recipes = Array.isArray(parsed.recipes) ? parsed.recipes : [];
+      base.ui.openId = parsed?.ui?.openId || null;
+
+      return base;
+    }catch{
+      return defaultState();
+    }
+  }
+
+  let state = load();
+
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch{}
+  }
+
+  /* ---------- rendering ---------- */
+  function renderShelfSelect(){
+    const sel = $("shelfSelect");
+    sel.innerHTML = "";
+    for(const s of state.shelves){
+      const o = document.createElement("option");
+      o.value = s.id;
+      o.textContent = s.name || "Shelf";
+      sel.appendChild(o);
+    }
+  }
+
+  function renderEditorShelfSelect(){
+    const sel = $("eShelf");
+    sel.innerHTML = "";
+    for(const s of state.shelves){
+      const o = document.createElement("option");
+      o.value = s.id;
+      o.textContent = s.name || "Shelf";
+      sel.appendChild(o);
+    }
+  }
+
+  function renderShelves(){
+    const root = $("shelves");
+    root.innerHTML = "";
+
+    for(const shelf of state.shelves){
+      const wrap = document.createElement("div");
+      wrap.className = "shelf";
+      wrap.dataset.shelfId = shelf.id;
+
+      const head = document.createElement("div");
+      head.className = "shelfHead";
+
+      const nameWrap = document.createElement("div");
+      nameWrap.className = "shelfName";
+
+      const nameInput = document.createElement("input");
+      nameInput.value = shelf.name || "";
+      nameInput.placeholder = "Shelf name";
+      nameInput.addEventListener("change", () => {
+        shelf.name = nameInput.value.trim() || "Shelf";
+        save();
+        renderShelfSelect();
+        renderEditorShelfSelect();
+      });
+
+      const count = document.createElement("span");
+      count.className = "pill";
+      const n = state.recipes.filter(r => r.shelfId === shelf.id).length;
+      count.innerHTML = `<span class="tiny">${n} recipe${n===1?"":"s"}</span>`;
+
+      nameWrap.appendChild(nameInput);
+      nameWrap.appendChild(count);
+
+      const actions = document.createElement("div");
+      actions.className = "shelfActions";
+
+      const delShelf = document.createElement("button");
+      delShelf.className = "soft";
+      delShelf.type = "button";
+      delShelf.textContent = "Remove shelf";
+      delShelf.addEventListener("click", () => {
+        if(state.shelves.length <= 1) return;
+
+        // move recipes to first remaining shelf
+        const target = state.shelves.find(x => x.id !== shelf.id);
+        for(const r of state.recipes){
+          if(r.shelfId === shelf.id) r.shelfId = target.id;
+        }
+        state.shelves = state.shelves.filter(x => x.id !== shelf.id);
+
+        // if editor open on a recipe, keep it open
+        save();
+        renderAll();
+      });
+
+      actions.appendChild(delShelf);
+
+      head.appendChild(nameWrap);
+      head.appendChild(actions);
+
+      const row = document.createElement("div");
+      row.className = "recipesRow";
+
+      const recipes = state.recipes
+        .filter(r => r.shelfId === shelf.id)
+        .sort((a,b) => (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0));
+
+      if(!recipes.length){
+        const empty = document.createElement("div");
+        empty.className = "tiny";
+        empty.style.padding = "6px 4px";
+        empty.textContent = "No recipes here yet.";
+        row.appendChild(empty);
+      }else{
+        for(const r of recipes){
+          const card = document.createElement("div");
+          card.className = "recipeBook";
+          card.dataset.recipeId = r.id;
+
+          const cover = document.createElement("div");
+          cover.className = "cover";
+
+          if(r.coverDataUrl){
+            const img = document.createElement("img");
+            img.alt = "Cover";
+            img.src = r.coverDataUrl;
+            cover.appendChild(img);
+          }else{
+            const fb = document.createElement("div");
+            fb.className = "coverFallback";
+            fb.innerHTML = `
+              <div class="ctitle">${escapeHtml(r.title || "Untitled recipe")}</div>
+              <div class="cmeta">${escapeHtml(compactMeta(r))}</div>
+            `;
+            cover.appendChild(fb);
+          }
+
+          cover.addEventListener("click", () => openEditor(r.id));
+
+          const label = document.createElement("div");
+          label.className = "bookLabel";
+          label.textContent = r.title || "Untitled recipe";
+
+          const mini = document.createElement("div");
+          mini.className = "bookMiniRow";
+
+          const editBtn = document.createElement("button");
+          editBtn.className = "miniBtn";
+          editBtn.type = "button";
+          editBtn.textContent = "Open";
+          editBtn.addEventListener("click", () => openEditor(r.id));
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "miniBtn danger";
+          delBtn.type = "button";
+          delBtn.textContent = "✕";
+          delBtn.title = "Remove recipe";
+          delBtn.addEventListener("click", () => removeRecipe(r.id));
+
+          mini.appendChild(editBtn);
+          mini.appendChild(delBtn);
+
+          card.appendChild(cover);
+          card.appendChild(label);
+          card.appendChild(mini);
+
+          row.appendChild(card);
+        }
+      }
+
+      wrap.appendChild(head);
+      wrap.appendChild(row);
+      root.appendChild(wrap);
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function compactMeta(r){
+    const bits = [];
+    if((r.time||"").trim()) bits.push(r.time.trim());
+    if((r.serves||"").trim()) bits.push(`serves ${r.serves.trim()}`);
+    if(r.tags && r.tags.length) bits.push(r.tags.slice(0,2).join(" · "));
+    return bits.join(" · ") || "Kitchen";
+  }
+
+  function renderAll(){
+    renderShelfSelect();
+    renderEditorShelfSelect();
+    renderShelves();
+    renderEditor();
+    save();
+  }
+
+  /* ---------- add shelf/recipe ---------- */
+  function addShelf(){
+    state.shelves.push({ id: uid(), name: `Shelf ${state.shelves.length + 1}` });
+    save();
+    renderAll();
+    $("shelfSelect").value = state.shelves[state.shelves.length - 1].id;
+  }
+
+  function addRecipe(){
+    const title = ($("recipeTitle").value || "").trim();
+    if(!title) return;
+
+    const shelfId = $("shelfSelect").value;
+    const id = uid();
+    const now = Date.now();
+
+    state.recipes.unshift({
+      id,
+      shelfId,
+      title,
+      time:"",
+      serves:"",
+      tags: [],
+      ingredients:"",
+      steps:"",
+      coverDataUrl:null,
+      createdAt: now,
+      updatedAt: now
+    });
+
+    $("recipeTitle").value = "";
+    save();
+    renderAll();
+    openEditor(id);
+  }
+
+  /* ---------- internal reset ---------- */
+  function showReset(){
+    $("resetConfirm").classList.add("open");
+    const bgPanel = document.getElementById("bgPanel");
+    if(bgPanel) bgPanel.classList.remove("open");
+  }
+  function hideReset(){
+    $("resetConfirm").classList.remove("open");
+  }
+  function doReset(){
+    localStorage.removeItem(KEY);
+    state = defaultState();
+    hideReset();
+    renderAll();
+  }
+
+  /* ---------- editor ---------- */
+  function currentRecipe(){
+    return state.recipes.find(r => r.id === state.ui.openId) || null;
+  }
+
+  function openEditor(id){
+    state.ui.openId = id;
+    save();
+    renderEditor();
+    document.getElementById("editor").classList.add("open");
+  }
+
+  function closeEditor(){
+    state.ui.openId = null;
+    save();
+    renderEditor();
+    document.getElementById("editor").classList.remove("open");
+    // clear cover upload input
+    $("coverInput").value = "";
+  }
+
+  function renderEditor(){
+    const editor = $("editor");
+    const r = currentRecipe();
+    if(!r){
+      editor.classList.remove("open");
+      return;
+    }
+
+    $("editorTitle").textContent = r.title || "Recipe";
+
+    $("eTitle").value = r.title || "";
+    $("eShelf").value = r.shelfId || (state.shelves[0]?.id || "");
+    $("eTags").value = (r.tags || []).join(", ");
+    $("eTime").value = r.time || "";
+    $("eServes").value = r.serves || "";
+    $("eIngredients").value = r.ingredients || "";
+    $("eSteps").value = r.steps || "";
+
+    // cover preview
+    const img = $("coverPreview");
+    const fb = $("coverFallback");
+    if(r.coverDataUrl){
+      img.src = r.coverDataUrl;
+      img.style.display = "block";
+      fb.style.display = "none";
+    }else{
+      img.src = "";
+      img.style.display = "none";
+      fb.style.display = "flex";
+      $("coverFallbackTitle").textContent = r.title || "Recipe";
+      $("coverFallbackMeta").textContent = compactMeta(r);
+    }
+
+    // chips
+    const chips = $("chips");
+    chips.innerHTML = "";
+    const bits = [];
+    if((r.time||"").trim()) bits.push(`Time: ${r.time.trim()}`);
+    if((r.serves||"").trim()) bits.push(`Serves: ${r.serves.trim()}`);
+    if(r.tags && r.tags.length) bits.push(...r.tags.map(t => `#${t}`));
+    if(!bits.length) bits.push("Add time/serves/tags to show details here.");
+    for(const b of bits){
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = b;
+      chips.appendChild(c);
+    }
+
+    editor.classList.add("open");
+  }
+
+  function saveRecipe(){
+    const r = currentRecipe();
+    if(!r) return;
+
+    const title = ($("eTitle").value || "").trim();
+    if(!title) return;
+
+    r.title = title;
+    r.shelfId = $("eShelf").value || r.shelfId;
+
+    const tagsRaw = ($("eTags").value || "").split(",").map(x => x.trim()).filter(Boolean);
+    r.tags = tagsRaw.slice(0, 12);
+
+    r.time = ($("eTime").value || "").trim();
+    r.serves = ($("eServes").value || "").trim();
+    r.ingredients = ($("eIngredients").value || "").trim();
+    r.steps = ($("eSteps").value || "").trim();
+    r.updatedAt = Date.now();
+
+    // if no cover image, refresh fallback meta in preview
+    save();
+    renderAll();
+  }
+
+  function removeRecipe(id){
+    // internal delete (no popups)
+    state.recipes = state.recipes.filter(x => x.id !== id);
+    if(state.ui.openId === id){
+      closeEditor();
+    }
+    save();
+    renderAll();
+  }
+
+  function deleteCurrent(){
+    const r = currentRecipe();
+    if(!r) return;
+    removeRecipe(r.id);
+  }
+
+  /* ---------- cover handling (internal) ---------- */
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result));
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+  }
+
+  async function setCover(){
+    const r = currentRecipe();
+    if(!r) return;
+
+    const f = $("coverInput").files && $("coverInput").files[0];
+    if(!f) return; // no popups; do nothing
+
+    try{
+      r.coverDataUrl = await fileToDataUrl(f);
+      r.updatedAt = Date.now();
+      $("coverInput").value = "";
+      save();
+      renderAll();
+    }catch{
+      // silent fail (still internal)
+    }
+  }
+
+  function clearCover(){
+    const r = currentRecipe();
+    if(!r) return;
+    r.coverDataUrl = null;
+    r.updatedAt = Date.now();
+    $("coverInput").value = "";
+    save();
+    renderAll();
+  }
+
+  /* ---------- init ---------- */
+  function init(){
+    const required = [
+      "recipeTitle","shelfSelect","addRecipe","addShelf","resetAll","resetConfirm","resetYes","resetNo",
+      "shelves","editor","editorTitle","editorClose","eTitle","eShelf","eTags","eTime","eServes",
+      "eIngredients","eSteps","saveRecipe","deleteRecipe","coverInput","setCover","clearCover","chips",
+      "coverPreview","coverFallback","coverFallbackTitle","coverFallbackMeta"
+    ];
+    for(const id of required){ if(!$(id)) return; }
+
+    $("addShelf").addEventListener("click", addShelf);
+    $("addRecipe").addEventListener("click", addRecipe);
+    $("recipeTitle").addEventListener("keydown", (e)=> {
+      if(e.key === "Enter"){ e.preventDefault(); addRecipe(); }
+    });
+
+    $("resetAll").addEventListener("click", ()=> {
+      $("resetConfirm").classList.contains("open") ? hideReset() : showReset();
+    });
+    $("resetNo").addEventListener("click", hideReset);
+    $("resetYes").addEventListener("click", doReset);
+
+    $("editorClose").addEventListener("click", closeEditor);
+
+    $("saveRecipe").addEventListener("click", saveRecipe);
+    $("deleteRecipe").addEventListener("click", deleteCurrent);
+
+    $("setCover").addEventListener("click", setCover);
+    $("clearCover").addEventListener("click", clearCover);
+
+    // autosave when leaving fields (still internal)
+    const autos = ["eTitle","eShelf","eTags","eTime","eServes","eIngredients","eSteps"];
+    for(const id of autos){
+      $(id).addEventListener("change", saveRecipe);
+    }
+
+    renderAll();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

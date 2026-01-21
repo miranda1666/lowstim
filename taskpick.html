@@ -7,7 +7,9 @@
   <style>
     :root{
       --bg:#ffffff;
-      --card: rgba(255,255,255,0.80);
+
+      --card: rgba(255,255,255,0.58);
+
       --stroke:#e9e4dd;
       --ink:#2b2a28;
       --muted:#6a665f;
@@ -40,6 +42,7 @@
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
     }
+
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -51,11 +54,10 @@
       transform: scale(1.01);
       z-index:0;
       pointer-events:none;
-    }
 
-    .widgetBoard::before{
-  filter: saturate(1.15) contrast(1.08) brightness(1.02);
-}
+      /* make image pop */
+      filter: saturate(1.25) contrast(1.15) brightness(1.05);
+    }
 
     .boardTint{
       position:absolute;
@@ -71,8 +73,10 @@
       border-radius:0;
       box-shadow:none;
       padding:14px;
-      backdrop-filter: blur(2px);         /* reduced blur for crisper images */
-      -webkit-backdrop-filter: blur(2px);
+
+      /* ✅ changed: remove blur so background stays crisp */
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
     }
 
     .title{
@@ -91,10 +95,12 @@
       align-items:center;
       flex-wrap:wrap;
     }
+
+
     button, input, select{
       font:inherit;
       border:1px solid var(--stroke);
-      background:#fff;
+      background: rgba(255,255,255,0.78);
       color:var(--ink);
       border-radius:12px;
       padding:10px 12px;
@@ -102,8 +108,8 @@
       -webkit-tap-highlight-color: transparent;
     }
     button{ cursor:pointer; user-select:none; }
-    button.soft{ background:var(--soft); }
-    button.primary{ background: rgba(239,231,225,0.9); }
+    button.soft{ background: rgba(243,239,233,0.72); }      
+    button.primary{ background: rgba(239,231,225,0.80); }
     button:active{ transform:translateY(1px); }
 
     .divider{ height:1px; background:var(--stroke); margin:12px 0; }
@@ -111,7 +117,8 @@
     .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
     .kpi .box{
       flex:1; min-width:200px;
-      background:var(--soft);
+
+      background: rgba(255,255,255,0.70);
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:10px;
@@ -122,7 +129,8 @@
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       border:1px solid var(--stroke);
-      background:#fff;
+
+      background: rgba(255,255,255,0.72);
       border-radius:999px;
       padding:8px 12px;
       font-size:13px;
@@ -139,7 +147,8 @@
       padding:10px 12px;
       border-radius:14px;
       border:1px solid var(--stroke);
-      background:#fff;
+
+      background: rgba(255,255,255,0.72);
     }
     .meta{
       display:flex;
@@ -166,7 +175,7 @@
       padding:6px 10px;
       border-radius:999px;
       border:1px solid var(--stroke);
-      background:var(--soft);
+      background: rgba(243,239,233,0.72);
       user-select:none;
       white-space:nowrap;
     }
@@ -199,7 +208,10 @@
       width: 270px;
       border-radius: 16px;
       border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.80);
+
+
+      background: rgba(255,255,255,0.86);
+
       box-shadow: 0 18px 40px rgba(30,20,10,.12);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
@@ -238,7 +250,7 @@
       width:100%;
       border-radius:12px;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.97);
+      background: rgba(255,255,255,0.90);
       padding:9px 10px;
       font-weight:700;
       letter-spacing:.06em;
@@ -257,7 +269,8 @@
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:12px;
-      background:#fff;
+
+      background: rgba(255,255,255,0.72);
     }
     .pickedTop{
       display:flex;
@@ -279,7 +292,8 @@
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:12px;
-      background:#fff;
+
+      background: rgba(255,255,255,0.72);
     }
     .confirmTop{
       display:flex;
@@ -565,7 +579,9 @@
 })();
 
 
-
+/* --------------------------
+   Energy task picker module
+--------------------------- */
 (function(){
   const KEY = "energy_task_picker_v2";
   const $ = (id)=>document.getElementById(id);
@@ -782,7 +798,6 @@
     }
     function showResetConfirm(){
       resetConfirm.style.display = "block";
-      // Optional: close background panel if open, to avoid overlap
       const bgPanel = document.getElementById("bgPanel");
       if(bgPanel) bgPanel.classList.remove("open");
     }
@@ -832,7 +847,6 @@
       renderAll();
     });
 
-
     $("resetAll").addEventListener("click", () => {
       if(resetConfirm.style.display === "block"){
         hideResetConfirm();
@@ -841,9 +855,7 @@
       }
     });
 
-    resetNo.addEventListener("click", () => {
-      hideResetConfirm();
-    });
+    resetNo.addEventListener("click", hideResetConfirm);
 
     resetYes.addEventListener("click", () => {
       localStorage.removeItem(KEY);

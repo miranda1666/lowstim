@@ -265,7 +265,7 @@
 <body>
   <div class="wrap">
     <h1>Time Check</h1>
-
+<div class="hint">Overhead: tiny interruptions, getting set up, and wrap-up</div>
 
     <div class="widgetBoard" id="widgetBoard" aria-label="Time reality check board">
       <div class="boardTint" id="boardTint"></div>
@@ -629,7 +629,6 @@
     const lines = [
       `You estimated ${fmtMinutes(r.estMin)}.`,
       `Reality time: ${fmtMinutes(r.realMin)} (adds ${fmtMinutes(r.extraMin)} overhead).`,
-      `Overhead includes: switching costs, tiny interruptions, getting set up, and wrap-up.`
     ];
     $("resText").textContent = lines.join(" ");
   }

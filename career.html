@@ -324,7 +324,7 @@
           </div>
 
           <div style="height:10px;"></div>
-          <textarea id="goalNext"></textarea>
+          <textarea id="goalNext" placeholder="Notes..."></textarea>
 
           <div class="divider"></div>
 
@@ -598,7 +598,7 @@
       }
 
       const deadlineTxt = g.deadline ? ` · due ${g.deadline}` : "";
-      const nextTxt = (g.nextAction || "").trim() ? ` · next: ${g.nextAction}` : "";
+      const nextTxt = (g.nextAction || "").trim() ? ` · : ${g.nextAction}` : "";
       const s = document.createElement("span");
       s.textContent = `${priorityLabel(g.priority)} priority${deadlineTxt}${nextTxt}`;
 

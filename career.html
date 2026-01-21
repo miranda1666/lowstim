@@ -58,7 +58,7 @@
       inset:0;
       pointer-events:none;
       z-index:1;
-      background: rgba(0,0,0,0); /* set by JS */
+      background: rgba(0,0,0,0);
     }
     .boardContent{ position:relative; z-index:2; }
 
@@ -80,7 +80,6 @@
       margin-bottom:10px;
     }
     .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
-    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
     .row{
       display:flex;
       gap:10px;
@@ -250,17 +249,12 @@
       font-size:13px;
       line-height:1.25;
     }
-
-    @media (max-width: 720px){
-      .kpi .box{ min-width:160px; }
-    }
   </style>
 </head>
 
 <body>
   <div class="wrap">
-    <h1></h1>
-
+    <h1>Career Goals</h1>
 
     <div class="widgetBoard" id="widgetBoard" aria-label="Career goals board">
       <div class="boardTint" id="boardTint"></div>
@@ -270,7 +264,6 @@
           <div class="title">
             <div>
               <h2 style="margin:0;">Goals</h2>
-
             </div>
 
             <div class="bgWrap" id="bgWrap">
@@ -307,7 +300,7 @@
 
           <div class="divider"></div>
 
-          <!-- Add goal -->
+  
           <div class="row" aria-label="Add goal">
             <input id="goalTitle" style="flex:1; min-width:220px;" placeholder="Goal title (e.g., Get promoted)…" />
             <span class="pill">
@@ -324,11 +317,11 @@
           </div>
 
           <div style="height:10px;"></div>
-          <textarea id="goal" placeholder="Notes..."></textarea>
+
+          <textarea id="goalNext" placeholder="Notes..."></textarea>
 
           <div class="divider"></div>
 
-          <!-- Internal reset confirmation -->
           <div class="row" style="justify-content:space-between; align-items:center;">
             <button id="resetAll" class="danger" type="button">Reset</button>
           </div>
@@ -513,10 +506,7 @@
   function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
 
   function defaultState(){
-    return {
-      goals: [],  // {id,title,priority,deadline,nextAction,done,createdAt}
-      ui: { view:"all" }
-    };
+    return { goals: [], ui: { view:"all" } };
   }
 
   function load(){
@@ -598,7 +588,7 @@
       }
 
       const deadlineTxt = g.deadline ? ` · due ${g.deadline}` : "";
-      const nextTxt = (g.nextAction || "").trim() ? `  ${g.nextAction}` : "";
+      const nextTxt = (g.nextAction || "").trim() ? ` notes: ${g.nextAction}` : "";
       const s = document.createElement("span");
       s.textContent = `${priorityLabel(g.priority)} priority${deadlineTxt}${nextTxt}`;
 
@@ -631,7 +621,6 @@
         $("goalPriority").value = g.priority || "mid";
         $("goalDeadline").value = g.deadline || "";
         $("goalNext").value = g.nextAction || "";
-        // "Edit" just loads fields; user can tweak and Add again (creates new)
       });
 
       const delBtn = document.createElement("button");
@@ -689,6 +678,7 @@
   }
 
   function init(){
+    // FIX: this was returning early because goalNext didn't exist (textarea id mismatch)
     const required = ["goalTitle","goalPriority","goalDeadline","goalNext","addGoal","clearDone","resetAll","resetConfirm","resetYes","resetNo","kTotal","kActive","kDone","viewFilter","goalList"];
     for(const id of required){ if(!$(id)) return; }
 

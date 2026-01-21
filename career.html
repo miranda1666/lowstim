@@ -588,7 +588,7 @@
       }
 
       const deadlineTxt = g.deadline ? ` · due ${g.deadline}` : "";
-      const nextTxt = (g.nextAction || "").trim() ? ` notes: ${g.nextAction}` : "";
+      const nextTxt = (g.nextAction || "").trim() ? `, notes: ${g.nextAction}` : "";
       const s = document.createElement("span");
       s.textContent = `${priorityLabel(g.priority)} priority${deadlineTxt}${nextTxt}`;
 

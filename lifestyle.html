@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lifestyle Goals</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card: rgba(255,255,255,0.84);
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      /* Board background controls */
+      --board-tint:#efe7e1;
+      --board-tint-a:0.12;
+      --board-image:none;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background:var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{ max-width:980px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
+
+    /* Board */
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.01);
+      z-index:0;
+      pointer-events:none;
+      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+      background: rgba(0,0,0,0);
+    }
+    .boardContent{ position:relative; z-index:2; }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button, input, select, textarea{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background:#fff;
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    textarea{ width:100%; min-height:90px; resize:vertical; }
+    button{ cursor:pointer; user-select:none; }
+    button.soft{ background:var(--soft); }
+    button.primary{ background: rgba(239,231,225,0.9); }
+    button:active{ transform:translateY(1px); }
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
+    .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
+    .kpi .box{
+      flex:1; min-width:200px;
+      background:var(--soft);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .num{ font-weight:750; font-size:16px; }
+    .kpi .lab{ font-size:12px; color:var(--muted); }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .tiny{ font-size:12px; color:var(--muted); }
+
+    .list{ display:flex; flex-direction:column; gap:8px; }
+    .item{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:#fff;
+    }
+    .meta{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .meta b{ font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .meta span{ font-size:12px; color:var(--muted); }
+    .right{ display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+    .tag{
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:var(--soft);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .smallbtn{ padding:8px 10px; border-radius:12px; }
+    .danger{ border-color:#efc2c2; }
+
+    /* Background settings */
+    .bgWrap{ position:relative; margin-left:auto; }
+    .bgBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    }
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+    .bgPanel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 270px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+    }
+    .bgPanel.open{ display:block; }
+    .bgTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .bgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .bgRow label{ font-size:12px; color:var(--muted); }
+    .bgRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .bgRow input[type="range"]{ width: 150px; }
+    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgMiniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.97);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    }
+    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    /* Internal reset confirm */
+    .confirm{
+      margin-top:10px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+    }
+    .confirmTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .confirmTitle{
+      margin:0;
+      font-weight:750;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    @media (max-width: 720px){
+      .kpi .box{ min-width:160px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1></h1>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Lifestyle goals board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+
+          <div class="title">
+            <div>
+              <h2 style="margin:0;">Goals</h2>
+            </div>
+
+            <div class="bgWrap" id="bgWrap">
+              <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
+                <div class="bgTitle">Background</div>
+
+                <div class="bgRow">
+                  <label for="bgColor">Tint</label>
+                  <input id="bgColor" type="color" value="#efe7e1" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgStrength">Strength</label>
+                  <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow" style="align-items:flex-start;">
+                  <label for="bgImage">Image</label>
+                  <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+                </div>
+
+                <div class="bgRow">
+                  <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Add goal -->
+          <div class="row" aria-label="Add goal">
+            <input id="goalTitle" style="flex:1; min-width:220px;" placeholder="Goal title (e.g., Walk 3x/week)…" />
+            <span class="pill">
+              Category
+              <select id="goalCategory">
+                <option value="health" selected>Health</option>
+                <option value="home">Home</option>
+                <option value="relationships">Relationships</option>
+                <option value="learning">Learning</option>
+                <option value="fun">Fun</option>
+                <option value="other">Other</option>
+              </select>
+            </span>
+            <span class="pill">
+              Cadence
+              <select id="goalCadence">
+                <option value="daily">Daily</option>
+                <option value="weekly" selected>Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="one-off">One-off</option>
+              </select>
+            </span>
+            <button id="addGoal" class="primary" type="button">Add</button>
+            <button id="clearDone" class="soft" type="button">Clear done</button>
+          </div>
+
+          <div style="height:10px;"></div>
+          <textarea id="goalNext"></textarea>
+
+          <div class="divider"></div>
+
+          <!-- Internal reset confirmation -->
+          <div class="row" style="justify-content:space-between; align-items:center;">
+            <button id="resetAll" class="danger" type="button">Reset</button>
+          </div>
+
+          <div id="resetConfirm" class="confirm" style="display:none;">
+            <div class="confirmTop">
+              <p class="confirmTitle">Reset all lifestyle goals?</p>
+              <span class="tiny">This can’t be undone.</span>
+            </div>
+            <div class="row">
+              <button id="resetYes" class="danger" type="button">Yes, reset</button>
+              <button id="resetNo" class="soft" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- KPIs -->
+          <div class="kpi" aria-label="Summary">
+            <div class="box">
+              <div class="num" id="kTotal">—</div>
+              <div class="lab">Total</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kActive">—</div>
+              <div class="lab">Active</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kDone">—</div>
+              <div class="lab">Done</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Filter -->
+          <div class="row" style="justify-content:space-between; align-items:flex-end;">
+            <div class="tiny">Goals</div>
+            <span class="pill">
+              View
+              <select id="viewFilter">
+                <option value="all" selected>All</option>
+                <option value="active">Active</option>
+                <option value="done">Done</option>
+              </select>
+            </span>
+          </div>
+
+          <div style="height:10px;"></div>
+          <div class="list" id="goalList"></div>
+
+          <div class="divider"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* --------------------------
+   Background settings module
+--------------------------- */
+(function(){
+  const BG_KEY = "lifestyle_goals_bg_v1";
+
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function loadBg(){
+    try{
+      const raw = localStorage.getItem(BG_KEY);
+      if(raw) return JSON.parse(raw) || null;
+    }catch{}
+    return null;
+  }
+  function saveBg(bg){
+    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+  }
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function init(){
+    const boardTintEl = document.getElementById("boardTint");
+    const bgBtn = document.getElementById("bgBtn");
+    const bgPanel = document.getElementById("bgPanel");
+    const bgColor = document.getElementById("bgColor");
+    const bgStrength = document.getElementById("bgStrength");
+    const bgImage = document.getElementById("bgImage");
+    const bgRemove = document.getElementById("bgRemove");
+    const bgDot = document.getElementById("bgDot");
+
+    if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+
+    const bgState = loadBg() || { tint:"#efe7e1", strength:12, imageDataUrl:null };
+
+    function applyBg(){
+      const tint = bgState.tint || "#efe7e1";
+      const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
+
+      document.documentElement.style.setProperty("--board-tint", tint);
+      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+      document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
+
+      boardTintEl.style.background = hexToRgba(tint, strength);
+
+      if(bgDot){
+        bgDot.style.background = tint;
+        bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+      }
+    }
+
+    bgColor.value = bgState.tint;
+    bgStrength.value = String(bgState.strength);
+    applyBg();
+
+    bgBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      bgPanel.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if(!bgPanel.classList.contains("open")) return;
+      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      if(!inside) bgPanel.classList.remove("open");
+    });
+
+    bgColor.addEventListener("input", () => {
+      bgState.tint = bgColor.value;
+      applyBg();
+      saveBg(bgState);
+    });
+
+    bgStrength.addEventListener("input", () => {
+      bgState.strength = Number(bgStrength.value);
+      applyBg();
+      saveBg(bgState);
+    });
+
+    bgImage.addEventListener("change", async () => {
+      const file = bgImage.files && bgImage.files[0];
+      if(!file) return;
+      const dataUrl = await fileToDataUrl(file);
+      bgState.imageDataUrl = dataUrl;
+      applyBg();
+      saveBg(bgState);
+    });
+
+    bgRemove.addEventListener("click", () => {
+      bgState.imageDataUrl = null;
+      bgImage.value = "";
+      applyBg();
+      saveBg(bgState);
+    });
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+
+
+/* --------------------------
+   Lifestyle goals module
+--------------------------- */
+(function(){
+  const KEY = "lifestyle_goals_v1";
+  const $ = (id)=>document.getElementById(id);
+
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function defaultState(){
+    return {
+      goals: [], // {id,title,category,cadence,nextStep,done,createdAt}
+      ui: { view:"all" }
+    };
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw) || {};
+      const base = defaultState();
+      base.goals = Array.isArray(parsed.goals) ? parsed.goals : [];
+      base.ui.view = parsed?.ui?.view || "all";
+      return base;
+    }catch{
+      return defaultState();
+    }
+  }
+
+  let state = load();
+
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch{}
+  }
+
+  function catLabel(c){
+    const map = { health:"Health", home:"Home", relationships:"Relationships", learning:"Learning", fun:"Fun", other:"Other" };
+    return map[c] || "Other";
+  }
+  function cadenceLabel(c){
+    const map = { daily:"Daily", weekly:"Weekly", monthly:"Monthly", "one-off":"One-off" };
+    return map[c] || "Weekly";
+  }
+
+  function filtered(){
+    let list = [...state.goals];
+    if(state.ui.view === "active") list = list.filter(g => !g.done);
+    if(state.ui.view === "done") list = list.filter(g => g.done);
+
+    const cadenceOrder = { daily:0, weekly:1, monthly:2, "one-off":3 };
+    list.sort((a,b) => {
+      if(a.done !== b.done) return a.done ? 1 : -1;
+      if((cadenceOrder[a.cadence] ?? 9) !== (cadenceOrder[b.cadence] ?? 9)) return (cadenceOrder[a.cadence] ?? 9) - (cadenceOrder[b.cadence] ?? 9);
+      return (b.createdAt||0) - (a.createdAt||0);
+    });
+    return list;
+  }
+
+  function renderKPIs(){
+    const total = state.goals.length;
+    const done = state.goals.filter(g => g.done).length;
+    const active = total - done;
+
+    $("kTotal").textContent = String(total);
+    $("kActive").textContent = String(active);
+    $("kDone").textContent = String(done);
+  }
+
+  function renderList(){
+    const root = $("goalList");
+    const list = filtered();
+    root.innerHTML = "";
+
+    if(list.length === 0){
+      root.innerHTML = `<div class="tiny">No goals yet. Add one above.</div>`;
+      return;
+    }
+
+    for(const g of list){
+      const el = document.createElement("div");
+      el.className = "item";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const b = document.createElement("b");
+      b.textContent = g.title || "(Untitled)";
+      if(g.done){
+        b.style.textDecoration = "line-through";
+        b.style.opacity = "0.72";
+      }
+
+      const nextTxt = (g.nextStep || "").trim() ? ` · next: ${g.nextStep}` : "";
+      const s = document.createElement("span");
+      s.textContent = `${catLabel(g.category)} · ${cadenceLabel(g.cadence)}${nextTxt}`;
+
+      meta.appendChild(b);
+      meta.appendChild(s);
+
+      const right = document.createElement("div");
+      right.className = "right";
+
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = catLabel(g.category);
+
+      const doneBtn = document.createElement("button");
+      doneBtn.type = "button";
+      doneBtn.className = "smallbtn";
+      doneBtn.textContent = g.done ? "Undo" : "Done";
+      doneBtn.addEventListener("click", () => {
+        g.done = !g.done;
+        save();
+        renderAll();
+      });
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "smallbtn soft";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", () => {
+        $("goalTitle").value = g.title || "";
+        $("goalCategory").value = g.category || "health";
+        $("goalCadence").value = g.cadence || "weekly";
+        $("goalNext").value = g.nextStep || "";
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "smallbtn danger";
+      delBtn.textContent = "✕";
+      delBtn.title = "Remove";
+      delBtn.addEventListener("click", () => {
+        state.goals = state.goals.filter(x => x.id !== g.id);
+        save();
+        renderAll();
+      });
+
+      right.appendChild(tag);
+      right.appendChild(doneBtn);
+      right.appendChild(editBtn);
+      right.appendChild(delBtn);
+
+      el.appendChild(meta);
+      el.appendChild(right);
+      root.appendChild(el);
+    }
+  }
+
+  function renderAll(){
+    $("viewFilter").value = state.ui.view;
+    renderKPIs();
+    renderList();
+    save();
+  }
+
+  function addGoal(){
+    const title = ($("goalTitle").value || "").trim();
+    const nextStep = ($("goalNext").value || "").trim();
+    if(!title) return;
+
+    const category = $("goalCategory").value || "health";
+    const cadence = $("goalCadence").value || "weekly";
+
+    state.goals.unshift({
+      id: uid(),
+      title,
+      category,
+      cadence,
+      nextStep,
+      done:false,
+      createdAt: Date.now()
+    });
+
+    $("goalTitle").value = "";
+    $("goalNext").value = "";
+    $("goalTitle").focus();
+    renderAll();
+  }
+
+  function init(){
+    const required = ["goalTitle","goalCategory","goalCadence","goalNext","addGoal","clearDone","resetAll","resetConfirm","resetYes","resetNo","kTotal","kActive","kDone","viewFilter","goalList"];
+    for(const id of required){ if(!$(id)) return; }
+
+    const resetConfirm = $("resetConfirm");
+    const resetYes = $("resetYes");
+    const resetNo = $("resetNo");
+
+    function hideReset(){ resetConfirm.style.display = "none"; }
+    function showReset(){
+      resetConfirm.style.display = "block";
+      const bgPanel = document.getElementById("bgPanel");
+      if(bgPanel) bgPanel.classList.remove("open");
+    }
+
+    $("addGoal").addEventListener("click", addGoal);
+    $("goalTitle").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); addGoal(); } });
+
+    $("viewFilter").addEventListener("change", ()=>{ state.ui.view = $("viewFilter").value; renderAll(); });
+
+    $("clearDone").addEventListener("click", ()=> {
+      state.goals = state.goals.filter(g => !g.done);
+      save();
+      renderAll();
+    });
+
+    $("resetAll").addEventListener("click", ()=> {
+      resetConfirm.style.display === "block" ? hideReset() : showReset();
+    });
+
+    resetNo.addEventListener("click", hideReset);
+    resetYes.addEventListener("click", ()=> {
+      localStorage.removeItem(KEY);
+      state = defaultState();
+      save();
+      hideReset();
+      renderAll();
+    });
+
+    renderAll();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

@@ -333,7 +333,7 @@
           </div>
 
           <div style="height:10px;"></div>
-          <textarea id="goalNext"></textarea>
+          <textarea id="goalNext" placeholder="Notes..."></textarea>
 
           <div class="divider"></div>
 
@@ -605,7 +605,7 @@
         b.style.opacity = "0.72";
       }
 
-      const nextTxt = (g.nextStep || "").trim() ? ` · next: ${g.nextStep}` : "";
+      const nextTxt = (g.nextStep || "").trim() ? ` next: ${g.nextStep}` : "";
       const s = document.createElement("span");
       s.textContent = `${catLabel(g.category)} · ${cadenceLabel(g.cadence)}${nextTxt}`;
 

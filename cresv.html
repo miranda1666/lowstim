@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Resource Vault</title>
   <style>
     :root{
+      /* ===== THEME TOKENS (editable via Theme panel) ===== */
       --bg: #ffffff;
       --panel: rgba(255,255,255,.65);
       --panel2: rgba(255,255,255,.82);
@@ -24,9 +25,8 @@
       --board-image: none; /* url(...) injected by JS */
     }
 
-    *{ box-sizing: border-box; }
-    html, body{ height: 100%; }
-
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body{
       margin: 0;
       color: var(--text);
@@ -42,13 +42,16 @@
 
     /* Header */
     .top{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
       gap: 14px;
       margin-bottom: 18px;
     }
-    .title{ display:grid; gap: 6px; }
+    .title{
+      display: grid;
+      gap: 6px;
+    }
     .title h1{
       font-size: clamp(22px, 2.6vw, 32px);
       line-height: 1.1;
@@ -63,40 +66,46 @@
     }
 
     .actions{
-      display:flex;
-      align-items:center;
+      display: flex;
+      align-items: center;
       gap: 10px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
 
     .btn{
-      appearance:none;
+      appearance: none;
       border: 1px solid var(--line);
       background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.65));
       color: var(--text);
       padding: 10px 12px;
       border-radius: 999px;
       box-shadow: 0 6px 18px rgba(0,0,0,.06);
-      cursor:pointer;
+      cursor: pointer;
       transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
       font-size: 13px;
-      display:inline-flex;
-      align-items:center;
+      display: inline-flex;
+      align-items: center;
       gap: 8px;
-      user-select:none;
+      user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
     .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,.08); border-color: rgba(43,43,43,.18); }
     .btn:active{ transform: translateY(0px); }
-    .btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .btn:focus-visible{
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
     .btn.primary{
       border-color: rgba(43,43,43,.14);
       background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.72));
     }
-    .btn.danger{ border-color: rgba(160, 60, 60, .2); }
+    .btn.danger{
+      border-color: rgba(160, 60, 60, .2);
+    }
 
-    /* Background popover */
+    /* Popovers */
     .popover{ position: relative; }
     .bgBtn{
       width: 42px;
@@ -111,6 +120,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .bgBtn:active{ transform: translateY(1px); }
+
     .bgDot{
       width: 14px;
       height: 14px;
@@ -120,8 +130,17 @@
       box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
     }
 
+    .themeDot{
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(43,43,43,.14);
+      background: var(--text);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+
     .bgPanel{
-      position:absolute;
+      position: absolute;
       top: 50px;
       right: 0;
       width: 260px;
@@ -223,11 +242,14 @@
       pointer-events:none;
       mix-blend-mode: multiply;
     }
-    .boardContent{ position: relative; z-index: 2; }
+    .boardContent{
+      position: relative;
+      z-index: 2;
+    }
 
     /* Controls */
     .controls{
-      display:grid;
+      display: grid;
       grid-template-columns: 1.2fr .8fr .6fr;
       gap: 10px;
       background: var(--panel);
@@ -238,16 +260,25 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     @media (max-width: 860px){
       .controls{ grid-template-columns: 1fr; }
-      .actions{ justify-content:flex-start; }
+      .actions{ justify-content: flex-start; }
       .top{ flex-direction: column; align-items: stretch; }
     }
 
-    .field{ position: relative; display:grid; gap: 6px; }
-    label{ font-size: 12px; color: var(--muted); padding-left: 6px; }
+    .field{
+      position: relative;
+      display: grid;
+      gap: 6px;
+    }
+    label{
+      font-size: 12px;
+      color: var(--muted);
+      padding-left: 6px;
+    }
     .input, select{
-      width:100%;
+      width: 100%;
       padding: 12px 12px 12px 40px;
       border-radius: 14px;
       border: 1px solid rgba(43,43,43,.12);
@@ -264,16 +295,16 @@
       box-shadow: 0 0 0 3px rgba(43,43,43,.10);
     }
     .icon{
-      position:absolute;
+      position: absolute;
       left: 12px;
       top: 36px;
       width: 16px;
       height: 16px;
       opacity: .65;
-      pointer-events:none;
+      pointer-events: none;
     }
 
-    /* Shelf */
+    /* Shelf area */
     .shelf{
       margin-top: 16px;
       background: var(--panel);
@@ -284,18 +315,18 @@
       -webkit-backdrop-filter: blur(10px);
       overflow: hidden;
     }
+
     .shelfHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 10px;
       padding: 14px 14px 12px;
       border-bottom: 1px solid rgba(43,43,43,.08);
-      flex-wrap: wrap;
     }
     .meta{
-      display:flex;
-      align-items:center;
+      display: flex;
+      align-items: center;
       gap: 10px;
       flex-wrap: wrap;
       color: var(--muted);
@@ -306,20 +337,24 @@
       background: rgba(255,255,255,.65);
       padding: 6px 10px;
       border-radius: 999px;
-      display:inline-flex;
-      align-items:center;
+      display: inline-flex;
+      align-items: center;
       gap: 8px;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
     }
 
     .grid{
       padding: 14px;
-      display:grid;
+      display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
     }
-    @media (max-width: 980px){ .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 620px){ .grid{ grid-template-columns: 1fr; } }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 620px){
+      .grid{ grid-template-columns: 1fr; }
+    }
 
     .card{
       background: rgba(255,255,255,.78);
@@ -327,7 +362,7 @@
       border-radius: var(--radius2);
       box-shadow: 0 8px 20px rgba(0,0,0,.06);
       overflow: hidden;
-      display:grid;
+      display: grid;
       grid-template-columns: 54px 1fr;
       min-height: 92px;
       transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
@@ -341,8 +376,8 @@
     .spine{
       background: linear-gradient(180deg, rgba(240,236,231,.95), rgba(226,219,212,.85));
       border-right: 1px solid rgba(43,43,43,.10);
-      display:grid;
-      place-items:center;
+      display: grid;
+      place-items: center;
       position: relative;
     }
     .spine::after{
@@ -359,18 +394,22 @@
       height: 30px;
       border-radius: 10px;
       border: 1px solid rgba(43,43,43,.10);
-      display:grid;
-      place-items:center;
+      display: grid;
+      place-items: center;
       background: rgba(255,255,255,.7);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
       font-size: 15px;
     }
 
-    .content{ padding: 12px 12px 10px; display:grid; gap: 6px; }
+    .content{
+      padding: 12px 12px 10px;
+      display: grid;
+      gap: 6px;
+    }
     .row1{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
       gap: 10px;
     }
     .name{
@@ -385,12 +424,17 @@
       font-size: 12.5px;
       color: var(--muted);
       line-height: 1.25;
-      overflow:hidden;
-      display:-webkit-box;
+      overflow: hidden;
+      display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
     }
-    .tags{ display:flex; flex-wrap:wrap; gap: 6px; margin-top: 2px; }
+    .tags{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
     .tag{
       font-size: 11px;
       color: rgba(43,43,43,.78);
@@ -399,18 +443,22 @@
       padding: 4px 8px;
       border-radius: 999px;
     }
-    .cardActions{ display:flex; align-items:center; gap: 8px; }
+    .cardActions{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     .iconBtn{
-      appearance:none;
+      appearance: none;
       border: 1px solid rgba(43,43,43,.12);
       background: rgba(255,255,255,.7);
       width: 34px;
       height: 34px;
       border-radius: 999px;
       cursor: pointer;
-      display:grid;
-      place-items:center;
+      display: grid;
+      place-items: center;
       transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
     }
@@ -420,20 +468,20 @@
       box-shadow: 0 10px 20px rgba(0,0,0,.08);
     }
     .iconBtn:active{ transform: translateY(0); }
-    .iconBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .iconBtn:focus-visible{
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
     .iconBtn svg{ width: 16px; height: 16px; opacity: .75; }
 
-    .lip{
-      height: 18px;
-      background: linear-gradient(180deg, rgba(212,199,188,.8), rgba(188,171,156,.75));
-      border-top: 1px solid rgba(43,43,43,.12);
-    }
+    /* ✅ REMOVED the bottom colour block: .lip is no longer used */
+    .lip{ display:none; }
 
     .empty{
       padding: 46px 18px 50px;
-      display:grid;
-      place-items:center;
-      text-align:center;
+      display: grid;
+      place-items: center;
+      text-align: center;
       gap: 12px;
       color: var(--muted);
     }
@@ -443,8 +491,8 @@
       border-radius: 18px;
       border: 1px solid rgba(43,43,43,.12);
       background: rgba(255,255,255,.7);
-      display:grid;
-      place-items:center;
+      display: grid;
+      place-items: center;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 12px 30px rgba(0,0,0,.06);
       font-size: 22px;
     }
@@ -473,7 +521,7 @@
       -webkit-backdrop-filter: blur(8px);
       z-index: 50;
     }
-    .modalBackdrop.show{ display:grid; }
+    .modalBackdrop.show{ display: grid; }
 
     .modal{
       width: min(720px, 100%);
@@ -485,29 +533,34 @@
     }
     .modalHead{
       padding: 14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 10px;
       border-bottom: 1px solid rgba(43,43,43,.10);
       background: rgba(255,255,255,.72);
     }
-    .modalHead h3{ margin: 0; font-size: 15px; letter-spacing: -.01em; }
-
+    .modalHead h3{
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: -.01em;
+    }
     .modalBody{
       padding: 14px 16px 16px;
-      display:grid;
+      display: grid;
       gap: 12px;
     }
     .formGrid{
-      display:grid;
+      display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
-    @media (max-width: 700px){ .formGrid{ grid-template-columns: 1fr; } }
+    @media (max-width: 700px){
+      .formGrid{ grid-template-columns: 1fr; }
+    }
 
     .input2, .textarea, .select2{
-      width:100%;
+      width: 100%;
       padding: 12px 12px;
       border-radius: 14px;
       border: 1px solid rgba(43,43,43,.12);
@@ -524,8 +577,10 @@
       box-shadow: 0 0 0 3px rgba(43,43,43,.10);
     }
 
+    .help{ font-size: 12px; color: var(--muted); margin-top: -6px; }
+
     .modalFoot{
-      display:flex;
+      display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
@@ -534,29 +589,28 @@
       background: rgba(255,255,255,.70);
       flex-wrap: wrap;
     }
-    .leftFoot{ display:flex; gap: 10px; align-items:center; flex-wrap: wrap; }
+    .leftFoot{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
     .tiny{ font-size: 12px; color: var(--muted); }
 
-    .sr{
-      position:absolute;
-      width:1px;
-      height:1px;
-      padding:0;
-      margin:-1px;
-      overflow:hidden;
-      clip:rect(0,0,0,0);
-      white-space:nowrap;
-      border:0;
+    a.link{
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(43,43,43,.22);
     }
+    a.link:hover{ border-bottom-color: rgba(43,43,43,.45); }
   </style>
 </head>
-
 <body>
   <div class="wrap">
     <div class="top">
       <div class="title">
         <h1>Resource Vault</h1>
-        <p>A place to keep your links, PDFs, notes, and references. Searchable and taggable!</p>
+        <p>A place to store your links, PDFs, notes, and references. Searchable and taggable!</p>
       </div>
 
       <div class="actions">
@@ -564,12 +618,10 @@
           <span aria-hidden="true">＋</span>
           Add resource
         </button>
-
         <button class="btn" id="exportBtn" type="button" title="Export resources to JSON">
           <span aria-hidden="true">⤓</span>
           Export
         </button>
-
         <button class="btn danger" id="clearBtn" type="button" title="Clear all resources">
           <span aria-hidden="true">✕</span>
           Clear
@@ -577,7 +629,7 @@
 
         <!-- Background settings -->
         <div class="popover" id="bgPopover">
-          <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" aria-haspopup="dialog" aria-expanded="false" title="Background settings">
+          <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
             <span class="bgDot" id="bgDot" aria-hidden="true"></span>
           </button>
 
@@ -606,10 +658,52 @@
             </div>
           </div>
         </div>
+
+        <!-- ✅ NEW: Theme settings (full page colors) -->
+        <div class="popover" id="themePopover">
+          <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+            <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+          </button>
+
+          <div class="bgPanel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <h3>Theme</h3>
+
+            <div class="bgRow">
+              <label for="tBg">Page bg</label>
+              <input class="bgColor" id="tBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="bgRow">
+              <label for="tText">Text</label>
+              <input class="bgColor" id="tText" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="bgRow">
+              <label for="tMuted">Muted</label>
+              <input class="bgColor" id="tMuted" type="color" value="#6f6a63" />
+            </div>
+
+            <div class="bgRow">
+              <label for="tLine">Borders</label>
+              <input class="bgColor" id="tLine" type="color" value="#d9d9d9" />
+            </div>
+
+            <div class="bgRow">
+              <label for="tPanelAlpha">Panel opacity</label>
+              <input class="bgStrength" id="tPanelAlpha" type="range" min="35" max="98" value="65" />
+            </div>
+
+            <div class="bgDivider"></div>
+
+            <div class="bgRow">
+              <button class="bgMiniBtn" id="resetTheme" type="button">Reset theme</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- Wrap ONLY controls + shelf inside widgetBoard -->
     <div class="widgetBoard" id="board">
       <div class="boardTint" id="boardTint"></div>
 
@@ -653,7 +747,7 @@
 
           <div id="contentArea"></div>
 
-          <div class="lip" aria-hidden="true"></div>
+          <!-- removed: <div class="lip"> -->
         </section>
       </div>
     </div>
@@ -724,53 +818,67 @@
   </div>
 
   <script>
-    const LS_KEY = "resource_vault_v1";
-    const BG_KEY = "resource_vault_bg_v1";
+  const LS_KEY = "resource_vault_v1";
+  const BG_KEY = "resource_vault_bg_v1";
 
-    const els = {
-      contentArea: document.getElementById("contentArea"),
-      countPill: document.getElementById("countPill"),
-      tagPill: document.getElementById("tagPill"),
-      filteredMeta: document.getElementById("filteredMeta"),
+  /* ✅ NEW: Theme storage key */
+  const THEME_KEY = "resource_vault_theme_v1";
 
-      search: document.getElementById("search"),
-      tagFilter: document.getElementById("tagFilter"),
-      sortBy: document.getElementById("sortBy"),
+  const els = {
+    contentArea: document.getElementById("contentArea"),
+    countPill: document.getElementById("countPill"),
+    tagPill: document.getElementById("tagPill"),
+    filteredMeta: document.getElementById("filteredMeta"),
 
-      addBtn: document.getElementById("addBtn"),
-      exportBtn: document.getElementById("exportBtn"),
-      clearBtn: document.getElementById("clearBtn"),
+    search: document.getElementById("search"),
+    tagFilter: document.getElementById("tagFilter"),
+    sortBy: document.getElementById("sortBy"),
 
-      modalBackdrop: document.getElementById("modalBackdrop"),
-      closeModalBtn: document.getElementById("closeModalBtn"),
-      cancelBtn: document.getElementById("cancelBtn"),
+    addBtn: document.getElementById("addBtn"),
+    exportBtn: document.getElementById("exportBtn"),
+    clearBtn: document.getElementById("clearBtn"),
 
-      resourceForm: document.getElementById("resourceForm"),
-      editId: document.getElementById("editId"),
-      modalTitle: document.getElementById("modalTitle"),
-      rTitle: document.getElementById("rTitle"),
-      rType: document.getElementById("rType"),
-      rUrl: document.getElementById("rUrl"),
-      rTags: document.getElementById("rTags"),
-      rDesc: document.getElementById("rDesc"),
-      saveBtn: document.getElementById("saveBtn"),
+    modalBackdrop: document.getElementById("modalBackdrop"),
+    closeModalBtn: document.getElementById("closeModalBtn"),
+    cancelBtn: document.getElementById("cancelBtn"),
 
-      board: document.getElementById("board"),
-      boardTint: document.getElementById("boardTint"),
-      bgBtn: document.getElementById("bgBtn"),
-      bgPanel: document.getElementById("bgPanel"),
-      bgColor: document.getElementById("bgColor"),
-      bgStrength: document.getElementById("bgStrength"),
-      bgImage: document.getElementById("bgImage"),
-      removeImage: document.getElementById("removeImage"),
-      bgDot: document.getElementById("bgDot"),
-      bgPopover: document.getElementById("bgPopover"),
-    };
+    resourceForm: document.getElementById("resourceForm"),
+    editId: document.getElementById("editId"),
+    modalTitle: document.getElementById("modalTitle"),
+    rTitle: document.getElementById("rTitle"),
+    rType: document.getElementById("rType"),
+    rUrl: document.getElementById("rUrl"),
+    rTags: document.getElementById("rTags"),
+    rDesc: document.getElementById("rDesc"),
+    saveBtn: document.getElementById("saveBtn"),
+    seedDemo: document.getElementById("seedDemo"),
 
-    // ---- Utils ----
-    const nowISO = () => new Date().toISOString();
+    board: document.getElementById("board"),
+    boardTint: document.getElementById("boardTint"),
+    bgBtn: document.getElementById("bgBtn"),
+    bgPanel: document.getElementById("bgPanel"),
+    bgColor: document.getElementById("bgColor"),
+    bgStrength: document.getElementById("bgStrength"),
+    bgImage: document.getElementById("bgImage"),
+    removeImage: document.getElementById("removeImage"),
+    bgDot: document.getElementById("bgDot"),
+    bgPopover: document.getElementById("bgPopover"),
 
-    const typeIcon = (type) => ({
+    /* ✅ NEW theme panel refs */
+    themeBtn: document.getElementById("themeBtn"),
+    themePanel: document.getElementById("themePanel"),
+    themePopover: document.getElementById("themePopover"),
+    themeDot: document.getElementById("themeDot"),
+    tBg: document.getElementById("tBg"),
+    tText: document.getElementById("tText"),
+    tMuted: document.getElementById("tMuted"),
+    tLine: document.getElementById("tLine"),
+    tPanelAlpha: document.getElementById("tPanelAlpha"),
+    resetTheme: document.getElementById("resetTheme"),
+  };
+
+  const typeIcon = (type) => {
+    const map = {
       link: "↗",
       paper: "⟡",
       lecture: "▷",
@@ -778,600 +886,623 @@
       book: "⌁",
       tool: "✶",
       note: "✎",
-      other: "◻",
-    }[type] || "◻");
-
-    const escapeHtml = (s) =>
-      String(s ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-
-    const safeUrl = (url) => {
-      try {
-        if (!url) return "";
-        const u = new URL(url);
-        // allow only http(s)
-        if (!/^https?:$/.test(u.protocol)) return "";
-        return u.toString();
-      } catch {
-        return "";
-      }
+      other: "◻"
     };
+    return map[type] || "◻";
+  };
 
-    const normalizeTags = (raw) => {
-      if (!raw) return [];
-      const parts = raw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-      return [...new Set(parts)].slice(0, 12);
-    };
+  const escapeHtml = (s) =>
+    String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
 
-    const normalizeHex = (hex) => {
-      if (!hex) return "#efe7e1";
-      const s = String(hex).trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
-      return "#efe7e1";
-    };
+  const safeUrl = (url) => {
+    try {
+      if (!url) return "";
+      const u = new URL(url);
+      return u.toString();
+    } catch {
+      return "";
+    }
+  };
 
-    const hexToRgb = (hex) => {
-      const h = normalizeHex(hex).slice(1);
-      return {
-        r: parseInt(h.slice(0,2), 16),
-        g: parseInt(h.slice(2,4), 16),
-        b: parseInt(h.slice(4,6), 16),
-      };
-    };
+  const normalizeTags = (raw) => {
+    if (!raw) return [];
+    const parts = raw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    return [...new Set(parts)].slice(0, 12);
+  };
 
-    const hexToRgba = (hex, a) => {
-      const { r, g, b } = hexToRgb(hex);
-      return `rgba(${r},${g},${b},${a})`;
-    };
+  const nowISO = () => new Date().toISOString();
 
-    const fileToDataUrl = (file) =>
-      new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
+  // ---------- Storage ----------
+  const save = (items) => {
+    const data = JSON.stringify(items);
+    try { localStorage.setItem(LS_KEY, data); return; } catch {}
+    try { sessionStorage.setItem(LS_KEY, data); return; } catch {}
+    console.warn("Storage unavailable in this embed.");
+  };
 
-    // ---- Storage (embed-safe) ----
-    const save = (items) => {
-      const data = JSON.stringify(items);
-      try { localStorage.setItem(LS_KEY, data); return; } catch {}
-      try { sessionStorage.setItem(LS_KEY, data); return; } catch {}
-      console.warn("Storage unavailable in this embed.");
-    };
+  const load = () => {
+    try { const raw = localStorage.getItem(LS_KEY); if (raw) return JSON.parse(raw); } catch {}
+    try { const raw = sessionStorage.getItem(LS_KEY); if (raw) return JSON.parse(raw); } catch {}
+    return [];
+  };
 
-    const load = () => {
-      try {
-        const raw = localStorage.getItem(LS_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch {}
-      try {
-        const raw = sessionStorage.getItem(LS_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch {}
-      return [];
-    };
+  const loadBg = () => {
+    try{
+      const raw = localStorage.getItem(BG_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  };
+  const saveBg = (bg) => { try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{} };
 
-    const loadBg = () => {
-      try{
-        const raw = localStorage.getItem(BG_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
-    };
+  /* ✅ NEW: Theme load/save */
+  const loadTheme = () => {
+    try{
+      const raw = localStorage.getItem(THEME_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  };
+  const saveTheme = (t) => { try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{} };
 
-    const saveBg = (bg) => {
-      try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-    };
+  const normalizeHex = (hex) => {
+    if (!hex) return "#efe7e1";
+    const s = String(hex).trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+    return "#efe7e1";
+  };
+  const hexToRgb = (hex) => {
+    const h = normalizeHex(hex).slice(1);
+    return { r: parseInt(h.slice(0,2), 16), g: parseInt(h.slice(2,4), 16), b: parseInt(h.slice(4,6), 16) };
+  };
+  const hexToRgba = (hex, a) => {
+    const { r, g, b } = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  };
 
-    const setBoardImage = (dataUrlOrNull) => {
-      document.documentElement.style.setProperty(
-        "--board-image",
-        dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none"
-      );
-    };
+  const setBoardImage = (dataUrlOrNull) => {
+    document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+  };
 
-    const applyBoardTint = (colorHex, strengthPct) => {
-      const tint = normalizeHex(colorHex);
-      const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
+  const applyBoardTint = (colorHex, strengthPct) => {
+    const tint = normalizeHex(colorHex);
+    const strength = Number(strengthPct) / 100;
 
-      document.documentElement.style.setProperty("--board-tint", tint);
-      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
-      els.bgDot.style.background = tint;
-      els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.1))}`;
+    els.bgDot.style.background = tint;
+    els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.1))}`;
 
-      els.boardTint.style.background = hexToRgba(tint, strength);
-    };
+    els.boardTint.style.background = hexToRgba(tint, strength);
+  };
 
-    const applyBgFromStore = () => {
-      const bg = loadBg();
-      const tint = bg?.tint ?? "#efe7e1";
-      const strength = bg?.strength ?? 35;
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
 
-      els.bgColor.value = tint;
-      els.bgStrength.value = String(strength);
+  const applyBgFromStore = () => {
+    const bg = loadBg();
+    const tint = bg?.tint ?? "#efe7e1";
+    const strength = bg?.strength ?? 35;
 
-      applyBoardTint(tint, strength);
-      setBoardImage(bg?.imageDataUrl ?? null);
-    };
+    els.bgColor.value = tint;
+    els.bgStrength.value = String(strength);
 
-    // ---- State ----
-    let items = Array.isArray(load()) ? load() : [];
+    applyBoardTint(tint, strength);
+    setBoardImage(bg?.imageDataUrl ?? null);
+  };
 
-    let state = {
-      q: "",
-      tag: "",
-      sort: "updated_desc",
-    };
+  /* ✅ NEW: Theme application (changes “anything and everything” via CSS vars) */
+  const DEFAULT_THEME = {
+    bg: "#ffffff",
+    text: "#2b2b2b",
+    muted: "#6f6a63",
+    line: "#d9d9d9",     // UI picker uses solid; CSS still uses rgba for some places
+    panelAlpha: 65,      // 35–98
+  };
 
-    // ---- In-page confirm (works in sandboxed iframes) ----
-    const askConfirm = (message, { okText="Confirm", cancelText="Cancel", danger=false } = {}) =>
-      new Promise((resolve) => {
-        const wrap = document.createElement("div");
-        wrap.style.position = "fixed";
-        wrap.style.inset = "0";
-        wrap.style.zIndex = "9999";
-        wrap.style.display = "grid";
-        wrap.style.placeItems = "center";
-        wrap.style.padding = "18px";
-        wrap.style.background = "rgba(20,18,16,.35)";
-        wrap.style.backdropFilter = "blur(8px)";
-        wrap.style.webkitBackdropFilter = "blur(8px)";
+  const applyTheme = (t) => {
+    const theme = { ...DEFAULT_THEME, ...(t || {}) };
 
-        wrap.innerHTML = `
-          <div style="
-            width:min(520px,100%);
-            background:rgba(255,255,255,.92);
-            border:1px solid rgba(43,43,43,.14);
-            border-radius:20px;
-            box-shadow:0 12px 40px rgba(0,0,0,.12);
-            overflow:hidden;">
-            <div style="padding:14px 16px;border-bottom:1px solid rgba(43,43,43,.10);font-weight:650;">
-              Confirm
-            </div>
-            <div style="padding:14px 16px;color:rgba(43,43,43,.92);line-height:1.45;">
-              ${escapeHtml(message)}
-            </div>
-            <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
-              padding:12px 16px;border-top:1px solid rgba(43,43,43,.10);">
-              <button class="btn" type="button" id="cnlBtn">${escapeHtml(cancelText)}</button>
-              <button class="btn ${danger ? "danger" : "primary"}" type="button" id="okBtn">${escapeHtml(okText)}</button>
-            </div>
+    const bg = normalizeHex(theme.bg);
+    const text = normalizeHex(theme.text);
+    const muted = normalizeHex(theme.muted);
+    const line = normalizeHex(theme.line);
+    const panelA = Math.max(0.35, Math.min(0.98, Number(theme.panelAlpha)/100));
+
+    // Update vars
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.setProperty("--text", text);
+    document.documentElement.style.setProperty("--muted", muted);
+    document.documentElement.style.setProperty("--line", hexToRgba(line, 0.40));   // used broadly
+    document.documentElement.style.setProperty("--focus", hexToRgba(text, 0.22));
+
+    // Panels: keep your “glassy” look but controllable
+    document.documentElement.style.setProperty("--panel", `rgba(255,255,255,${panelA})`);
+    document.documentElement.style.setProperty("--panel2", `rgba(255,255,255,${Math.min(0.98, panelA + 0.17)})`);
+
+    // Sync UI controls
+    els.tBg.value = bg;
+    els.tText.value = text;
+    els.tMuted.value = muted;
+    els.tLine.value = line;
+    els.tPanelAlpha.value = String(Math.round(panelA * 100));
+
+    // Dot preview
+    els.themeDot.style.background = text;
+    els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(muted, 0.18)}`;
+  };
+
+  const applyThemeFromStore = () => {
+    const t = loadTheme() || DEFAULT_THEME;
+    applyTheme(t);
+  };
+
+  let items = load();
+
+  // UI state
+  let state = { q: "", tag: "", sort: "updated_desc" };
+
+  // ---------- In-page confirm ----------
+  const askConfirm = (message, { okText = "Confirm", cancelText = "Cancel", danger = false } = {}) =>
+    new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.style.position = "fixed";
+      wrap.style.inset = "0";
+      wrap.style.zIndex = "9999";
+      wrap.style.display = "grid";
+      wrap.style.placeItems = "center";
+      wrap.style.padding = "18px";
+      wrap.style.background = "rgba(20,18,16,.35)";
+      wrap.style.backdropFilter = "blur(8px)";
+      wrap.style.webkitBackdropFilter = "blur(8px)";
+
+      wrap.innerHTML = `
+        <div style="
+          width:min(520px,100%);
+          background:rgba(255,255,255,.92);
+          border:1px solid rgba(43,43,43,.14);
+          border-radius:20px;
+          box-shadow:0 12px 40px rgba(0,0,0,.12);
+          overflow:hidden;">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(43,43,43,.10);font-weight:650;">
+            Confirm
           </div>
-        `;
-
-        const cleanup = (val) => {
-          document.removeEventListener("keydown", onKey);
-          wrap.remove();
-          resolve(val);
-        };
-
-        const onKey = (e) => { if (e.key === "Escape") cleanup(false); };
-
-        wrap.addEventListener("click", (e) => {
-          if (e.target === wrap) cleanup(false);
-        });
-
-        document.body.appendChild(wrap);
-        document.addEventListener("keydown", onKey);
-
-        wrap.querySelector("#cnlBtn").addEventListener("click", () => cleanup(false));
-        wrap.querySelector("#okBtn").addEventListener("click", () => cleanup(true));
-        setTimeout(() => wrap.querySelector("#okBtn").focus(), 0);
-      });
-
-    // ---- Rendering ----
-    const buildTagOptions = (allItems) => {
-      const tagSet = new Set();
-      allItems.forEach(it => (it.tags || []).forEach(t => tagSet.add(t)));
-      const tags = [...tagSet].sort((a,b) => a.localeCompare(b));
-
-      const selected = els.tagFilter.value;
-
-      els.tagFilter.innerHTML =
-        `<option value="">All tags</option>` +
-        tags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
-
-      if ([...els.tagFilter.options].some(o => o.value === selected)) els.tagFilter.value = selected;
-
-      els.tagPill.textContent = `${tags.length} tag${tags.length === 1 ? "" : "s"}`;
-    };
-
-    const matches = (it, q) => {
-      if (!q) return true;
-      const hay = [
-        it.title,
-        it.type,
-        it.url,
-        it.description,
-        ...(it.tags || []),
-      ].join(" ").toLowerCase();
-      return hay.includes(q.toLowerCase());
-    };
-
-    const applyFilters = (allItems) => {
-      const q = state.q.trim();
-      const tag = state.tag;
-
-      let out = allItems.filter(it => matches(it, q));
-      if (tag) out = out.filter(it => (it.tags || []).includes(tag));
-
-      out.sort((a,b) => {
-        switch(state.sort){
-          case "title_asc": return (a.title || "").localeCompare(b.title || "");
-          case "type_asc": return (a.type || "").localeCompare(b.type || "");
-          case "created_desc": return (b.createdAt || "").localeCompare(a.createdAt || "");
-          case "updated_desc":
-          default: return (b.updatedAt || "").localeCompare(a.updatedAt || "");
-        }
-      });
-
-      return out;
-    };
-
-    const cardHtml = (it) => {
-      const url = it.url ? it.url : "";
-      const urlHost = url ? (() => { try { return new URL(url).host; } catch { return ""; } })() : "";
-      const desc = it.description ? it.description : (urlHost ? urlHost : "—");
-      const tags = (it.tags || []).slice(0, 6);
-
-      const openDisabled = !url;
-      const openAttrs = openDisabled
-        ? `disabled aria-disabled="true" title="No URL" style="opacity:.5;cursor:not-allowed;"`
-        : `title="Open link"`;
-
-      return `
-        <article class="card" aria-label="${escapeHtml(it.title)}">
-          <div class="spine" aria-hidden="true">
-            <div class="badge" title="${escapeHtml(it.type)}">${escapeHtml(typeIcon(it.type))}</div>
+          <div style="padding:14px 16px;color:rgba(43,43,43,.92);line-height:1.45;">
+            ${escapeHtml(message)}
           </div>
-          <div class="content">
-            <div class="row1">
-              <div style="min-width:0;">
-                <p class="name">${escapeHtml(it.title)}</p>
-                <p class="sub">${escapeHtml(desc)}</p>
-              </div>
-
-              <div class="cardActions">
-                <button class="iconBtn" type="button" id="open_${it.id}" aria-label="Open" ${openAttrs}>
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M10 8h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M10 14 16 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M8 10v8a2 2 0 0 0 2 2h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                </button>
-
-                <button class="iconBtn" type="button" id="edit_${it.id}" aria-label="Edit" title="Edit">
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M4 20h4l10.5-10.5a1.8 1.8 0 0 0 0-2.5l-1.5-1.5a1.8 1.8 0 0 0-2.5 0L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                    <path d="M13.5 6.5 17.5 10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                  </svg>
-                </button>
-
-                <button class="iconBtn" type="button" id="del_${it.id}" aria-label="Delete" title="Delete">
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M6 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="tags" aria-label="Tags">
-              ${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
-              ${it.tags && it.tags.length > tags.length ? `<span class="tag">+${it.tags.length - tags.length}</span>` : ""}
-            </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+            padding:12px 16px;border-top:1px solid rgba(43,43,43,.10);">
+            <button class="btn" type="button" id="cnlBtn">${escapeHtml(cancelText)}</button>
+            <button class="btn ${danger ? "danger" : "primary"}" type="button" id="okBtn">${escapeHtml(okText)}</button>
           </div>
-        </article>
-      `;
-    };
-
-    const render = () => {
-      buildTagOptions(items);
-
-      const filtered = applyFilters(items);
-      els.countPill.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
-
-      const parts = [];
-      if (state.q) parts.push(`Search: “${state.q}”`);
-      if (state.tag) parts.push(`Tag: ${state.tag}`);
-      els.filteredMeta.textContent = parts.length
-        ? `${filtered.length} match${filtered.length === 1 ? "" : "es"} · ${parts.join(" · ")}`
-        : `${filtered.length} shown`;
-
-      if (items.length === 0){
-        els.contentArea.innerHTML = `
-          <div class="empty">
-            <div class="big" aria-hidden="true">▢</div>
-            <h2>Your shelf is empty</h2>
-            <p>Add links, papers, lecture notes, datasets—anything you want to find again instantly.</p>
-            <button class="btn primary" type="button" id="emptyAddBtn">＋ Add your first resource</button>
-          </div>
-        `;
-        document.getElementById("emptyAddBtn").addEventListener("click", openAddModal);
-        return;
-      }
-
-      if (filtered.length === 0){
-        els.contentArea.innerHTML = `
-          <div class="empty">
-            <div class="big" aria-hidden="true">⌕</div>
-            <h2>No matches</h2>
-            <p>Try a different search, clear the tag filter, or add a new resource.</p>
-            <button class="btn" type="button" id="clearFiltersBtn">Clear filters</button>
-          </div>
-        `;
-        document.getElementById("clearFiltersBtn").addEventListener("click", () => {
-          state.q = "";
-          state.tag = "";
-          els.search.value = "";
-          els.tagFilter.value = "";
-          render();
-        });
-        return;
-      }
-
-      els.contentArea.innerHTML = `
-        <div class="grid">
-          ${filtered.map(cardHtml).join("")}
         </div>
       `;
 
-      filtered.forEach(it => {
-        const edit = document.getElementById(`edit_${it.id}`);
-        const del = document.getElementById(`del_${it.id}`);
-        const open = document.getElementById(`open_${it.id}`);
-
-        if (edit) edit.addEventListener("click", () => openEditModal(it.id));
-        if (del) del.addEventListener("click", () => deleteItem(it.id));
-        if (open) open.addEventListener("click", () => {
-          if (it.url) window.open(it.url, "_blank", "noopener,noreferrer");
-        });
-      });
-    };
-
-    // ---- CRUD ----
-    const upsertItem = (payload) => {
-      const idx = items.findIndex(x => x.id === payload.id);
-      if (idx >= 0) items[idx] = payload;
-      else items.unshift(payload);
-      save(items);
-      render();
-    };
-
-    const deleteItem = async (id) => {
-      const it = items.find(x => x.id === id);
-      const name = it ? it.title : "this item";
-
-      const ok = await askConfirm(`Delete "${name}"?`, { okText: "Delete", cancelText: "Cancel", danger: true });
-      if (!ok) return;
-
-      items = items.filter(x => x.id !== id);
-      save(items);
-      render();
-    };
-
-    const clearAll = async () => {
-      if (!items.length) return;
-
-      const ok = await askConfirm("Clear all resources? This cannot be undone.", {
-        okText: "Yes, clear",
-        cancelText: "Cancel",
-        danger: true
-      });
-      if (!ok) return;
-
-      items = [];
-      save(items);
-      render();
-    };
-
-    const exportJson = () => {
-      const data = JSON.stringify(items, null, 2);
-      const blob = new Blob([data], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "resource-vault.json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    };
-
-    // ---- Modal ----
-    let lastFocusEl = null;
-
-    const openModal = () => {
-      lastFocusEl = document.activeElement;
-      els.modalBackdrop.classList.add("show");
-      setTimeout(() => els.rTitle.focus(), 0);
-      document.addEventListener("keydown", onModalKeydown);
-    };
-
-    const closeModal = () => {
-      els.modalBackdrop.classList.remove("show");
-      document.removeEventListener("keydown", onModalKeydown);
-      if (lastFocusEl && typeof lastFocusEl.focus === "function") lastFocusEl.focus();
-      resetForm();
-    };
-
-    const onModalKeydown = (e) => {
-      if (e.key === "Escape") closeModal();
-      if (e.key === "Tab"){
-        const focusables = els.modalBackdrop.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        const list = [...focusables].filter(x => !x.disabled && x.offsetParent !== null);
-        if (!list.length) return;
-
-        const first = list[0];
-        const last = list[list.length - 1];
-        if (e.shiftKey && document.activeElement === first){
-          e.preventDefault(); last.focus();
-        } else if (!e.shiftKey && document.activeElement === last){
-          e.preventDefault(); first.focus();
-        }
-      }
-    };
-
-    const resetForm = () => {
-      els.editId.value = "";
-      els.modalTitle.textContent = "Add resource";
-      els.saveBtn.textContent = "Save";
-      els.rTitle.value = "";
-      els.rType.value = "link";
-      els.rUrl.value = "";
-      els.rTags.value = "";
-      els.rDesc.value = "";
-    };
-
-    const openAddModal = () => {
-      resetForm();
-      openModal();
-    };
-
-    const openEditModal = (id) => {
-      const it = items.find(x => x.id === id);
-      if (!it) return;
-
-      els.editId.value = it.id;
-      els.modalTitle.textContent = "Edit resource";
-      els.saveBtn.textContent = "Update";
-
-      els.rTitle.value = it.title || "";
-      els.rType.value = it.type || "link";
-      els.rUrl.value = it.url || "";
-      els.rTags.value = (it.tags || []).join(", ");
-      els.rDesc.value = it.description || "";
-
-      openModal();
-    };
-
-    // ---- Events ----
-    els.addBtn.addEventListener("click", openAddModal);
-    els.exportBtn.addEventListener("click", exportJson);
-    els.clearBtn.addEventListener("click", clearAll);
-
-    els.closeModalBtn.addEventListener("click", closeModal);
-    els.cancelBtn.addEventListener("click", closeModal);
-    els.modalBackdrop.addEventListener("click", (e) => {
-      if (e.target === els.modalBackdrop) closeModal();
-    });
-
-    els.resourceForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const title = els.rTitle.value.trim();
-      const type = els.rType.value;
-      const url = safeUrl(els.rUrl.value.trim());
-      const tags = normalizeTags(els.rTags.value);
-      const description = els.rDesc.value.trim();
-
-      if (!title) return;
-
-      const id = els.editId.value || crypto.randomUUID();
-      const existing = items.find(x => x.id === id);
-
-      const payload = {
-        id,
-        title,
-        type,
-        url,
-        tags,
-        description,
-        createdAt: existing ? existing.createdAt : nowISO(),
-        updatedAt: nowISO(),
+      const cleanup = (val) => {
+        document.removeEventListener("keydown", onKey);
+        wrap.remove();
+        resolve(val);
       };
 
-      upsertItem(payload);
-      closeModal();
+      const onKey = (e) => { if (e.key === "Escape") cleanup(false); };
+
+      wrap.addEventListener("click", (e) => { if (e.target === wrap) cleanup(false); });
+
+      document.body.appendChild(wrap);
+      document.addEventListener("keydown", onKey);
+
+      wrap.querySelector("#cnlBtn").addEventListener("click", () => cleanup(false));
+      wrap.querySelector("#okBtn").addEventListener("click", () => cleanup(true));
     });
 
-    els.search.addEventListener("input", () => { state.q = els.search.value; render(); });
-    els.tagFilter.addEventListener("change", () => { state.tag = els.tagFilter.value; render(); });
-    els.sortBy.addEventListener("change", () => { state.sort = els.sortBy.value; render(); });
+  // -------- Rendering --------
+  const buildTagOptions = (allItems) => {
+    const tagSet = new Set();
+    allItems.forEach(it => (it.tags || []).forEach(t => tagSet.add(t)));
+    const tags = [...tagSet].sort((a,b) => a.localeCompare(b));
 
-    document.addEventListener("keydown", (e) => {
-      if (els.modalBackdrop.classList.contains("show")) return;
-      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey){
-        const active = document.activeElement;
-        const typing = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
-        if (!typing){
-          e.preventDefault();
-          els.search.focus();
-        }
-      }
-      // close background panel with Escape for keyboard users
-      if (e.key === "Escape" && els.bgPanel.classList.contains("open")){
-        els.bgPanel.classList.remove("open");
-        els.bgBtn.setAttribute("aria-expanded", "false");
+    const selected = els.tagFilter.value;
+
+    els.tagFilter.innerHTML = `<option value="">All tags</option>` +
+      tags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+
+    if ([...els.tagFilter.options].some(o => o.value === selected)) els.tagFilter.value = selected;
+
+    els.tagPill.textContent = `${tags.length} tag${tags.length === 1 ? "" : "s"}`;
+  };
+
+  const matches = (it, q) => {
+    if (!q) return true;
+    const hay = [it.title, it.type, it.url, it.description, ...(it.tags || [])].join(" ").toLowerCase();
+    return hay.includes(q.toLowerCase());
+  };
+
+  const applyFilters = (allItems) => {
+    const q = state.q.trim();
+    const tag = state.tag;
+
+    let out = allItems.filter(it => matches(it, q));
+    if (tag) out = out.filter(it => (it.tags || []).includes(tag));
+
+    out.sort((a,b) => {
+      switch(state.sort){
+        case "title_asc": return (a.title || "").localeCompare(b.title || "");
+        case "type_asc": return (a.type || "").localeCompare(b.type || "");
+        case "created_desc": return (b.createdAt || "").localeCompare(a.createdAt || "");
+        case "updated_desc":
+        default: return (b.updatedAt || "").localeCompare(a.updatedAt || "");
       }
     });
 
-    // ---- Background controls ----
-    const setBgPanelOpen = (open) => {
-      els.bgPanel.classList.toggle("open", open);
-      els.bgBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    return out;
+  };
+
+  const cardHtml = (it) => {
+    const url = it.url ? it.url : "";
+    const urlHost = url ? (() => { try { return new URL(url).host; } catch { return ""; } })() : "";
+    const desc = it.description ? it.description : (urlHost ? urlHost : "—");
+    const tags = (it.tags || []).slice(0, 6);
+
+    return `
+      <article class="card" aria-label="${escapeHtml(it.title)}">
+        <div class="spine" aria-hidden="true">
+          <div class="badge" title="${escapeHtml(it.type)}">${escapeHtml(typeIcon(it.type))}</div>
+        </div>
+        <div class="content">
+          <div class="row1">
+            <div style="min-width:0;">
+              <p class="name">${escapeHtml(it.title)}</p>
+              <p class="sub">${escapeHtml(desc)}</p>
+            </div>
+            <div class="cardActions">
+              <button class="iconBtn" type="button" id="open_${it.id}" aria-label="Open" ${url ? "" : "disabled"} title="${url ? "Open link" : "No URL"}" style="${url ? "" : "opacity:.5;cursor:not-allowed;"}">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M10 8h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M10 14 16 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M8 10v8a2 2 0 0 0 2 2h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="iconBtn" type="button" id="edit_${it.id}" aria-label="Edit" title="Edit">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 20h4l10.5-10.5a1.8 1.8 0 0 0 0-2.5l-1.5-1.5a1.8 1.8 0 0 0-2.5 0L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M13.5 6.5 17.5 10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="iconBtn" type="button" id="del_${it.id}" aria-label="Delete" title="Delete">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="tags" aria-label="Tags">
+            ${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
+            ${it.tags && it.tags.length > tags.length ? `<span class="tag">+${it.tags.length - tags.length}</span>` : ""}
+          </div>
+        </div>
+      </article>
+    `;
+  };
+
+  const render = () => {
+    buildTagOptions(items);
+    const filtered = applyFilters(items);
+
+    els.countPill.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
+
+    const parts = [];
+    if (state.q) parts.push(`Search: “${state.q}”`);
+    if (state.tag) parts.push(`Tag: ${state.tag}`);
+    els.filteredMeta.textContent = parts.length
+      ? `${filtered.length} match${filtered.length === 1 ? "" : "es"} · ` + parts.join(" · ")
+      : `${filtered.length} shown`;
+
+    if (items.length === 0){
+      els.contentArea.innerHTML = `
+        <div class="empty">
+          <div class="big" aria-hidden="true">▢</div>
+          <h2>Your shelf is empty</h2>
+          <p>Add links, papers, lecture notes, datasets—anything you want to find again instantly.</p>
+          <button class="btn primary" type="button" id="emptyAddBtn">＋ Add your first resource</button>
+        </div>
+      `;
+      document.getElementById("emptyAddBtn").addEventListener("click", openAddModal);
+      return;
+    }
+
+    if (filtered.length === 0){
+      els.contentArea.innerHTML = `
+        <div class="empty">
+          <div class="big" aria-hidden="true">⌕</div>
+          <h2>No matches</h2>
+          <p>Try a different search, clear the tag filter, or add a new resource.</p>
+          <button class="btn" type="button" id="clearFiltersBtn">Clear filters</button>
+        </div>
+      `;
+      document.getElementById("clearFiltersBtn").addEventListener("click", () => {
+        state.q = "";
+        state.tag = "";
+        els.search.value = "";
+        els.tagFilter.value = "";
+        render();
+      });
+      return;
+    }
+
+    els.contentArea.innerHTML = `
+      <div class="grid">
+        ${filtered.map(cardHtml).join("")}
+      </div>
+    `;
+
+    filtered.forEach(it => {
+      const edit = document.getElementById(`edit_${it.id}`);
+      const del = document.getElementById(`del_${it.id}`);
+      const open = document.getElementById(`open_${it.id}`);
+
+      if (edit) edit.addEventListener("click", () => openEditModal(it.id));
+      if (del) del.addEventListener("click", () => deleteItem(it.id));
+      if (open) open.addEventListener("click", () => { if (it.url) window.open(it.url, "_blank", "noopener,noreferrer"); });
+    });
+  };
+
+  // -------- CRUD --------
+  const upsertItem = (payload) => {
+    const idx = items.findIndex(x => x.id === payload.id);
+    if (idx >= 0) items[idx] = payload;
+    else items.unshift(payload);
+    save(items);
+    render();
+  };
+
+  const deleteItem = async (id) => {
+    const it = items.find(x => x.id === id);
+    const name = it ? it.title : "this item";
+
+    const ok = await askConfirm(`Delete "${name}"?`, { okText: "Delete", cancelText: "Cancel", danger: true });
+    if (!ok) return;
+
+    items = items.filter(x => x.id !== id);
+    save(items);
+    render();
+  };
+
+  const clearAll = async () => {
+    if (!items.length) return;
+
+    const ok = await askConfirm("Clear all resources? This cannot be undone.", {
+      okText: "Yes, clear",
+      cancelText: "Cancel",
+      danger: true
+    });
+    if (!ok) return;
+
+    items = [];
+    save(items);
+    render();
+  };
+
+  const exportJson = () => {
+    const data = JSON.stringify(items, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "resource-vault.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  // -------- Modal --------
+  let lastFocusEl = null;
+
+  const openModal = () => {
+    lastFocusEl = document.activeElement;
+    els.modalBackdrop.classList.add("show");
+    setTimeout(() => els.rTitle.focus(), 0);
+    document.addEventListener("keydown", onModalKeydown);
+  };
+
+  const closeModal = () => {
+    els.modalBackdrop.classList.remove("show");
+    document.removeEventListener("keydown", onModalKeydown);
+    if (lastFocusEl && typeof lastFocusEl.focus === "function") lastFocusEl.focus();
+    resetForm();
+  };
+
+  const onModalKeydown = (e) => {
+    if (e.key === "Escape") closeModal();
+    if (e.key === "Tab"){
+      const focusables = els.modalBackdrop.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const list = [...focusables].filter(x => !x.disabled && x.offsetParent !== null);
+      if (!list.length) return;
+
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first){
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last){
+        e.preventDefault(); first.focus();
+      }
+    }
+  };
+
+  const resetForm = () => {
+    els.editId.value = "";
+    els.modalTitle.textContent = "Add resource";
+    els.saveBtn.textContent = "Save";
+    els.rTitle.value = "";
+    els.rType.value = "link";
+    els.rUrl.value = "";
+    els.rTags.value = "";
+    els.rDesc.value = "";
+  };
+
+  const openAddModal = () => { resetForm(); openModal(); };
+
+  const openEditModal = (id) => {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+
+    els.editId.value = it.id;
+    els.modalTitle.textContent = "Edit resource";
+    els.saveBtn.textContent = "Update";
+
+    els.rTitle.value = it.title || "";
+    els.rType.value = it.type || "link";
+    els.rUrl.value = it.url || "";
+    els.rTags.value = (it.tags || []).join(", ");
+    els.rDesc.value = it.description || "";
+
+    openModal();
+  };
+
+  // -------- Events --------
+  els.addBtn.addEventListener("click", openAddModal);
+  els.exportBtn.addEventListener("click", exportJson);
+  els.clearBtn.addEventListener("click", clearAll);
+
+  els.closeModalBtn.addEventListener("click", closeModal);
+  els.cancelBtn.addEventListener("click", closeModal);
+  els.modalBackdrop.addEventListener("click", (e) => { if (e.target === els.modalBackdrop) closeModal(); });
+
+  els.resourceForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const title = els.rTitle.value.trim();
+    const type = els.rType.value;
+    const url = safeUrl(els.rUrl.value.trim());
+    const tags = normalizeTags(els.rTags.value);
+    const description = els.rDesc.value.trim();
+    if (!title) return;
+
+    const id = els.editId.value || crypto.randomUUID();
+    const existing = items.find(x => x.id === id);
+
+    const payload = {
+      id, title, type, url, tags, description,
+      createdAt: existing ? existing.createdAt : nowISO(),
+      updatedAt: nowISO(),
     };
 
-    els.bgBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      setBgPanelOpen(!els.bgPanel.classList.contains("open"));
-    });
+    upsertItem(payload);
+    closeModal();
+  });
 
-    document.addEventListener("click", (e) => {
-      if (!els.bgPanel.classList.contains("open")) return;
-      if (!els.bgPopover.contains(e.target)) setBgPanelOpen(false);
-    });
+  els.search.addEventListener("input", () => { state.q = els.search.value; render(); });
+  els.tagFilter.addEventListener("change", () => { state.tag = els.tagFilter.value; render(); });
+  els.sortBy.addEventListener("change", () => { state.sort = els.sortBy.value; render(); });
 
-    els.bgColor.addEventListener("input", () => {
-      applyBoardTint(els.bgColor.value, els.bgStrength.value);
-      const bg = loadBg() || {};
-      bg.tint = els.bgColor.value;
-      bg.strength = Number(els.bgStrength.value);
-      saveBg(bg);
-    });
+  document.addEventListener("keydown", (e) => {
+    if (els.modalBackdrop.classList.contains("show")) return;
+    if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey){
+      const active = document.activeElement;
+      const typing = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+      if (!typing){
+        e.preventDefault();
+        els.search.focus();
+      }
+    }
+  });
 
-    els.bgStrength.addEventListener("input", () => {
-      applyBoardTint(els.bgColor.value, els.bgStrength.value);
-      const bg = loadBg() || {};
-      bg.tint = els.bgColor.value;
-      bg.strength = Number(els.bgStrength.value);
-      saveBg(bg);
-    });
+  // -------- Background controls --------
+  els.bgBtn.addEventListener("click", (e) => { e.stopPropagation(); els.bgPanel.classList.toggle("open"); });
 
-    els.bgImage.addEventListener("change", async () => {
-      const file = els.bgImage.files && els.bgImage.files[0];
-      if (!file) return;
-      const dataUrl = await fileToDataUrl(file);
-      setBoardImage(dataUrl);
+  document.addEventListener("click", (e) => {
+    // close bg
+    if (els.bgPanel.classList.contains("open") && !els.bgPopover.contains(e.target)) els.bgPanel.classList.remove("open");
+    // close theme
+    if (els.themePanel.classList.contains("open") && !els.themePopover.contains(e.target)) els.themePanel.classList.remove("open");
+  });
 
-      const bg = loadBg() || {};
-      bg.imageDataUrl = dataUrl;
-      bg.tint = els.bgColor.value;
-      bg.strength = Number(els.bgStrength.value);
-      saveBg(bg);
-    });
+  els.bgColor.addEventListener("input", () => {
+    applyBoardTint(els.bgColor.value, els.bgStrength.value);
+    const bg = loadBg() || {};
+    bg.tint = els.bgColor.value;
+    bg.strength = Number(els.bgStrength.value);
+    saveBg(bg);
+  });
 
-    els.removeImage.addEventListener("click", () => {
-      setBoardImage(null);
-      els.bgImage.value = "";
-      const bg = loadBg() || {};
-      bg.imageDataUrl = null;
-      bg.tint = els.bgColor.value;
-      bg.strength = Number(els.bgStrength.value);
-      saveBg(bg);
-    });
+  els.bgStrength.addEventListener("input", () => {
+    applyBoardTint(els.bgColor.value, els.bgStrength.value);
+    const bg = loadBg() || {};
+    bg.tint = els.bgColor.value;
+    bg.strength = Number(els.bgStrength.value);
+    saveBg(bg);
+  });
 
-    // Initial render
-    applyBgFromStore();
-    render();
+  els.bgImage.addEventListener("change", async () => {
+    const file = els.bgImage.files && els.bgImage.files[0];
+    if (!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    setBoardImage(dataUrl);
+
+    const bg = loadBg() || {};
+    bg.imageDataUrl = dataUrl;
+    bg.tint = els.bgColor.value;
+    bg.strength = Number(els.bgStrength.value);
+    saveBg(bg);
+  });
+
+  els.removeImage.addEventListener("click", () => {
+    setBoardImage(null);
+    els.bgImage.value = "";
+    const bg = loadBg() || {};
+    bg.imageDataUrl = null;
+    bg.tint = els.bgColor.value;
+    bg.strength = Number(els.bgStrength.value);
+    saveBg(bg);
+  });
+
+  // -------- NEW: Theme controls --------
+  els.themeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.themePanel.classList.toggle("open");
+  });
+
+  const persistThemeFromInputs = () => {
+    const t = {
+      bg: els.tBg.value,
+      text: els.tText.value,
+      muted: els.tMuted.value,
+      line: els.tLine.value,
+      panelAlpha: Number(els.tPanelAlpha.value),
+    };
+    applyTheme(t);
+    saveTheme(t);
+  };
+
+  els.tBg.addEventListener("input", persistThemeFromInputs);
+  els.tText.addEventListener("input", persistThemeFromInputs);
+  els.tMuted.addEventListener("input", persistThemeFromInputs);
+  els.tLine.addEventListener("input", persistThemeFromInputs);
+  els.tPanelAlpha.addEventListener("input", persistThemeFromInputs);
+
+  els.resetTheme.addEventListener("click", () => {
+    saveTheme(DEFAULT_THEME);
+    applyTheme(DEFAULT_THEME);
+  });
+
+  // Initial render
+  applyThemeFromStore();   // ✅ first: base page colors
+  applyBgFromStore();      // ✅ then: board tint/image
+  render();
   </script>
 </body>
 </html>

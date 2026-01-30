@@ -33,7 +33,10 @@
       margin: 0 auto;
       position:relative;
       border-radius: var(--r);
-      overflow:hidden;
+
+      /* FIX: allow panels to extend beyond the board without being clipped */
+      overflow: visible;
+
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
     }
@@ -49,6 +52,9 @@
       z-index:0;
       pointer-events:none;
       filter: saturate(1.1) contrast(1.06) brightness(1.03);
+
+      /* keep rounded corners on background layers */
+      border-radius: var(--r);
     }
     .widgetBoard::after{
       content:"";
@@ -61,6 +67,9 @@
       background-blend-mode: screen;
       pointer-events:none;
       z-index:0;
+
+      /* keep rounded corners on background layers */
+      border-radius: var(--r);
     }
     .boardTint{
       position:absolute;
@@ -68,6 +77,9 @@
       pointer-events:none;
       z-index:1;
       background: rgba(0,0,0,0);
+
+      /* keep rounded corners on background layers */
+      border-radius: var(--r);
     }
     .boardContent{
       position:relative;
@@ -168,6 +180,10 @@
       padding: 12px;
       display:none;
       z-index: 50;
+
+
+      max-height: min(70vh, 420px);
+      overflow: auto;
     }
     .panel.open{ display:block; }
     .bgTitle{
@@ -215,7 +231,7 @@
 <body>
   <div class="wrap">
     <h1>Emergency Fund Comfort Meter</h1>
-    <div class="sub">Track your emergency fund.</div>
+    <div class="sub"></div>
 
     <div class="widgetBoard" id="widgetBoard" aria-label="Emergency Fund widget board">
       <div class="boardTint" id="boardTint"></div>

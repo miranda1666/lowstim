@@ -6,18 +6,19 @@
   <title>Timetable</title>
   <style>
     :root{
-      --bg: #ffffff;
+      /* Core theme tokens (these are what the new Theme popover edits) */
+      --bg: #ffffff;                 /* full page background */
       --panel: rgba(255,255,255,.65);
       --panel2: rgba(255,255,255,.82);
-      --text: #2b2b2b;
-      --muted: #6f6a63;
-      --line: rgba(43,43,43,.12);
+      --text: #2b2b2b;               /* main text */
+      --muted: #6f6a63;              /* secondary text */
+      --line: rgba(43,43,43,.12);    /* borders/dividers */
+      --gridLine: rgba(43,43,43,.08);
+      --focus: rgba(43,43,43,.18);
       --shadow: 0 10px 30px rgba(0,0,0,.08);
       --shadow2: 0 16px 50px rgba(0,0,0,.14);
       --radius: 18px;
       --radius2: 14px;
-      --focus: rgba(43,43,43,.18);
-      --gridLine: rgba(43,43,43,.08);
       --inkSoft: rgba(43,43,43,.60);
 
       /* Widget-board background (only behind controls + panel) */
@@ -102,6 +103,7 @@
     /* Discreet popovers */
     .popover{ position: relative; }
 
+    /* Background button */
     .bgBtn{
       width: 42px;
       height: 42px;
@@ -124,13 +126,16 @@
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
     }
+
+    /* Theme button (new) */
     .themeDot{
       width: 14px;
       height: 14px;
       border-radius: 999px;
       border: 1px solid rgba(43,43,43,.14);
       background: var(--text);
-      box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
+      box-shadow: 0 0 0 6px rgba(43,43,43,0.08);
+      opacity: .9;
     }
 
     .bgPanel{
@@ -200,9 +205,12 @@
       background: rgba(43,43,43,.08);
       margin: 8px 0;
     }
-
-    /* Theme panel opens to the left */
-    .themePanel{ right: 50px; }
+    .bgHint{
+      font-size: 11.5px;
+      color: var(--muted);
+      line-height: 1.35;
+      margin-top: 6px;
+    }
 
     /* Widget board (ONLY behind controls + panel) */
     .widgetBoard{
@@ -238,6 +246,7 @@
       inset:0;
       pointer-events:none;
       mix-blend-mode: multiply;
+      background: rgba(239,231,225,.35);
     }
     .boardContent{
       position: relative;
@@ -551,22 +560,6 @@
       background: rgba(255,255,255,.72);
     }
     .modalHead h3{ margin:0; font-size: 15px; letter-spacing: -.01em; }
-
-    /* icon button (was missing in your CSS, adding minimally) */
-    .iconBtn{
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-      border: 1px solid rgba(43,43,43,.12);
-      background: rgba(255,255,255,.70);
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .iconBtn svg{ width:18px; height:18px; opacity:.75; }
-    .iconBtn:active{ transform: translateY(1px); }
-
     .modalBody{
       padding: 14px 16px 16px;
       display:grid;
@@ -596,6 +589,12 @@
       border-color: rgba(43,43,43,.22);
       box-shadow: 0 0 0 3px rgba(43,43,43,.10);
     }
+    .help{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -6px;
+      line-height: 1.35;
+    }
 
     .modalFoot{
       display:flex;
@@ -607,12 +606,15 @@
       background: rgba(255,255,255,.70);
       flex-wrap: wrap;
     }
-
-    .floor{
-      height: 18px;
-      background: linear-gradient(180deg, rgba(212,199,188,.8), rgba(188,171,156,.75));
-      border-top: 1px solid rgba(43,43,43,.12);
+    .tiny{ font-size: 12px; color: var(--muted); }
+    a.link{
+      color: inherit;
+      text-decoration:none;
+      border-bottom: 1px solid rgba(43,43,43,.22);
     }
+    a.link:hover{ border-bottom-color: rgba(43,43,43,.45); }
+
+    /* Removed: .floor */
 
     .colorRow{
       display:flex;
@@ -629,6 +631,11 @@
       background: rgba(255,255,255,.75);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
       cursor: pointer;
+    }
+    .colorHint{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
     }
   </style>
 </head>
@@ -649,56 +656,59 @@
           <span aria-hidden="true">✕</span> Clear
         </button>
 
-        <!-- THEME POPOVER -->
+        <!-- Theme popover (NEW) -->
         <div class="popover" id="themePopover">
           <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
             <span class="themeDot" id="themeDot" aria-hidden="true"></span>
           </button>
 
-          <div class="bgPanel themePanel" id="themePanel" role="dialog" aria-label="Theme settings">
+          <div class="bgPanel" id="themePanel" role="dialog" aria-label="Theme settings">
             <h3>Theme</h3>
 
             <div class="bgRow">
-              <label for="tBg">Page bg</label>
-              <input class="bgColor" id="tBg" type="color" value="#ffffff" />
+              <label for="themeBg">Page background</label>
+              <input class="bgColor" id="themeBg" type="color" value="#ffffff" />
             </div>
 
             <div class="bgRow">
-              <label for="tText">Text</label>
-              <input class="bgColor" id="tText" type="color" value="#2b2b2b" />
+              <label for="themeText">Text</label>
+              <input class="bgColor" id="themeText" type="color" value="#2b2b2b" />
             </div>
 
             <div class="bgRow">
-              <label for="tMuted">Muted</label>
-              <input class="bgColor" id="tMuted" type="color" value="#6f6a63" />
+              <label for="themeMuted">Muted text</label>
+              <input class="bgColor" id="themeMuted" type="color" value="#6f6a63" />
             </div>
 
             <div class="bgRow">
-              <label for="tLine">Borders</label>
-              <input class="bgColor" id="tLine" type="color" value="#cfcac3" />
+              <label for="themeBorders">Borders</label>
+              <input class="bgColor" id="themeBorders" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="bgRow">
+              <label for="themeBorderAlpha">Border strength</label>
+              <input class="bgStrength" id="themeBorderAlpha" type="range" min="4" max="40" value="12" />
+            </div>
+
+            <div class="bgRow">
+              <label for="themeGridAlpha">Grid strength</label>
+              <input class="bgStrength" id="themeGridAlpha" type="range" min="3" max="30" value="8" />
+            </div>
+
+            <div class="bgRow">
+              <label for="themePanelAlpha">Panel transparency</label>
+              <input class="bgStrength" id="themePanelAlpha" type="range" min="40" max="95" value="65" />
             </div>
 
             <div class="bgDivider"></div>
 
             <div class="bgRow">
-              <label for="tPanelA">Panel opacity</label>
-              <input class="bgStrength" id="tPanelA" type="range" min="35" max="95" value="65" />
-            </div>
-
-            <div class="bgRow">
-              <label for="tPanel2A">Panel 2 opacity</label>
-              <input class="bgStrength" id="tPanel2A" type="range" min="35" max="98" value="82" />
-            </div>
-
-            <div class="bgDivider"></div>
-
-            <div class="bgRow">
-              <button class="bgMiniBtn" id="themeReset" type="button">Reset theme</button>
+              <button class="bgMiniBtn" id="resetTheme" type="button">Reset theme</button>
             </div>
           </div>
         </div>
 
-        <!-- BACKGROUND POPOVER -->
+        <!-- Background popover (existing) -->
         <div class="popover" id="bgPopover">
           <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
             <span class="bgDot" id="bgDot" aria-hidden="true"></span>
@@ -775,7 +785,7 @@
           </div>
 
           <div id="panelBody"></div>
-          <div class="floor" aria-hidden="true"></div>
+          <!-- Removed bottom color block (.floor) -->
         </section>
       </div>
     </div>
@@ -908,18 +918,19 @@
       bgDot: document.getElementById("bgDot"),
       bgPopover: document.getElementById("bgPopover"),
 
+      // Theme popover (NEW)
       themeBtn: document.getElementById("themeBtn"),
       themePanel: document.getElementById("themePanel"),
       themePopover: document.getElementById("themePopover"),
       themeDot: document.getElementById("themeDot"),
-
-      tBg: document.getElementById("tBg"),
-      tText: document.getElementById("tText"),
-      tMuted: document.getElementById("tMuted"),
-      tLine: document.getElementById("tLine"),
-      tPanelA: document.getElementById("tPanelA"),
-      tPanel2A: document.getElementById("tPanel2A"),
-      themeReset: document.getElementById("themeReset"),
+      themeBg: document.getElementById("themeBg"),
+      themeText: document.getElementById("themeText"),
+      themeMuted: document.getElementById("themeMuted"),
+      themeBorders: document.getElementById("themeBorders"),
+      themeBorderAlpha: document.getElementById("themeBorderAlpha"),
+      themeGridAlpha: document.getElementById("themeGridAlpha"),
+      themePanelAlpha: document.getElementById("themePanelAlpha"),
+      resetTheme: document.getElementById("resetTheme"),
     };
 
     const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
@@ -967,20 +978,22 @@
       try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
     };
 
-    // -------- THEME persistence --------
-    const defaultTheme = () => ({
+    // ---------- Theme storage (NEW) ----------
+    const DEFAULT_THEME = {
       bg: "#ffffff",
       text: "#2b2b2b",
       muted: "#6f6a63",
-      line: "#cfcac3",
-      panelA: 65,
-      panel2A: 82
-    });
+      border: "#2b2b2b",
+      borderA: 12,     // 4..40
+      gridA: 8,        // 3..30
+      panelAlpha: 65   // 40..95 (maps to rgba(255,255,255, alpha))
+    };
 
     const loadTheme = () => {
       try{
         const raw = localStorage.getItem(THEME_KEY);
-        return raw ? JSON.parse(raw) : null;
+        const t = raw ? JSON.parse(raw) : null;
+        return t && typeof t === "object" ? t : null;
       }catch{ return null; }
     };
 
@@ -990,93 +1003,79 @@
 
     const clamp = (n,a,b) => Math.max(a, Math.min(b, n));
 
+    const normalizeHex = (hex) => {
+      if (!hex) return "#ffffff";
+      const s = String(hex).trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+      return "#ffffff";
+    };
+
     const hexToRgb = (hex) => {
-      const s = String(hex || "#000000").trim();
-      const m = s.match(/^#([0-9a-f]{6})$/i);
-      const h = (m ? m[1] : "000000").toLowerCase();
+      const h = normalizeHex(hex).slice(1);
       const r = parseInt(h.slice(0,2), 16);
       const g = parseInt(h.slice(2,4), 16);
       const b = parseInt(h.slice(4,6), 16);
       return { r, g, b };
     };
 
-    const rgbaFromHex = (hex, a) => {
-      const { r,g,b } = hexToRgb(hex);
+    const hexToRgba = (hex, a) => {
+      const { r, g, b } = hexToRgb(hex);
       return `rgba(${r},${g},${b},${a})`;
     };
 
-    const setThemeDot = (inkHex) => {
-      if (!els.themeDot) return;
-      els.themeDot.style.background = inkHex;
-      els.themeDot.style.boxShadow = `0 0 0 6px ${rgbaFromHex(inkHex, 0.18)}`;
-    };
+    // Derive rgba(...) border/grid from a chosen base color + slider strength.
+    // Strength values are treated as percentages.
+    const alphaFromPct = (pct) => clamp(Number(pct) / 100, 0.01, 0.95);
 
-    const applyTheme = (t) => {
-      const base = defaultTheme();
-      const theme = Object.assign(base, t || {});
-
-      const panelA = clamp(Number(theme.panelA ?? 65), 35, 95) / 100;
-      const panel2A = clamp(Number(theme.panel2A ?? 82), 35, 98) / 100;
-
-      document.documentElement.style.setProperty("--bg", theme.bg);
-      document.documentElement.style.setProperty("--text", theme.text);
-      document.documentElement.style.setProperty("--muted", theme.muted);
-      document.documentElement.style.setProperty("--line", rgbaFromHex(theme.line, 0.12)); /* keep line subtle */
-      document.documentElement.style.setProperty("--focus", rgbaFromHex(theme.text, 0.18));
-      document.documentElement.style.setProperty("--gridLine", rgbaFromHex(theme.text, 0.08));
-      document.documentElement.style.setProperty("--inkSoft", rgbaFromHex(theme.text, 0.60));
-
-      document.documentElement.style.setProperty("--panel", rgbaFromHex("#ffffff", panelA));
-      document.documentElement.style.setProperty("--panel2", rgbaFromHex("#ffffff", panel2A));
-
-      setThemeDot(theme.text);
-    };
-
-    const initTheme = () => {
-      if (!els.themeBtn || !els.themePanel || !els.tBg || !els.tText || !els.tMuted || !els.tLine || !els.tPanelA || !els.tPanel2A || !els.themeReset) return;
-
-      const loaded = loadTheme() || defaultTheme();
-
-      els.tBg.value = loaded.bg;
-      els.tText.value = loaded.text;
-      els.tMuted.value = loaded.muted;
-      els.tLine.value = loaded.line;
-      els.tPanelA.value = String(loaded.panelA ?? 65);
-      els.tPanel2A.value = String(loaded.panel2A ?? 82);
-
-      applyTheme(loaded);
-
-      const update = () => {
-        const next = {
-          bg: els.tBg.value,
-          text: els.tText.value,
-          muted: els.tMuted.value,
-          line: els.tLine.value,
-          panelA: Number(els.tPanelA.value),
-          panel2A: Number(els.tPanel2A.value),
-        };
-        applyTheme(next);
-        saveTheme(next);
+    const applyTheme = (theme) => {
+      const t = {
+        bg: normalizeHex(theme?.bg ?? DEFAULT_THEME.bg),
+        text: normalizeHex(theme?.text ?? DEFAULT_THEME.text),
+        muted: normalizeHex(theme?.muted ?? DEFAULT_THEME.muted),
+        border: normalizeHex(theme?.border ?? DEFAULT_THEME.border),
+        borderA: clamp(Number(theme?.borderA ?? DEFAULT_THEME.borderA), 4, 40),
+        gridA: clamp(Number(theme?.gridA ?? DEFAULT_THEME.gridA), 3, 30),
+        panelAlpha: clamp(Number(theme?.panelAlpha ?? DEFAULT_THEME.panelAlpha), 40, 95),
       };
 
-      [els.tBg, els.tText, els.tMuted, els.tLine].forEach(inp => inp.addEventListener("input", update));
-      [els.tPanelA, els.tPanel2A].forEach(inp => inp.addEventListener("input", update));
+      // Apply CSS vars
+      document.documentElement.style.setProperty("--bg", t.bg);
+      document.documentElement.style.setProperty("--text", t.text);
+      document.documentElement.style.setProperty("--muted", t.muted);
 
-      els.themeReset.addEventListener("click", () => {
-        localStorage.removeItem(THEME_KEY);
-        const def = defaultTheme();
-        els.tBg.value = def.bg;
-        els.tText.value = def.text;
-        els.tMuted.value = def.muted;
-        els.tLine.value = def.line;
-        els.tPanelA.value = String(def.panelA);
-        els.tPanel2A.value = String(def.panel2A);
-        applyTheme(def);
-        saveTheme(def);
-      });
+      document.documentElement.style.setProperty("--line", hexToRgba(t.border, alphaFromPct(t.borderA)));
+      document.documentElement.style.setProperty("--gridLine", hexToRgba(t.border, alphaFromPct(t.gridA)));
+      document.documentElement.style.setProperty("--focus", hexToRgba(t.border, 0.18));
+
+      // Panel transparency is based on white alpha, like your original design
+      const pA = clamp(t.panelAlpha / 100, 0.4, 0.95);
+      document.documentElement.style.setProperty("--panel", `rgba(255,255,255,${pA})`);
+      document.documentElement.style.setProperty("--panel2", `rgba(255,255,255,${clamp(pA + 0.17, 0.5, 0.98)})`);
+
+      // Update tiny indicator dot
+      els.themeDot.style.background = t.text;
+      els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.text, 0.10)}`;
+
+      // Sync UI controls
+      els.themeBg.value = t.bg;
+      els.themeText.value = t.text;
+      els.themeMuted.value = t.muted;
+      els.themeBorders.value = t.border;
+      els.themeBorderAlpha.value = String(t.borderA);
+      els.themeGridAlpha.value = String(t.gridA);
+      els.themePanelAlpha.value = String(t.panelAlpha);
+
+      saveTheme(t);
+
+      // Re-render so timetable elements that use hard-coded rgba border colors still match theme.
+      render();
     };
 
-    // confirm modal helper (unchanged)
+    const applyThemeFromStore = () => {
+      const t = loadTheme() || DEFAULT_THEME;
+      applyTheme(t);
+    };
+
     const askConfirm = (message, { okText="Confirm", cancelText="Cancel", danger=false } = {}) =>
       new Promise((resolve) => {
         const wrap = document.createElement("div");
@@ -1139,7 +1138,12 @@
     let items = load();
 
     // state
-    let state = { q: "", tag: "", startHour: 8, endHour: 20 };
+    let state = {
+      q: "",
+      tag: "",
+      startHour: 8,
+      endHour: 20
+    };
 
     const hourLabel = (h) => {
       const ampm = h < 12 ? "AM" : "PM";
@@ -1216,15 +1220,6 @@
       return endMin > a && startMin < b;
     };
 
-    const clampNum = (n,a,b) => Math.max(a, Math.min(b, n));
-
-    const normalizeHex = (hex) => {
-      if (!hex) return "#ffffff";
-      const s = String(hex).trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
-      return "#ffffff";
-    };
-
     const mixWithWhite = (hex, alphaToWhite = 0.72) => {
       const { r, g, b } = hexToRgb(hex);
       const rr = Math.round(r * (1 - alphaToWhite) + 255 * alphaToWhite);
@@ -1237,11 +1232,6 @@
       const { r, g, b } = hexToRgb(hex);
       const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
       return lum < 0.55 ? "rgba(255,255,255,.92)" : "rgba(43,43,43,.92)";
-    };
-
-    const hexToRgba = (hex, a) => {
-      const { r, g, b } = hexToRgb(hex);
-      return `rgba(${r},${g},${b},${a})`;
     };
 
     const setBoardImage = (dataUrlOrNull) => {
@@ -1338,6 +1328,9 @@
         }
       }
 
+      // Use theme border color instead of hard-coded rgba(43,43,43,...) so it truly recolors everything.
+      const lineColor = getComputedStyle(document.documentElement).getPropertyValue("--line").trim() || "rgba(43,43,43,.12)";
+
       filtered.forEach((it) => {
         const s = timeToMinutes(it.start);
         const e = timeToMinutes(it.end);
@@ -1347,8 +1340,8 @@
         const col = document.getElementById(`day_${it.day}`);
         if (!col) return;
 
-        const top = ((clampNum(s, startMin, endMin) - startMin) / totalMin) * bodyHeight;
-        const bottom = ((clampNum(e, startMin, endMin) - startMin) / totalMin) * bodyHeight;
+        const top = ((clamp(s, startMin, endMin) - startMin) / totalMin) * bodyHeight;
+        const bottom = ((clamp(e, startMin, endMin) - startMin) / totalMin) * bodyHeight;
         const height = Math.max(34, bottom - top);
 
         const btn = document.createElement("button");
@@ -1360,7 +1353,7 @@
 
         const base = normalizeHex(it.color || "#ffffff");
         btn.style.background = mixWithWhite(base, 0.68);
-        btn.style.borderColor = "rgba(43,43,43,.12)";
+        btn.style.borderColor = lineColor; // themed
         btn.style.color = contrastInk(base);
 
         btn.innerHTML = `
@@ -1545,26 +1538,49 @@
     // -------- Background controls --------
     els.bgBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (els.themePanel) els.themePanel.classList.remove("open");
       els.bgPanel.classList.toggle("open");
     });
 
-    // -------- Theme controls --------
+    // -------- Theme controls (NEW) --------
     els.themeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (els.bgPanel) els.bgPanel.classList.remove("open");
       els.themePanel.classList.toggle("open");
     });
 
-    // close popovers on outside click
     document.addEventListener("click", (e) => {
-      const bgOpen = els.bgPanel.classList.contains("open");
-      const thOpen = els.themePanel.classList.contains("open");
-      if (!bgOpen && !thOpen) return;
-
-      if (bgOpen && !els.bgPopover.contains(e.target)) els.bgPanel.classList.remove("open");
-      if (thOpen && !els.themePopover.contains(e.target)) els.themePanel.classList.remove("open");
+      // close bg
+      if (els.bgPanel.classList.contains("open") && !els.bgPopover.contains(e.target)) {
+        els.bgPanel.classList.remove("open");
+      }
+      // close theme
+      if (els.themePanel.classList.contains("open") && !els.themePopover.contains(e.target)) {
+        els.themePanel.classList.remove("open");
+      }
     });
+
+    const readThemeUi = () => ({
+      bg: els.themeBg.value,
+      text: els.themeText.value,
+      muted: els.themeMuted.value,
+      border: els.themeBorders.value,
+      borderA: Number(els.themeBorderAlpha.value),
+      gridA: Number(els.themeGridAlpha.value),
+      panelAlpha: Number(els.themePanelAlpha.value),
+    });
+
+    const onThemeInput = () => applyTheme(readThemeUi());
+
+    els.themeBg.addEventListener("input", onThemeInput);
+    els.themeText.addEventListener("input", onThemeInput);
+    els.themeMuted.addEventListener("input", onThemeInput);
+    els.themeBorders.addEventListener("input", onThemeInput);
+    els.themeBorderAlpha.addEventListener("input", onThemeInput);
+    els.themeGridAlpha.addEventListener("input", onThemeInput);
+    els.themePanelAlpha.addEventListener("input", onThemeInput);
+
+    els.resetTheme.addEventListener("click", () => applyTheme(DEFAULT_THEME));
+
+    // Background popover outside click handled above already
 
     els.bgColor.addEventListener("input", () => {
       applyBoardTint(els.bgColor.value, els.bgStrength.value);
@@ -1636,7 +1652,6 @@
       const location = els.bLocation.value.trim();
       const tags = normalizeTags(els.bTags.value);
       const notes = els.bNotes.value.trim();
-
       const color = normalizeHex(els.bColor.value);
 
       const id = els.editId.value || crypto.randomUUID();
@@ -1696,9 +1711,8 @@
       }
     });
 
-    // init theme + bg
-    initTheme();
-    applyBgFromStore();
+    applyThemeFromStore();   // NEW: theme first (sets bg/text/borders)
+    applyBgFromStore();      // existing: board tint/image
     render();
 
     window.addEventListener("resize", () => {

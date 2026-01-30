@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Water Tracker</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --cream:#e6d8cc;
+      --stone:#c9beb6;
+      --text:#1f1f1f;
+      --muted:#6b625c;
+
+      --border: rgba(201,190,182,0.85);
+      --borderSoft: rgba(201,190,182,0.55);
+      --creamSoft: rgba(230,216,204,0.20);
+
+      --shadow: 0 10px 26px rgba(0,0,0,0.06);
+      --shadowSoft: 0 3px 10px rgba(0,0,0,0.05);
+
+      --rOuter: 18px;
+      --rInner: 16px;
+      --rPill: 999px;
+
+      --fsKicker: 12px;
+      --fsLabel: 11px;
+      --fsBody: 13px;
+
+      /* Pastel water */
+      --waterA: #bfe6ff;
+      --waterB: #a8dbff;
+      --waterC: #8fcfff;
+
+      --board-tint: #ffffff;
+      --board-tint-a: 0.30;
+      --board-image: none;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      padding:26px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+    }
+
+    .wrap{ width:100%; max-width:760px; }
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .kicker{
+      font-size:var(--fsKicker);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+      padding-top:4px;
+    }
+    .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      border-radius:var(--rPill);
+      padding:9px 14px;
+      font-size:12px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .btn.primary{ background:var(--cream); }
+
+    .popover{ position:relative; }
+    .icon-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      background: rgba(255,255,255,0.80);
+      border: 1px solid var(--borderSoft);
+      border-radius: 999px;
+      padding: 6px 10px;
+      box-shadow: var(--shadowSoft);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .bg-btn{
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      border:1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.95);
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+    .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
+    .bg-btn:active{ transform: translateY(0px); }
+
+    .bg-dot{
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
+    }
+
+    .theme-dot{
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background: var(--text);
+      box-shadow: 0 0 0 6px rgba(201,190,182,0.25);
+    }
+
+    .panel{
+      position:absolute;
+      top: 46px;
+      right: 0;
+      width: 270px;
+      border-radius: 16px;
+      border: 1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px;
+      display:none;
+      z-index: 80;
+    }
+    .panel.open{ display:block; }
+
+    .panel h2{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(31,31,31,0.72);
+    }
+
+    .panel .rowT{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 8px 0;
+    }
+    .panel .rowT label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    input[type="color"]{
+      width: 36px;
+      height: 28px;
+      border: 1px solid var(--borderSoft);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"]{ width: 150px; }
+    .file{
+      width:100%;
+      font-size: 12px;
+      color: rgba(31,31,31,0.75);
+    }
+    .mini-btn{
+      width: 100%;
+      border: 1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: 11px;
+      color: rgba(31,31,31,0.80);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+    .divider{
+      height: 1px;
+      background: rgba(201,190,182,0.35);
+      margin: 8px 0;
+    }
+    .hintSmall{
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .widgetBoard{
+      position: relative;
+      border-radius: var(--rOuter);
+      overflow: hidden;
+      border: 1px solid var(--borderSoft);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      background: transparent;
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(0.95);
+      transform: scale(1.02);
+      z-index:0;
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+      background-blend-mode: screen;
+      pointer-events: none;
+      z-index:0;
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap:14px;
+      align-items:stretch;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card{
+      background: rgba(255,255,255,0.88);
+      border:1px solid var(--border);
+      border-radius:var(--rOuter);
+      box-shadow: none; 
+      padding:14px;
+      min-width:0;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .cardHead{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .cardTitle{
+      font-size:14px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0;
+    }
+    .meta{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.04em;
+      white-space:nowrap;
+    }
+
+    /* Cup */
+    .cupWrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 0 4px;
+    }
+    .cup{
+      width:170px;
+      height:260px;
+      border-radius: 18px 18px 26px 26px;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0));
+      box-shadow: var(--shadowSoft);
+      position:relative;
+      overflow:hidden;
+    }
+    .cup::before{
+      content:"";
+      position:absolute;
+      inset:10px 14px 12px 14px;
+      border-radius: 14px 14px 22px 22px;
+      border:1px solid rgba(201,190,182,0.35);
+      pointer-events:none;
+    }
+
+    /* Water */
+    .water{
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:0;
+      height:0%;
+      transition: height 420ms ease;
+      overflow:hidden;
+    }
+    .waterFill{
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, var(--waterA), var(--waterB) 55%, var(--waterC));
+    }
+    .wave{
+      position:absolute;
+      left:-40px;
+      right:-40px;
+      top:-16px;
+      height:32px;
+      opacity:0.9;
+      background:
+        radial-gradient(26px 16px at 20% 55%, rgba(255,255,255,0.28), rgba(255,255,255,0) 60%),
+        linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.02)),
+        linear-gradient(180deg, var(--waterA), var(--waterB));
+      border-bottom:1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      animation: wave 3.2s ease-in-out infinite;
+    }
+    @keyframes wave{
+      0%   { transform: translateX(-6px); }
+      50%  { transform: translateX(6px); }
+      100% { transform: translateX(-6px); }
+    }
+
+    .cupLabel{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      pointer-events:none;
+      text-align:center;
+      padding:18px;
+    }
+    .big{
+      font-size:30px;
+      font-weight:760;
+      letter-spacing:-0.02em;
+    }
+    .small{
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    /* Controls */
+    .controls{
+      display:grid;
+      gap:12px;
+      margin-top:6px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      align-items:end;
+    }
+    .label{
+      display:block;
+      font-size:var(--fsLabel);
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0 0 6px 0;
+    }
+    .input, .select{
+      width:100%;
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:var(--fsBody);
+      outline:none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      height:36px;
+    }
+    .input:focus, .select:focus{
+      border-color: rgba(201,190,182,1);
+      box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
+    }
+
+    .stepper{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rInner);
+      padding:12px;
+      background: linear-gradient(180deg, var(--creamSoft), rgba(255,255,255,0));
+      margin-top:8px;
+    }
+    .stepperLeft{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .stepperTitle{
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .stepperHint{
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.4;
+      margin:0;
+    }
+    .stepperBtns{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .iconBtn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:12px;
+      width:44px;
+      height:40px;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      font-size:18px;
+      line-height:1;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .iconBtn.primary{ background:var(--cream); }
+
+    .barWrap{
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rInner);
+      padding:12px;
+      background:#fff;
+      margin-top:12px;
+    }
+    .barTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .barTitle{
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .pill{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rPill);
+      padding:6px 10px;
+      background:#fff;
+      line-height:1;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .bar{
+      height:12px;
+      border-radius:var(--rPill);
+      background: rgba(201,190,182,0.28);
+      border:1px solid var(--borderSoft);
+      overflow:hidden;
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--waterA), var(--waterB), var(--waterC));
+      transition: width 260ms ease;
+    }
+
+    .note{
+      margin-top:10px;
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.4;
+    }
+
+    @media (max-width: 860px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div class="kicker">Water Tracker</div>
+      <div class="btns">
+
+        <!-- Background settings -->
+        <div class="popover" id="bgPopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <span class="bg-dot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <h2>Background</h2>
+
+            <div class="rowT">
+              <label for="bgColor">Tint</label>
+              <input id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="rowT">
+              <label for="bgStrength">Tint strength</label>
+              <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input id="bgImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- NEW: Theme settings -->
+        <div class="popover" id="themePopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <h2>Theme</h2>
+
+            <div class="rowT">
+              <label for="tWidgetBg">Page bg</label>
+              <input id="tWidgetBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="rowT">
+              <label for="tCardBg">Card bg</label>
+              <input id="tCardBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="rowT">
+              <label for="tFieldBg">Fields bg</label>
+              <input id="tFieldBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <label for="tText">Text</label>
+              <input id="tText" type="color" value="#1f1f1f" />
+            </div>
+
+            <div class="rowT">
+              <label for="tMuted">Muted text</label>
+              <input id="tMuted" type="color" value="#6b625c" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <label for="tBorder">Borders</label>
+              <input id="tBorder" type="color" value="#c9beb6" />
+            </div>
+
+            <div class="rowT">
+              <label for="tStone">Accent</label>
+              <input id="tStone" type="color" value="#c9beb6" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <label for="tCream">Highlight</label>
+              <input id="tCream" type="color" value="#e6d8cc" />
+            </div>
+
+            <div class="rowT">
+              <label for="tCreamSoft">Highlight soft</label>
+              <input id="tCreamSoft" type="color" value="#e6d8cc" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <label for="tWaterA">Water A</label>
+              <input id="tWaterA" type="color" value="#bfe6ff" />
+            </div>
+            <div class="rowT">
+              <label for="tWaterB">Water B</label>
+              <input id="tWaterB" type="color" value="#a8dbff" />
+            </div>
+            <div class="rowT">
+              <label for="tWaterC">Water C</label>
+              <input id="tWaterC" type="color" value="#8fcfff" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
+            </div>
+
+            <div class="hintSmall">
+            </div>
+          </div>
+        </div>
+
+        <button id="prevDay" class="btn" type="button">◀ PREV</button>
+        <button id="nextDay" class="btn" type="button">NEXT ▶</button>
+        <button id="resetDay" class="btn primary" type="button">RESET</button>
+      </div>
+    </div>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Water tracker widget board">
+      <div class="boardTint" id="boardTint"></div>
+
+      <div class="grid">
+        <!-- Left: Cup -->
+        <section class="card" aria-label="Cup">
+          <div class="cardHead">
+            <h2 class="cardTitle">Today</h2>
+            <div id="dayMeta" class="meta"></div>
+          </div>
+
+          <div class="cupWrap">
+            <div class="cup" aria-label="Water cup">
+              <div id="water" class="water">
+                <div class="waterFill"></div>
+                <div class="wave"></div>
+              </div>
+
+              <div class="cupLabel">
+                <div id="bigAmt" class="big">0</div>
+                <div id="smallAmt" class="small">cups</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stepper" aria-label="Quick add">
+            <div class="stepperLeft">
+              <div class="stepperTitle">Quick add</div>
+              <p class="stepperHint">Use + / – to track cups. Adjust cup size if you need to.</p>
+            </div>
+            <div class="stepperBtns">
+              <button id="minus" class="iconBtn" type="button">–</button>
+              <button id="plus" class="iconBtn primary" type="button">+</button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Right: Settings + Bar -->
+        <aside class="card" aria-label="Settings and progress">
+          <div class="cardHead">
+            <h2 class="cardTitle">Settings</h2>
+          </div>
+
+          <div class="controls">
+            <div class="row">
+              <div>
+                <label class="label" for="goalCups">Daily goal (cups)</label>
+                <input id="goalCups" class="input" type="number" min="0" placeholder="e.g. 8" />
+              </div>
+              <div>
+                <label class="label" for="cupSize">Cup size</label>
+                <select id="cupSize" class="select">
+                  <option value="250">250 ml</option>
+                  <option value="300">300 ml</option>
+                  <option value="330">330 ml</option>
+                  <option value="500">500 ml</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="barWrap">
+              <div class="barTop">
+                <div class="barTitle">Progress</div>
+                <div id="progressPill" class="pill">0 / 8 cups</div>
+              </div>
+              <div class="bar"><div id="barFill"></div></div>
+              <div id="mlHint" class="note" style="margin-top:10px;">0 ml today</div>
+            </div>
+
+            <div class="note">
+              Suggestion: If you prefer bottles, set cup size to 500 ml and count bottles as cups.
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const pad2 = (n) => String(n).padStart(2,"0");
+      const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
+      const clampPct = (p) => Math.max(0, Math.min(100, p));
+
+      /* ---------------------------
+         BACKGROUND SETTINGS (existing)
+      ---------------------------- */
+      const BG_KEY = "water_tracker_bg_v1";
+
+      const bgBtn = document.getElementById("bgBtn");
+      const bgPanel = document.getElementById("bgPanel");
+      const bgColor = document.getElementById("bgColor");
+      const bgStrength = document.getElementById("bgStrength");
+      const bgImage = document.getElementById("bgImage");
+      const removeImage = document.getElementById("removeImage");
+      const boardTintEl = document.getElementById("boardTint");
+      const bgDot = document.querySelector(".bg-dot");
+
+      function loadBg(){
+        try{
+          const raw = localStorage.getItem(BG_KEY);
+          if(raw) return JSON.parse(raw) || null;
+        }catch{}
+        return null;
+      }
+      function saveBg(bg){
+        try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+      }
+      function hexToRgba(hex, a){
+        const h = String(hex || "").replace("#","").trim();
+        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+        const num = parseInt(full || "efe7e1", 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${a})`;
+      }
+      function setBoardImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      }
+      function applyBoardTint(colorHex, strengthPct){
+        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
+        document.documentElement.style.setProperty("--board-tint", colorHex);
+        document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+        if (bgDot){
+          bgDot.style.background = colorHex;
+          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
+        }
+        if (boardTintEl){
+          boardTintEl.style.background = hexToRgba(colorHex, strength);
+        }
+      }
+      async function fileToDataUrl(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
+      const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
+      bgColor.value = bgState.tint;
+      bgStrength.value = String(bgState.strength);
+      applyBoardTint(bgState.tint, bgState.strength);
+      setBoardImage(bgState.imageDataUrl);
+
+      /* ---------------------------
+         THEME SETTINGS (NEW)
+      ---------------------------- */
+      const THEME_KEY = "water_tracker_theme_v1";
+
+      const themeBtn = document.getElementById("themeBtn");
+      const themePanel = document.getElementById("themePanel");
+      const themeDot = document.getElementById("themeDot");
+
+      const tWidgetBg = document.getElementById("tWidgetBg");
+      const tCardBg   = document.getElementById("tCardBg");
+      const tFieldBg  = document.getElementById("tFieldBg");
+      const tText     = document.getElementById("tText");
+      const tMuted    = document.getElementById("tMuted");
+      const tBorder   = document.getElementById("tBorder");
+      const tStone    = document.getElementById("tStone");
+      const tCream    = document.getElementById("tCream");
+      const tCreamSoft= document.getElementById("tCreamSoft");
+      const tWaterA   = document.getElementById("tWaterA");
+      const tWaterB   = document.getElementById("tWaterB");
+      const tWaterC   = document.getElementById("tWaterC");
+      const resetTheme= document.getElementById("resetTheme");
+
+      const DEFAULT_THEME = {
+        bg: "#ffffff",
+        cardBg: "#ffffff",
+        fieldBg: "#ffffff",
+        text: "#1f1f1f",
+        muted: "#6b625c",
+        borderHex: "#c9beb6",
+        stone: "#c9beb6",
+        cream: "#e6d8cc",
+        creamSoftHex: "#e6d8cc",
+        waterA: "#bfe6ff",
+        waterB: "#a8dbff",
+        waterC: "#8fcfff"
+      };
+
+      function loadTheme(){
+        try{
+          const raw = localStorage.getItem(THEME_KEY);
+          if(raw) return JSON.parse(raw) || null;
+        }catch{}
+        return null;
+      }
+      function saveTheme(t){
+        try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+      }
+
+      function applyTheme(t){
+        // Base page background + core palette
+        document.documentElement.style.setProperty("--bg", t.bg);
+        document.documentElement.style.setProperty("--text", t.text);
+        document.documentElement.style.setProperty("--muted", t.muted);
+
+        // Accents / highlights
+        document.documentElement.style.setProperty("--stone", t.stone);
+        document.documentElement.style.setProperty("--cream", t.cream);
+
+        // Borders derived from a single hex
+        document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
+        document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
+
+        // Cream soft used in gradients
+        document.documentElement.style.setProperty("--creamSoft", hexToRgba(t.creamSoftHex, 0.20));
+
+        // Water palette
+        document.documentElement.style.setProperty("--waterA", t.waterA);
+        document.documentElement.style.setProperty("--waterB", t.waterB);
+        document.documentElement.style.setProperty("--waterC", t.waterC);
+
+        // Custom vars for patching hard-coded whites
+        document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, 0.88));
+        document.documentElement.style.setProperty("--field-bg", t.fieldBg);
+
+        // Theme dot preview
+        if(themeDot){
+          themeDot.style.background = t.text;
+          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
+          themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
+        }
+      }
+
+      // Inject minimal overrides so you don't have to refactor the whole CSS
+      const injected = document.createElement("style");
+      injected.textContent = `
+        .card{ background: var(--card-bg, rgba(255,255,255,0.88)); }
+        .input, .select{ background: var(--field-bg, #fff); }
+        .iconBtn{ background: var(--field-bg, #fff); }
+        .pill{ background: var(--field-bg, #fff); }
+        .barWrap{ background: var(--field-bg, #fff); }
+      `;
+      document.head.appendChild(injected);
+
+      const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
+
+      // Initialize inputs
+      tWidgetBg.value = themeState.bg;
+      tCardBg.value = themeState.cardBg;
+      tFieldBg.value = themeState.fieldBg;
+      tText.value = themeState.text;
+      tMuted.value = themeState.muted;
+      tBorder.value = themeState.borderHex;
+      tStone.value = themeState.stone;
+      tCream.value = themeState.cream;
+      tCreamSoft.value = themeState.creamSoftHex;
+      tWaterA.value = themeState.waterA;
+      tWaterB.value = themeState.waterB;
+      tWaterC.value = themeState.waterC;
+
+      applyTheme(themeState);
+
+      function wireThemeInput(inputEl, key){
+        inputEl.addEventListener("input", () => {
+          themeState[key] = inputEl.value;
+          applyTheme(themeState);
+          saveTheme(themeState);
+          // keep bg dot + board tint visuals consistent if border changed
+          applyBoardTint(bgState.tint, bgState.strength);
+        });
+      }
+
+      wireThemeInput(tWidgetBg, "bg");
+      wireThemeInput(tCardBg, "cardBg");
+      wireThemeInput(tFieldBg, "fieldBg");
+      wireThemeInput(tText, "text");
+      wireThemeInput(tMuted, "muted");
+      wireThemeInput(tBorder, "borderHex");
+      wireThemeInput(tStone, "stone");
+      wireThemeInput(tCream, "cream");
+      wireThemeInput(tCreamSoft, "creamSoftHex");
+      wireThemeInput(tWaterA, "waterA");
+      wireThemeInput(tWaterB, "waterB");
+      wireThemeInput(tWaterC, "waterC");
+
+      resetTheme.addEventListener("click", () => {
+        Object.assign(themeState, DEFAULT_THEME);
+
+        tWidgetBg.value = themeState.bg;
+        tCardBg.value = themeState.cardBg;
+        tFieldBg.value = themeState.fieldBg;
+        tText.value = themeState.text;
+        tMuted.value = themeState.muted;
+        tBorder.value = themeState.borderHex;
+        tStone.value = themeState.stone;
+        tCream.value = themeState.cream;
+        tCreamSoft.value = themeState.creamSoftHex;
+        tWaterA.value = themeState.waterA;
+        tWaterB.value = themeState.waterB;
+        tWaterC.value = themeState.waterC;
+
+        applyTheme(themeState);
+        saveTheme(themeState);
+        applyBoardTint(bgState.tint, bgState.strength);
+      });
+
+      /* ---------------------------
+         POPOVER OPEN/CLOSE (both panels)
+      ---------------------------- */
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+        themePanel.classList.remove("open");
+      });
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        bgPanel.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        const bgOpen = bgPanel.classList.contains("open");
+        const thOpen = themePanel.classList.contains("open");
+
+        if(bgOpen){
+          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          if (!inside) bgPanel.classList.remove("open");
+        }
+        if(thOpen){
+          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if (!inside) themePanel.classList.remove("open");
+        }
+      });
+
+      /* ---------------------------
+         BACKGROUND HANDLERS (existing)
+      ---------------------------- */
+      bgColor.addEventListener("input", () => {
+        bgState.tint = bgColor.value;
+        applyBoardTint(bgState.tint, bgStrength.value);
+        saveBg(bgState);
+      });
+
+      bgStrength.addEventListener("input", () => {
+        bgState.strength = Number(bgStrength.value);
+        applyBoardTint(bgState.tint, bgState.strength);
+        saveBg(bgState);
+      });
+
+      bgImage.addEventListener("change", async () => {
+        const file = bgImage.files && bgImage.files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataUrl(file);
+        bgState.imageDataUrl = dataUrl;
+        setBoardImage(dataUrl);
+        saveBg(bgState);
+      });
+
+      removeImage.addEventListener("click", () => {
+        bgState.imageDataUrl = null;
+        setBoardImage(null);
+        bgImage.value = "";
+        saveBg(bgState);
+      });
+
+      /* ---------------------------
+         WATER TRACKER (existing)
+      ---------------------------- */
+      const STORAGE_PREFIX = "water_tracker_v2_";
+      const keyFor = (date) => STORAGE_PREFIX + isoDay(date);
+
+      function defaultData(){
+        return { cups: 0, goalCups: 8, cupSizeMl: 250 };
+      }
+      function load(date){
+        const raw = localStorage.getItem(keyFor(date));
+        if(!raw) return defaultData();
+        try{
+          const parsed = JSON.parse(raw) || {};
+          return {
+            cups: Number(parsed.cups || 0),
+            goalCups: Number(parsed.goalCups || 8),
+            cupSizeMl: Number(parsed.cupSizeMl || 250)
+          };
+        }catch{
+          localStorage.removeItem(keyFor(date));
+          return defaultData();
+        }
+      }
+      function save(date, data){
+        localStorage.setItem(keyFor(date), JSON.stringify(data));
+      }
+
+      let current = new Date();
+      current.setHours(0,0,0,0);
+      let state = load(current);
+
+      const dayMeta = document.getElementById("dayMeta");
+      const waterEl = document.getElementById("water");
+      const bigAmt = document.getElementById("bigAmt");
+      const smallAmt = document.getElementById("smallAmt");
+
+      const goalCups = document.getElementById("goalCups");
+      const cupSize = document.getElementById("cupSize");
+
+      const barFill = document.getElementById("barFill");
+      const progressPill = document.getElementById("progressPill");
+      const mlHint = document.getElementById("mlHint");
+
+      const minus = document.getElementById("minus");
+      const plus = document.getElementById("plus");
+
+      const prevDay = document.getElementById("prevDay");
+      const nextDay = document.getElementById("nextDay");
+      const resetDay = document.getElementById("resetDay");
+
+      function render(){
+        dayMeta.textContent = niceDay(current);
+
+        goalCups.value = state.goalCups ? String(state.goalCups) : "";
+        cupSize.value = String(state.cupSizeMl);
+
+        const cups = Math.max(0, Math.round(state.cups));
+        const goal = Math.max(0, Math.round(state.goalCups || 0));
+
+        bigAmt.textContent = String(cups);
+        smallAmt.textContent = cups === 1 ? "cup" : "cups";
+
+        const denom = goal > 0 ? goal : 8;
+        const pct = (cups / denom) * 100;
+        waterEl.style.height = clampPct(pct <= 120 ? pct : 120) + "%";
+
+        const barPct = goal > 0 ? clampPct((cups / goal) * 100) : 0;
+        barFill.style.width = barPct + "%";
+        progressPill.textContent = goal > 0 ? `${cups} / ${goal} cups` : `${cups} cups`;
+
+        const ml = cups * state.cupSizeMl;
+        mlHint.textContent = `${ml} ml today`;
+
+        save(current, state);
+      }
+
+      plus.addEventListener("click", () => { state.cups = Number(state.cups || 0) + 1; render(); });
+      minus.addEventListener("click", () => { state.cups = Math.max(0, Number(state.cups || 0) - 1); render(); });
+
+      goalCups.addEventListener("input", () => { state.goalCups = Number(goalCups.value || 0); render(); });
+      cupSize.addEventListener("change", () => { state.cupSizeMl = Number(cupSize.value || 250); render(); });
+
+      function go(delta){
+        current = new Date(current.getTime() + delta * 86400000);
+        current.setHours(0,0,0,0);
+        state = load(current);
+        render();
+      }
+      prevDay.addEventListener("click", () => go(-1));
+      nextDay.addEventListener("click", () => go(1));
+
+      resetDay.addEventListener("click", () => {
+        localStorage.removeItem(keyFor(current));
+        state = load(current);
+        render();
+      });
+
+      render();
+    });
+  </script>
+</body>
+</html>

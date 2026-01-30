@@ -27,7 +27,10 @@
     .widgetBoard{
       position:relative;
       border-radius: var(--r);
-      overflow:hidden;
+
+
+      overflow: visible;
+
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
     }
@@ -42,6 +45,9 @@
       transform: scale(1.02);
       z-index:0;
       pointer-events:none;
+
+
+      border-radius: var(--r);
     }
     .widgetBoard::after{
       content:"";
@@ -49,12 +55,18 @@
       inset:0;
       pointer-events:none;
       z-index:0;
+
+
+      border-radius: var(--r);
     }
     .boardTint{
       position:absolute;
       inset:0;
       pointer-events:none;
       z-index:1;
+
+
+      border-radius: var(--r);
     }
     .boardContent{
       position:relative;
@@ -151,6 +163,10 @@
       padding: 12px;
       display:none;
       z-index: 50;
+
+
+      max-height: min(70vh, 420px);
+      overflow: auto;
     }
     .bgPanel.open{ display:block; }
     .bgTitle{
@@ -226,6 +242,10 @@
       padding: 12px;
       display:none;
       z-index: 50;
+
+      /* Optional safety: scroll instead of getting cut off */
+      max-height: min(70vh, 460px);
+      overflow: auto;
     }
     .themePanel.open{ display:block; }
 
@@ -314,9 +334,7 @@
                     </div>
                   </div>
 
-                  <div class="bgHint">
-
-                  </div>
+                  <div class="bgHint"></div>
                 </div>
               </div>
 

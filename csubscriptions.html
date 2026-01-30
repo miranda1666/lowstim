@@ -184,10 +184,12 @@
 
 
     .themeIcon{
-      width:16px; height:16px;
-
-      /* FIX: make icon circular */
-      border-radius:999px;
+      width:34px;
+      height:34px;
+      padding:0;
+      border-radius:999px; /* or 50% */
+      display:grid;
+      place-items:center;
 
       border:1px solid rgba(233,228,221,0.95);
       background: linear-gradient(135deg, var(--ink), var(--soft));

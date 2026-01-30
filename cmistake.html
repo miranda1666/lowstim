@@ -1,0 +1,1681 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Mistake Museum</title>
+  <style>
+    :root{
+      /* ===== THEME TOKENS (editable via Theme panel) ===== */
+      --bg: #ffffff; /* ✅ fixed missing # */
+      --panel: rgba(255,255,255,.65);
+      --panel2: rgba(255,255,255,.82);
+      --text: #2b2b2b;
+      --muted: #6f6a63;
+      --line: rgba(43,43,43,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --shadow2: 0 16px 50px rgba(0,0,0,.14);
+      --radius: 18px;
+      --radius2: 14px;
+      --focus: rgba(43,43,43,.18);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg); /* ✅ fixed */
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+
+    /* Header */
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .title{
+      display:grid;
+      gap: 6px;
+      min-width: 260px;
+    }
+    .title h1{
+      font-size: clamp(22px, 2.6vw, 32px);
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: -.02em;
+    }
+    .title p{
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 58ch;
+      line-height: 1.4;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn{
+      appearance:none;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.68));
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      font-size: 13px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,.08); border-color: rgba(43,43,43,.18); }
+    .btn:active{ transform: translateY(0px); }
+    .btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .btn.primary{ border-color: rgba(43,43,43,.14); }
+    .btn.danger{ border-color: rgba(160, 60, 60, .20); }
+
+    /* Controls */
+    .controls{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr .6fr;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 2;
+    }
+    @media (max-width: 860px){
+      .controls{ grid-template-columns: 1fr; }
+      .actions{ width: 100%; justify-content: flex-start; }
+    }
+
+    .field{ position: relative; display:grid; gap: 6px; }
+    label{ font-size: 12px; color: var(--muted); padding-left: 6px; }
+    .input, select{
+      width:100%;
+      padding: 12px 12px 12px 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.75);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    select{ padding-left: 12px; }
+    .input:focus, select:focus{
+      border-color: rgba(43,43,43,.22);
+      box-shadow: 0 0 0 3px rgba(43,43,43,.10);
+    }
+    .icon{
+      position:absolute;
+      left: 12px;
+      top: 36px;
+      width: 16px;
+      height: 16px;
+      opacity: .65;
+      pointer-events:none;
+    }
+
+    /* Gallery */
+    .museum{
+      margin-top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+    .museumHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(43,43,43,.08);
+      flex-wrap: wrap;
+    }
+    .meta{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      border: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.65);
+      padding: 6px 10px;
+      border-radius: 999px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    .grid{
+      padding: 14px;
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 980px){ .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 620px){ .grid{ grid-template-columns: 1fr; } }
+
+    /* Exhibit card */
+    .card{
+      background: rgba(255,255,255,.80);
+      border: 1px solid rgba(43,43,43,.10);
+      border-radius: var(--radius2);
+      box-shadow: 0 8px 22px rgba(0,0,0,.06);
+      overflow: hidden;
+      display:grid;
+      grid-template-columns: 76px 1fr;
+      min-height: 124px;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      position: relative;
+    }
+    .card:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(0,0,0,.10);
+      border-color: rgba(43,43,43,.16);
+    }
+
+    /* "Frame" column */
+    .frame{
+      display:grid;
+      place-items:center;
+      background:
+        linear-gradient(180deg, rgba(240,236,231,.95), rgba(226,219,212,.85));
+      border-right: 1px solid rgba(43,43,43,.10);
+      position: relative;
+      padding: 10px;
+    }
+    .plaque{
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.75);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.9),
+        0 10px 22px rgba(0,0,0,.06);
+      display:grid;
+      place-items:center;
+      font-size: 22px;
+      letter-spacing: -.02em;
+      opacity: .95;
+    }
+    .frame::after{
+      content:"";
+      position:absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 12px;
+      height: 1px;
+      background: rgba(43,43,43,.12);
+    }
+
+    .content{
+      padding: 12px 12px 10px;
+      display:grid;
+      gap: 8px;
+    }
+
+    .topRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+
+    .name{
+      margin: 0;
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.2;
+      letter-spacing: -.01em;
+    }
+    .sub{
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.3;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .chip{
+      font-size: 11px;
+      color: rgba(43,43,43,.78);
+      background: rgba(255,255,255,.65);
+      border: 1px solid rgba(43,43,43,.08);
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .cardActions{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+    .iconBtn{
+      appearance:none;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.72);
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      cursor: pointer;
+      display:grid;
+      place-items:center;
+      transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .iconBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(43,43,43,.18);
+      box-shadow: 0 10px 20px rgba(0,0,0,.08);
+    }
+    .iconBtn:active{ transform: translateY(0); }
+    .iconBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .iconBtn svg{ width: 16px; height: 16px; opacity: .75; }
+
+    /* Expandable details */
+    details{
+      border-top: 1px dashed rgba(43,43,43,.14);
+      padding-top: 8px;
+    }
+    summary{
+      cursor: pointer;
+      list-style: none;
+      color: rgba(43,43,43,.85);
+      font-size: 12.5px;
+      user-select: none;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    .chev{
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.7);
+      display:grid;
+      place-items:center;
+      opacity: .85;
+      flex: 0 0 auto;
+    }
+    .detailsBody{
+      margin-top: 8px;
+      display:grid;
+      gap: 8px;
+      font-size: 12.5px;
+      color: rgba(43,43,43,.92);
+      line-height: 1.45;
+    }
+    .label{
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .box{
+      border: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.70);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .empty{
+      padding: 46px 18px 50px;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      gap: 12px;
+      color: var(--muted);
+    }
+    .empty .big{
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.7);
+      display:grid;
+      place-items:center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 12px 30px rgba(0,0,0,.06);
+      font-size: 22px;
+    }
+    .empty h2{
+      margin: 0;
+      color: var(--text);
+      font-size: 16px;
+      letter-spacing: -.01em;
+    }
+    .empty p{
+      margin: 0;
+      max-width: 55ch;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    /* Modal */
+    .modalBackdrop{
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(20,18,16,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+    .modalBackdrop.show{ display: grid; }
+
+    .modal{
+      width: min(780px, 100%);
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(43,43,43,.14);
+      border-radius: 20px;
+      box-shadow: var(--shadow2);
+      overflow: hidden;
+    }
+    .modalHead{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.72);
+    }
+    .modalHead h3{
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: -.01em;
+    }
+    .modalBody{
+      padding: 14px 16px 16px;
+      display:grid;
+      gap: 12px;
+    }
+    .formGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 760px){ .formGrid{ grid-template-columns: 1fr; } }
+
+    .input2, .textarea, .select2{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.78);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    .textarea{ min-height: 92px; resize: vertical; }
+    .input2:focus, .textarea:focus, .select2:focus{
+      border-color: rgba(43,43,43,.22);
+      box-shadow: 0 0 0 3px rgba(43,43,43,.10);
+    }
+    .help{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -6px;
+      line-height: 1.35;
+    }
+
+    .modalFoot{
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px 14px;
+      border-top: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.70);
+      flex-wrap: wrap;
+    }
+    .tiny{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    a.link{
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(43,43,43,.22);
+    }
+    a.link:hover{ border-bottom-color: rgba(43,43,43,.45); }
+
+    /* Little "gallery floor" strip */
+    .floor{
+      height: 18px;
+      background: linear-gradient(180deg, rgba(212,199,188,.8), rgba(188,171,156,.75));
+      border-top: 1px solid rgba(43,43,43,.12);
+    }
+
+    kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(43,43,43,.14);
+      background: rgba(255,255,255,.7);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    /* ------------------------------------
+       Background Module (scoped + discreet)
+       ------------------------------------ */
+    [data-mm-bg-board]{
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    [data-mm-bg-board]::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--mm-bg-image, none);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.02);
+      pointer-events:none;
+      z-index: 0;
+    }
+
+    [data-mm-bg-board]::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 520px at 18% 20%, rgba(255,255,255,0.35), transparent 62%),
+        radial-gradient(700px 460px at 82% 34%, rgba(255,255,255,0.25), transparent 62%),
+        rgba(255,255,255,0.38);
+      pointer-events:none;
+      z-index: 1;
+    }
+
+    .mmBgTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      mix-blend-mode: multiply;
+      z-index: 1;
+    }
+
+    .mmBgModule{ position: relative; }
+
+    .mmBgBtn{
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.68));
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mmBgBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .mmBgDot{
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(43,43,43,.14);
+      background: var(--mm-bg-tint, #efe7e1);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
+    }
+
+    .mmThemeDot{
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(43,43,43,.14);
+      background: var(--text);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+
+    .mmBgPanel{
+      position: absolute;
+      top: 50px;
+      right: 0;
+      width: 260px;
+      border-radius: 16px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 18px 40px rgba(0,0,0,.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 12px;
+      display:none;
+      z-index: 60;
+    }
+    .mmBgPanel.open{ display:block; }
+
+    .mmBgTitle{
+      font-size: 13px;
+      font-weight: 650;
+      color: rgba(43,43,43,.85);
+      margin-bottom: 10px;
+    }
+
+    .mmBgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .mmBgRowTop{ align-items:flex-start; }
+
+    .mmBgLabel{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .mmBgColor{
+      width: 34px;
+      height: 26px;
+      border: 1px solid rgba(43,43,43,.14);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .mmBgRange{ width: 140px; }
+
+    .mmBgDivider{
+      height: 1px;
+      background: rgba(43,43,43,.08);
+      margin: 8px 0;
+    }
+
+    .mmBgFile{
+      width: 100%;
+      font-size: 12px;
+      color: rgba(43,43,43,.75);
+    }
+
+    .mmBgMiniBtn{
+      width: 100%;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.90);
+      border-radius: 12px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 650;
+      color: rgba(43,43,43,.85);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mmBgMiniBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">
+        <h1>Mistake Museum</h1>
+        <p>The best way to learn is from your mistakes, so drop them here and adress them one by one!.</p>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="addBtn" type="button" title="Add an exhibit">
+          <span aria-hidden="true">＋</span>
+          Add exhibit
+        </button>
+        <button class="btn" id="exportBtn" type="button" title="Export exhibits to JSON">
+          <span aria-hidden="true">⤓</span>
+          Export
+        </button>
+        <button class="btn danger" id="clearBtn" type="button" title="Clear all exhibits">
+          <span aria-hidden="true">✕</span>
+          Clear
+        </button>
+
+        <!-- Existing background settings -->
+        <div class="mmBgModule" data-mm-bg-module>
+          <button class="mmBgBtn" type="button" aria-label="Background settings" title="Background">
+            <span class="mmBgDot" aria-hidden="true"></span>
+          </button>
+
+          <div class="mmBgPanel" role="dialog" aria-label="Background settings">
+            <div class="mmBgTitle">Background</div>
+
+            <div class="mmBgRow">
+              <label class="mmBgLabel">Tint</label>
+              <input class="mmBgColor" type="color" value="#efe7e1" data-mm-bg-color />
+            </div>
+
+            <div class="mmBgRow">
+              <label class="mmBgLabel">Strength</label>
+              <input class="mmBgRange" type="range" min="0" max="70" value="35" data-mm-bg-strength />
+            </div>
+
+            <div class="mmBgDivider"></div>
+
+            <div class="mmBgRow mmBgRowTop">
+              <label class="mmBgLabel">Image</label>
+              <input class="mmBgFile" type="file" accept="image/*" data-mm-bg-image />
+            </div>
+
+            <button class="mmBgMiniBtn" type="button" data-mm-bg-clear>Remove image</button>
+          </div>
+        </div>
+
+        <!-- ✅ NEW: Theme settings (collapsible like background) -->
+        <div class="mmBgModule" data-mm-theme-module>
+          <button class="mmBgBtn" type="button" aria-label="Theme settings" title="Theme">
+            <span class="mmThemeDot" aria-hidden="true"></span>
+          </button>
+
+          <div class="mmBgPanel" role="dialog" aria-label="Theme settings">
+            <div class="mmBgTitle">Theme</div>
+
+            <div class="mmBgRow">
+              <label class="mmBgLabel">Page bg</label>
+              <input class="mmBgColor" type="color" value="#ffffff" data-mm-theme-bg />
+            </div>
+
+            <div class="mmBgRow">
+              <label class="mmBgLabel">Text</label>
+              <input class="mmBgColor" type="color" value="#2b2b2b" data-mm-theme-text />
+            </div>
+
+            <div class="mmBgRow">
+              <label class="mmBgLabel">Muted</label>
+              <input class="mmBgColor" type="color" value="#6f6a63" data-mm-theme-muted />
+            </div>
+
+            <div class="mmBgRow">
+              <label class="mmBgLabel">Borders</label>
+              <input class="mmBgColor" type="color" value="#d9d9d9" data-mm-theme-line />
+            </div>
+
+            <div class="mmBgRow">
+              <label class="mmBgLabel">Panel opacity</label>
+              <input class="mmBgRange" type="range" min="35" max="98" value="65" data-mm-theme-panel-a />
+            </div>
+
+            <div class="mmBgDivider"></div>
+
+            <button class="mmBgMiniBtn" type="button" data-mm-theme-reset>Reset theme</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div data-mm-bg-board>
+      <div class="mmBgTint" id="mmBgTint"></div>
+
+      <section class="controls" aria-label="Museum controls">
+        <div class="field">
+          <label for="search">Search</label>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <input class="input" id="search" type="search" placeholder="Title, lesson, tags, course, topic…" autocomplete="off" />
+        </div>
+
+        <div class="field">
+          <label for="tagFilter">Tag filter</label>
+          <select id="tagFilter" aria-label="Tag filter">
+            <option value="">All tags</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="sortBy">Sort</label>
+          <select id="sortBy" aria-label="Sort exhibits">
+            <option value="updated_desc">Recently updated</option>
+            <option value="created_desc">Recently added</option>
+            <option value="severity_desc">Severity (high → low)</option>
+            <option value="title_asc">Title A → Z</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="museum" aria-label="Exhibit gallery">
+        <div class="museumHead">
+          <div class="meta">
+            <span class="pill" id="countPill">0 exhibits</span>
+            <span class="pill" id="tagPill">0 tags</span>
+          </div>
+          <div class="meta" id="filteredMeta" aria-live="polite"></div>
+        </div>
+
+        <div id="contentArea"></div>
+
+
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="modalTitle">Add exhibit</h3>
+        <button class="iconBtn" id="closeModalBtn" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <form class="modalBody" id="exhibitForm">
+        <input type="hidden" id="editId" value="" />
+
+        <div class="formGrid">
+          <div class="field">
+            <label for="mTitle">Mistake (title)</label>
+            <input class="input2" id="mTitle" required maxlength="90" placeholder="e.g., Misread the question and solved the wrong thing" />
+          </div>
+
+          <div class="field">
+            <label for="mSeverity">Severity</label>
+            <select class="select2" id="mSeverity" required>
+              <option value="1">1 — tiny</option>
+              <option value="2">2 — small</option>
+              <option value="3" selected>3 — medium</option>
+              <option value="4">4 — big</option>
+              <option value="5">5 — critical</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="formGrid">
+          <div class="field">
+            <label for="mContext">Context (course / topic)</label>
+            <input class="input2" id="mContext" maxlength="70" placeholder="e.g., Calculus • Optimization • Homework 4" />
+          </div>
+
+          <div class="field">
+            <label for="mTags">Tags</label>
+            <input class="input2" id="mTags" placeholder="comma-separated (e.g., algebra, exam, rushing)" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="mWhat">What happened?</label>
+          <textarea class="textarea" id="mWhat" placeholder="Describe the mistake briefly. What triggered it?"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="mLesson">Lesson learned</label>
+          <textarea class="textarea" id="mLesson" placeholder="Advice for to future you"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="mFix">Prevention routine (next time)</label>
+          <textarea class="textarea" id="mFix" placeholder="A tiny repeatable action: e.g., underline keywords, estimate first, check units, do a 30s sanity check."></textarea>
+          <div class="help">Make it simple enough you’ll actually do it under stress.</div>
+        </div>
+
+        <div class="modalFoot">
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <span class="tiny"><a class="link" href="#" id="seedDemo">Add example set</a></span>
+            <button class="btn" type="button" id="cancelBtn">Cancel</button>
+            <button class="btn primary" type="submit" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  /* -----------------------------
+     Theme module logic (NEW)
+     ----------------------------- */
+  (function(){
+    const STORE_KEY = "mistake_museum_theme_v1";
+
+    const module = document.querySelector("[data-mm-theme-module]");
+    if (!module) return;
+
+    const btn = module.querySelector(".mmBgBtn");
+    const panel = module.querySelector(".mmBgPanel");
+
+    const inputBg = module.querySelector("[data-mm-theme-bg]");
+    const inputText = module.querySelector("[data-mm-theme-text]");
+    const inputMuted = module.querySelector("[data-mm-theme-muted]");
+    const inputLine = module.querySelector("[data-mm-theme-line]");
+    const inputPanelA = module.querySelector("[data-mm-theme-panel-a]");
+    const resetBtn = module.querySelector("[data-mm-theme-reset]");
+    const dot = module.querySelector(".mmThemeDot");
+
+    const normalizeHex = (hex, fallback="#ffffff") => {
+      const s = String(hex || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+    };
+
+    const hexToRgb = (hex) => {
+      const h = normalizeHex(hex).slice(1);
+      return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
+    };
+    const hexToRgba = (hex, a) => {
+      const { r,g,b } = hexToRgb(hex);
+      return `rgba(${r},${g},${b},${a})`;
+    };
+
+    const storageGet = () => {
+      try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch {}
+      try{ return JSON.parse(sessionStorage.getItem(STORE_KEY) || "null"); } catch {}
+      return null;
+    };
+    const storageSet = (val) => {
+      const data = JSON.stringify(val);
+      try { localStorage.setItem(STORE_KEY, data); return; } catch {}
+      try { sessionStorage.setItem(STORE_KEY, data); return; } catch {}
+    };
+
+    const DEFAULT_THEME = {
+      bg: "#ffffff",
+      text: "#2b2b2b",
+      muted: "#6f6a63",
+      line: "#d9d9d9",
+      panelAlpha: 65, // 35–98
+    };
+
+    const applyTheme = (t) => {
+      const theme = { ...DEFAULT_THEME, ...(t || {}) };
+
+      const bg = normalizeHex(theme.bg, DEFAULT_THEME.bg);
+      const text = normalizeHex(theme.text, DEFAULT_THEME.text);
+      const muted = normalizeHex(theme.muted, DEFAULT_THEME.muted);
+      const line = normalizeHex(theme.line, DEFAULT_THEME.line);
+      const panelA = Math.max(0.35, Math.min(0.98, Number(theme.panelAlpha)/100));
+
+      document.documentElement.style.setProperty("--bg", bg);
+      document.documentElement.style.setProperty("--text", text);
+      document.documentElement.style.setProperty("--muted", muted);
+      document.documentElement.style.setProperty("--line", hexToRgba(line, 0.40));
+      document.documentElement.style.setProperty("--focus", hexToRgba(text, 0.22));
+      document.documentElement.style.setProperty("--panel", `rgba(255,255,255,${panelA})`);
+      document.documentElement.style.setProperty("--panel2", `rgba(255,255,255,${Math.min(0.98, panelA + 0.17)})`);
+
+      // sync inputs
+      inputBg.value = bg;
+      inputText.value = text;
+      inputMuted.value = muted;
+      inputLine.value = line;
+      inputPanelA.value = String(Math.round(panelA * 100));
+
+      // dot preview
+      dot.style.background = text;
+      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(muted, 0.18)}`;
+    };
+
+    const persistFromInputs = () => {
+      const t = {
+        bg: inputBg.value,
+        text: inputText.value,
+        muted: inputMuted.value,
+        line: inputLine.value,
+        panelAlpha: Number(inputPanelA.value),
+      };
+      applyTheme(t);
+      storageSet(t);
+    };
+
+    // restore
+    applyTheme(storageGet() || DEFAULT_THEME);
+
+    // open/close
+    btn.addEventListener("click", (e) => { e.stopPropagation(); panel.classList.toggle("open"); });
+
+    document.addEventListener("click", (e) => {
+      if (!panel.classList.contains("open")) return;
+      if (!module.contains(e.target)) panel.classList.remove("open");
+    });
+
+    // inputs
+    inputBg.addEventListener("input", persistFromInputs);
+    inputText.addEventListener("input", persistFromInputs);
+    inputMuted.addEventListener("input", persistFromInputs);
+    inputLine.addEventListener("input", persistFromInputs);
+    inputPanelA.addEventListener("input", persistFromInputs);
+
+    resetBtn.addEventListener("click", () => {
+      storageSet(DEFAULT_THEME);
+      applyTheme(DEFAULT_THEME);
+    });
+  })();
+
+  /* -----------------------------
+     Background module logic
+     ----------------------------- */
+  (function(){
+    const STORE_KEY = "mistake_museum_bg_v1";
+
+    const board = document.querySelector("[data-mm-bg-board]");
+    const module = document.querySelector("[data-mm-bg-module]");
+    const tintEl = document.getElementById("mmBgTint");
+    if (!board || !module || !tintEl) return;
+
+    const btn = module.querySelector(".mmBgBtn");
+    const panel = module.querySelector(".mmBgPanel");
+    const color = module.querySelector("[data-mm-bg-color]");
+    const strength = module.querySelector("[data-mm-bg-strength]");
+    const image = module.querySelector("[data-mm-bg-image]");
+    const clear = module.querySelector("[data-mm-bg-clear]");
+    const dot = module.querySelector(".mmBgDot");
+
+    const normalizeHex = (hex) => {
+      const s = String(hex || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : "#efe7e1";
+    };
+
+    const hexToRgb = (hex) => {
+      const h = normalizeHex(hex).slice(1);
+      return {
+        r: parseInt(h.slice(0,2), 16),
+        g: parseInt(h.slice(2,4), 16),
+        b: parseInt(h.slice(4,6), 16),
+      };
+    };
+
+    const hexToRgba = (hex, a) => {
+      const { r,g,b } = hexToRgb(hex);
+      return `rgba(${r},${g},${b},${a})`;
+    };
+
+    const storageGet = () => {
+      try{ return JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch {}
+      try{ return JSON.parse(sessionStorage.getItem(STORE_KEY) || "null"); } catch {}
+      return null;
+    };
+
+    const storageSet = (val) => {
+      const data = JSON.stringify(val);
+      try { localStorage.setItem(STORE_KEY, data); return; } catch {}
+      try { sessionStorage.setItem(STORE_KEY, data); return; } catch {}
+    };
+
+    const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+
+    const applyTint = (tintHex, strengthPct) => {
+      const t = normalizeHex(tintHex);
+      const a = Math.max(0, Math.min(0.7, Number(strengthPct)/100));
+
+      tintEl.style.background = hexToRgba(t, a);
+      board.style.setProperty("--mm-bg-tint", t);
+
+      dot.style.background = t;
+      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(t, Math.min(0.35, a + 0.1))}`;
+    };
+
+    const setImage = (dataUrlOrNull) => {
+      board.style.setProperty("--mm-bg-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    };
+
+    // restore
+    const saved = storageGet() || {};
+    const startTint = saved.tint || "#efe7e1";
+    const startStrength = (saved.strength ?? 35);
+
+    color.value = normalizeHex(startTint);
+    strength.value = String(startStrength);
+    applyTint(color.value, strength.value);
+    setImage(saved.imageDataUrl || null);
+
+    const persist = (patch={}) => {
+      const cur = storageGet() || {};
+      storageSet({ ...cur, ...patch });
+    };
+
+    // open/close panel
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      panel.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!panel.classList.contains("open")) return;
+      if (!module.contains(e.target)) panel.classList.remove("open");
+    });
+
+    // tint changes
+    color.addEventListener("input", () => {
+      applyTint(color.value, strength.value);
+      persist({ tint: color.value, strength: Number(strength.value) });
+    });
+
+    strength.addEventListener("input", () => {
+      applyTint(color.value, strength.value);
+      persist({ tint: color.value, strength: Number(strength.value) });
+    });
+
+    // image upload/remove
+    image.addEventListener("change", async () => {
+      const f = image.files && image.files[0];
+      if (!f) return;
+      const dataUrl = await fileToDataUrl(f);
+      setImage(dataUrl);
+      persist({ imageDataUrl: dataUrl });
+    });
+
+    clear.addEventListener("click", () => {
+      image.value = "";
+      setImage(null);
+      persist({ imageDataUrl: null });
+    });
+
+    // mobile nicety: close panel on scroll
+    window.addEventListener("scroll", () => {
+      if (panel.classList.contains("open")) panel.classList.remove("open");
+    }, { passive: true });
+  })();
+
+  /* -----------------------------
+     Your existing Mistake Museum JS
+     ----------------------------- */
+  const LS_KEY = "mistake_museum_v1";
+
+  const els = {
+    contentArea: document.getElementById("contentArea"),
+    countPill: document.getElementById("countPill"),
+    tagPill: document.getElementById("tagPill"),
+    filteredMeta: document.getElementById("filteredMeta"),
+
+    search: document.getElementById("search"),
+    tagFilter: document.getElementById("tagFilter"),
+    sortBy: document.getElementById("sortBy"),
+
+    addBtn: document.getElementById("addBtn"),
+    exportBtn: document.getElementById("exportBtn"),
+    clearBtn: document.getElementById("clearBtn"),
+
+    modalBackdrop: document.getElementById("modalBackdrop"),
+    closeModalBtn: document.getElementById("closeModalBtn"),
+    cancelBtn: document.getElementById("cancelBtn"),
+
+    exhibitForm: document.getElementById("exhibitForm"),
+    editId: document.getElementById("editId"),
+    modalTitle: document.getElementById("modalTitle"),
+    saveBtn: document.getElementById("saveBtn"),
+
+    mTitle: document.getElementById("mTitle"),
+    mSeverity: document.getElementById("mSeverity"),
+    mContext: document.getElementById("mContext"),
+    mTags: document.getElementById("mTags"),
+    mWhat: document.getElementById("mWhat"),
+    mLesson: document.getElementById("mLesson"),
+    mFix: document.getElementById("mFix"),
+
+    seedDemo: document.getElementById("seedDemo"),
+  };
+
+  const nowISO = () => new Date().toISOString();
+
+  const escapeHtml = (s) =>
+    String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+  const save = (items) => {
+    const data = JSON.stringify(items);
+    try { localStorage.setItem(LS_KEY, data); return; } catch {}
+    try { sessionStorage.setItem(LS_KEY, data); return; } catch {}
+    console.warn("Storage unavailable in this embed.");
+  };
+
+  const load = () => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    try {
+      const raw = sessionStorage.getItem(LS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return [];
+  };
+
+  const askConfirm = (message, { okText = "Confirm", cancelText = "Cancel", danger = false } = {}) =>
+    new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.style.position = "fixed";
+      wrap.style.inset = "0";
+      wrap.style.zIndex = "9999";
+      wrap.style.display = "grid";
+      wrap.style.placeItems = "center";
+      wrap.style.padding = "18px";
+      wrap.style.background = "rgba(20,18,16,.35)";
+      wrap.style.backdropFilter = "blur(8px)";
+      wrap.style.webkitBackdropFilter = "blur(8px)";
+
+      wrap.innerHTML = `
+        <div style="
+          width:min(520px,100%);
+          background:rgba(255,255,255,.92);
+          border:1px solid rgba(43,43,43,.14);
+          border-radius:20px;
+          box-shadow:0 12px 40px rgba(0,0,0,.12);
+          overflow:hidden;">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(43,43,43,.10);font-weight:650;">
+            Confirm
+          </div>
+          <div style="padding:14px 16px;color:rgba(43,43,43,.92);line-height:1.45;">
+            ${escapeHtml(message)}
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+            padding:12px 16px;border-top:1px solid rgba(43,43,43,.10);">
+            <button class="btn" type="button" id="cnlBtn">${escapeHtml(cancelText)}</button>
+            <button class="btn ${danger ? "danger" : "primary"}" type="button" id="okBtn">${escapeHtml(okText)}</button>
+          </div>
+        </div>
+      `;
+
+      const cleanup = (val) => {
+        document.removeEventListener("keydown", onKey);
+        wrap.remove();
+        resolve(val);
+      };
+
+      const onKey = (e) => { if (e.key === "Escape") cleanup(false); };
+
+      wrap.addEventListener("click", (e) => {
+        if (e.target === wrap) cleanup(false);
+      });
+
+      document.body.appendChild(wrap);
+      document.addEventListener("keydown", onKey);
+
+      wrap.querySelector("#cnlBtn").addEventListener("click", () => cleanup(false));
+      wrap.querySelector("#okBtn").addEventListener("click", () => cleanup(true));
+    });
+
+  let items = load();
+
+  let state = { q: "", tag: "", sort: "updated_desc" };
+
+  const normalizeTags = (raw) => {
+    if (!raw) return [];
+    const parts = raw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    return [...new Set(parts)].slice(0, 14);
+  };
+
+  const severityIcon = (n) => {
+    const map = { 1: "·", 2: "∘", 3: "◦", 4: "◎", 5: "◉" };
+    return map[n] || "◦";
+  };
+
+  const buildTagOptions = (allItems) => {
+    const tagSet = new Set();
+    allItems.forEach(it => (it.tags || []).forEach(t => tagSet.add(t)));
+    const tags = [...tagSet].sort((a,b) => a.localeCompare(b));
+    const selected = els.tagFilter.value;
+
+    els.tagFilter.innerHTML =
+      `<option value="">All tags</option>` +
+      tags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+
+    if ([...els.tagFilter.options].some(o => o.value === selected)) els.tagFilter.value = selected;
+    els.tagPill.textContent = `${tags.length} tag${tags.length === 1 ? "" : "s"}`;
+  };
+
+  const matches = (it, q) => {
+    if (!q) return true;
+    const hay = [
+      it.title,
+      it.context,
+      it.what,
+      it.lesson,
+      it.fix,
+      ...(it.tags || [])
+    ].join(" ").toLowerCase();
+    return hay.includes(q.toLowerCase());
+  };
+
+  const applyFilters = (allItems) => {
+    const q = state.q.trim();
+    const tag = state.tag;
+
+    let out = allItems.filter(it => matches(it, q));
+    if (tag) out = out.filter(it => (it.tags || []).includes(tag));
+
+    out.sort((a,b) => {
+      switch(state.sort){
+        case "title_asc": return (a.title || "").localeCompare(b.title || "");
+        case "created_desc": return (b.createdAt || "").localeCompare(a.createdAt || "");
+        case "severity_desc": return (Number(b.severity) || 0) - (Number(a.severity) || 0);
+        case "updated_desc":
+        default: return (b.updatedAt || "").localeCompare(a.updatedAt || "");
+      }
+    });
+
+    return out;
+  };
+
+  const cardHtml = (it) => {
+    const tags = (it.tags || []).slice(0, 7);
+    const ctx = it.context ? it.context : "—";
+    const shortLesson = it.lesson ? it.lesson : "Lesson: (add one)";
+
+    return `
+      <article class="card" aria-label="${escapeHtml(it.title)}">
+        <div class="frame" aria-hidden="true">
+          <div class="plaque" title="Severity ${Number(it.severity)}">${escapeHtml(severityIcon(Number(it.severity)))}</div>
+        </div>
+
+        <div class="content">
+          <div class="topRow">
+            <div style="min-width:0;">
+              <p class="name">${escapeHtml(it.title)}</p>
+              <p class="sub">${escapeHtml(ctx)} · ${escapeHtml(shortLesson)}</p>
+            </div>
+
+            <div class="cardActions">
+              <button class="iconBtn" type="button" id="edit_${it.id}" aria-label="Edit" title="Edit">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 20h4l10.5-10.5a1.8 1.8 0 0 0 0-2.5l-1.5-1.5a1.8 1.8 0 0 0-2.5 0L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M13.5 6.5 17.5 10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="iconBtn" type="button" id="del_${it.id}" aria-label="Delete" title="Delete">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="chips" aria-label="Tags">
+            <span class="chip">severity ${escapeHtml(String(it.severity))}</span>
+            ${tags.map(t => `<span class="chip">${escapeHtml(t)}</span>`).join("")}
+            ${(it.tags && it.tags.length > tags.length) ? `<span class="chip">+${it.tags.length - tags.length}</span>` : ""}
+          </div>
+
+          <details>
+            <summary>
+              <span>Open exhibit details</span>
+              <span class="chev" aria-hidden="true">⌄</span>
+            </summary>
+
+            <div class="detailsBody">
+              <div>
+                <div class="label">What happened</div>
+                <div class="box">${escapeHtml(it.what || "—")}</div>
+              </div>
+              <div>
+                <div class="label">Lesson learned</div>
+                <div class="box">${escapeHtml(it.lesson || "—")}</div>
+              </div>
+              <div>
+                <div class="label">Prevention routine</div>
+                <div class="box">${escapeHtml(it.fix || "—")}</div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </article>
+    `;
+  };
+
+  const render = () => {
+    buildTagOptions(items);
+    const filtered = applyFilters(items);
+
+    els.countPill.textContent = `${items.length} exhibit${items.length === 1 ? "" : "s"}`;
+
+    const parts = [];
+    if (state.q) parts.push(`Search: “${state.q}”`);
+    if (state.tag) parts.push(`Tag: ${state.tag}`);
+    els.filteredMeta.textContent = parts.length
+      ? `${filtered.length} match${filtered.length === 1 ? "" : "es"} · ` + parts.join(" · ")
+      : `${filtered.length} shown`;
+
+    if (items.length === 0){
+      els.contentArea.innerHTML = `
+        <div class="empty">
+          <div class="big" aria-hidden="true">⟡</div>
+          <h2>No exhibits yet</h2>
+          <p>Add a mistake when it happens—then write the lesson learned and a simple prevention routine. Your future self will thank you!!</p>
+          <button class="btn primary" type="button" id="emptyAddBtn">＋ Add your first exhibit</button>
+        </div>
+      `;
+      document.getElementById("emptyAddBtn").addEventListener("click", openAddModal);
+      return;
+    }
+
+    if (filtered.length === 0){
+      els.contentArea.innerHTML = `
+        <div class="empty">
+          <div class="big" aria-hidden="true">⌕</div>
+          <h2>No matches</h2>
+          <p>Try a different search, clear the tag filter, or add a new exhibit.</p>
+          <button class="btn" type="button" id="clearFiltersBtn">Clear filters</button>
+        </div>
+      `;
+      document.getElementById("clearFiltersBtn").addEventListener("click", () => {
+        state.q = ""; state.tag = "";
+        els.search.value = ""; els.tagFilter.value = "";
+        render();
+      });
+      return;
+    }
+
+    els.contentArea.innerHTML = `
+      <div class="grid">
+        ${filtered.map(cardHtml).join("")}
+      </div>
+    `;
+
+    filtered.forEach(it => {
+      const edit = document.getElementById(`edit_${it.id}`);
+      const del = document.getElementById(`del_${it.id}`);
+      if (edit) edit.addEventListener("click", () => openEditModal(it.id));
+      if (del) del.addEventListener("click", () => deleteItem(it.id));
+    });
+  };
+
+  // ------- CRUD -------
+  const upsert = (payload) => {
+    const idx = items.findIndex(x => x.id === payload.id);
+    if (idx >= 0) items[idx] = payload;
+    else items.unshift(payload);
+    save(items);
+    render();
+  };
+
+  const deleteItem = async (id) => {
+    const it = items.find(x => x.id === id);
+    const name = it ? it.title : "this exhibit";
+
+    const ok = await askConfirm(`Delete "${name}"?`, {
+      okText: "Delete",
+      cancelText: "Cancel",
+      danger: true
+    });
+    if (!ok) return;
+
+    items = items.filter(x => x.id !== id);
+    save(items);
+    render();
+  };
+
+  const clearAll = async () => {
+    if (!items.length) return;
+
+    const ok = await askConfirm("Clear all exhibits? This cannot be undone.", {
+      okText: "Yes, clear",
+      cancelText: "Cancel",
+      danger: true
+    });
+    if (!ok) return;
+
+    items = [];
+    save(items);
+    render();
+  };
+
+  const exportJson = () => {
+    const data = JSON.stringify(items, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "mistake-museum.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  // ------- Modal -------
+  let lastFocusEl = null;
+
+  const openModal = () => {
+    lastFocusEl = document.activeElement;
+    els.modalBackdrop.classList.add("show");
+    setTimeout(() => els.mTitle.focus(), 0);
+    document.addEventListener("keydown", onModalKeydown);
+  };
+
+  const closeModal = () => {
+    els.modalBackdrop.classList.remove("show");
+    document.removeEventListener("keydown", onModalKeydown);
+    if (lastFocusEl && typeof lastFocusEl.focus === "function") lastFocusEl.focus();
+    resetForm();
+  };
+
+  const onModalKeydown = (e) => {
+    if (e.key === "Escape") closeModal();
+
+    if (e.key === "Tab"){
+      const focusables = els.modalBackdrop.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const list = [...focusables].filter(x => !x.disabled && x.offsetParent !== null);
+      if (!list.length) return;
+
+      const first = list[0];
+      const last = list[list.length - 1];
+
+      if (e.shiftKey && document.activeElement === first){
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last){
+        e.preventDefault(); first.focus();
+      }
+    }
+  };
+
+  const resetForm = () => {
+    els.editId.value = "";
+    els.modalTitle.textContent = "Add exhibit";
+    els.saveBtn.textContent = "Save";
+
+    els.mTitle.value = "";
+    els.mSeverity.value = "3";
+    els.mContext.value = "";
+    els.mTags.value = "";
+    els.mWhat.value = "";
+    els.mLesson.value = "";
+    els.mFix.value = "";
+  };
+
+  const openAddModal = () => { resetForm(); openModal(); };
+
+  const openEditModal = (id) => {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+
+    els.editId.value = it.id;
+    els.modalTitle.textContent = "Edit exhibit";
+    els.saveBtn.textContent = "Update";
+
+    els.mTitle.value = it.title || "";
+    els.mSeverity.value = String(it.severity ?? 3);
+    els.mContext.value = it.context || "";
+    els.mTags.value = (it.tags || []).join(", ");
+    els.mWhat.value = it.what || "";
+    els.mLesson.value = it.lesson || "";
+    els.mFix.value = it.fix || "";
+
+    openModal();
+  };
+
+  // ------- Demo seed -------
+  const seedDemo = () => {
+    const demo = [
+      {
+        title: "Forgot units and got a nonsense answer",
+        severity: 3,
+        context: "Physics • Kinematics • Quiz",
+        tags: ["units", "sanity-check", "careless"],
+        what: "I treated km/h as m/s and didn’t notice the magnitude was impossible.",
+        lesson: "Always do a quick units + magnitude check before submitting.",
+        fix: "Last 30 seconds: write the unit next to the final number, then estimate if the value is plausible."
+      },
+      {
+        title: "Sign error in derivative chain rule",
+        severity: 4,
+        context: "Calculus • Derivatives • Homework",
+        tags: ["sign-error", "chain-rule"],
+        what: "I differentiated inside but forgot the negative sign from the inner function.",
+        lesson: "Don’t simplify too early—carry structure until the end.",
+        fix: "Box the inner function, write d/dx(inner) explicitly on the next line, then simplify."
+      },
+      {
+        title: "Misread ‘at most’ as ‘at least’",
+        severity: 5,
+        context: "Probability • Word Problems • Exam",
+        tags: ["reading", "rushing", "wording"],
+        what: "I rushed and inverted the condition, solving the complement without realizing.",
+        lesson: "Underline constraint words (at most, at least, exactly, unless).",
+        fix: "Before solving: rewrite the condition as a short inequality in symbols."
+      }
+    ];
+
+    const existing = new Set(items.map(x => (x.title || "").toLowerCase().trim()));
+    demo.forEach(d => {
+      if (existing.has(d.title.toLowerCase().trim())) return;
+      items.unshift({
+        id: crypto.randomUUID(),
+        title: d.title,
+        severity: d.severity,
+        context: d.context,
+        tags: d.tags,
+        what: d.what,
+        lesson: d.lesson,
+        fix: d.fix,
+        createdAt: nowISO(),
+        updatedAt: nowISO(),
+      });
+    });
+
+    save(items);
+    render();
+    closeModal();
+  };
+
+  // ------- Events -------
+  els.addBtn.addEventListener("click", openAddModal);
+  els.exportBtn.addEventListener("click", exportJson);
+  els.clearBtn.addEventListener("click", clearAll);
+
+  els.closeModalBtn.addEventListener("click", closeModal);
+  els.cancelBtn.addEventListener("click", closeModal);
+  els.modalBackdrop.addEventListener("click", (e) => { if (e.target === els.modalBackdrop) closeModal(); });
+
+  els.exhibitForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const title = els.mTitle.value.trim();
+    if (!title) return;
+
+    const severity = Number(els.mSeverity.value);
+    const context = els.mContext.value.trim();
+    const tags = normalizeTags(els.mTags.value);
+    const what = els.mWhat.value.trim();
+    const lesson = els.mLesson.value.trim();
+    const fix = els.mFix.value.trim();
+
+    const id = els.editId.value || crypto.randomUUID();
+    const existing = items.find(x => x.id === id);
+
+    const payload = {
+      id,
+      title,
+      severity: Number.isFinite(severity) ? severity : 3,
+      context,
+      tags,
+      what,
+      lesson,
+      fix,
+      createdAt: existing ? existing.createdAt : nowISO(),
+      updatedAt: nowISO(),
+    };
+
+    upsert(payload);
+    closeModal();
+  });
+
+  if (els.seedDemo) els.seedDemo.addEventListener("click", (e) => { e.preventDefault(); seedDemo(); });
+
+  els.search.addEventListener("input", () => { state.q = els.search.value; render(); });
+  els.tagFilter.addEventListener("change", () => { state.tag = els.tagFilter.value; render(); });
+  els.sortBy.addEventListener("change", () => { state.sort = els.sortBy.value; render(); });
+
+  // Keyboard shortcut: "/" focuses search (like Notion)
+  document.addEventListener("keydown", (e) => {
+    if (els.modalBackdrop.classList.contains("show")) return;
+    if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey){
+      const a = document.activeElement;
+      const typing = a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable);
+      if (!typing){
+        e.preventDefault();
+        els.search.focus();
+      }
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>

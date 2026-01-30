@@ -24,6 +24,7 @@
     h1{margin:0; font-size:18px}
     .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
 
+
     .widgetBoard{
       position:relative;
       border-radius: var(--r);
@@ -34,6 +35,7 @@
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
     }
+
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -42,13 +44,16 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      transform: scale(1.02);
+
+
       z-index:0;
       pointer-events:none;
 
 
       border-radius: var(--r);
+      clip-path: inset(0 round var(--r));
     }
+
     .widgetBoard::after{
       content:"";
       position:absolute;
@@ -58,7 +63,9 @@
 
 
       border-radius: var(--r);
+      clip-path: inset(0 round var(--r));
     }
+
     .boardTint{
       position:absolute;
       inset:0;
@@ -67,11 +74,15 @@
 
 
       border-radius: var(--r);
+      clip-path: inset(0 round var(--r));
     }
+
     .boardContent{
       position:relative;
       z-index:2;
     }
+
+    /* ===================================================== */
 
     .card{
       background:var(--card);
@@ -149,6 +160,7 @@
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.30);
     }
+
     .bgPanel{
       position:absolute;
       top: 44px;
@@ -164,70 +176,23 @@
       display:none;
       z-index: 50;
 
-
+      /* Optional safety */
       max-height: min(70vh, 420px);
-      overflow: auto;
+      overflow:auto;
     }
     .bgPanel.open{ display:block; }
-    .bgTitle{
-      margin:0 0 10px 0;
-      font-size:12px;
-      font-weight:700;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color: rgba(43,42,40,0.72);
-    }
-    .bgRow{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding: 7px 0;
-    }
-    .bgRow label{ font-size:12px; color:var(--muted); }
-    .bgRow input[type="color"]{
-      width:36px; height:28px;
-      border-radius:10px;
-      padding:0;
-      border:1px solid var(--stroke);
-      background: transparent;
-      cursor:pointer;
-    }
-    .bgRow input[type="range"]{ width: 150px; }
-    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
-    .bgMiniBtn{
-      width:100%;
-      border-radius:12px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.95);
-      padding:9px 10px;
-      font-weight:700;
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      font-size:11px;
-      color: rgba(43,42,40,0.82);
-      box-shadow: 0 2px 8px rgba(30,20,10,.06);
-    }
-    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
-    .bgHint{ font-size:11px; color:var(--muted); line-height:1.35; margin-top:8px; }
 
-    .themeWrap{ position:relative; }
-    .themeBtn{
-      width:34px; height:34px;
-      border-radius:999px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.92);
-      padding:0;
-      display:grid;
-      place-items:center;
-      box-shadow: 0 3px 12px rgba(30,20,10,.08);
-    }
+
     .themeIcon{
       width:16px; height:16px;
-      border-radius:4px;
+
+      /* FIX: make icon circular */
+      border-radius:999px;
+
       border:1px solid rgba(233,228,221,0.95);
       background: linear-gradient(135deg, var(--ink), var(--soft));
     }
+
     .themePanel{
       position:absolute;
       top: 44px;
@@ -243,9 +208,9 @@
       display:none;
       z-index: 50;
 
-      /* Optional safety: scroll instead of getting cut off */
+      /* Optional safety */
       max-height: min(70vh, 460px);
-      overflow: auto;
+      overflow:auto;
     }
     .themePanel.open{ display:block; }
 

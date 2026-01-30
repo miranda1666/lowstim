@@ -1,0 +1,2019 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Journal</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --cream:#e6d8cc;
+      --stone:#c9beb6;
+      --text:#1f1f1f;
+      --muted:#6b625c;
+
+      --border: rgba(201,190,182,0.85);
+      --borderSoft: rgba(201,190,182,0.55);
+      --shadow: 0 18px 40px rgba(0,0,0,0.08);
+      --shadowSoft: 0 6px 18px rgba(0,0,0,0.06);
+
+      --rOuter: 18px;
+      --rInner: 16px;
+      --rPill: 999px;
+
+      --a5w: 500px;
+      --a5h: 595px;
+
+      --paper: #fffdfb;
+      --line: rgba(201,190,182,0.35);
+
+      --lineH: 26px;
+      --textTopPad: 10px;
+
+      --inkOffset: 7px;
+
+      --board-tint: #efe7e1;
+      --board-tint-a: 0.30;
+      --board-image: none;
+
+      --paper-image: none;
+      --paper-tint-a: 0.0;
+
+      /* NEW: override-friendly "whites" */
+      --card-bg: rgba(255,255,255,0.88);
+      --field-bg: #ffffff;
+      --panel-bg: rgba(255,255,255,0.92);
+      --chip-bg: #ffffff;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      padding:22px;
+    }
+
+    .wrap{ max-width: 1200px; margin: 0 auto; }
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .kicker{
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+      padding-top:4px;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:var(--field-bg);
+      color:var(--text);
+      border-radius:999px;
+      padding:9px 14px;
+      font-size:12px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 14px 22px rgba(0,0,0,0.10); }
+    .btn.primary{ background:var(--cream); }
+
+    .popover{ position:relative; }
+    .icon-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      background: rgba(255,255,255,0.80);
+      border: 1px solid var(--borderSoft);
+      border-radius: 999px;
+      padding: 6px 10px;
+      box-shadow: var(--shadowSoft);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .bg-btn{
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      border:1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.95);
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      -webkit-tap-highlight-color: transparent;
+      color: rgba(31,31,31,0.70);
+      font-weight:800;
+      line-height:1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+    .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
+    .bg-btn:active{ transform: translateY(0px); }
+
+    .bg-dot{
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
+    }
+
+    /* NEW: theme dot */
+    .theme-dot{
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background: var(--text);
+      box-shadow: 0 0 0 6px rgba(201,190,182,0.25);
+    }
+
+    .panel{
+      position:absolute;
+      top: 46px;
+      right: 0;
+      width: 270px;
+      border-radius: 16px;
+      border: 1px solid var(--borderSoft);
+      background: var(--panel-bg);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px;
+      display:none;
+      z-index: 80;
+    }
+    .panel.open{ display:block; }
+
+    .panel h2{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(31,31,31,0.72);
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 8px 0;
+    }
+    .row label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    input[type="color"]{
+      width: 36px;
+      height: 28px;
+      border: 1px solid var(--borderSoft);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"]{ width: 150px; }
+    .file{
+      width:100%;
+      font-size: 12px;
+      color: rgba(31,31,31,0.75);
+    }
+    .mini-btn{
+      width: 100%;
+      border: 1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: 11px;
+      color: rgba(31,31,31,0.80);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+    .divider{
+      height: 1px;
+      background: rgba(201,190,182,0.35);
+      margin: 8px 0;
+    }
+    .hint{
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:14px;
+      align-items:start;
+      position: relative;
+      z-index: 2;
+    }
+
+    .widgetBoard{
+      position: relative;
+      border-radius: var(--rOuter);
+      overflow: hidden;
+      border: 1px solid var(--borderSoft);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      background: transparent;
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(0.95);
+      transform: scale(1.02);
+      z-index:0;
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      /* FIX: the original had a broken "background:" line.
+         Kept consistent with your other widgets. */
+      background:
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.35), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.22), transparent 62%),
+        rgba(255,255,255,0.30);
+      background-blend-mode: screen;
+      pointer-events: none;
+      z-index:0;
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      background: rgba(0,0,0,0);
+      mix-blend-mode: multiply;
+      pointer-events:none;
+      z-index: 1;
+    }
+
+    .notebookShell{
+      border:1px solid var(--border);
+      border-radius: var(--rOuter);
+      box-shadow: none;
+      background:
+        linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0)),
+        var(--card-bg);
+      padding:14px;
+      min-width:0;
+    }
+
+    .shellHead{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+
+    .dateRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    label.small{
+      font-size:11px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    .input, .select{
+      border:1px solid var(--border);
+      background:var(--field-bg);
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:13px;
+      outline:none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      height:36px;
+      color: var(--text);
+    }
+    .input:focus, .select:focus{
+      border-color: rgba(201,190,182,1);
+      box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
+    }
+
+    .pill{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--borderSoft);
+      border-radius:999px;
+      padding:6px 10px;
+      background:var(--chip-bg);
+      line-height:1;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    .stage{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px 0 6px;
+    }
+
+    .book{
+      position:relative;
+      width: min(100%, var(--a5w));
+      height: var(--a5h);
+      border-radius: 14px;
+      background: var(--paper);
+      border:1px solid var(--borderSoft);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+      overflow:hidden;
+    }
+
+    .book::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      /* FIX: original had broken "background:".
+         Leaving it empty (transparent) keeps your paper clean. */
+      background: transparent;
+      pointer-events:none;
+      opacity:0.55;
+    }
+
+    .spine{
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:0;
+      width:44px;
+      background: linear-gradient(180deg, rgba(230,216,204,0.65), rgba(230,216,204,0.25));
+      border-right: 1px solid rgba(201,190,182,0.45);
+    }
+    .spine::after{
+      content:"";
+      position:absolute;
+      left:12px;
+      top:18px;
+      bottom:18px;
+      width:2px;
+      background: rgba(201,190,182,0.55);
+      border-radius: 2px;
+      opacity:0.9;
+    }
+
+    .paper{
+      position:absolute;
+      left:44px; right:0; top:0; bottom:0;
+      padding: 18px 22px 18px 18px;
+      background: var(--paper);
+      overflow:hidden;
+    }
+    .paper::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--paper-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: var(--paper-tint-a);
+      pointer-events:none;
+      z-index:0;
+      transform: scale(1.02);
+    }
+
+    .bookmarkTab{
+      width:18px;
+      height:34px;
+      border-radius: 10px 0 0 10px;
+      border:1px solid rgba(201,190,182,0.55);
+      background: rgba(230,216,204,0.45);
+      position:absolute;
+      right:-1px;
+      top:72px;
+      box-shadow: var(--shadowSoft);
+      display:none;
+    }
+    .bookmarkTab.on{ display:block; }
+
+    .editorWrap{
+      position:relative;
+      height: 100%;
+      border-radius: 12px;
+      z-index: 1;
+    }
+
+    .editor{
+      width:100%;
+      height:100%;
+      padding: var(--textTopPad) 6px 6px 2px;
+      outline:none;
+      background: transparent;
+      overflow:auto;
+      font-size: 15px;
+      line-height: var(--lineH);
+      color: var(--text);
+      border-radius: 12px;
+      user-select:text;
+
+      position: relative;
+
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent calc(var(--lineH) - var(--inkOffset)),
+        var(--line) calc(var(--lineH) - var(--inkOffset)),
+        var(--line) calc(var(--lineH) - var(--inkOffset) + 1px),
+        transparent calc(var(--lineH) - var(--inkOffset) + 1px),
+        transparent var(--lineH)
+      );
+      background-size: 100% var(--lineH);
+      background-position: 0 var(--textTopPad);
+      background-attachment: local;
+    }
+    .editor p{ margin:0; }
+
+    /* Image blocks (custom resize handle) */
+    .imgWrap{
+      display:inline-block;
+      position:relative;
+      margin: 6px 0;
+      max-width:100%;
+      vertical-align:baseline;
+      border-radius:12px;
+    }
+    .imgWrap img{
+      display:block;
+      width:100%;
+      height:auto;
+      border-radius:12px;
+      border:1px solid rgba(201,190,182,0.55);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+      pointer-events:none;
+      user-select:none;
+    }
+    .imgWrap[contenteditable="false"]{ user-select:none; }
+
+    .imgWrap.freeMove{
+      position:absolute;
+      z-index: 20;
+      margin: 0;
+      touch-action: none;
+      cursor: grab;
+    }
+    .imgWrap.freeMove img{ pointer-events:none; }
+
+    .imgHandle{
+      position:absolute;
+      right:6px;
+      bottom:6px;
+      width:18px;
+      height:18px;
+      border-radius:8px;
+      border:1px solid rgba(201,190,182,0.75);
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 8px 14px rgba(0,0,0,0.10);
+      cursor: nwse-resize;
+    }
+    .imgHandle::after{
+      content:"";
+      position:absolute;
+      inset:4px;
+      border-radius:6px;
+      background:
+        linear-gradient(135deg,
+          rgba(201,190,182,0.0) 0 35%,
+          rgba(201,190,182,0.85) 35% 40%,
+          rgba(201,190,182,0.0) 40% 65%,
+          rgba(201,190,182,0.85) 65% 70%,
+          rgba(201,190,182,0.0) 70% 100%);
+      opacity:0.7;
+    }
+    .imgDel{
+      position:absolute;
+      top:-10px;
+      right:-10px;
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background:var(--field-bg);
+      box-shadow: 0 8px 14px rgba(0,0,0,0.10);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+    }
+
+    /* Sticker layer */
+    .stickerLayer{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+    .sticker{
+      position:absolute;
+      pointer-events:auto;
+      cursor:grab;
+      user-select:none;
+      transform: translate(-50%, -50%);
+      font-size: 28px;
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,0.10));
+    }
+    .sticker:active{ cursor:grabbing; }
+    .sticker .x{
+      position:absolute;
+      top:-10px;
+      right:-10px;
+      width:22px; height:22px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background:var(--field-bg);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      cursor:pointer;
+      box-shadow: 0 8px 14px rgba(0,0,0,0.10);
+    }
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:flex-end;
+      justify-content:space-between;
+      margin-top:12px;
+      padding:12px;
+      border:1px solid var(--borderSoft);
+      border-radius: var(--rInner);
+      background: linear-gradient(180deg, rgba(230,216,204,0.16), rgba(255,255,255,0));
+    }
+    .toolGroup{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:flex-end;
+    }
+    .iconBtn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:var(--field-bg);
+      border-radius:12px;
+      width:40px;
+      height:36px;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--text);
+    }
+    .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 14px 22px rgba(0,0,0,0.10); }
+    .iconBtn.primary{ background: var(--cream); }
+
+    .color{
+      width:44px;
+      height:36px;
+      padding:0;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--field-bg);
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+    }
+
+    .hint{
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.4;
+      margin:0;
+    }
+
+    /* Sidebar */
+    .side{
+      border:1px solid var(--border);
+      border-radius: var(--rOuter);
+      box-shadow: none;
+      background:
+        linear-gradient(180deg, rgba(230,216,204,0.12), rgba(255,255,255,0)),
+        var(--card-bg);
+      padding:14px;
+    }
+    .sideHead{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .sideTitle{
+      font-size:14px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0;
+    }
+    .list{ display:grid; gap:10px; }
+    .rowCard{
+      border:1px solid var(--borderSoft);
+      border-radius:14px;
+      padding:10px;
+      background:var(--field-bg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+    .rowCard:hover{ transform:translateY(-1px); box-shadow:0 14px 22px rgba(0,0,0,0.10); }
+    .rowCard small{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+    }
+    .rowCard .left{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+    .rowCard .title{
+      font-size:13px;
+      color:var(--text);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 250px;
+    }
+    .badge{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--borderSoft);
+      border-radius:999px;
+      padding:5px 8px;
+      background:var(--chip-bg);
+      line-height:1;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .wrap{ max-width: 900px; }
+      .widgetBoard{ padding: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div class="kicker"></div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; align-items:flex-start;">
+
+        <div class="popover" id="bgPopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <span class="bg-dot" id="boardDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <h2>Background</h2>
+
+            <div class="row">
+              <label for="bgColor">Tint</label>
+              <input id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="row">
+              <label for="bgStrength">Tint strength</label>
+              <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input id="bgImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="row">
+              <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="popover" id="paperPopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="paperBtn" type="button" aria-label="Paper settings" title="Paper settings">
+              <span class="bg-dot" id="paperDot" aria-hidden="true" style="background: var(--paper);"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="paperPanel" role="dialog" aria-label="Paper settings">
+            <h2>Paper</h2>
+
+            <div class="row">
+              <label for="paperColor">Color</label>
+              <input id="paperColor" type="color" value="#fffdfb" />
+            </div>
+
+            <div class="row">
+              <label for="paperStrength">Image strength</label>
+              <input id="paperStrength" type="range" min="0" max="70" value="0" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row" style="align-items:flex-start;">
+              <label for="paperImage">Image</label>
+              <input id="paperImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="row">
+              <button class="mini-btn" id="removePaperImage" type="button">Remove image</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="popover" id="themePopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <h2>Theme</h2>
+
+            <div class="row">
+              <label for="tWidgetBg">Page bg</label>
+              <input id="tWidgetBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="row">
+              <label for="tCardBg">Card bg</label>
+              <input id="tCardBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="row">
+              <label for="tFieldBg">Cards/inputs bg</label>
+              <input id="tFieldBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label for="tText">Text</label>
+              <input id="tText" type="color" value="#1f1f1f" />
+            </div>
+
+            <div class="row">
+              <label for="tMuted">Muted text</label>
+              <input id="tMuted" type="color" value="#6b625c" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label for="tBorder">Borders</label>
+              <input id="tBorder" type="color" value="#c9beb6" />
+            </div>
+
+            <div class="row">
+              <label for="tStone">Accent</label>
+              <input id="tStone" type="color" value="#c9beb6" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label for="tCream">Highlight</label>
+              <input id="tCream" type="color" value="#e6d8cc" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
+            </div>
+
+            <div class="hint">
+            </div>
+          </div>
+        </div>
+
+        <button id="prevPage" class="btn" type="button">◀ PREV PAGE</button>
+        <button id="nextPage" class="btn" type="button">NEXT PAGE ▶</button>
+        <button id="addPage" class="btn primary" type="button">ADD PAGE</button>
+      </div>
+    </div>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Journal widget board">
+      <div class="boardTint" id="boardTint"></div>
+
+      <div class="grid">
+        <section class="notebookShell" aria-label="Notebook">
+          <div class="shellHead">
+            <div class="dateRow">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label class="small" for="datePick">Date</label>
+                <input id="datePick" class="input" type="date" />
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label class="small" for="pagePick">Page</label>
+                <select id="pagePick" class="select"></select>
+              </div>
+              <div class="pill" id="savePill">Saved</div>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+              <button id="toggleBookmark" class="btn" type="button">BOOKMARK</button>
+              <button id="deletePage" class="btn" type="button">DELETE PAGE</button>
+            </div>
+          </div>
+
+          <div class="stage">
+            <div class="book" aria-label="A5 notebook">
+              <div class="spine"></div>
+
+              <div class="paper">
+                <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                  <div class="pill" id="pageInfo">Page 1</div>
+                </div>
+
+                <div id="bookmarkTab" class="bookmarkTab" title="Bookmarked page"></div>
+
+                <div class="editorWrap">
+                  <div id="editor" class="editor" contenteditable="true" spellcheck="true"></div>
+                  <div id="stickerLayer" class="stickerLayer"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="toolbar" aria-label="Editor tools">
+            <div class="toolGroup">
+              <button class="iconBtn" type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+              <button class="iconBtn" type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+              <button class="iconBtn" type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+            </div>
+
+            <div class="toolGroup">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label class="small" for="fontSel">Font</label>
+                <select id="fontSel" class="select" style="height:36px;">
+                  <option value="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial">System</option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="'Times New Roman', Times, serif">Times</option>
+                  <option value="Garamond, serif">Garamond</option>
+                  <option value="'Courier New', Courier, monospace">Courier</option>
+                  <option value="Verdana, Geneva, sans-serif">Verdana</option>
+                  <option value="'Trebuchet MS', Trebuchet, sans-serif">Trebuchet</option>
+                </select>
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label class="small" for="customFont">Custom font</label>
+                <input id="customFont" class="input" type="text" placeholder="e.g. 'Comic Sans MS'" />
+              </div>
+
+              <button id="applyCustomFont" class="btn primary" type="button" style="height:36px; padding:0 14px;">APPLY</button>
+            </div>
+
+            <div class="toolGroup">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label class="small" for="highlight">Highlight</label>
+                <input id="highlight" class="color" type="color" value="#fff59d" />
+              </div>
+              <button id="doHighlight" class="btn primary" type="button" style="height:36px; padding:0 14px;">HIGHLIGHT</button>
+              <button id="clearFormat" class="btn" type="button" style="height:36px; padding:0 14px;">CLEAR</button>
+            </div>
+
+            <div class="toolGroup">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label class="small" for="imgPick">Add image</label>
+                <input id="imgPick" class="input" type="file" accept="image/*" style="height:36px; padding-top:6px;" />
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label class="small">Stickers</label>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button class="iconBtn primary" type="button" data-sticker="✨">✨</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🌿">🌿</button>
+                  <button class="iconBtn primary" type="button" data-sticker="⭐">⭐</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🧸">🧸</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🫶">🫶</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🍓">🍓</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🍯">🍯</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🕯️">🕯️</button>
+                  <button class="iconBtn primary" type="button" data-sticker="☁️">☁️</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🌙">🌙</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🦋">🦋</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🌸">🌸</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🎀">🎀</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🧋">🧋</button>
+                  <button class="iconBtn primary" type="button" data-sticker="📌">📌</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🩷">🩷</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🐻">🐻</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🐰">🐰</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🧁">🧁</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🍰">🍰</button>
+                  <button class="iconBtn primary" type="button" data-sticker="🪻">🪻</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="hint" style="margin-top:10px;"></p>
+        </section>
+
+        <aside class="side" aria-label="Pages and bookmarks">
+          <div class="sideHead">
+            <h2 class="sideTitle">Pages</h2>
+            <div class="pill" id="dayCountPill">0 pages</div>
+          </div>
+          <div class="list" id="pageList"></div>
+
+          <div style="height:12px;"></div>
+
+          <div class="sideHead">
+            <h2 class="sideTitle">Bookmarks</h2>
+            <div class="pill" id="bmCountPill">0</div>
+          </div>
+          <div class="list" id="bmList"></div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const STORE_KEY = "cute_notebook_journal_v4";
+
+      const pad2 = (n) => String(n).padStart(2,"0");
+      const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      // ---------- Storage helpers (localStorage + session fallback) ----------
+      function loadStore(){
+        try{
+          const raw = localStorage.getItem(STORE_KEY);
+          if(raw) return JSON.parse(raw) || {};
+        }catch{}
+        try{
+          const raw = sessionStorage.getItem(STORE_KEY);
+          if(raw) return JSON.parse(raw) || {};
+        }catch{}
+        return {};
+      }
+      function saveStore(store){
+        const data = JSON.stringify(store);
+        try{ localStorage.setItem(STORE_KEY, data); return; }catch{}
+        try{ sessionStorage.setItem(STORE_KEY, data); return; }catch{}
+      }
+
+      function defaultPage(){
+        return {
+          html: "",
+          font: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
+          customFont: "",
+          bookmark: false,
+          stickers: []
+        };
+      }
+
+      const store = loadStore();
+
+      // --------------------------------------------------------------------
+      // Theme Settings (NEW)
+      // --------------------------------------------------------------------
+      const THEME_KEY = "cute_notebook_theme_v1";
+
+      const themeBtn = document.getElementById("themeBtn");
+      const themePanel = document.getElementById("themePanel");
+      const themeDot = document.getElementById("themeDot");
+
+      const tWidgetBg = document.getElementById("tWidgetBg");
+      const tCardBg   = document.getElementById("tCardBg");
+      const tFieldBg  = document.getElementById("tFieldBg");
+      const tText     = document.getElementById("tText");
+      const tMuted    = document.getElementById("tMuted");
+      const tBorder   = document.getElementById("tBorder");
+      const tStone    = document.getElementById("tStone");
+      const tCream    = document.getElementById("tCream");
+      const resetTheme= document.getElementById("resetTheme");
+
+      const DEFAULT_THEME = {
+        bg: "#ffffff",
+        cardBg: "#ffffff",
+        fieldBg: "#ffffff",
+        text: "#1f1f1f",
+        muted: "#6b625c",
+        borderHex: "#c9beb6",
+        stone: "#c9beb6",
+        cream: "#e6d8cc"
+      };
+
+      function loadTheme(){
+        try{
+          const raw = localStorage.getItem(THEME_KEY);
+          if(raw) return JSON.parse(raw) || null;
+        }catch{}
+        return null;
+      }
+      function saveTheme(t){
+        try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+      }
+
+      // Helper used by both theme + background
+      function hexToRgba(hex, a){
+        const h = String(hex || "").replace("#","").trim();
+        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+        const num = parseInt(full || "efe7e1", 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${a})`;
+      }
+
+      function applyTheme(t){
+        document.documentElement.style.setProperty("--bg", t.bg);
+        document.documentElement.style.setProperty("--text", t.text);
+        document.documentElement.style.setProperty("--muted", t.muted);
+
+        document.documentElement.style.setProperty("--stone", t.stone);
+        document.documentElement.style.setProperty("--cream", t.cream);
+
+        document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
+        document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
+
+        document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, 0.88));
+        document.documentElement.style.setProperty("--field-bg", t.fieldBg);
+        document.documentElement.style.setProperty("--chip-bg", t.fieldBg);
+
+        if(themeDot){
+          themeDot.style.background = t.text;
+          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
+          themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
+        }
+      }
+
+      const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
+
+      tWidgetBg.value = themeState.bg;
+      tCardBg.value = themeState.cardBg;
+      tFieldBg.value = themeState.fieldBg;
+      tText.value = themeState.text;
+      tMuted.value = themeState.muted;
+      tBorder.value = themeState.borderHex;
+      tStone.value = themeState.stone;
+      tCream.value = themeState.cream;
+
+      applyTheme(themeState);
+
+      function wireThemeInput(el, key){
+        el.addEventListener("input", () => {
+          themeState[key] = el.value;
+          applyTheme(themeState);
+          saveTheme(themeState);
+          // keep dots consistent (board dot uses border-ish colors too)
+          applyBackgroundFromStore();
+          applyPaperFromStore();
+        });
+      }
+
+      wireThemeInput(tWidgetBg, "bg");
+      wireThemeInput(tCardBg, "cardBg");
+      wireThemeInput(tFieldBg, "fieldBg");
+      wireThemeInput(tText, "text");
+      wireThemeInput(tMuted, "muted");
+      wireThemeInput(tBorder, "borderHex");
+      wireThemeInput(tStone, "stone");
+      wireThemeInput(tCream, "cream");
+
+      resetTheme.addEventListener("click", () => {
+        Object.assign(themeState, DEFAULT_THEME);
+
+        tWidgetBg.value = themeState.bg;
+        tCardBg.value = themeState.cardBg;
+        tFieldBg.value = themeState.fieldBg;
+        tText.value = themeState.text;
+        tMuted.value = themeState.muted;
+        tBorder.value = themeState.borderHex;
+        tStone.value = themeState.stone;
+        tCream.value = themeState.cream;
+
+        applyTheme(themeState);
+        saveTheme(themeState);
+        applyBackgroundFromStore();
+        applyPaperFromStore();
+      });
+
+      // --------------------------------------------------------------------
+      // Background Settings (board + paper)  (existing)
+      // --------------------------------------------------------------------
+      const boardTintEl = document.getElementById("boardTint");
+      const bgBtn = document.getElementById("bgBtn");
+      const bgPanel = document.getElementById("bgPanel");
+      const bgColor = document.getElementById("bgColor");
+      const bgStrength = document.getElementById("bgStrength");
+      const bgImage = document.getElementById("bgImage");
+      const removeImage = document.getElementById("removeImage");
+      const boardDot = document.getElementById("boardDot");
+
+      const paperBtn = document.getElementById("paperBtn");
+      const paperPanel = document.getElementById("paperPanel");
+      const paperColor = document.getElementById("paperColor");
+      const paperStrength = document.getElementById("paperStrength");
+      const paperImage = document.getElementById("paperImage");
+      const removePaperImage = document.getElementById("removePaperImage");
+      const paperDot = document.getElementById("paperDot");
+
+      function ensureUI(){
+        store.__ui = store.__ui || {};
+        store.__ui.background = store.__ui.background || { tint: "#efe7e1", strength: 30, imageDataUrl: null };
+        store.__ui.paper = store.__ui.paper || { color: "#fffdfb", strength: 0, imageDataUrl: null };
+        return store.__ui;
+      }
+
+      function setBoardImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      }
+
+      function applyBoardTint(colorHex, strengthPct){
+        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
+        document.documentElement.style.setProperty("--board-tint", colorHex);
+        document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+        if (boardDot){
+          boardDot.style.background = colorHex;
+          boardDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
+        }
+        if (boardTintEl){
+          boardTintEl.style.background = hexToRgba(colorHex, strength);
+        }
+      }
+
+      function setPaperImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--paper-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      }
+
+      function applyPaper(colorHex, strengthPct){
+        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
+        document.documentElement.style.setProperty("--paper", colorHex);
+        document.documentElement.style.setProperty("--paper-tint-a", String(strength));
+
+        if (paperDot){
+          paperDot.style.background = colorHex;
+          paperDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.20, strength + 0.10))}`;
+        }
+      }
+
+      async function fileToDataUrl(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
+      function applyBackgroundFromStore(){
+        const ui = ensureUI();
+        const bg = ui.background;
+
+        bgColor.value = bg.tint || "#efe7e1";
+        bgStrength.value = String(bg.strength ?? 30);
+
+        applyBoardTint(bgColor.value, bgStrength.value);
+        setBoardImage(bg.imageDataUrl || null);
+      }
+
+      function applyPaperFromStore(){
+        const ui = ensureUI();
+        const p = ui.paper;
+
+        paperColor.value = p.color || "#fffdfb";
+        paperStrength.value = String(p.strength ?? 0);
+
+        applyPaper(paperColor.value, paperStrength.value);
+        setPaperImage(p.imageDataUrl || null);
+      }
+
+      // Popover toggle + click outside
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+        themePanel.classList.remove("open");
+      });
+
+      paperBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        paperPanel.classList.toggle("open");
+        themePanel.classList.remove("open");
+      });
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        bgPanel.classList.remove("open");
+        paperPanel.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (bgPanel.classList.contains("open")) {
+          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          if (!inside) bgPanel.classList.remove("open");
+        }
+        if (paperPanel.classList.contains("open")) {
+          const inside2 = e.target.closest("#paperPanel") || e.target.closest("#paperBtn");
+          if (!inside2) paperPanel.classList.remove("open");
+        }
+        if (themePanel.classList.contains("open")) {
+          const inside3 = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if (!inside3) themePanel.classList.remove("open");
+        }
+      });
+
+      // Board inputs
+      bgColor.addEventListener("input", () => {
+        const ui = ensureUI();
+        ui.background.tint = bgColor.value;
+        applyBoardTint(ui.background.tint, bgStrength.value);
+        saveStore(store);
+      });
+
+      bgStrength.addEventListener("input", () => {
+        const ui = ensureUI();
+        ui.background.strength = Number(bgStrength.value);
+        applyBoardTint(bgColor.value, ui.background.strength);
+        saveStore(store);
+      });
+
+      bgImage.addEventListener("change", async () => {
+        const file = bgImage.files && bgImage.files[0];
+        if(!file) return;
+        const ui = ensureUI();
+        const dataUrl = await fileToDataUrl(file);
+        ui.background.imageDataUrl = dataUrl;
+        setBoardImage(dataUrl);
+        saveStore(store);
+      });
+
+      removeImage.addEventListener("click", () => {
+        const ui = ensureUI();
+        ui.background.imageDataUrl = null;
+        setBoardImage(null);
+        bgImage.value = "";
+        saveStore(store);
+      });
+
+      // Paper inputs
+      paperColor.addEventListener("input", () => {
+        const ui = ensureUI();
+        ui.paper.color = paperColor.value;
+        applyPaper(ui.paper.color, paperStrength.value);
+        saveStore(store);
+      });
+
+      paperStrength.addEventListener("input", () => {
+        const ui = ensureUI();
+        ui.paper.strength = Number(paperStrength.value);
+        applyPaper(paperColor.value, ui.paper.strength);
+        saveStore(store);
+      });
+
+      paperImage.addEventListener("change", async () => {
+        const file = paperImage.files && paperImage.files[0];
+        if(!file) return;
+        const ui = ensureUI();
+        const dataUrl = await fileToDataUrl(file);
+        ui.paper.imageDataUrl = dataUrl;
+        setPaperImage(dataUrl);
+        saveStore(store);
+      });
+
+      removePaperImage.addEventListener("click", () => {
+        const ui = ensureUI();
+        ui.paper.imageDataUrl = null;
+        setPaperImage(null);
+        paperImage.value = "";
+        saveStore(store);
+      });
+
+      // Apply on load
+      applyBackgroundFromStore();
+      applyPaperFromStore();
+
+      // --------------------------------------------------------------------
+      // Existing Journal logic (unchanged except one tiny bugfix below)
+      // --------------------------------------------------------------------
+      const datePick = document.getElementById("datePick");
+      const pagePick = document.getElementById("pagePick");
+      const editor = document.getElementById("editor");
+      const stickerLayer = document.getElementById("stickerLayer");
+
+      const pageInfo = document.getElementById("pageInfo");
+      const savePill = document.getElementById("savePill");
+      const bookmarkTab = document.getElementById("bookmarkTab");
+
+      const prevPageBtn = document.getElementById("prevPage");
+      const nextPageBtn = document.getElementById("nextPage");
+      const addPageBtn = document.getElementById("addPage");
+      const deletePageBtn = document.getElementById("deletePage");
+      const toggleBookmarkBtn = document.getElementById("toggleBookmark");
+
+      const fontSel = document.getElementById("fontSel");
+      const customFont = document.getElementById("customFont");
+      const applyCustomFont = document.getElementById("applyCustomFont");
+
+      const highlight = document.getElementById("highlight");
+      const doHighlight = document.getElementById("doHighlight");
+      const clearFormat = document.getElementById("clearFormat");
+
+      const imgPick = document.getElementById("imgPick");
+
+      const pageList = document.getElementById("pageList");
+      const bmList = document.getElementById("bmList");
+      const dayCountPill = document.getElementById("dayCountPill");
+      const bmCountPill = document.getElementById("bmCountPill");
+
+      let currentDate = isoDay(today);
+      let currentPageIndex = 0;
+      let savingTimer = null;
+
+      function ensureDay(dateStr){
+        if(!store[dateStr]) store[dateStr] = { pages: [ defaultPage() ] };
+        if(!Array.isArray(store[dateStr].pages) || store[dateStr].pages.length === 0){
+          store[dateStr].pages = [ defaultPage() ];
+        }
+        return store[dateStr];
+      }
+      function getDay(){ return ensureDay(currentDate); }
+      function getPage(){ return getDay().pages[currentPageIndex]; }
+      function pageLabel(i){ return `Page ${i+1}`; }
+
+      function markSaving(isSaving){
+        savePill.textContent = isSaving ? "Saving…" : "Saved";
+        savePill.style.background = isSaving ? "rgba(230,216,204,0.55)" : "var(--field-bg)";
+      }
+      function scheduleSave(){
+        markSaving(true);
+        if(savingTimer) clearTimeout(savingTimer);
+        savingTimer = setTimeout(() => {
+          saveStore(store);
+          markSaving(false);
+          savingTimer = null;
+          renderSidebar();
+        }, 280);
+      }
+      function scheduleSaveFromEditor(){
+        const page = getPage();
+        page.html = editor.innerHTML;
+        scheduleSave();
+      }
+
+      function setDate(dateStr){
+        currentDate = dateStr;
+        ensureDay(currentDate);
+        currentPageIndex = 0;
+        renderAll();
+      }
+      function setPage(index){
+        const pages = getDay().pages;
+        currentPageIndex = Math.max(0, Math.min(index, pages.length - 1));
+        renderAll();
+      }
+
+      function populatePageSelect(){
+        const pages = getDay().pages;
+        pagePick.innerHTML = "";
+        pages.forEach((_, i) => {
+          const opt = document.createElement("option");
+          opt.value = String(i);
+          opt.textContent = pageLabel(i);
+          if(i === currentPageIndex) opt.selected = true;
+          pagePick.appendChild(opt);
+        });
+        dayCountPill.textContent = `${pages.length} page${pages.length===1?"":"s"}`;
+      }
+
+      function applyFonts(page){
+        const f = (page.customFont && page.customFont.trim()) ? page.customFont.trim() : page.font;
+        editor.style.fontFamily = f;
+        fontSel.value = page.font || fontSel.value;
+        customFont.value = page.customFont || "";
+      }
+
+      function renderBookmarkUI(page){
+        bookmarkTab.className = "bookmarkTab" + (page.bookmark ? " on" : "");
+        toggleBookmarkBtn.classList.toggle("primary", page.bookmark);
+        toggleBookmarkBtn.textContent = page.bookmark ? "BOOKMARKED" : "BOOKMARK";
+      }
+
+      // Stickers
+      function clearStickers(){ stickerLayer.innerHTML = ""; }
+      function renderStickers(page){
+        clearStickers();
+        (page.stickers || []).forEach(s => {
+          const el = document.createElement("div");
+          el.className = "sticker";
+          el.dataset.id = s.id;
+          el.textContent = s.emoji;
+          el.style.left = (s.xPct ?? 50) + "%";
+          el.style.top = (s.yPct ?? 30) + "%";
+          el.style.fontSize = (s.size ?? 28) + "px";
+
+          const x = document.createElement("div");
+          x.className = "x";
+          x.textContent = "✕";
+          x.addEventListener("click", (e) => {
+            e.stopPropagation();
+            page.stickers = (page.stickers || []).filter(t => t.id !== s.id);
+            scheduleSave();
+            renderStickers(page);
+          });
+          el.appendChild(x);
+
+          makeDraggable(el, page);
+          stickerLayer.appendChild(el);
+        });
+      }
+
+      function makeDraggable(el, page){
+        let dragging = false;
+        let startX=0, startY=0;
+        let startLeft=0, startTop=0;
+
+        function pctFromPx(px, total){ return (px / total) * 100; }
+
+        el.addEventListener("mousedown", (e) => {
+          if(e.target && e.target.classList && e.target.classList.contains("x")) return;
+          dragging = true;
+          el.style.cursor = "grabbing";
+          startX = e.clientX;
+          startY = e.clientY;
+
+          const rect = stickerLayer.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          startLeft = elRect.left - rect.left + elRect.width/2;
+          startTop  = elRect.top  - rect.top  + elRect.height/2;
+          e.preventDefault();
+        });
+
+        window.addEventListener("mousemove", (e) => {
+          if(!dragging) return;
+          const rect = stickerLayer.getBoundingClientRect();
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          let x = startLeft + dx;
+          let y = startTop + dy;
+          x = Math.max(10, Math.min(x, rect.width - 10));
+          y = Math.max(10, Math.min(y, rect.height - 10));
+          el.style.left = pctFromPx(x, rect.width) + "%";
+          el.style.top  = pctFromPx(y, rect.height) + "%";
+        });
+
+        window.addEventListener("mouseup", () => {
+          if(!dragging) return;
+          dragging = false;
+          el.style.cursor = "grab";
+          const id = el.dataset.id;
+          const s = (page.stickers || []).find(t => t.id === id);
+          if(s){
+            s.xPct = parseFloat(el.style.left);
+            s.yPct = parseFloat(el.style.top);
+            scheduleSave();
+          }
+        });
+
+        el.addEventListener("touchstart", (e) => {
+          if(e.target && e.target.classList && e.target.classList.contains("x")) return;
+          const t = e.touches && e.touches[0];
+          if(!t) return;
+          dragging = true;
+          el.style.cursor = "grabbing";
+          startX = t.clientX;
+          startY = t.clientY;
+
+          const rect = stickerLayer.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          startLeft = elRect.left - rect.left + elRect.width/2;
+          startTop  = elRect.top  - rect.top  + elRect.height/2;
+          e.preventDefault();
+        }, { passive:false });
+
+        window.addEventListener("touchmove", (e) => {
+          if(!dragging) return;
+          const t = e.touches && e.touches[0];
+          if(!t) return;
+          const rect = stickerLayer.getBoundingClientRect();
+          const dx = t.clientX - startX;
+          const dy = t.clientY - startY;
+          let x = startLeft + dx;
+          let y = startTop + dy;
+          x = Math.max(10, Math.min(x, rect.width - 10));
+          y = Math.max(10, Math.min(y, rect.height - 10));
+          el.style.left = (x / rect.width) * 100 + "%";
+          el.style.top  = (y / rect.height) * 100 + "%";
+          e.preventDefault();
+        }, { passive:false });
+
+        window.addEventListener("touchend", () => {
+          if(!dragging) return;
+          dragging = false;
+          el.style.cursor = "grab";
+          const id = el.dataset.id;
+          const s = (page.stickers || []).find(t => t.id === id);
+          if(s){
+            s.xPct = parseFloat(el.style.left);
+            s.yPct = parseFloat(el.style.top);
+            scheduleSave();
+          }
+        });
+      }
+
+      // Formatting
+      function exec(cmd, value=null){
+        editor.focus();
+        try{ document.execCommand(cmd, false, value); } catch {}
+      }
+
+      document.querySelectorAll("[data-cmd]").forEach(btn => {
+        btn.addEventListener("click", () => { exec(btn.dataset.cmd); scheduleSaveFromEditor(); });
+      });
+
+      doHighlight.addEventListener("click", () => {
+        const c = highlight.value || "#fff59d";
+        editor.focus();
+        const ok = document.execCommand("hiliteColor", false, c);
+        if(!ok) document.execCommand("backColor", false, c);
+        scheduleSaveFromEditor();
+      });
+
+      clearFormat.addEventListener("click", () => { exec("removeFormat"); scheduleSaveFromEditor(); });
+
+      fontSel.addEventListener("change", () => {
+        const page = getPage();
+        page.font = fontSel.value;
+        page.customFont = "";
+        applyFonts(page);
+        scheduleSave();
+      });
+
+      applyCustomFont.addEventListener("click", () => {
+        const page = getPage();
+        const val = (customFont.value || "").trim();
+        if(!val) return;
+        page.customFont = val;
+        applyFonts(page);
+        scheduleSave();
+      });
+
+      editor.addEventListener("input", scheduleSaveFromEditor);
+
+      // Images: insert + resize handle (and later you can drag them)
+      imgPick.addEventListener("change", async () => {
+        const file = imgPick.files && imgPick.files[0];
+        if(!file) return;
+
+        // FIX: original called fileToDataURL but defined fileToDataURL (caps) later; this is ok,
+        // but it called fileToDataURL vs fileToDataURL in one place. Keep one spelling:
+        const dataUrl = await fileToDataURL(file);
+
+        const id = "img_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+
+        const html =
+          `<div class="imgWrap" contenteditable="false" data-img-id="${id}" style="width:260px;">
+             <img src="${dataUrl}" alt="image" />
+             <div class="imgHandle" title="Drag to resize"></div>
+             <button class="imgDel" type="button" title="Remove">✕</button>
+           </div><br/>`;
+
+        safeInsertHTML(html);
+        imgPick.value = "";
+        scheduleSaveFromEditor();
+      });
+
+      function fileToDataURL(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
+      function safeInsertHTML(html){
+        editor.focus();
+        try{
+          const ok = document.execCommand("insertHTML", false, html);
+          if(!ok) throw new Error("insertHTML not supported");
+        }catch{
+          editor.insertAdjacentHTML("beforeend", html);
+        }
+      }
+
+      // Resize + Drag logic
+      let resizing = null;
+      let imgDragging = null;
+
+      function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+      function removeTrailingBrIfAny(wrap){
+        const n = wrap && wrap.nextSibling;
+        if(n && n.nodeName === "BR") n.remove();
+      }
+
+      function promoteToFreeMove(wrap){
+        if(wrap.classList.contains("freeMove")) return;
+
+        const edRect = editor.getBoundingClientRect();
+        const wr = wrap.getBoundingClientRect();
+
+        wrap.classList.add("freeMove");
+        removeTrailingBrIfAny(wrap);
+
+        const left = (wr.left - edRect.left) + editor.scrollLeft;
+        const top  = (wr.top  - edRect.top)  + editor.scrollTop;
+
+        wrap.style.left = Math.max(0, left) + "px";
+        wrap.style.top  = Math.max(0, top) + "px";
+      }
+
+      // Mouse interactions (resize + drag)
+      editor.addEventListener("mousedown", (e) => {
+        const handle = e.target && e.target.classList && e.target.classList.contains("imgHandle") ? e.target : null;
+        const delBtn = e.target && e.target.classList && e.target.classList.contains("imgDel") ? e.target : null;
+
+        if(delBtn){
+          const wrap = delBtn.closest(".imgWrap");
+          if(wrap){
+            removeTrailingBrIfAny(wrap);
+            wrap.remove();
+            scheduleSaveFromEditor();
+          }
+          e.preventDefault();
+          return;
+        }
+
+        if(handle){
+          const wrap = handle.closest(".imgWrap");
+          if(!wrap) return;
+
+          const startWidth = wrap.getBoundingClientRect().width;
+          const startX = e.clientX;
+
+          const editorRect = editor.getBoundingClientRect();
+          const maxW = Math.floor(editorRect.width - 18);
+          const minW = 120;
+
+          resizing = { wrap, startWidth, startX, minW, maxW };
+          e.preventDefault();
+          return;
+        }
+
+        const wrap = e.target && e.target.closest ? e.target.closest(".imgWrap") : null;
+        if(!wrap) return;
+        if(e.target.classList && (e.target.classList.contains("imgHandle") || e.target.classList.contains("imgDel"))) return;
+
+        promoteToFreeMove(wrap);
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startLeft = parseFloat(wrap.style.left || "0");
+        const startTop = parseFloat(wrap.style.top || "0");
+
+        imgDragging = { wrap, startX, startY, startLeft, startTop };
+        wrap.style.cursor = "grabbing";
+        e.preventDefault();
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if(resizing){
+          const dx = e.clientX - resizing.startX;
+          const newW = clamp(resizing.startWidth + dx, resizing.minW, resizing.maxW);
+          resizing.wrap.style.width = Math.round(newW) + "px";
+          return;
+        }
+
+        if(imgDragging){
+          const wrap = imgDragging.wrap;
+          const w = wrap.offsetWidth;
+          const h = wrap.offsetHeight;
+
+          const dx = e.clientX - imgDragging.startX;
+          const dy = e.clientY - imgDragging.startY;
+
+          let newLeft = imgDragging.startLeft + dx;
+          let newTop  = imgDragging.startTop + dy;
+
+          const maxLeft = Math.max(0, editor.scrollWidth - w);
+          const maxTop  = Math.max(0, editor.scrollHeight - h);
+
+          newLeft = clamp(newLeft, 0, maxLeft);
+          newTop  = clamp(newTop, 0, maxTop);
+
+          wrap.style.left = Math.round(newLeft) + "px";
+          wrap.style.top  = Math.round(newTop) + "px";
+        }
+      });
+
+      window.addEventListener("mouseup", () => {
+        let didSomething = false;
+
+        if(resizing){
+          resizing = null;
+          didSomething = true;
+        }
+
+        if(imgDragging){
+          imgDragging.wrap.style.cursor = "grab";
+          imgDragging = null;
+          didSomething = true;
+        }
+
+        if(didSomething) scheduleSaveFromEditor();
+      });
+
+      editor.addEventListener("touchstart", (e) => {
+        const t = e.touches && e.touches[0];
+        if(!t) return;
+
+        const target = e.target;
+        const delBtn = target && target.classList && target.classList.contains("imgDel") ? target : null;
+        const handle = target && target.classList && target.classList.contains("imgHandle") ? target : null;
+
+        if(delBtn){
+          const wrap = delBtn.closest(".imgWrap");
+          if(wrap){
+            removeTrailingBrIfAny(wrap);
+            wrap.remove();
+            scheduleSaveFromEditor();
+          }
+          e.preventDefault();
+          return;
+        }
+
+        if(handle) return;
+
+        const wrap = target && target.closest ? target.closest(".imgWrap") : null;
+        if(!wrap) return;
+
+        promoteToFreeMove(wrap);
+
+        const startX = t.clientX;
+        const startY = t.clientY;
+        const startLeft = parseFloat(wrap.style.left || "0");
+        const startTop = parseFloat(wrap.style.top || "0");
+
+        imgDragging = { wrap, startX, startY, startLeft, startTop };
+        wrap.style.cursor = "grabbing";
+        e.preventDefault();
+      }, { passive:false });
+
+      window.addEventListener("touchmove", (e) => {
+        if(!imgDragging) return;
+        const t = e.touches && e.touches[0];
+        if(!t) return;
+
+        const wrap = imgDragging.wrap;
+        const w = wrap.offsetWidth;
+        const h = wrap.offsetHeight;
+
+        const dx = t.clientX - imgDragging.startX;
+        const dy = t.clientY - imgDragging.startY;
+
+        let newLeft = imgDragging.startLeft + dx;
+        let newTop  = imgDragging.startTop + dy;
+
+        const maxLeft = Math.max(0, editor.scrollWidth - w);
+        const maxTop  = Math.max(0, editor.scrollHeight - h);
+
+        newLeft = clamp(newLeft, 0, maxLeft);
+        newTop  = clamp(newTop, 0, maxTop);
+
+        wrap.style.left = Math.round(newLeft) + "px";
+        wrap.style.top  = Math.round(newTop) + "px";
+
+        e.preventDefault();
+      }, { passive:false });
+
+      window.addEventListener("touchend", () => {
+        if(!imgDragging) return;
+        imgDragging.wrap.style.cursor = "grab";
+        imgDragging = null;
+        scheduleSaveFromEditor();
+      });
+
+      // Pages
+      addPageBtn.addEventListener("click", () => {
+        const day = getDay();
+        day.pages.push(defaultPage());
+        currentPageIndex = day.pages.length - 1;
+        renderAll();
+      });
+
+      deletePageBtn.addEventListener("click", () => {
+        const day = getDay();
+        if(day.pages.length <= 1){
+          day.pages[0] = defaultPage();
+          currentPageIndex = 0;
+          renderAll();
+          return;
+        }
+        day.pages.splice(currentPageIndex, 1);
+        currentPageIndex = Math.max(0, currentPageIndex - 1);
+        renderAll();
+      });
+
+      prevPageBtn.addEventListener("click", () => setPage(currentPageIndex - 1));
+      nextPageBtn.addEventListener("click", () => setPage(currentPageIndex + 1));
+      pagePick.addEventListener("change", () => setPage(Number(pagePick.value || 0)));
+
+      toggleBookmarkBtn.addEventListener("click", () => {
+        const page = getPage();
+        page.bookmark = !page.bookmark;
+        renderBookmarkUI(page);
+        scheduleSave();
+      });
+
+      datePick.addEventListener("change", () => {
+        const v = datePick.value;
+        if(v) setDate(v);
+      });
+
+      document.querySelectorAll("[data-sticker]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const page = getPage();
+          const emoji = btn.dataset.sticker;
+          const id = "s_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+          page.stickers = page.stickers || [];
+          page.stickers.push({ id, emoji, xPct: 72, yPct: 24, size: 28 });
+          scheduleSave();
+          renderStickers(page);
+        });
+      });
+
+      // Sidebar
+      function stripHtml(html){
+        const tmp = document.createElement("div");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+      }
+
+      function renderSidebar(){
+        const day = getDay();
+        const pages = day.pages;
+
+        pageList.innerHTML = "";
+        pages.forEach((p, i) => {
+          const card = document.createElement("div");
+          card.className = "rowCard";
+          card.addEventListener("click", () => setPage(i));
+
+          const left = document.createElement("div");
+          left.className = "left";
+
+          const title = document.createElement("div");
+          title.className = "title";
+          const previewText = (stripHtml(p.html || "") || "").trim();
+          title.textContent = previewText ? previewText.slice(0, 42) : "(empty page)";
+
+          const small = document.createElement("small");
+          small.textContent = pageLabel(i);
+
+          left.appendChild(small);
+          left.appendChild(title);
+
+          const right = document.createElement("div");
+          right.style.display = "flex";
+          right.style.gap = "8px";
+          right.style.alignItems = "center";
+
+          if(p.bookmark){
+            const b = document.createElement("div");
+            b.className = "badge";
+            b.textContent = "★";
+            right.appendChild(b);
+          }
+          if(i === currentPageIndex){
+            const cur = document.createElement("div");
+            cur.className = "badge";
+            cur.textContent = "Current";
+            right.appendChild(cur);
+          }
+
+          card.appendChild(left);
+          card.appendChild(right);
+          pageList.appendChild(card);
+        });
+
+        const bookmarks = pages.map((p,i)=>({p,i})).filter(x => x.p.bookmark);
+        bmCountPill.textContent = String(bookmarks.length);
+
+        bmList.innerHTML = "";
+        if(bookmarks.length === 0){
+          const empty = document.createElement("p");
+          empty.className = "hint";
+          empty.textContent = "No bookmarks for this date yet.";
+          bmList.appendChild(empty);
+        } else {
+          bookmarks.forEach(({p,i}) => {
+            const card = document.createElement("div");
+            card.className = "rowCard";
+            card.addEventListener("click", () => setPage(i));
+
+            const left = document.createElement("div");
+            left.className = "left";
+
+            const title = document.createElement("div");
+            title.className = "title";
+            const previewText = (stripHtml(p.html || "") || "").trim();
+            title.textContent = previewText ? previewText.slice(0, 42) : "(empty bookmark)";
+
+            const small = document.createElement("small");
+            small.textContent = pageLabel(i);
+
+            left.appendChild(small);
+            left.appendChild(title);
+
+            const badge = document.createElement("div");
+            badge.className = "badge";
+            badge.textContent = "★";
+
+            card.appendChild(left);
+            card.appendChild(badge);
+            bmList.appendChild(card);
+          });
+        }
+      }
+
+      function renderEditor(){
+        const page = getPage();
+        pageInfo.textContent = pageLabel(currentPageIndex);
+        editor.innerHTML = page.html || "";
+        applyFonts(page);
+        renderBookmarkUI(page);
+        renderStickers(page);
+      }
+
+      function renderAll(){
+        populatePageSelect();
+        renderEditor();
+        renderSidebar();
+        scheduleSave();
+      }
+
+      // Init
+      datePick.value = currentDate;
+      ensureDay(currentDate);
+      renderAll();
+      markSaving(false);
+    });
+  </script>
+</body>
+</html>

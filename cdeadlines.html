@@ -4,12 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Deadline Horizon</title>
-
-
   <style>
     :root{
-      /* Theme tokens */
-      --bg: #ffffff;
+      --bg: #ffffff; /* full page background */
       --panel: rgba(255,255,255,.65);
       --text: #2b2b2b;
       --muted: #6f6a63;
@@ -19,13 +16,11 @@
       --radius: 18px;
       --radius2: 14px;
       --focus: rgba(43,43,43,.18);
-
-      /* Viz tokens */
       --horizon: rgba(43,43,43,.16);
       --dot: rgba(43,43,43,.70);
       --dotSoft: rgba(43,43,43,.40);
 
-
+      /* Widget-board background (only behind controls + panel) */
       --board-tint: #ffffff;
       --board-tint-a: 0.35;
       --board-image: none; /* url(...) injected by JS */
@@ -37,8 +32,7 @@
       margin: 0;
       color: var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background:
-
+      background: var(--bg);
     }
 
     .wrap{
@@ -47,7 +41,7 @@
       padding: 28px 18px 40px;
     }
 
-
+    /* Header */
     .top{
       display:flex;
       align-items:flex-start;
@@ -82,7 +76,6 @@
       flex-wrap: wrap;
     }
 
-    /* Buttons */
     .btn{
       appearance:none;
       border: 1px solid var(--line);
@@ -106,9 +99,9 @@
     .btn.primary{ border-color: rgba(43,43,43,.14); }
     .btn.danger{ border-color: rgba(160, 60, 60, .20); }
 
-
+    /* Discreet popovers */
     .popover{ position: relative; }
-    .bgBtn{
+    .bgBtn, .themeBtn{
       width: 42px;
       height: 42px;
       border-radius: 999px;
@@ -120,10 +113,9 @@
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    .bgBtn:active{ transform: translateY(1px); }
+    .bgBtn:active, .themeBtn:active{ transform: translateY(1px); }
 
-    /* Tiny indicator showing current tint */
-    .bgDot{
+    .bgDot, .themeDot{
       width: 14px;
       height: 14px;
       border-radius: 999px;
@@ -131,13 +123,16 @@
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
     }
+    .themeDot{
+      background: var(--text);
+      box-shadow: 0 0 0 6px rgba(43,43,43,0.10);
+    }
 
-    /* Popover panel */
-    .bgPanel{
+    .bgPanel, .themePanel{
       position: absolute;
       top: 50px;
       right: 0;
-      width: 260px;
+      width: 270px;
       border-radius: 16px;
       border: 1px solid rgba(43,43,43,.12);
       background: rgba(255,255,255,.92);
@@ -148,26 +143,27 @@
       display:none;
       z-index: 60;
     }
-    .bgPanel.open{ display:block; }
-    .bgPanel h3{
+    .bgPanel.open, .themePanel.open{ display:block; }
+    .bgPanel h3, .themePanel h3{
       margin: 0 0 10px 0;
       font-size: 13px;
       font-weight: 650;
       color: rgba(43,43,43,.85);
     }
-    .bgRow{
+    .bgRow, .themeRow{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap: 10px;
       padding: 8px 0;
     }
-    .bgRow label{
+    .bgRow label, .themeRow label{
       font-size: 12px;
       color: var(--muted);
       padding-left: 0;
     }
-    input[type="color"].bgColor{
+    input[type="color"].bgColor,
+    input[type="color"].themeColor{
       width: 34px;
       height: 26px;
       border: 1px solid rgba(43,43,43,.14);
@@ -177,13 +173,14 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    input[type="range"].bgStrength{ width: 140px; }
+    input[type="range"].bgStrength,
+    input[type="range"].themeRange{ width: 140px; }
     .bgFile{
       width: 100%;
       font-size: 12px;
       color: rgba(43,43,43,.75);
     }
-    .bgMiniBtn{
+    .bgMiniBtn, .themeMiniBtn{
       width: 100%;
       border: 1px solid rgba(43,43,43,.12);
       background: rgba(255,255,255,.90);
@@ -194,21 +191,20 @@
       color: rgba(43,43,43,.85);
       -webkit-tap-highlight-color: transparent;
     }
-    .bgMiniBtn:active{ transform: translateY(1px); }
-    .bgDivider{
+    .bgMiniBtn:active, .themeMiniBtn:active{ transform: translateY(1px); }
+    .bgDivider, .themeDivider{
       height: 1px;
       background: rgba(43,43,43,.08);
       margin: 8px 0;
     }
 
-
+    /* Widget board (ONLY behind controls + panel) */
     .widgetBoard{
       position: relative;
       border-radius: var(--radius);
       overflow: hidden;
     }
     .widgetBoard::before{
-      /* Background image layer */
       content:"";
       position:absolute;
       inset:0;
@@ -221,7 +217,6 @@
       pointer-events:none;
     }
     .widgetBoard::after{
-      /* Light “glass” sheen */
       content:"";
       position:absolute;
       inset:0;
@@ -233,7 +228,6 @@
       pointer-events:none;
     }
     .boardTint{
-      /* Tint overlay controlled by JS via background: rgba(...) */
       position:absolute;
       inset:0;
       pointer-events:none;
@@ -244,7 +238,7 @@
       z-index: 2;
     }
 
-
+    /* Controls */
     .controls{
       display:grid;
       grid-template-columns: 1.2fr .8fr .6fr;
@@ -291,7 +285,7 @@
       pointer-events:none;
     }
 
-
+    /* Horizon panel */
     .panel{
       margin-top: 16px;
       background: var(--panel);
@@ -330,7 +324,7 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
     }
 
-    /* Horizon visualization container */
+    /* Horizon canvas area */
     .vizWrap{ padding: 14px; }
     .viz{
       width: 100%;
@@ -345,7 +339,6 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
     }
     .viz::before{
-      /* The “horizon” line */
       content:"";
       position:absolute;
       left: 8%;
@@ -357,7 +350,6 @@
       filter: blur(.1px);
     }
     .viz::after{
-      /* Fog / fade near horizon */
       content:"";
       position:absolute;
       left: 0;
@@ -392,7 +384,6 @@
         0 0 0 3px rgba(43,43,43,.05);
     }
     .dot.urgent{
-      /* Urgent dots are larger */
       width: 18px;
       height: 18px;
       box-shadow:
@@ -638,13 +629,13 @@
       background: rgba(255,255,255,.70);
       flex-wrap: wrap;
     }
-
-    /* Decorative “floor” bar at the bottom of the panel */
-    .floor{
-      height: 18px;
-      background: linear-gradient(180deg, rgba(212,199,188,.8), rgba(188,171,156,.75));
-      border-top: 1px solid rgba(43,43,43,.12);
+    .tiny{ font-size: 12px; color: var(--muted); }
+    a.link{
+      color: inherit;
+      text-decoration:none;
+      border-bottom: 1px solid rgba(43,43,43,.22);
     }
+    a.link:hover{ border-bottom-color: rgba(43,43,43,.45); }
 
     kbd{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -662,11 +653,10 @@
     <div class="top">
       <div class="title">
         <h1>Deadline Horizon</h1>
-        <p>Deadlines appear as dots on a fading horizon. Closer items feel larger, clearer, and lower on the line.</p>
+        <p>Deadlines appear as dots on a fading horizon. Closer items are larger, clearer, and lower on the line.</p>
       </div>
 
       <div class="actions">
-        <!-- Primary CRUD actions -->
         <button class="btn primary" id="addBtn" type="button" title="Add a deadline">
           <span aria-hidden="true">＋</span>
           Add deadline
@@ -680,7 +670,7 @@
           Clear
         </button>
 
-        <!-- Background settings popover -->
+        <!-- Background popover -->
         <div class="popover" id="bgPopover">
           <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
             <span class="bgDot" id="bgDot" aria-hidden="true"></span>
@@ -711,15 +701,98 @@
             </div>
           </div>
         </div>
+
+        <!-- Theme popover -->
+        <div class="popover" id="themePopover">
+          <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+            <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+          </button>
+
+          <div class="themePanel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <h3>Theme</h3>
+
+            <div class="themeRow">
+              <label for="tBg">Page background</label>
+              <input class="themeColor" id="tBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tText">Text</label>
+              <input class="themeColor" id="tText" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tMuted">Muted text</label>
+              <input class="themeColor" id="tMuted" type="color" value="#6f6a63" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow">
+              <label for="tPanelHex">Panels</label>
+              <input class="themeColor" id="tPanelHex" type="color" value="#ffffff" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tPanelA">Panel opacity</label>
+              <input class="themeRange" id="tPanelA" type="range" min="0" max="95" value="65" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow">
+              <label for="tLineHex">Borders</label>
+              <input class="themeColor" id="tLineHex" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tLineA">Border opacity</label>
+              <input class="themeRange" id="tLineA" type="range" min="0" max="40" value="12" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow">
+              <label for="tHorizonHex">Horizon line</label>
+              <input class="themeColor" id="tHorizonHex" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tHorizonA">Horizon opacity</label>
+              <input class="themeRange" id="tHorizonA" type="range" min="0" max="60" value="16" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow">
+              <label for="tDotHex">Dots</label>
+              <input class="themeColor" id="tDotHex" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tDotA">Dot opacity</label>
+              <input class="themeRange" id="tDotA" type="range" min="0" max="100" value="70" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tDotSoftA">Soft-dot opacity</label>
+              <input class="themeRange" id="tDotSoftA" type="range" min="0" max="100" value="40" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow">
+              <button class="themeMiniBtn" id="resetTheme" type="button">Reset theme</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
 
     <div class="widgetBoard" id="board">
       <div class="boardTint" id="boardTint"></div>
 
       <div class="boardContent">
-        <!-- Filters -->
         <section class="controls" aria-label="Horizon controls">
           <div class="field">
             <label for="search">Search</label>
@@ -748,7 +821,6 @@
           </div>
         </section>
 
-        <!-- Panel: viz + list -->
         <section class="panel" aria-label="Deadline horizon panel">
           <div class="panelHead">
             <div class="meta">
@@ -759,7 +831,6 @@
             <div class="meta" id="filteredMeta" aria-live="polite"></div>
           </div>
 
-          <!-- Visualization -->
           <div class="vizWrap">
             <div class="viz" id="viz" aria-label="Horizon visualization">
               <div class="tooltip" id="tooltip" role="status" aria-live="polite">
@@ -770,16 +841,14 @@
             </div>
           </div>
 
-          <!-- List area is injected by JS -->
           <div id="listArea"></div>
-
-          <div class="floor" aria-hidden="true"></div>
+          <!-- removed bottom colour block -->
         </section>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Add/Edit deadline -->
+  <!-- Modal -->
   <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal">
       <div class="modalHead">
@@ -792,7 +861,6 @@
       </div>
 
       <form class="modalBody" id="deadlineForm">
-        <!-- If set, we're editing an existing item -->
         <input type="hidden" id="editId" value="" />
 
         <div class="formGrid">
@@ -838,12 +906,8 @@
 <script>
   const LS_KEY = "deadline_horizon_v1";
   const BG_KEY = "deadline_horizon_bg_v1";
+  const THEME_KEY = "deadline_horizon_theme_v1";
 
-  /*
-    =========================
-    DOM cache (elements)
-    =========================
-  */
   const els = {
     viz: document.getElementById("viz"),
     tooltip: document.getElementById("tooltip"),
@@ -880,11 +944,12 @@
     dTags: document.getElementById("dTags"),
     dNotes: document.getElementById("dNotes"),
 
-    /* Note: seedDemo element does not exist in this HTML, so this will be null. */
     seedDemo: document.getElementById("seedDemo"),
 
     board: document.getElementById("board"),
     boardTint: document.getElementById("boardTint"),
+
+    // Background popover
     bgBtn: document.getElementById("bgBtn"),
     bgPanel: document.getElementById("bgPanel"),
     bgColor: document.getElementById("bgColor"),
@@ -893,13 +958,28 @@
     removeImage: document.getElementById("removeImage"),
     bgDot: document.getElementById("bgDot"),
     bgPopover: document.getElementById("bgPopover"),
+
+    // Theme popover
+    themeBtn: document.getElementById("themeBtn"),
+    themePanel: document.getElementById("themePanel"),
+    themeDot: document.getElementById("themeDot"),
+    themePopover: document.getElementById("themePopover"),
+
+    tBg: document.getElementById("tBg"),
+    tText: document.getElementById("tText"),
+    tMuted: document.getElementById("tMuted"),
+    tPanelHex: document.getElementById("tPanelHex"),
+    tPanelA: document.getElementById("tPanelA"),
+    tLineHex: document.getElementById("tLineHex"),
+    tLineA: document.getElementById("tLineA"),
+    tHorizonHex: document.getElementById("tHorizonHex"),
+    tHorizonA: document.getElementById("tHorizonA"),
+    tDotHex: document.getElementById("tDotHex"),
+    tDotA: document.getElementById("tDotA"),
+    tDotSoftA: document.getElementById("tDotSoftA"),
+    resetTheme: document.getElementById("resetTheme"),
   };
 
-  /*
-    =========================
-    Date utilities
-    =========================
-  */
   const nowISO = () => new Date().toISOString();
 
   const startOfToday = () => {
@@ -908,13 +988,11 @@
     return d;
   };
 
-  // Whole-day difference (rounded); due dates are treated as date-only.
   const daysBetween = (a, b) => {
     const ms = 24 * 60 * 60 * 1000;
     return Math.round((b.getTime() - a.getTime()) / ms);
   };
 
-  // Parse "YYYY-MM-DD" into a local Date at midnight.
   const parseDate = (yyyyMmDd) => {
     const [y,m,d] = (yyyyMmDd || "").split("-").map(Number);
     if (!y || !m || !d) return null;
@@ -923,17 +1001,11 @@
     return dt;
   };
 
-  // Friendly display: "Jan 30"
   const formatDate = (dt) => {
     const opts = { month: "short", day: "numeric" };
     return dt.toLocaleDateString(undefined, opts);
   };
 
-  /*
-    =========================
-    Sanitizers / helpers
-    =========================
-  */
   const escapeHtml = (s) =>
     String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -942,18 +1014,12 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
 
-  // Normalize tags: lowercased, trimmed, unique, max 14.
   const normalizeTags = (raw) => {
     if (!raw) return [];
     const parts = raw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
     return [...new Set(parts)].slice(0, 14);
   };
 
-  /*
-    =========================
-    Storage (deadlines)
-    =========================
-  */
   const load = () => {
     try {
       const parsed = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
@@ -971,35 +1037,13 @@
     try { sessionStorage.setItem(LS_KEY, data); return; } catch {}
   };
 
-  /*
-    =========================
-    Storage (background)
-    =========================
-  */
-  const loadBg = () => {
-    try{
-      const raw = localStorage.getItem(BG_KEY);
-      return raw ? JSON.parse(raw) : null;
-    }catch{ return null; }
-  };
-
-  const saveBg = (bg) => {
-    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-  };
-
-  /*
-    Background tint pipeline:
-    - normalizeHex -> RGB/RGBA
-    - applyBoardTint sets CSS var + boardTint overlay + bgDot indicator
-    - setBoardImage sets CSS var "--board-image" to url("...") or none
-  */
+  // ---- Colors/helpers (bg + theme) ----
   const normalizeHex = (hex) => {
     if (!hex) return "#efe7e1";
     const s = String(hex).trim();
     if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
     return "#efe7e1";
   };
-
   const hexToRgb = (hex) => {
     const h = normalizeHex(hex).slice(1);
     return {
@@ -1008,17 +1052,24 @@
       b: parseInt(h.slice(4,6), 16),
     };
   };
-
   const hexToRgba = (hex, a) => {
     const { r, g, b } = hexToRgb(hex);
     return `rgba(${r},${g},${b},${a})`;
   };
 
+  // ---- Background store ----
+  const loadBg = () => {
+    try{
+      const raw = localStorage.getItem(BG_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  };
+  const saveBg = (bg) => {
+    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+  };
+
   const setBoardImage = (dataUrlOrNull) => {
-    document.documentElement.style.setProperty(
-      "--board-image",
-      dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none"
-    );
+    document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
   };
 
   const applyBoardTint = (colorHex, strengthPct) => {
@@ -1028,11 +1079,9 @@
     document.documentElement.style.setProperty("--board-tint", tint);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
-    // Update the little dot indicator in the popover button.
     els.bgDot.style.background = tint;
     els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.1))}`;
 
-    // Apply overlay tint on the board.
     els.boardTint.style.background = hexToRgba(tint, strength);
   };
 
@@ -1056,12 +1105,82 @@
     setBoardImage(bg?.imageDataUrl ?? null);
   };
 
-  /*
-    =========================
-    Custom confirm dialog (Promise-based)
-    =========================
-    Used for delete/clear confirmations.
-  */
+  // ---- Theme store ----
+  const DEFAULT_THEME = {
+    bg: "#ffffff",
+    text: "#2b2b2b",
+    muted: "#6f6a63",
+
+    panelHex: "#ffffff",
+    panelA: 0.65,
+
+    lineHex: "#2b2b2b",
+    lineA: 0.12,
+
+    horizonHex: "#2b2b2b",
+    horizonA: 0.16,
+
+    dotHex: "#2b2b2b",
+    dotA: 0.70,
+    dotSoftA: 0.40,
+  };
+
+  const loadTheme = () => {
+    try{
+      const raw = localStorage.getItem(THEME_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  };
+
+  const saveTheme = (t) => {
+    try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+  };
+
+  const applyTheme = (t) => {
+    const theme = { ...DEFAULT_THEME, ...(t || {}) };
+
+    document.documentElement.style.setProperty("--bg", normalizeHex(theme.bg));
+    document.documentElement.style.setProperty("--text", normalizeHex(theme.text));
+    document.documentElement.style.setProperty("--muted", normalizeHex(theme.muted));
+
+    document.documentElement.style.setProperty("--panel", hexToRgba(theme.panelHex, theme.panelA));
+    document.documentElement.style.setProperty("--line", hexToRgba(theme.lineHex, theme.lineA));
+    document.documentElement.style.setProperty("--horizon", hexToRgba(theme.horizonHex, theme.horizonA));
+    document.documentElement.style.setProperty("--dot", hexToRgba(theme.dotHex, theme.dotA));
+    document.documentElement.style.setProperty("--dotSoft", hexToRgba(theme.dotHex, theme.dotSoftA));
+
+    // keep focus outline readable vs chosen theme text
+    document.documentElement.style.setProperty("--focus", hexToRgba(theme.text, 0.18));
+
+    // update theme-dot preview
+    els.themeDot.style.background = normalizeHex(theme.text);
+    els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(theme.text, 0.10)}`;
+
+    // sync UI controls
+    els.tBg.value = normalizeHex(theme.bg);
+    els.tText.value = normalizeHex(theme.text);
+    els.tMuted.value = normalizeHex(theme.muted);
+
+    els.tPanelHex.value = normalizeHex(theme.panelHex);
+    els.tPanelA.value = String(Math.round(theme.panelA * 100));
+
+    els.tLineHex.value = normalizeHex(theme.lineHex);
+    els.tLineA.value = String(Math.round(theme.lineA * 100));
+
+    els.tHorizonHex.value = normalizeHex(theme.horizonHex);
+    els.tHorizonA.value = String(Math.round(theme.horizonA * 100));
+
+    els.tDotHex.value = normalizeHex(theme.dotHex);
+    els.tDotA.value = String(Math.round(theme.dotA * 100));
+    els.tDotSoftA.value = String(Math.round(theme.dotSoftA * 100));
+  };
+
+  const applyThemeFromStore = () => {
+    const t = loadTheme();
+    applyTheme(t || DEFAULT_THEME);
+  };
+
+  // ---- Confirm ----
   const askConfirm = (message, { okText="Confirm", cancelText="Cancel", danger=false } = {}) =>
     new Promise((resolve) => {
       const wrap = document.createElement("div");
@@ -1106,7 +1225,6 @@
       const onKey = (e) => { if (e.key === "Escape") cleanup(false); };
 
       wrap.addEventListener("click", (e) => {
-        // Click outside closes (cancel)
         if (e.target === wrap) cleanup(false);
       });
 
@@ -1122,11 +1240,6 @@
       setTimeout(() => okBtn.focus(), 0);
     });
 
-  /*
-    =========================
-    App state
-    =========================
-  */
   let items = load();
 
   let state = {
@@ -1135,11 +1248,6 @@
     rangeDays: 30
   };
 
-  /*
-    =========================
-    Filtering + tags
-    =========================
-  */
   const buildTagOptions = (allItems) => {
     const tagSet = new Set();
     allItems.forEach(it => (it.tags || []).forEach(t => tagSet.add(t)));
@@ -1150,9 +1258,7 @@
       `<option value="">All tags</option>` +
       tags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
 
-    // Preserve selection if still valid
     if ([...els.tagFilter.options].some(o => o.value === selected)) els.tagFilter.value = selected;
-
     els.tagPill.textContent = `${tags.length} tag${tags.length === 1 ? "" : "s"}`;
   };
 
@@ -1174,17 +1280,8 @@
     return out;
   };
 
-  /*
-    =========================
-    Visualization math
-    =========================
-  */
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-  // Map daysLeft -> urgency scalar in [0..1]
-  // - <=0 is "max urgent"
-  // - >=rangeDays is "min urgent"
-  // - uses an easing curve for nicer spread
   const urgency = (daysLeft) => {
     if (daysLeft <= 0) return 1;
     const r = state.rangeDays;
@@ -1193,17 +1290,9 @@
     return Math.pow(t, 0.65);
   };
 
-  /*
-    Assign each deadline a dot position:
-    - x: normalized distance across the range (0 = today, 1 = range end)
-    - y: nearer (smaller x) -> lower (closer to horizon line)
-    - lane: small offset to reduce collisions for items with similar x
-    - size/opacity: based on urgency
-  */
   const layoutDots = (filteredInRange) => {
     const lanes = [0, 1, 2, 3];
     const used = [];
-
     return filteredInRange.map((it) => {
       const today = startOfToday();
       const due = parseDate(it.due);
@@ -1212,17 +1301,13 @@
       const u = urgency(dLeft);
       const x = clamp(dLeft / state.rangeDays, 0, 1);
 
-      // As x decreases (closer), y increases (lower on screen).
       const yBase = 0.35 + (1 - x) * 0.37;
-
-      // Pick a lane whose last-used x is far enough away.
       let lane = 0;
       for (const l of lanes){
         const ok = used.every(p => Math.abs(p.x - x) > 0.05 || p.lane !== l);
         if (ok){ lane = l; break; }
       }
       used.push({ x, lane });
-
       const laneOffset = (lane - 1.5) * 0.03;
       const y = clamp(yBase + laneOffset, 0.18, 0.86);
 
@@ -1239,17 +1324,11 @@
     [...els.viz.querySelectorAll(".dot")].forEach(n => n.remove());
   };
 
-  /*
-    =========================
-    Tooltip
-    =========================
-  */
   const showTooltip = (dotEl, payload) => {
     const { it, dLeft } = payload;
     const due = parseDate(it.due);
     const dueText = due ? formatDate(due) : "—";
 
-    // Human-readable relative “when”
     let when = "";
     if (dLeft < 0) when = `${Math.abs(dLeft)} day${Math.abs(dLeft)===1?"":"s"} overdue`;
     else if (dLeft === 0) when = "due today";
@@ -1258,13 +1337,11 @@
     els.ttTitle.textContent = it.title || "Untitled";
     els.ttSub.textContent = `${it.course ? it.course + " · " : ""}${dueText} · ${when}`;
 
-    // Chips: up to 6 tags + optional "notes"
     els.ttChips.innerHTML = `
       ${(it.tags || []).slice(0, 6).map(t => `<span class="chip">${escapeHtml(t)}</span>`).join("")}
       ${it.notes ? `<span class="chip">notes</span>` : ""}
     `.trim();
 
-    // Position tooltip above the dot inside the viz container.
     const rect = els.viz.getBoundingClientRect();
     const drect = dotEl.getBoundingClientRect();
 
@@ -1280,11 +1357,6 @@
     els.tooltip.classList.remove("show");
   };
 
-  /*
-    =========================
-    Render list view
-    =========================
-  */
   const renderList = (filteredAll) => {
     const today = startOfToday();
 
@@ -1336,7 +1408,6 @@
       </div>
     `;
 
-    // Bind row actions
     filteredAll.forEach(it => {
       const e = document.getElementById(`edit_${it.id}`);
       const d = document.getElementById(`del_${it.id}`);
@@ -1345,18 +1416,11 @@
     });
   };
 
-  /*
-    =========================
-    Render visualization
-    =========================
-  */
   const renderViz = (filteredAll) => {
     clearVizDots();
     hideTooltip();
 
     const today = startOfToday();
-
-    // Only show dots within the selected horizon range (<= rangeDays).
     const inRange = filteredAll.filter(it => {
       const due = parseDate(it.due);
       if (!due) return false;
@@ -1372,8 +1436,6 @@
       const dot = document.createElement("button");
       dot.type = "button";
       dot.className = "dot" + (p.soft ? " soft" : "") + (p.urgent ? " urgent" : "");
-
-      // Keep dots inside an 8% left/right padding region.
       dot.style.left = `${(0.08 + p.x * 0.84) * W}px`;
       dot.style.top = `${p.y * H}px`;
       dot.style.width = `${p.size}px`;
@@ -1385,11 +1447,9 @@
       const show = () => showTooltip(dot, p);
       const hide = () => hideTooltip();
 
-      // Desktop hover
       dot.addEventListener("mouseenter", show);
       dot.addEventListener("mouseleave", hide);
 
-      // Tap/click toggles tooltip (useful on touch devices).
       dot.addEventListener("click", (e) => {
         e.stopPropagation();
         const visible = els.tooltip.classList.contains("show");
@@ -1397,22 +1457,15 @@
         else show();
       });
 
-      // Keyboard accessibility
       dot.addEventListener("focus", show);
       dot.addEventListener("blur", hide);
 
       els.viz.appendChild(dot);
     });
 
-    // One-off click on the viz backdrop hides tooltip.
     els.viz.addEventListener("click", () => hideTooltip(), { once: true });
   };
 
-  /*
-    =========================
-    Main render
-    =========================
-  */
   const render = () => {
     buildTagOptions(items);
     const filteredAll = applyFilters();
@@ -1425,7 +1478,6 @@
     parts.push(`Range: ${state.rangeDays}d`);
     els.filteredMeta.textContent = `${filteredAll.length} shown · ` + parts.join(" · ");
 
-    // Empty state
     if (items.length === 0){
       els.viz.innerHTML = `
         <div class="tooltip" id="tooltip" style="display:none;"></div>
@@ -1439,13 +1491,10 @@
       `;
       document.getElementById("emptyAddBtn").addEventListener("click", openAddModal);
       els.listArea.innerHTML = "";
-
-      // Rebind tooltip reference because viz.innerHTML replaced it.
       els.tooltip = document.getElementById("tooltip");
       return;
     }
 
-    // Ensure tooltip element exists inside viz (in case it was replaced).
     if (!els.viz.querySelector(".tooltip")){
       els.viz.prepend(els.tooltip);
     }
@@ -1454,11 +1503,6 @@
     renderList(filteredAll);
   };
 
-  /*
-    =========================
-    CRUD
-    =========================
-  */
   const upsert = (payload) => {
     const idx = items.findIndex(x => x.id === payload.id);
     if (idx >= 0) items[idx] = payload;
@@ -1482,10 +1526,7 @@
   const clearAll = async () => {
     if (!items.length) return;
 
-    const ok = await askConfirm(
-      "Clear all deadlines? This cannot be undone.",
-      { okText: "Yes, clear", cancelText: "Cancel", danger: true }
-    );
+    const ok = await askConfirm("Clear all deadlines? This cannot be undone.", { okText: "Yes, clear", cancelText: "Cancel", danger: true });
     if (!ok) return;
 
     items = [];
@@ -1506,13 +1547,7 @@
     URL.revokeObjectURL(url);
   };
 
-  /*
-    =========================
-    Modal behavior
-    =========================
-    - openModal stores last focused element so we can restore focus on close.
-    - onModalKeydown traps Tab key within the modal.
-  */
+  // -------- Modal --------
   let lastFocusEl = null;
 
   const openModal = () => {
@@ -1532,7 +1567,6 @@
   const onModalKeydown = (e) => {
     if (e.key === "Escape") closeModal();
 
-    // Focus trap: keep tab navigation inside the modal.
     if (e.key === "Tab"){
       const focusables = els.modalBackdrop.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -1585,19 +1619,16 @@
     openModal();
   };
 
-  /*
-    =========================
-    Background popover controls
-    =========================
-  */
+  // -------- Background controls --------
   els.bgBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     els.bgPanel.classList.toggle("open");
+    els.themePanel.classList.remove("open");
   });
 
   document.addEventListener("click", (e) => {
-    if (!els.bgPanel.classList.contains("open")) return;
-    if (!els.bgPopover.contains(e.target)) els.bgPanel.classList.remove("open");
+    if (els.bgPanel.classList.contains("open") && !els.bgPopover.contains(e.target)) els.bgPanel.classList.remove("open");
+    if (els.themePanel.classList.contains("open") && !els.themePopover.contains(e.target)) els.themePanel.classList.remove("open");
   });
 
   els.bgColor.addEventListener("input", () => {
@@ -1639,11 +1670,54 @@
     saveBg(bg);
   });
 
-  /*
-    =========================
-    Wire up events
-    =========================
-  */
+  // -------- Theme controls --------
+  const readThemeFromUI = () => ({
+    bg: normalizeHex(els.tBg.value),
+    text: normalizeHex(els.tText.value),
+    muted: normalizeHex(els.tMuted.value),
+
+    panelHex: normalizeHex(els.tPanelHex.value),
+    panelA: Number(els.tPanelA.value) / 100,
+
+    lineHex: normalizeHex(els.tLineHex.value),
+    lineA: Number(els.tLineA.value) / 100,
+
+    horizonHex: normalizeHex(els.tHorizonHex.value),
+    horizonA: Number(els.tHorizonA.value) / 100,
+
+    dotHex: normalizeHex(els.tDotHex.value),
+    dotA: Number(els.tDotA.value) / 100,
+    dotSoftA: Number(els.tDotSoftA.value) / 100,
+  });
+
+  const onThemeChange = () => {
+    const t = readThemeFromUI();
+    applyTheme(t);
+    saveTheme(t);
+    render(); // refresh dots/list with new colors
+  };
+
+  els.themeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.themePanel.classList.toggle("open");
+    els.bgPanel.classList.remove("open");
+  });
+
+  [
+    els.tBg, els.tText, els.tMuted,
+    els.tPanelHex, els.tPanelA,
+    els.tLineHex, els.tLineA,
+    els.tHorizonHex, els.tHorizonA,
+    els.tDotHex, els.tDotA, els.tDotSoftA
+  ].forEach(el => el.addEventListener("input", onThemeChange));
+
+  els.resetTheme.addEventListener("click", () => {
+    applyTheme(DEFAULT_THEME);
+    saveTheme(DEFAULT_THEME);
+    render();
+  });
+
+  // -------- Events --------
   els.addBtn.addEventListener("click", openAddModal);
   els.exportBtn.addEventListener("click", exportJson);
   els.clearBtn.addEventListener("click", clearAll);
@@ -1654,7 +1728,6 @@
     if (e.target === els.modalBackdrop) closeModal();
   });
 
-  // Save deadline (add or update)
   els.deadlineForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -1684,12 +1757,10 @@
     closeModal();
   });
 
-  // This is safe because seedDemo doesn't exist (null check). Keeps a hook for future.
   if (els.seedDemo) {
     els.seedDemo.addEventListener("click", (e) => { e.preventDefault(); /* seedDemo() if you add it */ });
   }
 
-  // Live filters
   els.search.addEventListener("input", () => { state.q = els.search.value; render(); });
   els.tagFilter.addEventListener("change", () => { state.tag = els.tagFilter.value; render(); });
   els.range.addEventListener("change", () => {
@@ -1697,10 +1768,8 @@
     render();
   });
 
-  // Keyboard shortcut: "/" focuses search (unless you're already typing somewhere).
   document.addEventListener("keydown", (e) => {
     if (els.modalBackdrop.classList.contains("show")) return;
-
     if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey){
       const a = document.activeElement;
       const typing = a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable);
@@ -1711,15 +1780,10 @@
     }
   });
 
-  /*
-    =========================
-    Init
-    =========================
-  */
+  applyThemeFromStore();
   applyBgFromStore();
   render();
 
-  // Debounced resize rerender (so dot positions stay correct when width changes)
   window.addEventListener("resize", () => {
     clearTimeout(window.__dh_resize);
     window.__dh_resize = setTimeout(render, 120);

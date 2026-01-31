@@ -6,70 +6,38 @@
   <title>Monthly Planner</title>
   <style>
     :root{
-      /* =========================
-         THEME TOKENS (changeable)
-         ========================= */
+      /* ===== Theme (global) ===== */
       --app-bg: #ffffff;
-      --board-radius: 24px;
 
-      /* Text */
       --ink: #2b2b2b;
       --muted: #7a7a7a;
 
-      /* Neutrals */
-      --border-hex: #1e1e1e;
-      --border-a: 0.10;
-
-      /* Surfaces (use colors, not just opacity) */
-      --surface-hex: #ffffff;
-      --surface-a: 0.92;
-
-      --surface-soft-hex: #ffffff;
-      --surface-soft-a: 0.75;
-
-      --calendar-hex: #ffffff;
-      --calendar-a: 0.60;
-
-      --daycell-hex: #ffffff;
-      --daycell-a: 0.92;
-
-      --dow-hex: #ffffff;
-      --dow-a: 0.55;
-
-      --note-hex: #ffffff;
-      --note-a: 0.95;
-
-      --btn-hex: #ffffff;
-      --btn-a: 0.90;
-
-      /* Accents / interactive */
-      --accent: #cbb8ae;
-      --accent-2: #efe7e1;
-
-      /* Focus ring */
-      --focus-hex: #cbb8ae;
-      --focus-a: 0.18;
-
-      /* Shadows */
+      --border: rgba(30, 30, 30, 0.10);
       --shadow: 0 10px 26px rgba(20, 20, 20, 0.08);
 
-      /* Board background (saved per month) */
+      --surface: rgba(255,255,255,0.75);   /* pills, popovers */
+      --panel: rgba(255,255,255,0.92);     /* settings panel */
+      --card: rgba(255,255,255,0.92);      /* side cards */
+      --calendar: rgba(255,255,255,0.60);  /* calendar container */
+      --daycell: rgba(255,255,255,0.92);   /* day cell base */
+      --daycell-outside-opacity: 0.55;
+
+      --accent: #cbb8ae;                 
+      --today: #efe7e1;                   
+
+      --btn-bg: rgba(255,255,255,0.9);
+      --btn-border: rgba(30,30,30,0.10);
+      --btn-ink: rgba(43,43,43,0.70);
+
+      /* ===== Board background (per-month) ===== */
+      --board-radius: 24px;
       --board-tint: #efe7e1;
       --board-tint-a: 0.35;
       --board-image: none;
 
-      /* Board overlay colors (NOT just strength) */
-      --overlay-base-hex: #ffffff;
+      /* ===== Overlay (global; NO radial layers) ===== */
+      --overlay-base: #ffffff;
       --overlay-a: 0.38;
-      --overlay-rad-1-hex: #ffffff;
-      --overlay-rad-1-a: 0.35;
-      --overlay-rad-2-hex: #ffffff;
-      --overlay-rad-2-a: 0.25;
-
-      /* Goal chips defaults */
-      --chip-base: #cbb8ae;
-      --chip-grad-top-a: 0.22;
-      --chip-grad-bot-a: 0.18;
     }
 
     *{ box-sizing: border-box; }
@@ -77,7 +45,7 @@
       margin: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       color: var(--ink);
-      background: var(--app-bg);
+      background:var(--app-bg);
     }
 
     .wrap{
@@ -87,56 +55,58 @@
     }
 
     .titlebar{
-      display:flex;
+      display: flex;
       gap: 12px;
-      align-items:center;
+      align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
       flex-wrap: wrap;
     }
 
     h1{
-      margin:0;
+      margin: 0;
       font-size: 18px;
       font-weight: 650;
       letter-spacing: 0.2px;
     }
 
     .controls{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      justify-content:flex-end;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .icon-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      background: rgba(255,255,255,0.0); /* panel owns look */
-      border: 0;
-      border-radius:999px;
-      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      box-shadow: 0 6px 18px rgba(20,20,20,0.06);
+      backdrop-filter: blur(8px);
     }
 
-    .bg-btn, .nav-btn{
+    .bg-btn, .nav-btn, .theme-btn{
       width: 34px;
       height: 34px;
-      border-radius:999px;
-      border: 1px solid rgba(30,30,30,0.10);
-      background: rgba(255,255,255,0.9);
-      cursor:pointer;
-      display:grid;
-      place-items:center;
+      border-radius: 999px;
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
       -webkit-tap-highlight-color: transparent;
-      color: rgba(43,43,43,0.70);
+      color: var(--btn-ink);
       font-weight: 800;
       line-height: 1;
     }
-    .bg-btn:active, .nav-btn:active{ transform: translateY(1px); }
+    .bg-btn:active, .nav-btn:active, .theme-btn:active{ transform: translateY(1px); }
 
-    .bg-dot{
+    .bg-dot, .theme-dot{
       width: 14px;
       height: 14px;
       border-radius: 999px;
@@ -144,70 +114,45 @@
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
     }
-
-    .theme-dot{
-      width: 14px;
-      height: 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(30,30,30,0.14);
-      background: var(--accent);
-      box-shadow: 0 0 0 6px rgba(255,255,255,0.25);
-    }
-
-    .chip-dot{
-      width: 14px;
-      height: 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(30,30,30,0.14);
-      background: var(--chip-base);
-      box-shadow: 0 0 0 6px rgba(255,255,255,0.25);
-    }
+    .theme-dot{ background: var(--accent); box-shadow: 0 0 0 6px rgba(203,184,174,0.25); }
 
     .popover{ position: relative; }
 
     .panel{
-      position:absolute;
+      position: absolute;
       top: 44px;
       right: 0;
-      width: 310px;
+      width: 290px;
       border-radius: 16px;
-      border: 1px solid rgba(30,30,30,0.10);
-      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--border);
+      background: var(--panel);
       box-shadow: 0 18px 40px rgba(20,20,20,0.10);
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(10px);
       padding: 12px;
-      display:none;
+      display: none;
       z-index: 50;
     }
-    .panel.open{ display:block; }
+    .panel.open{ display: block; }
 
     .panelTitle{
+      margin: 0 0 10px 0;
       font-size: 12px;
       font-weight: 750;
-      letter-spacing: .12em;
+      letter-spacing: .10em;
       text-transform: uppercase;
-      color: rgba(43,43,43,0.72);
-      margin: 0 0 8px 0;
+      color: rgba(43,43,43,0.70);
     }
 
     .row{
-      display:flex;
-      align-items:center;
+      display: flex;
+      align-items: center;
       justify-content: space-between;
       gap: 10px;
-      padding: 7px 0;
+      padding: 8px 0;
     }
-
     .row label{
       font-size: 12px;
       color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .row .stack{
-      display:flex;
-      align-items:center;
-      gap:8px;
     }
 
     input[type="color"]{
@@ -220,7 +165,6 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-
     input[type="range"]{ width: 150px; }
 
     .file{
@@ -230,12 +174,12 @@
     }
 
     .mini-btn{
-      width:100%;
+      width: 100%;
       border: 1px solid rgba(30,30,30,0.10);
       background: rgba(255,255,255,0.90);
       border-radius: 12px;
       padding: 9px 10px;
-      cursor:pointer;
+      cursor: pointer;
       font-weight: 650;
       color: rgba(43,43,43,0.85);
       -webkit-tap-highlight-color: transparent;
@@ -248,82 +192,70 @@
       margin: 8px 0;
     }
 
-    .help{
-      font-size: 11px;
-      color: rgba(43,43,43,0.65);
-      line-height: 1.35;
-      margin-top: 6px;
-    }
-
     .month-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
       padding: 6px 10px;
       border-radius: 999px;
-      border: 1px solid rgba(30,30,30,0.10);
-      background: rgba(255,255,255,0.75);
+      border: 1px solid var(--border);
+      background: var(--surface);
       box-shadow: 0 6px 18px rgba(20,20,20,0.06);
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(8px);
     }
-
     .month-label{
       font-size: 12px;
       color: rgba(43,43,43,0.78);
       min-width: 170px;
-      text-align:center;
-      user-select:none;
+      text-align: center;
+      user-select: none;
     }
 
     .board{
-      border: 1px solid rgba(30,30,30,0.10);
+      border: 1px solid var(--border);
       border-radius: var(--board-radius);
       box-shadow: var(--shadow);
-      overflow:hidden;
-      position:relative;
+      overflow: hidden;
+      position: relative;
       background: none;
     }
 
     .board::before{
-      content:"";
-      position:absolute;
-      inset:0;
+      content: "";
+      position: absolute;
+      inset: 0;
       background-image: var(--board-image);
       background-size: cover;
       background-position: center;
-      background-repeat:no-repeat;
+      background-repeat: no-repeat;
       filter: saturate(0.95);
       transform: scale(1.02);
     }
 
+
     .board::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        radial-gradient(900px 520px at 18% 20%,
-          rgba(255,255,255,0), rgba(255,255,255,0)),
-        radial-gradient(700px 460px at 82% 34%,
-          rgba(255,255,255,0), rgba(255,255,255,0)),
-        rgba(255,255,255,0);
-      pointer-events:none;
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.38);
+      pointer-events: none;
     }
 
     .board-tint{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
       mix-blend-mode: multiply;
     }
 
     .board-content{
-      position:relative;
-      z-index:2;
-      backdrop-filter: blur(2px);
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(10px);
     }
 
     .layout{
-      display:grid;
+      display: grid;
       grid-template-columns: 1.9fr 0.45fr;
       gap: 16px;
       padding: 14px;
@@ -333,36 +265,35 @@
     }
 
     .calendar{
-      background: rgba(0,0,0,0); /* computed in JS using theme vars */
+      background: var(--calendar);
       border: 1px solid rgba(30,30,30,0.10);
       border-radius: 20px;
       padding: 12px;
       box-shadow: 0 10px 24px rgba(20,20,20,0.06);
-      overflow:hidden;
+      overflow: hidden;
     }
 
     .dow{
-      display:grid;
+      display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 12px;
       padding: 2px 2px 10px;
       color: var(--muted);
       font-size: 11px;
     }
-
     .dow div{
-      text-align:center;
+      text-align: center;
       padding: 8px 0;
       border-radius: 12px;
-      background: rgba(0,0,0,0); /* computed in JS */
+      background: rgba(255,255,255,0.55);
       border: 1px solid rgba(30,30,30,0.06);
     }
 
     .cal-grid{
-      display:grid;
+      display: grid;
       grid-template-columns: repeat(7, minmax(160px, 1fr));
       gap: 12px;
-      overflow-x:auto;
+      overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       padding-bottom: 4px;
     }
@@ -371,35 +302,29 @@
     }
 
     .daycell{
-      background: rgba(0,0,0,0); /* computed in JS */
+      background: var(--daycell);
       border: 1px solid rgba(30,30,30,0.08);
       border-radius: 16px;
       min-height: 190px;
       padding: 10px;
-      display:flex;
+      display: flex;
       flex-direction: column;
       gap: 8px;
       box-shadow: 0 8px 18px rgba(20,20,20,0.05);
       min-width: 160px;
     }
-
-    .daycell.outside{ opacity: 0.55; }
+    .daycell.outside{ opacity: var(--daycell-outside-opacity); }
 
     .daytop{
-      display:flex;
+      display: flex;
       justify-content: space-between;
       align-items: baseline;
       gap: 8px;
     }
-
     .daynum{
       font-size: 12px;
       font-weight: 700;
       color: rgba(43,43,43,0.80);
-    }
-
-    textarea, button{
-      font: inherit;
     }
 
     .daynote{
@@ -407,29 +332,24 @@
       border: 1px solid rgba(30,30,30,0.10);
       border-radius: 12px;
       padding: 9px 10px;
-      outline:none;
-      background: rgba(0,0,0,0); /* computed in JS */
+      outline: none;
+      background: rgba(255,255,255,0.95);
       color: var(--ink);
       font-size: 12px;
-      resize:none;
+      resize: none;
       min-height: 64px;
       line-height: 1.25;
     }
-
     .daynote:focus{
       border-color: rgba(30,30,30,0.18);
       box-shadow: 0 0 0 4px rgba(203,184,174,0.18);
     }
 
-    .goals-wrap{
-      display:flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .goals-wrap{ display: flex; flex-direction: column; gap: 8px; }
 
     .goal-chip{
-      position:relative;
-      display:grid;
+      position: relative;
+      display: grid;
       grid-template-columns: 1fr 26px 26px;
       gap: 8px;
       align-items: start;
@@ -439,17 +359,16 @@
       background: rgba(203,184,174,0.22);
       min-width: 0;
     }
-
     .goalText{
       width: 100%;
       border: none;
       background: transparent;
-      outline:none;
+      outline: none;
       color: var(--ink);
       font-size: 12px;
       padding: 4px 2px;
-      min-width:0;
-      resize:none;
+      min-width: 0;
+      resize: none;
       min-height: 44px;
       line-height: 1.25;
       word-break: break-word;
@@ -462,9 +381,9 @@
       border-radius: 10px;
       border: 1px solid rgba(30,30,30,0.10);
       background: rgba(255,255,255,0.75);
-      cursor:pointer;
-      display:grid;
-      place-items:center;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
       color: rgba(43,43,43,0.72);
       -webkit-tap-highlight-color: transparent;
       font-weight: 900;
@@ -476,12 +395,12 @@
 
     .goalColorLabel{ position: relative; overflow: hidden; }
     .goalColorPicker{
-      position:absolute;
-      inset:0;
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       opacity: 0;
-      cursor:pointer;
+      cursor: pointer;
       border: 0;
       padding: 0;
       margin: 0;
@@ -495,7 +414,7 @@
       background: rgba(255,255,255,0.85);
       border-radius: 12px;
       padding: 8px 8px;
-      cursor:pointer;
+      cursor: pointer;
       color: rgba(43,43,43,0.78);
       font-weight: 650;
       font-size: 12px;
@@ -503,14 +422,10 @@
     }
     .add-goal:active{ transform: translateY(1px); }
 
-    .side{
-      display:flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .side{ display: flex; flex-direction: column; gap: 12px; }
 
     .card{
-      background: rgba(0,0,0,0); /* computed in JS */
+      background: var(--card);
       border: 1px solid rgba(30,30,30,0.10);
       border-radius: 20px;
       padding: 12px;
@@ -518,27 +433,27 @@
     }
 
     .card-title{
-      display:flex;
+      display: flex;
       align-items: baseline;
       justify-content: space-between;
       gap: 10px;
       margin-bottom: 10px;
     }
-
     .card-title h2{
-      margin:0;
+      margin: 0;
       font-size: 13px;
       font-weight: 700;
       color: rgba(43,43,43,0.85);
     }
-
-    .small{ font-size: 11px; color: var(--muted); }
+    .small{ font-size: 12px; color: var(--muted); }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="titlebar">
-      <div class="title"></div>
+      <div class="title">
+        <h1>Monthly Planner</h1>
+      </div>
 
       <div class="controls">
         <div class="month-pill" aria-label="Month navigation">
@@ -547,7 +462,79 @@
           <button class="nav-btn" id="nextMonth" type="button" aria-label="Next month" title="Next month">›</button>
         </div>
 
+        <!-- Theme (global) -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="theme-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
 
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <div class="panelTitle">Theme</div>
+
+            <div class="row">
+              <label for="tAppBg">App background</label>
+              <input id="tAppBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="row">
+              <label for="tInk">Text</label>
+              <input id="tInk" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="row">
+              <label for="tMuted">Muted</label>
+              <input id="tMuted" type="color" value="#7a7a7a" />
+            </div>
+
+            <div class="row">
+              <label for="tAccent">Accent</label>
+              <input id="tAccent" type="color" value="#cbb8ae" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label for="tSurface">Pills / popovers</label>
+              <input id="tSurface" type="range" min="40" max="98" value="75" />
+            </div>
+
+            <div class="row">
+              <label for="tCard">Card opacity</label>
+              <input id="tCard" type="range" min="40" max="98" value="92" />
+            </div>
+
+            <div class="row">
+              <label for="tCalendar">Calendar opacity</label>
+              <input id="tCalendar" type="range" min="35" max="95" value="60" />
+            </div>
+
+            <div class="row">
+              <label for="tDaycell">Daycell opacity</label>
+              <input id="tDaycell" type="range" min="45" max="98" value="92" />
+            </div>
+
+            <div class="divider"></div>
+
+
+            <div class="row">
+              <label for="tOverlayBase">Overlay</label>
+              <input id="tOverlayBase" type="color" value="#ffffff" />
+            </div>
+
+            <div class="row">
+              <label for="tOverlayA">Overlay strength</label>
+              <input id="tOverlayA" type="range" min="0" max="70" value="38" />
+            </div>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+          </div>
+        </div>
+
+        <!-- Background (per-month) -->
         <div class="popover">
           <div class="icon-pill">
             <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
@@ -581,217 +568,6 @@
 
           </div>
         </div>
-
-        <div class="popover">
-          <div class="icon-pill">
-            <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
-              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
-            </button>
-          </div>
-
-          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
-            <div class="panelTitle">Theme (global)</div>
-
-            <div class="row">
-              <label for="tAppBg">App bg</label>
-              <input id="tAppBg" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tInk">Text</label>
-              <input id="tInk" type="color" value="#2b2b2b" />
-            </div>
-
-            <div class="row">
-              <label for="tMuted">Muted</label>
-              <input id="tMuted" type="color" value="#7a7a7a" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-              <label for="tBorderHex">Border color</label>
-              <input id="tBorderHex" type="color" value="#1e1e1e" />
-            </div>
-
-            <div class="row">
-              <label for="tBorderA">Border strength</label>
-              <input id="tBorderA" type="range" min="0" max="30" value="10" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-              <label for="tSurfaceHex">Card color</label>
-              <input id="tSurfaceHex" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tSurfaceA">Card opacity</label>
-              <input id="tSurfaceA" type="range" min="50" max="100" value="92" />
-            </div>
-
-            <div class="row">
-              <label for="tSoftHex">Pill color</label>
-              <input id="tSoftHex" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tSoftA">Pill opacity</label>
-              <input id="tSoftA" type="range" min="40" max="100" value="75" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-              <label for="tCalendarHex">Calendar color</label>
-              <input id="tCalendarHex" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tCalendarA">Calendar opacity</label>
-              <input id="tCalendarA" type="range" min="25" max="100" value="60" />
-            </div>
-
-            <div class="row">
-              <label for="tDayHex">Day cell color</label>
-              <input id="tDayHex" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tDayA">Day cell opacity</label>
-              <input id="tDayA" type="range" min="40" max="100" value="92" />
-            </div>
-
-            <div class="row">
-              <label for="tDowHex">DOW chip color</label>
-              <input id="tDowHex" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tDowA">DOW opacity</label>
-              <input id="tDowA" type="range" min="25" max="100" value="55" />
-            </div>
-
-            <div class="row">
-              <label for="tNoteHex">Note bg</label>
-              <input id="tNoteHex" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tNoteA">Note opacity</label>
-              <input id="tNoteA" type="range" min="40" max="100" value="95" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-              <label for="tBtnHex">Button bg</label>
-              <input id="tBtnHex" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tBtnA">Button opacity</label>
-              <input id="tBtnA" type="range" min="40" max="100" value="90" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-              <label for="tAccent">Accent</label>
-              <input id="tAccent" type="color" value="#cbb8ae" />
-            </div>
-
-            <div class="row">
-              <label for="tAccent2">Accent 2</label>
-              <input id="tAccent2" type="color" value="#efe7e1" />
-            </div>
-
-            <div class="row">
-              <label for="tFocusHex">Focus color</label>
-              <input id="tFocusHex" type="color" value="#cbb8ae" />
-            </div>
-
-            <div class="row">
-              <label for="tFocusA">Focus strength</label>
-              <input id="tFocusA" type="range" min="4" max="40" value="18" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-              <label for="tOverlayBase">Overlay base</label>
-              <input id="tOverlayBase" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tOverlayA">Overlay strength</label>
-              <input id="tOverlayA" type="range" min="0" max="80" value="38" />
-            </div>
-
-            <div class="row">
-              <label for="tOverlayR1">Radial 1</label>
-              <input id="tOverlayR1" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tOverlayR1A">Radial 1 opacity</label>
-              <input id="tOverlayR1A" type="range" min="0" max="80" value="35" />
-            </div>
-
-            <div class="row">
-              <label for="tOverlayR2">Radial 2</label>
-              <input id="tOverlayR2" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tOverlayR2A">Radial 2 opacity</label>
-              <input id="tOverlayR2A" type="range" min="0" max="80" value="25" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-              <button class="mini-btn" id="tReset" type="button">Reset theme</button>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="popover">
-          <div class="icon-pill">
-            <button class="bg-btn" id="chipBtn" type="button" aria-label="Goal chip defaults" title="Goal chip defaults">
-              <span class="chip-dot" id="chipDot" aria-hidden="true"></span>
-            </button>
-          </div>
-
-          <div class="panel" id="chipPanel" role="dialog" aria-label="Goal chip defaults">
-            <div class="panelTitle">Goal chips</div>
-
-            <div class="row">
-              <label for="cBase">Default color</label>
-              <input id="cBase" type="color" value="#cbb8ae" />
-            </div>
-
-            <div class="row">
-              <label for="cTopA">Gradient top</label>
-              <input id="cTopA" type="range" min="0" max="60" value="22" />
-            </div>
-
-            <div class="row">
-              <label for="cBotA">Gradient bottom</label>
-              <input id="cBotA" type="range" min="0" max="60" value="18" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-              <button class="mini-btn" id="cApplyToNew" type="button">Use for new goals</button>
-            </div>
-
-          </div>
-        </div>
-
       </div>
     </div>
 
@@ -800,15 +576,15 @@
 
       <div class="board-content">
         <div class="layout">
-          <section class="calendar" id="calendar" aria-label="Monthly calendar">
-            <div class="dow" aria-hidden="true" id="dowRow">
+          <section class="calendar" aria-label="Monthly calendar">
+            <div class="dow" aria-hidden="true">
               <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
             </div>
             <div class="cal-grid" id="calGrid"></div>
           </section>
 
           <aside class="side" aria-label="Notes">
-            <div class="card" id="notesCard">
+            <div class="card">
               <div class="card-title">
                 <h2>Notes</h2>
                 <div class="small">Monthly</div>
@@ -817,44 +593,14 @@
             </div>
           </aside>
         </div>
-
-        <div class="footer-note"></div>
       </div>
     </div>
   </div>
 
   <script>
+
     const STORAGE_KEY = "monthly_planner_v2_day_goals";
-    const THEME_KEY = "monthly_planner_theme_v2";
-    const CHIP_KEY  = "monthly_planner_chip_v1";
-
-    /* --------------------------
-       Storage helpers
-    --------------------------- */
-    function loadStore(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : { months: {} };
-      }catch{
-        return { months: {} };
-      }
-    }
-
-    function saveStore(store){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-    }
-
-    function loadJson(key, fallback){
-      try{
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      }catch{
-        return fallback;
-      }
-    }
-    function saveJson(key, val){
-      try{ localStorage.setItem(key, JSON.stringify(val)); }catch{}
-    }
+    const THEME_KEY   = "monthly_planner_theme_v1";
 
     function pad2(n){ return String(n).padStart(2,"0"); }
 
@@ -891,13 +637,22 @@
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
+    function normHex(hex, fallback){
+      const s = String(hex || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+    }
+
+    function clamp(n, min, max){
+      const x = Number(n);
+      if(!Number.isFinite(x)) return min;
+      return Math.max(min, Math.min(max, x));
+    }
+
     function hexToRgba(hex, a){
-      const h = String(hex || "").replace("#","").trim();
-      const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-      const num = parseInt(full || "000000", 16);
-      const r = (num >> 16) & 255;
-      const g = (num >> 8) & 255;
-      const b = num & 255;
+      const h = normHex(hex, "#ffffff").slice(1);
+      const r = parseInt(h.slice(0,2), 16);
+      const g = parseInt(h.slice(2,4), 16);
+      const b = parseInt(h.slice(4,6), 16);
       return `rgba(${r},${g},${b},${a})`;
     }
 
@@ -906,368 +661,209 @@
       el.style.height = Math.min(el.scrollHeight, 260) + "px";
     }
 
-    /* --------------------------
-       Theme module (GLOBAL)
-       - Adds real color controls (hex + opacity)
-    --------------------------- */
+    function chipBg(color){
+      return `linear-gradient(180deg, ${hexToRgba(color, 0.22)}, ${hexToRgba(color, 0.18)})`;
+    }
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    /* ============================
+       Theme (global) — NO Radial 1/2
+    ============================ */
     const DEFAULT_THEME = {
       appBg: "#ffffff",
       ink: "#2b2b2b",
       muted: "#7a7a7a",
-
-      borderHex: "#1e1e1e",
-      borderA: 0.10,
-
-      surfaceHex: "#ffffff",
-      surfaceA: 0.92,
-
-      softHex: "#ffffff",
-      softA: 0.75,
-
-      calendarHex: "#ffffff",
-      calendarA: 0.60,
-
-      dayHex: "#ffffff",
-      dayA: 0.92,
-
-      dowHex: "#ffffff",
-      dowA: 0.55,
-
-      noteHex: "#ffffff",
-      noteA: 0.95,
-
-      btnHex: "#ffffff",
-      btnA: 0.90,
-
       accent: "#cbb8ae",
-      accent2: "#efe7e1",
 
-      focusHex: "#cbb8ae",
-      focusA: 0.18,
+      surfaceA: 0.75,  // 40-98 slider
+      cardA: 0.92,
+      calendarA: 0.60,
+      daycellA: 0.92,
 
       overlayBase: "#ffffff",
-      overlayA: 0.38,
-      overlayR1: "#ffffff",
-      overlayR1A: 0.35,
-      overlayR2: "#ffffff",
-      overlayR2A: 0.25
+      overlayA: 0.38
     };
 
-    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
-    function normHex(hex, fallback){
-      const s = String(hex || "").trim();
-      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+    function themeLoad(){
+      try{
+        const raw = localStorage.getItem(THEME_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }catch{
+        return null;
+      }
     }
 
-    function themeApply(t){
-      const theme = { ...DEFAULT_THEME, ...(t || {}) };
+    function themeSave(t){
+      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+    }
 
-      const appBg = normHex(theme.appBg, DEFAULT_THEME.appBg);
-      const ink = normHex(theme.ink, DEFAULT_THEME.ink);
-      const muted = normHex(theme.muted, DEFAULT_THEME.muted);
-
-      const borderHex = normHex(theme.borderHex, DEFAULT_THEME.borderHex);
-      const borderA = clamp(Number(theme.borderA), 0, 0.30);
-
-      const surfaceHex = normHex(theme.surfaceHex, DEFAULT_THEME.surfaceHex);
-      const surfaceA = clamp(Number(theme.surfaceA), 0.50, 1);
-
-      const softHex = normHex(theme.softHex, DEFAULT_THEME.softHex);
-      const softA = clamp(Number(theme.softA), 0.30, 1);
-
-      const calendarHex = normHex(theme.calendarHex, DEFAULT_THEME.calendarHex);
-      const calendarA = clamp(Number(theme.calendarA), 0.20, 1);
-
-      const dayHex = normHex(theme.dayHex, DEFAULT_THEME.dayHex);
-      const dayA = clamp(Number(theme.dayA), 0.35, 1);
-
-      const dowHex = normHex(theme.dowHex, DEFAULT_THEME.dowHex);
-      const dowA = clamp(Number(theme.dowA), 0.20, 1);
-
-      const noteHex = normHex(theme.noteHex, DEFAULT_THEME.noteHex);
-      const noteA = clamp(Number(theme.noteA), 0.35, 1);
-
-      const btnHex = normHex(theme.btnHex, DEFAULT_THEME.btnHex);
-      const btnA = clamp(Number(theme.btnA), 0.35, 1);
-
-      const accent = normHex(theme.accent, DEFAULT_THEME.accent);
-      const accent2 = normHex(theme.accent2, DEFAULT_THEME.accent2);
-
-      const focusHex = normHex(theme.focusHex, DEFAULT_THEME.focusHex);
-      const focusA = clamp(Number(theme.focusA), 0.04, 0.40);
-
-      const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
-      const overlayA = clamp(Number(theme.overlayA), 0, 0.80);
-
-      const overlayR1 = normHex(theme.overlayR1, DEFAULT_THEME.overlayR1);
-      const overlayR1A = clamp(Number(theme.overlayR1A), 0, 0.80);
-
-      const overlayR2 = normHex(theme.overlayR2, DEFAULT_THEME.overlayR2);
-      const overlayR2A = clamp(Number(theme.overlayR2A), 0, 0.80);
-
+    function themeApply(theme){
+      const t = theme || DEFAULT_THEME;
       const r = document.documentElement.style;
+
+      const appBg = normHex(t.appBg, DEFAULT_THEME.appBg);
+      const ink   = normHex(t.ink, DEFAULT_THEME.ink);
+      const muted = normHex(t.muted, DEFAULT_THEME.muted);
+      const accent = normHex(t.accent, DEFAULT_THEME.accent);
+
+      const surfaceA  = clamp(t.surfaceA, 0.40, 0.98);
+      const cardA     = clamp(t.cardA, 0.40, 0.98);
+      const calendarA = clamp(t.calendarA, 0.35, 0.95);
+      const daycellA  = clamp(t.daycellA, 0.45, 0.98);
+
+      const overlayBase = normHex(t.overlayBase, DEFAULT_THEME.overlayBase);
+      const overlayA    = clamp(t.overlayA, 0.00, 0.70);
 
       r.setProperty("--app-bg", appBg);
       r.setProperty("--ink", ink);
       r.setProperty("--muted", muted);
-
-      r.setProperty("--border-hex", borderHex);
-      r.setProperty("--border-a", String(borderA));
-
-      r.setProperty("--surface-hex", surfaceHex);
-      r.setProperty("--surface-a", String(surfaceA));
-
-      r.setProperty("--surface-soft-hex", softHex);
-      r.setProperty("--surface-soft-a", String(softA));
-
-      r.setProperty("--calendar-hex", calendarHex);
-      r.setProperty("--calendar-a", String(calendarA));
-
-      r.setProperty("--daycell-hex", dayHex);
-      r.setProperty("--daycell-a", String(dayA));
-
-      r.setProperty("--dow-hex", dowHex);
-      r.setProperty("--dow-a", String(dowA));
-
-      r.setProperty("--note-hex", noteHex);
-      r.setProperty("--note-a", String(noteA));
-
-      r.setProperty("--btn-hex", btnHex);
-      r.setProperty("--btn-a", String(btnA));
-
       r.setProperty("--accent", accent);
-      r.setProperty("--accent-2", accent2);
 
-      r.setProperty("--focus-hex", focusHex);
-      r.setProperty("--focus-a", String(focusA));
+      r.setProperty("--surface", `rgba(255,255,255,${surfaceA})`);
+      r.setProperty("--panel", `rgba(255,255,255,0.92)`);
+      r.setProperty("--card", `rgba(255,255,255,${cardA})`);
+      r.setProperty("--calendar", `rgba(255,255,255,${calendarA})`);
+      r.setProperty("--daycell", `rgba(255,255,255,${daycellA})`);
 
-      r.setProperty("--overlay-base-hex", overlayBase);
+      r.setProperty("--overlay-base", overlayBase);
       r.setProperty("--overlay-a", String(overlayA));
-      r.setProperty("--overlay-rad-1-hex", overlayR1);
-      r.setProperty("--overlay-rad-1-a", String(overlayR1A));
-      r.setProperty("--overlay-rad-2-hex", overlayR2);
-      r.setProperty("--overlay-rad-2-a", String(overlayR2A));
 
-      // Paint computed backgrounds in actual elements (so theme color applies everywhere)
-      const borderRgba = hexToRgba(borderHex, borderA);
-
-      // borders that rely on rgba(30,30,30,...) will still look fine, but we can upgrade key containers:
-      const board = $("#board");
-      if(board) board.style.borderColor = borderRgba;
-
-      const monthPill = document.querySelector(".month-pill");
-      if(monthPill) {
-        monthPill.style.borderColor = borderRgba;
-        monthPill.style.background = hexToRgba(softHex, softA);
-      }
-
-      // Buttons
-      $$("button.bg-btn, button.nav-btn").forEach(btn => {
-        btn.style.background = hexToRgba(btnHex, btnA);
-        btn.style.borderColor = borderRgba;
-        btn.style.color = hexToRgba(ink, 0.70);
-      });
-
-      // Calendar + day cells + dow + cards + note backgrounds
-      const calendar = $("#calendar");
-      if(calendar) {
-        calendar.style.background = hexToRgba(calendarHex, calendarA);
-        calendar.style.borderColor = borderRgba;
-      }
-
-      $$("#dowRow > div").forEach(d => {
-        d.style.background = hexToRgba(dowHex, dowA);
-        d.style.borderColor = hexToRgba(borderHex, clamp(borderA*0.6, 0, 0.30));
-        d.style.color = muted;
-      });
-
-      $$(".daycell").forEach(cell => {
-        cell.style.background = hexToRgba(dayHex, dayA);
-        cell.style.borderColor = hexToRgba(borderHex, clamp(borderA*0.8, 0, 0.30));
-      });
-
-      const notesCard = $("#notesCard");
-      if(notesCard){
-        notesCard.style.background = hexToRgba(surfaceHex, surfaceA);
-        notesCard.style.borderColor = borderRgba;
-      }
-
-      $$(".card").forEach(card => {
-        card.style.background = hexToRgba(surfaceHex, surfaceA);
-        card.style.borderColor = borderRgba;
-      });
-
-      $$(".daynote").forEach(n => {
-        n.style.background = hexToRgba(noteHex, noteA);
-        n.style.borderColor = hexToRgba(borderHex, clamp(borderA, 0, 0.30));
-        n.style.color = ink;
-      });
-
-      // Focus ring
-      const focusRing = hexToRgba(focusHex, focusA);
-      const styleId = "themeFocusStyle";
-      let style = document.getElementById(styleId);
-      if(!style){
-        style = document.createElement("style");
-        style.id = styleId;
-        document.head.appendChild(style);
-      }
-      style.textContent = `
-        .daynote:focus{
-          box-shadow: 0 0 0 4px ${focusRing} !important;
-        }
-      `;
-
-      // Board overlay
-      const overlayCss = `
-        radial-gradient(900px 520px at 18% 20%, ${hexToRgba(overlayR1, overlayR1A)}, transparent 62%),
-        radial-gradient(700px 460px at 82% 34%, ${hexToRgba(overlayR2, overlayR2A)}, transparent 62%),
-        ${hexToRgba(overlayBase, overlayA)}
-      `;
-      const overlayStyleId = "themeOverlayStyle";
-      let overlayStyle = document.getElementById(overlayStyleId);
-      if(!overlayStyle){
-        overlayStyle = document.createElement("style");
-        overlayStyle.id = overlayStyleId;
-        document.head.appendChild(overlayStyle);
-      }
-      overlayStyle.textContent = `
-        .board::after{ background: ${overlayCss} !important; }
-      `;
-
-      // Update theme dot
-      const themeDot = $("#themeDot");
+      // update theme dot
+      const themeDot = document.getElementById("themeDot");
       if(themeDot){
         themeDot.style.background = accent;
-        themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(softHex, clamp(softA*0.35, 0, 0.35))}`;
+        themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(accent, 0.25)}`;
       }
+
+      // apply overlay directly (single layer)
+      const overlayCss = hexToRgba(overlayBase, overlayA);
+      const styleId = "overlayStyle";
+      let st = document.getElementById(styleId);
+      if(!st){
+        st = document.createElement("style");
+        st.id = styleId;
+        document.head.appendChild(st);
+      }
+      st.textContent = `.board::after{ background: ${overlayCss} !important; }`;
     }
 
     function themeSyncInputs(t){
-      const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = String(v); };
-      set("tAppBg", t.appBg);
-      set("tInk", t.ink);
-      set("tMuted", t.muted);
+      const theme = t || DEFAULT_THEME;
 
-      set("tBorderHex", t.borderHex);
-      set("tBorderA", Math.round(t.borderA * 100));
+      const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
 
-      set("tSurfaceHex", t.surfaceHex);
-      set("tSurfaceA", Math.round(t.surfaceA * 100));
+      set("tAppBg", theme.appBg);
+      set("tInk", theme.ink);
+      set("tMuted", theme.muted);
+      set("tAccent", theme.accent);
 
-      set("tSoftHex", t.softHex);
-      set("tSoftA", Math.round(t.softA * 100));
+      set("tSurface", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
+      set("tCard", Math.round(clamp(theme.cardA, 0.40, 0.98) * 100));
+      set("tCalendar", Math.round(clamp(theme.calendarA, 0.35, 0.95) * 100));
+      set("tDaycell", Math.round(clamp(theme.daycellA, 0.45, 0.98) * 100));
 
-      set("tCalendarHex", t.calendarHex);
-      set("tCalendarA", Math.round(t.calendarA * 100));
-
-      set("tDayHex", t.dayHex);
-      set("tDayA", Math.round(t.dayA * 100));
-
-      set("tDowHex", t.dowHex);
-      set("tDowA", Math.round(t.dowA * 100));
-
-      set("tNoteHex", t.noteHex);
-      set("tNoteA", Math.round(t.noteA * 100));
-
-      set("tBtnHex", t.btnHex);
-      set("tBtnA", Math.round(t.btnA * 100));
-
-      set("tAccent", t.accent);
-      set("tAccent2", t.accent2);
-
-      set("tFocusHex", t.focusHex);
-      set("tFocusA", Math.round(t.focusA * 100));
-
-      set("tOverlayBase", t.overlayBase);
-      set("tOverlayA", Math.round(t.overlayA * 100));
-
-      set("tOverlayR1", t.overlayR1);
-      set("tOverlayR1A", Math.round(t.overlayR1A * 100));
-
-      set("tOverlayR2", t.overlayR2);
-      set("tOverlayR2A", Math.round(t.overlayR2A * 100));
+      set("tOverlayBase", theme.overlayBase);
+      set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
     }
 
     function themeReadFromInputs(){
-      const g = (id) => document.getElementById(id);
+      const g = (id)=>document.getElementById(id);
+
       return {
         appBg: g("tAppBg")?.value,
         ink: g("tInk")?.value,
         muted: g("tMuted")?.value,
-
-        borderHex: g("tBorderHex")?.value,
-        borderA: clamp(Number(g("tBorderA")?.value)/100, 0, 0.30),
-
-        surfaceHex: g("tSurfaceHex")?.value,
-        surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.50, 1),
-
-        softHex: g("tSoftHex")?.value,
-        softA: clamp(Number(g("tSoftA")?.value)/100, 0.30, 1),
-
-        calendarHex: g("tCalendarHex")?.value,
-        calendarA: clamp(Number(g("tCalendarA")?.value)/100, 0.20, 1),
-
-        dayHex: g("tDayHex")?.value,
-        dayA: clamp(Number(g("tDayA")?.value)/100, 0.35, 1),
-
-        dowHex: g("tDowHex")?.value,
-        dowA: clamp(Number(g("tDowA")?.value)/100, 0.20, 1),
-
-        noteHex: g("tNoteHex")?.value,
-        noteA: clamp(Number(g("tNoteA")?.value)/100, 0.35, 1),
-
-        btnHex: g("tBtnHex")?.value,
-        btnA: clamp(Number(g("tBtnA")?.value)/100, 0.35, 1),
-
         accent: g("tAccent")?.value,
-        accent2: g("tAccent2")?.value,
 
-        focusHex: g("tFocusHex")?.value,
-        focusA: clamp(Number(g("tFocusA")?.value)/100, 0.04, 0.40),
+        surfaceA: clamp(Number(g("tSurface")?.value)/100, 0.40, 0.98),
+        cardA: clamp(Number(g("tCard")?.value)/100, 0.40, 0.98),
+        calendarA: clamp(Number(g("tCalendar")?.value)/100, 0.35, 0.95),
+        daycellA: clamp(Number(g("tDaycell")?.value)/100, 0.45, 0.98),
 
         overlayBase: g("tOverlayBase")?.value,
-        overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0, 0.80),
-
-        overlayR1: g("tOverlayR1")?.value,
-        overlayR1A: clamp(Number(g("tOverlayR1A")?.value)/100, 0, 0.80),
-
-        overlayR2: g("tOverlayR2")?.value,
-        overlayR2A: clamp(Number(g("tOverlayR2A")?.value)/100, 0, 0.80),
+        overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70)
       };
     }
 
-    /* --------------------------
-       Chip defaults (GLOBAL)
-    --------------------------- */
-    const DEFAULT_CHIP = {
-      base: "#cbb8ae",
-      topA: 0.22,
-      botA: 0.18
-    };
+    function initThemeUI(){
+      const themeBtn = document.getElementById("themeBtn");
+      const themePanel = document.getElementById("themePanel");
+      const themeReset = document.getElementById("themeReset");
+      if(!themeBtn || !themePanel || !themeReset) return;
 
-    function chipApply(cfg){
-      const base = normHex(cfg.base, DEFAULT_CHIP.base);
-      const topA = clamp(Number(cfg.topA), 0, 0.60);
-      const botA = clamp(Number(cfg.botA), 0, 0.60);
+      // open/close
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        const bgPanel = document.getElementById("bgPanel");
+        if(bgPanel) bgPanel.classList.remove("open");
+      });
 
-      document.documentElement.style.setProperty("--chip-base", base);
-      document.documentElement.style.setProperty("--chip-grad-top-a", String(topA));
-      document.documentElement.style.setProperty("--chip-grad-bot-a", String(botA));
+      document.addEventListener("click", (e) => {
+        if(!themePanel.classList.contains("open")) return;
+        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+        if(!inside) themePanel.classList.remove("open");
+      });
 
-      const chipDot = $("#chipDot");
-      if(chipDot) chipDot.style.background = base;
+      // inputs -> apply/save
+      const themeInputIds = [
+        "tAppBg","tInk","tMuted","tAccent",
+        "tSurface","tCard","tCalendar","tDaycell",
+        "tOverlayBase","tOverlayA"
+      ];
+
+      for(const id of themeInputIds){
+        const el = document.getElementById(id);
+        if(!el) continue;
+        el.addEventListener("input", () => {
+          const t = themeReadFromInputs();
+          themeApply(t);
+          themeSave(t);
+        });
+      }
+
+      themeReset.addEventListener("click", () => {
+        localStorage.removeItem(THEME_KEY);
+        themeApply(DEFAULT_THEME);
+        themeSyncInputs(DEFAULT_THEME);
+      });
+
+      // boot
+      const saved = themeLoad() || DEFAULT_THEME;
+      themeApply(saved);
+      themeSyncInputs(saved);
     }
 
-    function chipBg(color){
-      const topA = clamp(Number(getComputedStyle(document.documentElement).getPropertyValue("--chip-grad-top-a")) || 0.22, 0, 0.60);
-      const botA = clamp(Number(getComputedStyle(document.documentElement).getPropertyValue("--chip-grad-bot-a")) || 0.18, 0, 0.60);
-      return `linear-gradient(180deg, ${hexToRgba(color, topA)}, ${hexToRgba(color, botA)})`;
+    /* ============================
+       Planner store (per-month)
+    ============================ */
+    function loadStore(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : { months: {} };
+      }catch{
+        return { months: {} };
+      }
+    }
+    function saveStore(store){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
     }
 
-    /* --------------------------
-       App data
-    --------------------------- */
+    function dayKey(d){
+      const y = d.getFullYear();
+      const m = pad2(d.getMonth()+1);
+      const day = pad2(d.getDate());
+      return `${y}-${m}-${day}`;
+    }
+
     let store = loadStore();
     let activeMonthId = monthIdFromDate(new Date());
 
@@ -1275,7 +871,7 @@
     const monthNotes = $("#monthNotes");
 
     function ensureMonthData(monthId){
-      if(!store.months[monthId]){
+      if (!store.months[monthId]){
         store.months[monthId] = {
           days: {},
           notes: "",
@@ -1286,25 +882,16 @@
       return store.months[monthId];
     }
 
-    function dayKey(d){
-      const y = d.getFullYear();
-      const m = pad2(d.getMonth()+1);
-      const day = pad2(d.getDate());
-      return `${y}-${m}-${day}`;
-    }
-
     function ensureDayData(monthData, key){
-      if(!monthData.days[key]){
-        monthData.days[key] = { note:"", goals: [] };
+      if (!monthData.days[key]){
+        monthData.days[key] = { note: "", goals: [] };
       }
-      if(!Array.isArray(monthData.days[key].goals)) monthData.days[key].goals = [];
+      if (!Array.isArray(monthData.days[key].goals)) monthData.days[key].goals = [];
       return monthData.days[key];
     }
 
     function goalChipHTML(goal){
-      const defaultChip = getComputedStyle(document.documentElement).getPropertyValue("--chip-base").trim() || "#cbb8ae";
-      const color = goal?.color || defaultChip;
-
+      const color = goal?.color || "#cbb8ae";
       const text = (goal?.text ?? "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
@@ -1329,6 +916,7 @@
       const monthData = ensureMonthData(monthId);
 
       $("#monthLabel").textContent = prettyMonthLabel(monthId);
+
       applyBackgroundFromMonth(monthData.background);
 
       monthNotes.value = monthData.notes || "";
@@ -1341,7 +929,7 @@
       const daysInView = 42;
 
       calGrid.innerHTML = "";
-      for(let i = 0; i < daysInView; i++){
+      for (let i = 0; i < daysInView; i++){
         const d = new Date(start);
         d.setDate(start.getDate() + i);
 
@@ -1383,10 +971,6 @@
 
       store.months[activeMonthId] = monthData;
       saveStore(store);
-
-      // Re-apply theme to newly created elements
-      const theme = loadJson(THEME_KEY, DEFAULT_THEME);
-      themeApply(theme);
     }
 
     function snapshotMonthToStore(){
@@ -1401,8 +985,7 @@
         cell.querySelectorAll(".goal-chip").forEach(chip => {
           const text = chip.querySelector(".goalText")?.value ?? "";
           const picker = chip.querySelector(".goalColorPicker");
-          const fallback = getComputedStyle(document.documentElement).getPropertyValue("--chip-base").trim() || "#cbb8ae";
-          const color = picker?.value ?? fallback;
+          const color = picker?.value ?? "#cbb8ae";
           goals.push({ text, color });
         });
 
@@ -1417,9 +1000,9 @@
       saveStore(store);
     }
 
-    /* --------------------------
-       Background panel (PER MONTH)
-    --------------------------- */
+    /* ============================
+       Background (per month)
+    ============================ */
     const boardTint = $("#boardTint");
     const bgBtn = $("#bgBtn");
     const bgPanel = $("#bgPanel");
@@ -1434,16 +1017,18 @@
     }
 
     function applyBoardTint(colorHex, strengthPct){
+      const tint = normHex(colorHex, "#efe7e1");
       const strength = clamp(Number(strengthPct)/100, 0, 0.70);
-      document.documentElement.style.setProperty("--board-tint", colorHex);
+
+      document.documentElement.style.setProperty("--board-tint", tint);
       document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
-      const dot = document.querySelector(".bg-dot");
-      if(dot){
-        dot.style.background = colorHex;
-        dot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.1))}`;
+      if(bgDot){
+        bgDot.style.background = tint;
+        bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.1))}`;
       }
-      boardTint.style.background = hexToRgba(colorHex, strength);
+
+      boardTint.style.background = hexToRgba(tint, strength);
     }
 
     function applyBackgroundFromMonth(bg){
@@ -1457,26 +1042,17 @@
       setBoardImage(bg?.imageDataUrl ?? null);
     }
 
-    function fileToDataUrl(file){
-      return new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
-    }
-
     bgBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       bgPanel.classList.toggle("open");
-      $("#themePanel")?.classList.remove("open");
-      $("#chipPanel")?.classList.remove("open");
+      const themePanel = document.getElementById("themePanel");
+      if(themePanel) themePanel.classList.remove("open");
     });
 
     document.addEventListener("click", (e) => {
-      if(!bgPanel.classList.contains("open")) return;
+      if (!bgPanel.classList.contains("open")) return;
       const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      if(!inside) bgPanel.classList.remove("open");
+      if (!inside) bgPanel.classList.remove("open");
     });
 
     bgColor.addEventListener("input", () => {
@@ -1499,7 +1075,7 @@
 
     bgImage.addEventListener("change", async () => {
       const file = bgImage.files && bgImage.files[0];
-      if(!file) return;
+      if (!file) return;
 
       const dataUrl = await fileToDataUrl(file);
       setBoardImage(dataUrl);
@@ -1522,111 +1098,9 @@
       saveStore(store);
     });
 
-    /* --------------------------
-       Theme panel wiring
-    --------------------------- */
-    const themeBtn = $("#themeBtn");
-    const themePanel = $("#themePanel");
-
-    themeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      themePanel.classList.toggle("open");
-      $("#bgPanel")?.classList.remove("open");
-      $("#chipPanel")?.classList.remove("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      if(!themePanel.classList.contains("open")) return;
-      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-      if(!inside) themePanel.classList.remove("open");
-    });
-
-    function persistTheme(){
-      const next = themeReadFromInputs();
-      themeApply(next);
-      saveJson(THEME_KEY, next);
-    }
-
-    const themeInputIds = [
-      "tAppBg","tInk","tMuted",
-      "tBorderHex","tBorderA",
-      "tSurfaceHex","tSurfaceA",
-      "tSoftHex","tSoftA",
-      "tCalendarHex","tCalendarA",
-      "tDayHex","tDayA",
-      "tDowHex","tDowA",
-      "tNoteHex","tNoteA",
-      "tBtnHex","tBtnA",
-      "tAccent","tAccent2",
-      "tFocusHex","tFocusA",
-      "tOverlayBase","tOverlayA",
-      "tOverlayR1","tOverlayR1A",
-      "tOverlayR2","tOverlayR2A"
-    ];
-    themeInputIds.forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.addEventListener("input", persistTheme);
-    });
-
-    $("#tReset").addEventListener("click", () => {
-      saveJson(THEME_KEY, DEFAULT_THEME);
-      themeSyncInputs(DEFAULT_THEME);
-      themeApply(DEFAULT_THEME);
-    });
-
-    /* --------------------------
-       Chip panel wiring
-    --------------------------- */
-    const chipBtn = $("#chipBtn");
-    const chipPanel = $("#chipPanel");
-
-    chipBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      chipPanel.classList.toggle("open");
-      $("#bgPanel")?.classList.remove("open");
-      $("#themePanel")?.classList.remove("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      if(!chipPanel.classList.contains("open")) return;
-      const inside = e.target.closest("#chipPanel") || e.target.closest("#chipBtn");
-      if(!inside) chipPanel.classList.remove("open");
-    });
-
-    function chipSyncInputs(cfg){
-      $("#cBase").value = cfg.base;
-      $("#cTopA").value = String(Math.round(cfg.topA * 100));
-      $("#cBotA").value = String(Math.round(cfg.botA * 100));
-    }
-
-    function chipReadInputs(){
-      return {
-        base: $("#cBase").value,
-        topA: clamp(Number($("#cTopA").value)/100, 0, 0.60),
-        botA: clamp(Number($("#cBotA").value)/100, 0, 0.60)
-      };
-    }
-
-    function persistChip(){
-      const cfg = chipReadInputs();
-      chipApply(cfg);
-      saveJson(CHIP_KEY, cfg);
-    }
-
-    ["cBase","cTopA","cBotA"].forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.addEventListener("input", persistChip);
-    });
-
-    $("#cApplyToNew").addEventListener("click", () => {
-      const cfg = chipReadInputs();
-      chipApply(cfg);
-      saveJson(CHIP_KEY, cfg);
-    });
-
-    /* --------------------------
+    /* ============================
        Month navigation
-    --------------------------- */
+    ============================ */
     $("#prevMonth").addEventListener("click", () => {
       snapshotMonthToStore();
       const [y, m] = activeMonthId.split("-").map(Number);
@@ -1641,31 +1115,30 @@
       buildMonth(monthIdFromDate(addMonths(d, 1)));
     });
 
-    /* --------------------------
+    /* ============================
        Day-goal interactions + autosave
-    --------------------------- */
+    ============================ */
     calGrid.addEventListener("click", (e) => {
       const cell = e.target.closest(".daycell");
-      if(!cell) return;
+      if (!cell) return;
 
       const add = e.target.closest(".add-goal");
-      if(add){
+      if (add){
         const list = cell.querySelector(".goalsListInDay");
-        const base = getComputedStyle(document.documentElement).getPropertyValue("--chip-base").trim() || "#cbb8ae";
-        const goal = { text: "", color: base };
+        const goal = { text: "", color: "#cbb8ae" };
         const wrap = document.createElement("div");
         wrap.innerHTML = goalChipHTML(goal);
         const chip = wrap.firstElementChild;
         list.appendChild(chip);
         const ta = chip.querySelector(".goalText");
         ta?.focus({ preventScroll: false });
-        if(ta) autoGrow(ta);
+        if (ta) autoGrow(ta);
         snapshotMonthToStore();
         return;
       }
 
       const rm = e.target.closest(".removeGoalBtn");
-      if(rm){
+      if (rm){
         rm.closest(".goal-chip")?.remove();
         snapshotMonthToStore();
         return;
@@ -1673,17 +1146,17 @@
     });
 
     calGrid.addEventListener("input", (e) => {
-      if(e.target.classList.contains("dayNoteInput")){
+      if (e.target.classList.contains("dayNoteInput")){
         autoGrow(e.target);
         snapshotMonthToStore();
         return;
       }
-      if(e.target.classList.contains("goalText")){
+      if (e.target.classList.contains("goalText")){
         autoGrow(e.target);
         snapshotMonthToStore();
         return;
       }
-      if(e.target.classList.contains("goalColorPicker")){
+      if (e.target.classList.contains("goalColorPicker")){
         const chip = e.target.closest(".goal-chip");
         const color = e.target.value;
         chip.style.background = chipBg(color);
@@ -1699,20 +1172,10 @@
 
     window.addEventListener("beforeunload", () => snapshotMonthToStore());
 
-    /* --------------------------
+    /* ============================
        Boot
-    --------------------------- */
-    // Load + apply chip defaults
-    const savedChip = loadJson(CHIP_KEY, DEFAULT_CHIP);
-    chipApply(savedChip);
-    chipSyncInputs(savedChip);
-
-    // Load + apply theme
-    const savedTheme = loadJson(THEME_KEY, DEFAULT_THEME);
-    themeSyncInputs(savedTheme);
-    themeApply(savedTheme);
-
-    // Build month
+    ============================ */
+    initThemeUI();
     buildMonth(activeMonthId);
   </script>
 </body>

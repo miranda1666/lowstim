@@ -6,38 +6,60 @@
   <title>Monthly Planner</title>
   <style>
     :root{
-      /* ===== Theme (global) ===== */
+
       --app-bg: #ffffff;
 
       --ink: #2b2b2b;
       --muted: #7a7a7a;
 
-      --border: rgba(30, 30, 30, 0.10);
+      /* borders + shadows */
+      --border-rgb: 30,30,30;
+      --border-a: 0.10;
+      --border: rgba(var(--border-rgb), var(--border-a));
       --shadow: 0 10px 26px rgba(20, 20, 20, 0.08);
 
-      --surface: rgba(255,255,255,0.75);   /* pills, popovers */
-      --panel: rgba(255,255,255,0.92);     /* settings panel */
-      --card: rgba(255,255,255,0.92);      /* side cards */
-      --calendar: rgba(255,255,255,0.60);  /* calendar container */
-      --daycell: rgba(255,255,255,0.92);   /* day cell base */
-      --daycell-outside-opacity: 0.55;
+      /* key surfaces */
+      --surface-bg: #ffffff;
+      --surface-a: 0.75;
 
-      --accent: #cbb8ae;                 
-      --today: #efe7e1;                   
+      --panel-bg: #ffffff;
+      --panel-a: 0.92;
 
-      --btn-bg: rgba(255,255,255,0.9);
-      --btn-border: rgba(30,30,30,0.10);
+      --calendar-bg: #ffffff;
+      --calendar-a: 0.60;
+
+      --card-bg: #ffffff;
+      --card-a: 0.92;
+
+      --daycell-bg: #ffffff;
+      --daycell-a: 0.92;
+
+      --dow-bg: #ffffff;
+      --dow-a: 0.55;
+
+      --input-bg: #ffffff;
+      --input-a: 0.95;
+
+      /* controls */
+      --btn-bg: #ffffff;
+      --btn-a: 0.90;
+      --btn-border-a: 0.10;
       --btn-ink: rgba(43,43,43,0.70);
 
-      /* ===== Board background (per-month) ===== */
+      /* accents */
+      --accent: #cbb8ae;
+
+      /* overlay (NO RADIALS) */
+      --overlay-base: #ffffff;
+      --overlay-a: 0.38;
+
+      /* some layout vars */
       --board-radius: 24px;
+
+
       --board-tint: #efe7e1;
       --board-tint-a: 0.35;
       --board-image: none;
-
-      /* ===== Overlay (global; NO radial layers) ===== */
-      --overlay-base: #ffffff;
-      --overlay-a: 0.38;
     }
 
     *{ box-sizing: border-box; }
@@ -45,7 +67,7 @@
       margin: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       color: var(--ink);
-      background:var(--app-bg);
+      background: var(--app-bg);
     }
 
     .wrap{
@@ -82,20 +104,20 @@
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: var(--surface);
+      background: rgba(var(--surface-bg-rgb, 255,255,255), var(--surface-a));
       border: 1px solid var(--border);
       border-radius: 999px;
       padding: 6px 10px;
       box-shadow: 0 6px 18px rgba(20,20,20,0.06);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(2px);
     }
 
     .bg-btn, .nav-btn, .theme-btn{
       width: 34px;
       height: 34px;
       border-radius: 999px;
-      border: 1px solid var(--btn-border);
-      background: var(--btn-bg);
+      border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
+      background: rgba(var(--btn-bg-rgb, 255,255,255), var(--btn-a));
       cursor: pointer;
       display: grid;
       place-items: center;
@@ -110,11 +132,14 @@
       width: 14px;
       height: 14px;
       border-radius: 999px;
-      border: 1px solid rgba(30,30,30,0.14);
+      border: 1px solid rgba(var(--border-rgb), 0.14);
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
     }
-    .theme-dot{ background: var(--accent); box-shadow: 0 0 0 6px rgba(203,184,174,0.25); }
+    .theme-dot{
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(203,184,174,0.25);
+    }
 
     .popover{ position: relative; }
 
@@ -122,12 +147,12 @@
       position: absolute;
       top: 44px;
       right: 0;
-      width: 290px;
+      width: 310px;
       border-radius: 16px;
       border: 1px solid var(--border);
-      background: var(--panel);
+      background: rgba(var(--panel-bg-rgb, 255,255,255), var(--panel-a));
       box-shadow: 0 18px 40px rgba(20,20,20,0.10);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(2px);
       padding: 12px;
       display: none;
       z-index: 50;
@@ -150,6 +175,7 @@
       gap: 10px;
       padding: 8px 0;
     }
+
     .row label{
       font-size: 12px;
       color: var(--muted);
@@ -158,7 +184,7 @@
     input[type="color"]{
       width: 34px;
       height: 26px;
-      border: 1px solid rgba(30,30,30,0.12);
+      border: 1px solid rgba(var(--border-rgb), 0.12);
       border-radius: 10px;
       padding: 0;
       background: transparent;
@@ -175,7 +201,7 @@
 
     .mini-btn{
       width: 100%;
-      border: 1px solid rgba(30,30,30,0.10);
+      border: 1px solid var(--border);
       background: rgba(255,255,255,0.90);
       border-radius: 12px;
       padding: 9px 10px;
@@ -188,7 +214,7 @@
 
     .divider{
       height: 1px;
-      background: rgba(30,30,30,0.08);
+      background: rgba(var(--border-rgb), 0.08);
       margin: 8px 0;
     }
 
@@ -199,9 +225,9 @@
       padding: 6px 10px;
       border-radius: 999px;
       border: 1px solid var(--border);
-      background: var(--surface);
+      background: rgba(var(--surface-bg-rgb,255,255,255), var(--surface-a));
       box-shadow: 0 6px 18px rgba(20,20,20,0.06);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(2px);
     }
     .month-label{
       font-size: 12px;
@@ -251,7 +277,7 @@
     .board-content{
       position: relative;
       z-index: 2;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(2px);
     }
 
     .layout{
@@ -265,8 +291,8 @@
     }
 
     .calendar{
-      background: var(--calendar);
-      border: 1px solid rgba(30,30,30,0.10);
+      background: rgba(var(--calendar-bg-rgb,255,255,255), var(--calendar-a));
+      border: 1px solid rgba(var(--border-rgb), 0.10);
       border-radius: 20px;
       padding: 12px;
       box-shadow: 0 10px 24px rgba(20,20,20,0.06);
@@ -285,8 +311,8 @@
       text-align: center;
       padding: 8px 0;
       border-radius: 12px;
-      background: rgba(255,255,255,0.55);
-      border: 1px solid rgba(30,30,30,0.06);
+      background: rgba(var(--dow-bg-rgb,255,255,255), var(--dow-a));
+      border: 1px solid rgba(var(--border-rgb), 0.06);
     }
 
     .cal-grid{
@@ -302,8 +328,8 @@
     }
 
     .daycell{
-      background: var(--daycell);
-      border: 1px solid rgba(30,30,30,0.08);
+      background: rgba(var(--daycell-bg-rgb,255,255,255), var(--daycell-a));
+      border: 1px solid rgba(var(--border-rgb), 0.08);
       border-radius: 16px;
       min-height: 190px;
       padding: 10px;
@@ -313,7 +339,7 @@
       box-shadow: 0 8px 18px rgba(20,20,20,0.05);
       min-width: 160px;
     }
-    .daycell.outside{ opacity: var(--daycell-outside-opacity); }
+    .daycell.outside{ opacity: 0.55; }
 
     .daytop{
       display: flex;
@@ -329,11 +355,11 @@
 
     .daynote{
       width: 100%;
-      border: 1px solid rgba(30,30,30,0.10);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
       border-radius: 12px;
       padding: 9px 10px;
       outline: none;
-      background: rgba(255,255,255,0.95);
+      background: rgba(var(--input-bg-rgb,255,255,255), var(--input-a));
       color: var(--ink);
       font-size: 12px;
       resize: none;
@@ -341,7 +367,7 @@
       line-height: 1.25;
     }
     .daynote:focus{
-      border-color: rgba(30,30,30,0.18);
+      border-color: rgba(var(--border-rgb), 0.18);
       box-shadow: 0 0 0 4px rgba(203,184,174,0.18);
     }
 
@@ -355,7 +381,7 @@
       align-items: start;
       padding: 8px 8px;
       border-radius: 14px;
-      border: 1px solid rgba(30,30,30,0.08);
+      border: 1px solid rgba(var(--border-rgb), 0.08);
       background: rgba(203,184,174,0.22);
       min-width: 0;
     }
@@ -379,7 +405,7 @@
       width: 26px;
       height: 26px;
       border-radius: 10px;
-      border: 1px solid rgba(30,30,30,0.10);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
       background: rgba(255,255,255,0.75);
       cursor: pointer;
       display: grid;
@@ -410,7 +436,7 @@
 
     .add-goal{
       width: 100%;
-      border: 1px solid rgba(30,30,30,0.10);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
       background: rgba(255,255,255,0.85);
       border-radius: 12px;
       padding: 8px 8px;
@@ -425,8 +451,8 @@
     .side{ display: flex; flex-direction: column; gap: 12px; }
 
     .card{
-      background: var(--card);
-      border: 1px solid rgba(30,30,30,0.10);
+      background: rgba(var(--card-bg-rgb,255,255,255), var(--card-a));
+      border: 1px solid rgba(var(--border-rgb), 0.10);
       border-radius: 20px;
       padding: 12px;
       box-shadow: 0 10px 24px rgba(20,20,20,0.06);
@@ -462,7 +488,7 @@
           <button class="nav-btn" id="nextMonth" type="button" aria-label="Next month" title="Next month">›</button>
         </div>
 
-        <!-- Theme (global) -->
+     
         <div class="popover">
           <div class="icon-pill">
             <button class="theme-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -473,60 +499,54 @@
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
             <div class="panelTitle">Theme</div>
 
-            <div class="row">
-              <label for="tAppBg">App background</label>
-              <input id="tAppBg" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tInk">Text</label>
-              <input id="tInk" type="color" value="#2b2b2b" />
-            </div>
-
-            <div class="row">
-              <label for="tMuted">Muted</label>
-              <input id="tMuted" type="color" value="#7a7a7a" />
-            </div>
-
-            <div class="row">
-              <label for="tAccent">Accent</label>
-              <input id="tAccent" type="color" value="#cbb8ae" />
-            </div>
+            <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
+            <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
+            <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
 
             <div class="divider"></div>
 
-            <div class="row">
-              <label for="tSurface">Pills / popovers</label>
-              <input id="tSurface" type="range" min="40" max="98" value="75" />
-            </div>
-
-            <div class="row">
-              <label for="tCard">Card opacity</label>
-              <input id="tCard" type="range" min="40" max="98" value="92" />
-            </div>
-
-            <div class="row">
-              <label for="tCalendar">Calendar opacity</label>
-              <input id="tCalendar" type="range" min="35" max="95" value="60" />
-            </div>
-
-            <div class="row">
-              <label for="tDaycell">Daycell opacity</label>
-              <input id="tDaycell" type="range" min="45" max="98" value="92" />
-            </div>
+            <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e" /></div>
+            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10" /></div>
 
             <div class="divider"></div>
 
+            <div class="row"><label for="tSurfaceColor">Pills bg</label><input id="tSurfaceColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tSurfaceA">Pills opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="75" /></div>
 
-            <div class="row">
-              <label for="tOverlayBase">Overlay</label>
-              <input id="tOverlayBase" type="color" value="#ffffff" />
-            </div>
+            <div class="row"><label for="tPanelColor">Panel bg</label><input id="tPanelColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92" /></div>
 
-            <div class="row">
-              <label for="tOverlayA">Overlay strength</label>
-              <input id="tOverlayA" type="range" min="0" max="70" value="38" />
-            </div>
+            <div class="divider"></div>
+
+            <div class="row"><label for="tCalendarColor">Calendar bg</label><input id="tCalendarColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tCalendarA">Calendar opacity</label><input id="tCalendarA" type="range" min="35" max="95" value="60" /></div>
+
+            <div class="row"><label for="tDaycellColor">Daycell bg</label><input id="tDaycellColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDaycellA">Daycell opacity</label><input id="tDaycellA" type="range" min="45" max="98" value="92" /></div>
+
+            <div class="row"><label for="tDowColor">DOW bg</label><input id="tDowColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDowA">DOW opacity</label><input id="tDowA" type="range" min="25" max="95" value="55" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tInputColor">Inputs bg</label><input id="tInputColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInputA">Inputs opacity</label><input id="tInputA" type="range" min="55" max="100" value="95" /></div>
+
+            <div class="row"><label for="tCardColor">Side cards bg</label><input id="tCardColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tCardA">Side cards opacity</label><input id="tCardA" type="range" min="55" max="100" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBtnColor">Buttons bg</label><input id="tBtnColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="90" /></div>
+            <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10" /></div>
+            <div class="row"><label for="tBtnInk">Btn icon/text</label><input id="tBtnInk" type="color" value="#2b2b2b" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tOverlayBase">Overlay color</label><input id="tOverlayBase" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="38" /></div>
 
             <div class="divider"></div>
 
@@ -566,6 +586,7 @@
               <button class="mini-btn" id="removeImage" type="button">Remove image</button>
             </div>
 
+
           </div>
         </div>
       </div>
@@ -600,7 +621,11 @@
   <script>
 
     const STORAGE_KEY = "monthly_planner_v2_day_goals";
-    const THEME_KEY   = "monthly_planner_theme_v1";
+    const THEME_KEY   = "monthly_planner_theme_v2";
+
+
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
     function pad2(n){ return String(n).padStart(2,"0"); }
 
@@ -634,26 +659,28 @@
       return start;
     }
 
-    const $ = (sel, root=document) => root.querySelector(sel);
-    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-
-    function normHex(hex, fallback){
-      const s = String(hex || "").trim();
-      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
-    }
-
     function clamp(n, min, max){
       const x = Number(n);
       if(!Number.isFinite(x)) return min;
       return Math.max(min, Math.min(max, x));
     }
 
-    function hexToRgba(hex, a){
+    function normHex(hex, fallback){
+      const s = String(hex || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+    }
+
+    function hexToRgbTuple(hex){
       const h = normHex(hex, "#ffffff").slice(1);
       const r = parseInt(h.slice(0,2), 16);
       const g = parseInt(h.slice(2,4), 16);
       const b = parseInt(h.slice(4,6), 16);
-      return `rgba(${r},${g},${b},${a})`;
+      return `${r},${g},${b}`;
+    }
+
+    function hexToRgba(hex, a){
+      const rgb = hexToRgbTuple(hex).split(",").map(Number);
+      return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
     }
 
     function autoGrow(el){
@@ -674,19 +701,41 @@
       });
     }
 
-    /* ============================
-       Theme (global) — NO Radial 1/2
-    ============================ */
+
     const DEFAULT_THEME = {
       appBg: "#ffffff",
       ink: "#2b2b2b",
       muted: "#7a7a7a",
       accent: "#cbb8ae",
 
-      surfaceA: 0.75,  // 40-98 slider
-      cardA: 0.92,
+      borderColor: "#1e1e1e",
+      borderA: 0.10,
+
+      surfaceColor: "#ffffff",
+      surfaceA: 0.75,
+
+      panelColor: "#ffffff",
+      panelA: 0.92,
+
+      calendarColor: "#ffffff",
       calendarA: 0.60,
+
+      daycellColor: "#ffffff",
       daycellA: 0.92,
+
+      dowColor: "#ffffff",
+      dowA: 0.55,
+
+      inputColor: "#ffffff",
+      inputA: 0.95,
+
+      cardColor: "#ffffff",
+      cardA: 0.92,
+
+      btnColor: "#ffffff",
+      btnA: 0.90,
+      btnBorderA: 0.10,
+      btnInk: "#2b2b2b",
 
       overlayBase: "#ffffff",
       overlayA: 0.38
@@ -696,68 +745,74 @@
       try{
         const raw = localStorage.getItem(THEME_KEY);
         return raw ? JSON.parse(raw) : null;
-      }catch{
-        return null;
-      }
+      }catch{ return null; }
     }
-
     function themeSave(t){
       try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
     }
 
-    function themeApply(theme){
-      const t = theme || DEFAULT_THEME;
+    function themeApply(t){
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
       const r = document.documentElement.style;
 
-      const appBg = normHex(t.appBg, DEFAULT_THEME.appBg);
-      const ink   = normHex(t.ink, DEFAULT_THEME.ink);
-      const muted = normHex(t.muted, DEFAULT_THEME.muted);
-      const accent = normHex(t.accent, DEFAULT_THEME.accent);
+      r.setProperty("--app-bg", normHex(theme.appBg, DEFAULT_THEME.appBg));
+      r.setProperty("--ink", normHex(theme.ink, DEFAULT_THEME.ink));
+      r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
+      r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
 
-      const surfaceA  = clamp(t.surfaceA, 0.40, 0.98);
-      const cardA     = clamp(t.cardA, 0.40, 0.98);
-      const calendarA = clamp(t.calendarA, 0.35, 0.95);
-      const daycellA  = clamp(t.daycellA, 0.45, 0.98);
+      r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
+      r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
 
-      const overlayBase = normHex(t.overlayBase, DEFAULT_THEME.overlayBase);
-      const overlayA    = clamp(t.overlayA, 0.00, 0.70);
+      r.setProperty("--surface-bg-rgb", hexToRgbTuple(theme.surfaceColor));
+      r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
 
-      r.setProperty("--app-bg", appBg);
-      r.setProperty("--ink", ink);
-      r.setProperty("--muted", muted);
-      r.setProperty("--accent", accent);
+      r.setProperty("--panel-bg-rgb", hexToRgbTuple(theme.panelColor));
+      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
 
-      r.setProperty("--surface", `rgba(255,255,255,${surfaceA})`);
-      r.setProperty("--panel", `rgba(255,255,255,0.92)`);
-      r.setProperty("--card", `rgba(255,255,255,${cardA})`);
-      r.setProperty("--calendar", `rgba(255,255,255,${calendarA})`);
-      r.setProperty("--daycell", `rgba(255,255,255,${daycellA})`);
+      r.setProperty("--calendar-bg-rgb", hexToRgbTuple(theme.calendarColor));
+      r.setProperty("--calendar-a", String(clamp(theme.calendarA, 0.35, 0.95)));
 
-      r.setProperty("--overlay-base", overlayBase);
-      r.setProperty("--overlay-a", String(overlayA));
+      r.setProperty("--daycell-bg-rgb", hexToRgbTuple(theme.daycellColor));
+      r.setProperty("--daycell-a", String(clamp(theme.daycellA, 0.45, 0.98)));
 
-      // update theme dot
-      const themeDot = document.getElementById("themeDot");
-      if(themeDot){
-        themeDot.style.background = accent;
-        themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(accent, 0.25)}`;
+      r.setProperty("--dow-bg-rgb", hexToRgbTuple(theme.dowColor));
+      r.setProperty("--dow-a", String(clamp(theme.dowA, 0.25, 0.95)));
+
+      r.setProperty("--input-bg-rgb", hexToRgbTuple(theme.inputColor));
+      r.setProperty("--input-a", String(clamp(theme.inputA, 0.55, 1.00)));
+
+      r.setProperty("--card-bg-rgb", hexToRgbTuple(theme.cardColor));
+      r.setProperty("--card-a", String(clamp(theme.cardA, 0.55, 1.00)));
+
+      r.setProperty("--btn-bg-rgb", hexToRgbTuple(theme.btnColor));
+      r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
+      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
+      r.setProperty("--btn-ink", normHex(theme.btnInk, "#2b2b2b"));
+
+      // Update dot
+      const dot = document.getElementById("themeDot");
+      if(dot){
+        const accent = normHex(theme.accent, DEFAULT_THEME.accent);
+        dot.style.background = accent;
+        dot.style.boxShadow = `0 0 0 6px ${hexToRgba(accent, 0.25)}`;
       }
 
-      // apply overlay directly (single layer)
-      const overlayCss = hexToRgba(overlayBase, overlayA);
-      const styleId = "overlayStyle";
-      let st = document.getElementById(styleId);
+      // Overlay (single layer)
+      const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
+      const overlayA = clamp(theme.overlayA, 0.00, 0.70);
+      const css = hexToRgba(overlayBase, overlayA);
+
+      let st = document.getElementById("overlayStyle");
       if(!st){
         st = document.createElement("style");
-        st.id = styleId;
+        st.id = "overlayStyle";
         document.head.appendChild(st);
       }
-      st.textContent = `.board::after{ background: ${overlayCss} !important; }`;
+      st.textContent = `.board::after{ background: ${css} !important; }`;
     }
 
     function themeSyncInputs(t){
-      const theme = t || DEFAULT_THEME;
-
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
       const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
 
       set("tAppBg", theme.appBg);
@@ -765,10 +820,34 @@
       set("tMuted", theme.muted);
       set("tAccent", theme.accent);
 
-      set("tSurface", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
-      set("tCard", Math.round(clamp(theme.cardA, 0.40, 0.98) * 100));
-      set("tCalendar", Math.round(clamp(theme.calendarA, 0.35, 0.95) * 100));
-      set("tDaycell", Math.round(clamp(theme.daycellA, 0.45, 0.98) * 100));
+      set("tBorderColor", theme.borderColor);
+      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+
+      set("tSurfaceColor", theme.surfaceColor);
+      set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
+
+      set("tPanelColor", theme.panelColor);
+      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+
+      set("tCalendarColor", theme.calendarColor);
+      set("tCalendarA", Math.round(clamp(theme.calendarA, 0.35, 0.95) * 100));
+
+      set("tDaycellColor", theme.daycellColor);
+      set("tDaycellA", Math.round(clamp(theme.daycellA, 0.45, 0.98) * 100));
+
+      set("tDowColor", theme.dowColor);
+      set("tDowA", Math.round(clamp(theme.dowA, 0.25, 0.95) * 100));
+
+      set("tInputColor", theme.inputColor);
+      set("tInputA", Math.round(clamp(theme.inputA, 0.55, 1.00) * 100));
+
+      set("tCardColor", theme.cardColor);
+      set("tCardA", Math.round(clamp(theme.cardA, 0.55, 1.00) * 100));
+
+      set("tBtnColor", theme.btnColor);
+      set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
+      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+      set("tBtnInk", theme.btnInk);
 
       set("tOverlayBase", theme.overlayBase);
       set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
@@ -783,10 +862,34 @@
         muted: g("tMuted")?.value,
         accent: g("tAccent")?.value,
 
-        surfaceA: clamp(Number(g("tSurface")?.value)/100, 0.40, 0.98),
-        cardA: clamp(Number(g("tCard")?.value)/100, 0.40, 0.98),
-        calendarA: clamp(Number(g("tCalendar")?.value)/100, 0.35, 0.95),
-        daycellA: clamp(Number(g("tDaycell")?.value)/100, 0.45, 0.98),
+        borderColor: g("tBorderColor")?.value,
+        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
+
+        surfaceColor: g("tSurfaceColor")?.value,
+        surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
+
+        panelColor: g("tPanelColor")?.value,
+        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
+
+        calendarColor: g("tCalendarColor")?.value,
+        calendarA: clamp(Number(g("tCalendarA")?.value)/100, 0.35, 0.95),
+
+        daycellColor: g("tDaycellColor")?.value,
+        daycellA: clamp(Number(g("tDaycellA")?.value)/100, 0.45, 0.98),
+
+        dowColor: g("tDowColor")?.value,
+        dowA: clamp(Number(g("tDowA")?.value)/100, 0.25, 0.95),
+
+        inputColor: g("tInputColor")?.value,
+        inputA: clamp(Number(g("tInputA")?.value)/100, 0.55, 1.00),
+
+        cardColor: g("tCardColor")?.value,
+        cardA: clamp(Number(g("tCardA")?.value)/100, 0.55, 1.00),
+
+        btnColor: g("tBtnColor")?.value,
+        btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
+        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
+        btnInk: g("tBtnInk")?.value,
 
         overlayBase: g("tOverlayBase")?.value,
         overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70)
@@ -794,17 +897,15 @@
     }
 
     function initThemeUI(){
-      const themeBtn = document.getElementById("themeBtn");
-      const themePanel = document.getElementById("themePanel");
-      const themeReset = document.getElementById("themeReset");
+      const themeBtn = $("#themeBtn");
+      const themePanel = $("#themePanel");
+      const themeReset = $("#themeReset");
       if(!themeBtn || !themePanel || !themeReset) return;
 
-      // open/close
       themeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         themePanel.classList.toggle("open");
-        const bgPanel = document.getElementById("bgPanel");
-        if(bgPanel) bgPanel.classList.remove("open");
+        $("#bgPanel")?.classList.remove("open");
       });
 
       document.addEventListener("click", (e) => {
@@ -813,22 +914,29 @@
         if(!inside) themePanel.classList.remove("open");
       });
 
-      // inputs -> apply/save
-      const themeInputIds = [
+      const ids = [
         "tAppBg","tInk","tMuted","tAccent",
-        "tSurface","tCard","tCalendar","tDaycell",
+        "tBorderColor","tBorderA",
+        "tSurfaceColor","tSurfaceA",
+        "tPanelColor","tPanelA",
+        "tCalendarColor","tCalendarA",
+        "tDaycellColor","tDaycellA",
+        "tDowColor","tDowA",
+        "tInputColor","tInputA",
+        "tCardColor","tCardA",
+        "tBtnColor","tBtnA","tBtnBorderA","tBtnInk",
         "tOverlayBase","tOverlayA"
       ];
 
-      for(const id of themeInputIds){
+      ids.forEach(id => {
         const el = document.getElementById(id);
-        if(!el) continue;
+        if(!el) return;
         el.addEventListener("input", () => {
           const t = themeReadFromInputs();
           themeApply(t);
           themeSave(t);
         });
-      }
+      });
 
       themeReset.addEventListener("click", () => {
         localStorage.removeItem(THEME_KEY);
@@ -836,7 +944,6 @@
         themeSyncInputs(DEFAULT_THEME);
       });
 
-      // boot
       const saved = themeLoad() || DEFAULT_THEME;
       themeApply(saved);
       themeSyncInputs(saved);
@@ -916,7 +1023,6 @@
       const monthData = ensureMonthData(monthId);
 
       $("#monthLabel").textContent = prettyMonthLabel(monthId);
-
       applyBackgroundFromMonth(monthData.background);
 
       monthNotes.value = monthData.notes || "";
@@ -1045,8 +1151,7 @@
     bgBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       bgPanel.classList.toggle("open");
-      const themePanel = document.getElementById("themePanel");
-      if(themePanel) themePanel.classList.remove("open");
+      $("#themePanel")?.classList.remove("open");
     });
 
     document.addEventListener("click", (e) => {

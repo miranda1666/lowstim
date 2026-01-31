@@ -6,7 +6,6 @@
   <title>Weekly Overview</title>
   <style>
     :root{
-
       --app-bg: #ffffff;
 
       --ink: #2b2b2b;
@@ -30,14 +29,11 @@
       --overlay-base: #ffffff;
       --overlay-a: 0.34;
 
-
       --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
 
-      /* =========================
-         LAYOUT / SCALE (bigger + less crowded)
-      ========================= */
+      /* Layout / Scale */
       --board-radius: 26px;
       --radius: 20px;
 
@@ -65,6 +61,10 @@
 
       --focus-min-h: 48px;
       --task-min-h: 44px;
+
+      /* NEW: multi-line input sizing */
+      --focus-lines: 2;
+      --task-lines: 2;
     }
 
     *{ box-sizing: border-box; }
@@ -102,12 +102,6 @@
       font-size: var(--h1);
       font-weight: 750;
       letter-spacing: 0.2px;
-    }
-
-    .subtitle{
-      font-size: var(--sub);
-      color: var(--muted);
-      line-height: 1.3;
     }
 
     .controls{
@@ -279,7 +273,6 @@
       transform: scale(1.02);
     }
 
-    /* single overlay only (no radials) */
     .board::after{
       content: "";
       position: absolute;
@@ -378,6 +371,7 @@
       flex-direction: column;
       gap: 14px;
       flex: 1;
+      min-height: 0;
     }
 
     .block{
@@ -396,7 +390,8 @@
       text-transform: uppercase;
     }
 
-    input[type="text"]{
+
+    textarea{
       width: 100%;
       border: 1px solid rgba(var(--border-rgb), 0.10);
       border-radius: var(--input-radius);
@@ -405,12 +400,20 @@
       background: rgba(255,255,255,0.96);
       color: var(--ink);
       font-size: var(--text);
-      min-height: var(--focus-min-h);
+      line-height: 1.3;
+      resize: none;
+      overflow: auto;
+      white-space: pre-wrap;      /* wrap lines */
+      overflow-wrap: anywhere;    /* break long words */
+      word-break: break-word;
     }
-
-    input[type="text"]:focus{
+    textarea:focus{
       border-color: rgba(var(--border-rgb), 0.18);
       box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
+    }
+
+    .focusInput{
+      min-height: calc(1.3em * var(--focus-lines) + 28px);
     }
 
     .tasks{
@@ -434,13 +437,14 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      min-height: 0;
     }
 
     .task-row{
       display: grid;
       grid-template-columns: 20px 1fr 36px;
       gap: 10px;
-      align-items: center;
+      align-items: start; /* was center; allows taller textarea */
       padding: var(--row-pad);
       border-radius: var(--row-radius);
       border: 1px solid rgba(var(--border-rgb), 0.08);
@@ -455,18 +459,18 @@
       box-shadow: 0 0 0 7px rgba(203,184,174,0.18);
       justify-self: center;
       flex: none;
+      margin-top: 10px; 
     }
 
-    .task-row input[type="text"]{
+    .taskInput{
       border: none;
       background: transparent;
       padding: 8px 2px;
       border-radius: 0;
       box-shadow: none;
-      min-height: var(--task-min-h);
-      font-size: var(--text);
+      min-height: calc(1.3em * var(--task-lines) + 16px);
     }
-    .task-row input[type="text"]:focus{
+    .taskInput:focus{
       border: none;
       box-shadow: none;
     }
@@ -484,6 +488,7 @@
       -webkit-tap-highlight-color: transparent;
       font-weight: 900;
       font-size: 16px;
+      margin-top: 2px;
     }
     .icon-btn:active{ transform: translateY(1px); }
 
@@ -536,7 +541,6 @@
           <button class="nav-btn" id="nextWeek" type="button" aria-label="Next week" title="Next week">›</button>
         </div>
 
-   
         <div class="popover">
           <div class="icon-pill">
             <button class="theme-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -610,8 +614,7 @@
               <button class="mini-btn" id="removeImage" type="button">Remove image</button>
             </div>
 
-            <div style="font-size:12px;color:var(--muted);line-height:1.3;">
-            </div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.3;"></div>
           </div>
         </div>
       </div>
@@ -624,22 +627,17 @@
         <div class="grid" id="grid"></div>
 
         <div class="footer-note">
-          <div><span class="kbd">Enter</span> in a task field adds a new task.</div>
+          <div><span class="kbd">Enter</span> in a task field adds a new task</div>
+          <div><span class="kbd">Shift + Enter</span> in a task field adds a new line</div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    /* ============================
-       Storage keys
-    ============================ */
     const STORAGE_KEY = "weekly_overview_v2";
     const THEME_KEY   = "weekly_overview_theme_v2";
 
-    /* ============================
-       Utils
-    ============================ */
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
@@ -679,7 +677,7 @@
 
     function mondayOfWeek(date){
       const d = new Date(date);
-      const day = d.getDay(); // 0 Sun ... 6 Sat
+      const day = d.getDay();
       const diff = (day === 0 ? -6 : 1) - day;
       d.setDate(d.getDate() + diff);
       d.setHours(0,0,0,0);
@@ -706,7 +704,15 @@
     }
 
     /* ============================
-       Theme (global) — Monthly Planner model
+       NEW: auto-grow textareas
+    ============================ */
+    function autoGrow(el, maxPx = 220){
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, maxPx) + "px";
+    }
+
+    /* ============================
+       Theme
     ============================ */
     const DEFAULT_THEME = {
       appBg: "#ffffff",
@@ -758,7 +764,6 @@
       r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
       r.setProperty("--btn-ink", normHex(theme.btnInk, "#2b2b2b"));
 
-      // theme dot
       const dot = document.getElementById("themeDot");
       if(dot){
         const accent = normHex(theme.accent, DEFAULT_THEME.accent);
@@ -766,7 +771,6 @@
         dot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
       }
 
-      // overlay (single layer)
       const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
       const overlayA = clamp(theme.overlayA, 0.00, 0.70);
       const css = hexToRgba(overlayBase, overlayA);
@@ -878,14 +882,14 @@
     ============================ */
     function loadStore(){
       try{
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem("weekly_overview_v2");
         return raw ? JSON.parse(raw) : { weeks: {} };
       }catch{
         return { weeks: {} };
       }
     }
     function saveStore(store){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      localStorage.setItem("weekly_overview_v2", JSON.stringify(store));
     }
 
     /* ============================
@@ -911,16 +915,16 @@
       });
     }
 
+    /* CHANGED: task now renders a textarea instead of input */
     function taskRowHTML(color, value=""){
       const safe = (value ?? "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"', "&quot;");
+        .replaceAll(">","&gt;");
       return `
         <div class="task-row">
           <div class="dot" style="background:${color}; box-shadow: 0 0 0 7px ${hexToRgba(color, 0.18)}"></div>
-          <input class="taskInput" type="text" placeholder="Task…" value="${safe}" />
+          <textarea class="taskInput" rows="2" placeholder="Task…">${safe}</textarea>
           <button class="icon-btn removeTask" type="button" aria-label="Remove task" title="Remove">×</button>
         </div>
       `;
@@ -934,11 +938,7 @@
             focus: "",
             tasks: [""]
           })),
-          background: {
-            tint: "#efe7e1",
-            strength: 30,
-            imageDataUrl: null
-          }
+          background: { tint: "#efe7e1", strength: 30, imageDataUrl: null }
         };
         saveStore(store);
       }
@@ -967,6 +967,12 @@
         const tasks = (Array.isArray(dayData.tasks) && dayData.tasks.length) ? dayData.tasks : [""];
         const tasksHtml = tasks.map(t => taskRowHTML(color, t)).join("");
 
+        /* CHANGED: focus now textarea */
+        const safeFocus = (dayData.focus ?? "")
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;");
+
         day.innerHTML = `
           <div class="day-header">
             <div class="day-title">
@@ -981,7 +987,7 @@
           <div class="day-body">
             <div class="block">
               <div class="label">Focus</div>
-              <input class="focusInput" type="text" placeholder="One main thing…" value="${(dayData.focus ?? "").replaceAll('"',"&quot;")}" />
+              <textarea class="focusInput" rows="2" placeholder="One main thing…">${safeFocus}</textarea>
             </div>
 
             <div class="tasks">
@@ -995,6 +1001,9 @@
         grid.appendChild(day);
         setDayHeaderTint(day, color);
       });
+
+      // auto-grow initial
+      $$(".focusInput, .taskInput", grid).forEach(el => autoGrow(el));
 
       selectDay(selectedDayId);
       applyBackgroundFromWeek(weekData.background);
@@ -1149,7 +1158,7 @@
        Interactions + autosave
     ============================ */
     grid.addEventListener("click", (e) => {
-      if (e.target.closest("input, button")) return;
+      if (e.target.closest("input, button, textarea")) return;
       const day = e.target.closest(".day");
       if (day) selectDay(day.dataset.dayId);
     });
@@ -1160,10 +1169,19 @@
         const color = e.target.value;
         day.dataset.color = color;
         setDayHeaderTint(day, color);
+
+        // update dots on existing task rows
+        day.querySelectorAll(".task-row .dot").forEach(dot => {
+          dot.style.background = color;
+          dot.style.boxShadow = `0 0 0 7px ${hexToRgba(color, 0.18)}`;
+        });
+
         snapshotWeekToStore();
         return;
       }
+
       if (e.target.classList.contains("focusInput") || e.target.classList.contains("taskInput")){
+        if (e.target.tagName === "TEXTAREA") autoGrow(e.target);
         snapshotWeekToStore();
       }
     });
@@ -1191,21 +1209,25 @@
 
     function addTask(dayEl, focusNew = true){
       const list = dayEl.querySelector(".taskList");
-      const color = dayEl.dataset.color || DEFAULT_THEME.accent;
+      const color = dayEl.dataset.color || "#cbb8ae";
 
       const wrap = document.createElement("div");
       wrap.innerHTML = taskRowHTML(color, "");
       const row = wrap.firstElementChild;
       list.appendChild(row);
 
+      const ta = row.querySelector(".taskInput");
+      autoGrow(ta);
+
       if (focusNew){
-        row.querySelector(".taskInput").focus({ preventScroll: false });
+        ta.focus({ preventScroll: false });
       }
     }
 
+    // Enter adds a new task, Shift+Enter makes a newline
     grid.addEventListener("keydown", (e) => {
       if (e.target.classList && e.target.classList.contains("taskInput")){
-        if (e.key === "Enter"){
+        if (e.key === "Enter" && !e.shiftKey){
           e.preventDefault();
           addTask(e.target.closest(".day"), true);
           snapshotWeekToStore();
@@ -1218,8 +1240,6 @@
     /* ============================
        Boot
     ============================ */
-    // Fix an old typo if present in storage (defensive)
-    // (No-op for new installs)
     initThemeUI();
     buildWeek(activeWeekId);
   </script>

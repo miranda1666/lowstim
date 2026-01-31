@@ -6,6 +6,9 @@
   <title>Weekly Overview</title>
   <style>
     :root{
+      /* =========================
+         THEME (Monthly Planner model)
+      ========================= */
       --app-bg: #ffffff;
 
       --ink: #2b2b2b;
@@ -29,24 +32,28 @@
       --overlay-base: #ffffff;
       --overlay-a: 0.34;
 
+      /* Board background (behind cards). Can be set via color OR image. */
       --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
 
-      /* NEW: card / surface colors (theme-able) */
-      --day-card-base: #ffffff;
-      --day-card-a: 0.94;
+      /* Day cards + blocks + inputs */
+      --day-bg: #ffffff;
+      --day-bg-a: 0.94;
 
-      --block-base: #ffffff;
-      --block-a: 0.72;
+      --block-bg: #ffffff;
+      --block-bg-a: 0.72;
 
-      --input-base: #ffffff;
-      --input-a: 0.96;
+      --input-bg: #ffffff;
+      --input-bg-a: 0.96;
 
-      /* Task tint strength (day color applied) */
-      --task-tint-a: 0.18;
+      /* TASK FULL BOX COLOR (from day color) */
+      --task-tint-a: 0.72;     /* how strong the day color fills task boxes */
+      --task-overlay-a: 0.12;  /* white veil to keep text readable */
 
-      /* Layout / Scale */
+      /* =========================
+         LAYOUT / SCALE (bigger + less crowded)
+      ========================= */
       --board-radius: 26px;
       --radius: 20px;
 
@@ -54,9 +61,11 @@
       --gap: 16px;
       --pad: 18px;
 
-      --day-min-h: 360px;
+      --day-min-h: 390px;
 
       --h1: 20px;
+      --sub: 14px;
+
       --label: 12px;
       --text: 15px;
 
@@ -67,11 +76,12 @@
       --row-radius: 16px;
 
       --header-pad: 14px 16px;
+
       --chip-pad: 8px 12px;
 
-      /* Fixed textarea heights (scroll reveals overflow) */
-      --focus-h: 74px;
-      --task-h: 68px;
+      --focus-min-h: 64px;
+      --task-min-h: 60px; /* IMPORTANT: less squished */
+      --max-lines: 4;     /* visible lines before scroll */
     }
 
     *{ box-sizing: border-box; }
@@ -97,11 +107,24 @@
       flex-wrap: wrap;
     }
 
+    .title{
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 260px;
+    }
+
     h1{
       margin: 0;
       font-size: var(--h1);
       font-weight: 750;
       letter-spacing: 0.2px;
+    }
+
+    .subtitle{
+      font-size: var(--sub);
+      color: var(--muted);
+      line-height: 1.3;
     }
 
     .controls{
@@ -159,7 +182,7 @@
       position: absolute;
       top: 48px;
       right: 0;
-      width: 340px;
+      width: 360px;
       border-radius: 18px;
       border: 1px solid var(--border);
       background: rgba(255,255,255, var(--panel-a));
@@ -202,7 +225,7 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    input[type="range"]{ width: 165px; }
+    input[type="range"]{ width: 170px; }
 
     .file{
       width: 100%;
@@ -273,12 +296,13 @@
       transform: scale(1.02);
     }
 
+    /* single overlay only (no radials) */
     .board::after{
       content: "";
       position: absolute;
       inset: 0;
-      background: rgba(255,255,255,0.34);
       pointer-events: none;
+      background: rgba(255,255,255,0.34); /* overridden by JS via overlayStyle */
     }
 
     .board-tint{
@@ -298,7 +322,7 @@
     .grid{
       display: grid;
       grid-auto-flow: column;
-      grid-auto-columns: minmax(260px, 1fr);
+      grid-auto-columns: minmax(290px, 1fr);
       gap: var(--gap);
       padding: var(--pad);
       overflow-x: auto;
@@ -316,8 +340,7 @@
     }
 
     .day{
-      background: rgba(255,255,255,0.94);
-      background: rgba(var(--day-card-base-rgb, 255,255,255), var(--day-card-a));
+      background: rgba(255,255,255, var(--day-bg-a));
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
@@ -372,14 +395,13 @@
       flex-direction: column;
       gap: 14px;
       flex: 1;
-      min-height: 0;
     }
 
     .block{
       border-radius: 16px;
       padding: 14px;
       border: 1px dashed rgba(var(--border-rgb), 0.14);
-      background: rgba(var(--block-base-rgb,255,255,255), var(--block-a));
+      background: rgba(255,255,255, var(--block-bg-a));
     }
 
     .block .label{
@@ -391,30 +413,31 @@
       text-transform: uppercase;
     }
 
+    /* MULTILINE INPUTS (wrap + scroll) */
     textarea{
       width: 100%;
       border: 1px solid rgba(var(--border-rgb), 0.10);
       border-radius: var(--input-radius);
       padding: var(--input-pad);
       outline: none;
-      background: rgba(var(--input-base-rgb,255,255,255), var(--input-a));
+      background: rgba(255,255,255, var(--input-bg-a));
       color: var(--ink);
       font-size: var(--text);
-      line-height: 1.3;
-      resize: none;
-      overflow: auto;            /* reveal overflow via scroll */
-      white-space: pre-wrap;     /* wrap lines */
-      overflow-wrap: anywhere;   /* break long words */
+      line-height: 1.35;
+      resize: none;                 /* keep layout clean */
+      overflow: auto;               /* reveal extra text */
+      white-space: pre-wrap;        /* wrap */
       word-break: break-word;
     }
+
     textarea:focus{
       border-color: rgba(var(--border-rgb), 0.18);
       box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
     }
 
     .focusInput{
-      height: var(--focus-h);
-      max-height: var(--focus-h);
+      min-height: calc(var(--focus-min-h));
+      max-height: calc(var(--max-lines) * 1.35em + 28px);
     }
 
     .tasks{
@@ -422,7 +445,7 @@
       flex-direction: column;
       gap: 10px;
       flex: 1;
-      min-height: 180px;
+      min-height: 190px;
     }
 
     .tasks .label{
@@ -437,42 +460,43 @@
     .taskList{
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      min-height: 0;
+      gap: 12px;
     }
 
-
+    /* TASK ROW: full box color from day color */
     .task-row{
       display: grid;
-      grid-template-columns: 1fr 36px;
+      grid-template-columns: 1fr 40px;
       gap: 10px;
       align-items: start;
-      padding: var(--row-pad);
+      padding: 0; /* internal padding comes from textarea + button */
       border-radius: var(--row-radius);
       border: 1px solid rgba(var(--border-rgb), 0.08);
-      background: rgba(255,255,255,0.96); 
+      overflow: hidden;
+      background: rgba(255,255,255,0.9);
     }
 
-    .taskInput{
+    .task-row .taskInput{
       border: none;
-      background: transparent;
-      padding: 8px 2px;
       border-radius: 0;
       box-shadow: none;
-      height: var(--task-h);
-      max-height: var(--task-h);
+      min-height: var(--task-min-h);
+      max-height: calc(var(--max-lines) * 1.35em + 28px);
+      padding-right: 12px;
     }
-    .taskInput:focus{
+    .task-row .taskInput:focus{
       border: none;
       box-shadow: none;
+      outline: none;
     }
 
     .icon-btn{
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.94);
+      width: 40px;
+      height: 100%;
+      min-height: var(--task-min-h);
+      border: none;
+      border-left: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.65);
       cursor: pointer;
       display: grid;
       place-items: center;
@@ -480,7 +504,6 @@
       -webkit-tap-highlight-color: transparent;
       font-weight: 900;
       font-size: 16px;
-      margin-top: 2px;
     }
     .icon-btn:active{ transform: translateY(1px); }
 
@@ -533,6 +556,7 @@
           <button class="nav-btn" id="nextWeek" type="button" aria-label="Next week" title="Next week">›</button>
         </div>
 
+        <!-- THEME -->
         <div class="popover">
           <div class="icon-pill">
             <button class="theme-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -547,25 +571,6 @@
             <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
             <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
             <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
-
-            <div class="divider"></div>
-
-            <div class="row"><label for="tDayCardBase">Day card</label><input id="tDayCardBase" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tDayCardA">Day card opacity</label><input id="tDayCardA" type="range" min="70" max="100" value="94" /></div>
-
-            <div class="divider"></div>
-
-            <div class="row"><label for="tBlockBase">Block bg</label><input id="tBlockBase" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tBlockA">Block opacity</label><input id="tBlockA" type="range" min="45" max="100" value="72" /></div>
-
-            <div class="divider"></div>
-
-            <div class="row"><label for="tInputBase">Textbox bg</label><input id="tInputBase" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tInputA">Textbox opacity</label><input id="tInputA" type="range" min="45" max="100" value="96" /></div>
-
-            <div class="divider"></div>
-
-            <div class="row"><label for="tTaskTintA">Task color strength</label><input id="tTaskTintA" type="range" min="6" max="45" value="18" /></div>
 
             <div class="divider"></div>
 
@@ -590,10 +595,33 @@
 
             <div class="divider"></div>
 
+            <!-- NEW: day cards + block + input backgrounds -->
+            <div class="row"><label for="tDayBg">Day card bg</label><input id="tDayBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDayBgA">Day card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="94" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBlockBg">Block bg</label><input id="tBlockBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tBlockBgA">Block opacity</label><input id="tBlockBgA" type="range" min="55" max="100" value="72" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInputBgA">Input opacity</label><input id="tInputBgA" type="range" min="60" max="100" value="96" /></div>
+
+            <div class="divider"></div>
+
+            <!-- NEW: task box visibility -->
+            <div class="row"><label for="tTaskTintA">Task color fill</label><input id="tTaskTintA" type="range" min="10" max="100" value="72" /></div>
+            <div class="row"><label for="tTaskOverlayA">Task white veil</label><input id="tTaskOverlayA" type="range" min="5" max="40" value="12" /></div>
+
+            <div class="divider"></div>
+
             <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
           </div>
         </div>
 
+        <!-- BACKGROUND -->
         <div class="popover">
           <div class="icon-pill">
             <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
@@ -636,16 +664,22 @@
         <div class="grid" id="grid"></div>
 
         <div class="footer-note">
-          <div><span class="kbd">Enter</span> adds a new task</div>
+          <div><span class="kbd">Enter</span> in a task field adds a new task.</div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    /* ============================
+       Storage keys
+    ============================ */
     const STORAGE_KEY = "weekly_overview_v3";
     const THEME_KEY   = "weekly_overview_theme_v3";
 
+    /* ============================
+       Utils
+    ============================ */
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
@@ -665,11 +699,11 @@
       const r = parseInt(h.slice(0,2), 16);
       const g = parseInt(h.slice(2,4), 16);
       const b = parseInt(h.slice(4,6), 16);
-      return { r, g, b, css: `${r},${g},${b}` };
+      return `${r},${g},${b}`;
     }
 
     function hexToRgba(hex, a){
-      const {r,g,b} = hexToRgbTuple(hex);
+      const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
       return `rgba(${r},${g},${b},${a})`;
     }
 
@@ -685,7 +719,7 @@
 
     function mondayOfWeek(date){
       const d = new Date(date);
-      const day = d.getDay();
+      const day = d.getDay(); // 0 Sun ... 6 Sat
       const diff = (day === 0 ? -6 : 1) - day;
       d.setDate(d.getDate() + diff);
       d.setHours(0,0,0,0);
@@ -712,24 +746,13 @@
     }
 
     /* ============================
-       Theme
+       Theme (global)
     ============================ */
     const DEFAULT_THEME = {
       appBg: "#ffffff",
       ink: "#2b2b2b",
       muted: "#7a7a7a",
       accent: "#cbb8ae",
-
-      dayCardBase: "#ffffff",
-      dayCardA: 0.94,
-
-      blockBase: "#ffffff",
-      blockA: 0.72,
-
-      inputBase: "#ffffff",
-      inputA: 0.96,
-
-      taskTintA: 0.18,
 
       borderColor: "#1e1e1e",
       borderA: 0.10,
@@ -742,7 +765,19 @@
       btnInk: "#2b2b2b",
 
       overlayBase: "#ffffff",
-      overlayA: 0.34
+      overlayA: 0.34,
+
+      dayBg: "#ffffff",
+      dayBgA: 0.94,
+
+      blockBg: "#ffffff",
+      blockBgA: 0.72,
+
+      inputBg: "#ffffff",
+      inputBgA: 0.96,
+
+      taskTintA: 0.72,
+      taskOverlayA: 0.12
     };
 
     function themeLoad(){
@@ -751,6 +786,7 @@
         return raw ? JSON.parse(raw) : null;
       }catch{ return null; }
     }
+
     function themeSave(t){
       try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
     }
@@ -764,21 +800,7 @@
       r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
       r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
 
-      const dayCard = hexToRgbTuple(theme.dayCardBase || DEFAULT_THEME.dayCardBase);
-      r.setProperty("--day-card-base-rgb", dayCard.css);
-      r.setProperty("--day-card-a", String(clamp(theme.dayCardA, 0.70, 1.00)));
-
-      const block = hexToRgbTuple(theme.blockBase || DEFAULT_THEME.blockBase);
-      r.setProperty("--block-base-rgb", block.css);
-      r.setProperty("--block-a", String(clamp(theme.blockA, 0.45, 1.00)));
-
-      const input = hexToRgbTuple(theme.inputBase || DEFAULT_THEME.inputBase);
-      r.setProperty("--input-base-rgb", input.css);
-      r.setProperty("--input-a", String(clamp(theme.inputA, 0.45, 1.00)));
-
-      r.setProperty("--task-tint-a", String(clamp(theme.taskTintA, 0.06, 0.45)));
-
-      r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor).css);
+      r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
       r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
 
       r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
@@ -786,8 +808,21 @@
 
       r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
       r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
-      r.setProperty("--btn-ink", normHex(theme.btnInk, "#2b2b2b"));
+      r.setProperty("--btn-ink", hexToRgba(normHex(theme.btnInk, "#2b2b2b"), 0.72));
 
+      r.setProperty("--day-bg", normHex(theme.dayBg, DEFAULT_THEME.dayBg));
+      r.setProperty("--day-bg-a", String(clamp(theme.dayBgA, 0.70, 1.00)));
+
+      r.setProperty("--block-bg", normHex(theme.blockBg, DEFAULT_THEME.blockBg));
+      r.setProperty("--block-bg-a", String(clamp(theme.blockBgA, 0.55, 1.00)));
+
+      r.setProperty("--input-bg", normHex(theme.inputBg, DEFAULT_THEME.inputBg));
+      r.setProperty("--input-bg-a", String(clamp(theme.inputBgA, 0.60, 1.00)));
+
+      r.setProperty("--task-tint-a", String(clamp(theme.taskTintA, 0.10, 1.00)));
+      r.setProperty("--task-overlay-a", String(clamp(theme.taskOverlayA, 0.05, 0.40)));
+
+      // theme dot
       const dot = document.getElementById("themeDot");
       if(dot){
         const accent = normHex(theme.accent, DEFAULT_THEME.accent);
@@ -795,6 +830,7 @@
         dot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
       }
 
+      // overlay (single)
       const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
       const overlayA = clamp(theme.overlayA, 0.00, 0.70);
       const css = hexToRgba(overlayBase, overlayA);
@@ -807,8 +843,18 @@
       }
       st.textContent = `.board::after{ background: ${css} !important; }`;
 
-      // Repaint tasks (tint strength may have changed)
-      repaintAllTaskRows();
+      // apply day/bg/block/input colors through lightweight styles
+      let st2 = document.getElementById("surfaceStyle");
+      if(!st2){
+        st2 = document.createElement("style");
+        st2.id = "surfaceStyle";
+        document.head.appendChild(st2);
+      }
+      st2.textContent = `
+        .day{ background: ${hexToRgba(normHex(theme.dayBg, "#ffffff"), clamp(theme.dayBgA,0.70,1.00))} !important; }
+        .block{ background: ${hexToRgba(normHex(theme.blockBg, "#ffffff"), clamp(theme.blockBgA,0.55,1.00))} !important; }
+        textarea{ background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important; }
+      `;
     }
 
     function themeSyncInputs(t){
@@ -819,17 +865,6 @@
       set("tInk", theme.ink);
       set("tMuted", theme.muted);
       set("tAccent", theme.accent);
-
-      set("tDayCardBase", theme.dayCardBase);
-      set("tDayCardA", Math.round(clamp(theme.dayCardA, 0.70, 1.00) * 100));
-
-      set("tBlockBase", theme.blockBase);
-      set("tBlockA", Math.round(clamp(theme.blockA, 0.45, 1.00) * 100));
-
-      set("tInputBase", theme.inputBase);
-      set("tInputA", Math.round(clamp(theme.inputA, 0.45, 1.00) * 100));
-
-      set("tTaskTintA", Math.round(clamp(theme.taskTintA, 0.06, 0.45) * 100));
 
       set("tBorderColor", theme.borderColor);
       set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
@@ -843,6 +878,18 @@
 
       set("tOverlayBase", theme.overlayBase);
       set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
+
+      set("tDayBg", theme.dayBg);
+      set("tDayBgA", Math.round(clamp(theme.dayBgA, 0.70, 1.00) * 100));
+
+      set("tBlockBg", theme.blockBg);
+      set("tBlockBgA", Math.round(clamp(theme.blockBgA, 0.55, 1.00) * 100));
+
+      set("tInputBg", theme.inputBg);
+      set("tInputBgA", Math.round(clamp(theme.inputBgA, 0.60, 1.00) * 100));
+
+      set("tTaskTintA", Math.round(clamp(theme.taskTintA, 0.10, 1.00) * 100));
+      set("tTaskOverlayA", Math.round(clamp(theme.taskOverlayA, 0.05, 0.40) * 100));
     }
 
     function themeReadFromInputs(){
@@ -852,17 +899,6 @@
         ink: g("tInk")?.value,
         muted: g("tMuted")?.value,
         accent: g("tAccent")?.value,
-
-        dayCardBase: g("tDayCardBase")?.value,
-        dayCardA: clamp(Number(g("tDayCardA")?.value)/100, 0.70, 1.00),
-
-        blockBase: g("tBlockBase")?.value,
-        blockA: clamp(Number(g("tBlockA")?.value)/100, 0.45, 1.00),
-
-        inputBase: g("tInputBase")?.value,
-        inputA: clamp(Number(g("tInputA")?.value)/100, 0.45, 1.00),
-
-        taskTintA: clamp(Number(g("tTaskTintA")?.value)/100, 0.06, 0.45),
 
         borderColor: g("tBorderColor")?.value,
         borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
@@ -876,6 +912,18 @@
 
         overlayBase: g("tOverlayBase")?.value,
         overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
+
+        dayBg: g("tDayBg")?.value,
+        dayBgA: clamp(Number(g("tDayBgA")?.value)/100, 0.70, 1.00),
+
+        blockBg: g("tBlockBg")?.value,
+        blockBgA: clamp(Number(g("tBlockBgA")?.value)/100, 0.55, 1.00),
+
+        inputBg: g("tInputBg")?.value,
+        inputBgA: clamp(Number(g("tInputBgA")?.value)/100, 0.60, 1.00),
+
+        taskTintA: clamp(Number(g("tTaskTintA")?.value)/100, 0.10, 1.00),
+        taskOverlayA: clamp(Number(g("tTaskOverlayA")?.value)/100, 0.05, 0.40),
       };
     }
 
@@ -899,14 +947,14 @@
 
       const ids = [
         "tAppBg","tInk","tMuted","tAccent",
-        "tDayCardBase","tDayCardA",
-        "tBlockBase","tBlockA",
-        "tInputBase","tInputA",
-        "tTaskTintA",
         "tBorderColor","tBorderA",
         "tSurfaceA","tPanelA",
         "tBtnA","tBtnBorderA","tBtnInk",
-        "tOverlayBase","tOverlayA"
+        "tOverlayBase","tOverlayA",
+        "tDayBg","tDayBgA",
+        "tBlockBg","tBlockBgA",
+        "tInputBg","tInputBgA",
+        "tTaskTintA","tTaskOverlayA"
       ];
 
       ids.forEach(id => {
@@ -916,6 +964,8 @@
           const t = themeReadFromInputs();
           themeApply(t);
           themeSave(t);
+          // update task fills, since theme changes affect intensity
+          applyTaskFillsForAllDays();
         });
       });
 
@@ -923,6 +973,7 @@
         localStorage.removeItem(THEME_KEY);
         themeApply(DEFAULT_THEME);
         themeSyncInputs(DEFAULT_THEME);
+        applyTaskFillsForAllDays();
       });
 
       const saved = themeLoad() || DEFAULT_THEME;
@@ -943,31 +994,6 @@
     }
     function saveStore(store){
       localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-    }
-
-    /* ============================
-       Task tint paint
-    ============================ */
-    function getCssVar(name){
-      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    }
-
-    function paintTaskRow(rowEl, dayColor){
-      const a = clamp(Number(getCssVar("--task-tint-a")) || 0.18, 0.06, 0.45);
-      // Slight “glass” base + day tint
-      rowEl.style.background =
-        `linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.78)),
-         ${hexToRgba(dayColor, a)}`;
-      rowEl.style.backgroundBlendMode = "screen";
-    }
-
-    function repaintDayTaskRows(dayEl){
-      const color = dayEl.dataset.color || "#cbb8ae";
-      dayEl.querySelectorAll(".task-row").forEach(row => paintTaskRow(row, color));
-    }
-
-    function repaintAllTaskRows(){
-      $$(".day").forEach(repaintDayTaskRows);
     }
 
     /* ============================
@@ -992,10 +1018,11 @@
       const safe = (value ?? "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
+        .replaceAll(">","&gt;")
+        .replaceAll('"', "&quot;");
       return `
         <div class="task-row">
-          <textarea class="taskInput" rows="2" placeholder="Task…">${safe}</textarea>
+          <textarea class="taskInput" placeholder="Task…">${safe}</textarea>
           <button class="icon-btn removeTask" type="button" aria-label="Remove task" title="Remove">×</button>
         </div>
       `;
@@ -1009,11 +1036,38 @@
             focus: "",
             tasks: [""]
           })),
-          background: { tint: "#efe7e1", strength: 30, imageDataUrl: null }
+          background: {
+            tint: "#efe7e1",
+            strength: 30,
+            imageDataUrl: null
+          }
         };
         saveStore(store);
       }
       return store.weeks[weekId];
+    }
+
+    function applyTaskFill(dayEl){
+      const color = dayEl.dataset.color || "#cbb8ae";
+      const taskTintA = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--task-tint-a")) || 0.72;
+      const veilA = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--task-overlay-a")) || 0.12;
+
+      dayEl.querySelectorAll(".task-row").forEach(row => {
+        // full box color
+        row.style.background = hexToRgba(color, clamp(taskTintA, 0.10, 1.00));
+        // readability veil + subtle depth
+        row.style.boxShadow = `0 10px 24px rgba(20,20,20,0.06)`;
+        row.style.position = "relative";
+
+        // veil layer (keeps text readable while still full color)
+        row.style.setProperty("--veil", hexToRgba("#ffffff", clamp(veilA, 0.05, 0.40)));
+        row.style.backgroundImage = `linear-gradient(180deg, var(--veil), var(--veil))`;
+        row.style.backgroundBlendMode = "screen";
+      });
+    }
+
+    function applyTaskFillsForAllDays(){
+      $$(".day").forEach(applyTaskFill);
     }
 
     function buildWeek(weekId){
@@ -1038,11 +1092,6 @@
         const tasks = (Array.isArray(dayData.tasks) && dayData.tasks.length) ? dayData.tasks : [""];
         const tasksHtml = tasks.map(t => taskRowHTML(t)).join("");
 
-        const safeFocus = (dayData.focus ?? "")
-          .replaceAll("&","&amp;")
-          .replaceAll("<","&lt;")
-          .replaceAll(">","&gt;");
-
         day.innerHTML = `
           <div class="day-header">
             <div class="day-title">
@@ -1057,7 +1106,10 @@
           <div class="day-body">
             <div class="block">
               <div class="label">Focus</div>
-              <textarea class="focusInput" rows="2" placeholder="">${safeFocus}</textarea>
+              <textarea class="focusInput" placeholder="">${(dayData.focus ?? "")
+                .replaceAll("&","&amp;")
+                .replaceAll("<","&lt;")
+                .replaceAll(">","&gt;")}</textarea>
             </div>
 
             <div class="tasks">
@@ -1070,7 +1122,7 @@
 
         grid.appendChild(day);
         setDayHeaderTint(day, color);
-        repaintDayTaskRows(day);
+        applyTaskFill(day);
       });
 
       selectDay(selectedDayId);
@@ -1236,13 +1288,11 @@
         const day = e.target.closest(".day");
         const color = e.target.value;
         day.dataset.color = color;
-
         setDayHeaderTint(day, color);
-        repaintDayTaskRows(day);
+        applyTaskFill(day);
         snapshotWeekToStore();
         return;
       }
-
       if (e.target.classList.contains("focusInput") || e.target.classList.contains("taskInput")){
         snapshotWeekToStore();
       }
@@ -1264,6 +1314,7 @@
         const list = day.querySelector(".taskList");
         row.remove();
         if (!list.querySelector(".task-row")) addTask(day, false);
+        applyTaskFill(day);
         snapshotWeekToStore();
         return;
       }
@@ -1271,20 +1322,19 @@
 
     function addTask(dayEl, focusNew = true){
       const list = dayEl.querySelector(".taskList");
+
       const wrap = document.createElement("div");
       wrap.innerHTML = taskRowHTML("");
       const row = wrap.firstElementChild;
       list.appendChild(row);
 
-      // tint whole task row using day color
-      paintTaskRow(row, dayEl.dataset.color || "#cbb8ae");
+      applyTaskFill(dayEl);
 
       if (focusNew){
         row.querySelector(".taskInput").focus({ preventScroll: false });
       }
     }
 
-    // Enter adds a new task, Shift+Enter inserts newline
     grid.addEventListener("keydown", (e) => {
       if (e.target.classList && e.target.classList.contains("taskInput")){
         if (e.key === "Enter" && !e.shiftKey){
@@ -1298,24 +1348,7 @@
     window.addEventListener("beforeunload", () => snapshotWeekToStore());
 
     /* ============================
-       Theme UI boot
-    ============================ */
-    function applyRgbVarsForStaticCss(){
-      // (Ensures CSS rgb vars exist at load even before themeApply)
-      const root = document.documentElement.style;
-      root.setProperty("--day-card-base-rgb", "255,255,255");
-      root.setProperty("--block-base-rgb", "255,255,255");
-      root.setProperty("--input-base-rgb", "255,255,255");
-    }
-
-    function bootTheme(){
-      const saved = themeLoad() || DEFAULT_THEME;
-      themeApply(saved);
-      themeSyncInputs(saved);
-    }
-
-    /* ============================
-       Theme UI wiring
+       Theme panel wiring
     ============================ */
     function initThemeUI(){
       const themeBtn = $("#themeBtn");
@@ -1337,14 +1370,14 @@
 
       const ids = [
         "tAppBg","tInk","tMuted","tAccent",
-        "tDayCardBase","tDayCardA",
-        "tBlockBase","tBlockA",
-        "tInputBase","tInputA",
-        "tTaskTintA",
         "tBorderColor","tBorderA",
         "tSurfaceA","tPanelA",
         "tBtnA","tBtnBorderA","tBtnInk",
-        "tOverlayBase","tOverlayA"
+        "tOverlayBase","tOverlayA",
+        "tDayBg","tDayBgA",
+        "tBlockBg","tBlockBgA",
+        "tInputBg","tInputBgA",
+        "tTaskTintA","tTaskOverlayA"
       ];
 
       ids.forEach(id => {
@@ -1354,6 +1387,7 @@
           const t = themeReadFromInputs();
           themeApply(t);
           themeSave(t);
+          applyTaskFillsForAllDays();
         });
       });
 
@@ -1361,15 +1395,32 @@
         localStorage.removeItem(THEME_KEY);
         themeApply(DEFAULT_THEME);
         themeSyncInputs(DEFAULT_THEME);
+        applyTaskFillsForAllDays();
       });
+
+      const saved = themeLoad() || DEFAULT_THEME;
+      themeApply(saved);
+      themeSyncInputs(saved);
+    }
+
+    /* ============================
+       Theme storage helpers
+    ============================ */
+    function themeLoad(){
+      try{
+        const raw = localStorage.getItem(THEME_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }catch{ return null; }
+    }
+
+    function themeSave(t){
+      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
     }
 
     /* ============================
        Boot
     ============================ */
-    applyRgbVarsForStaticCss();
     initThemeUI();
-    bootTheme();
     buildWeek(activeWeekId);
   </script>
 </body>

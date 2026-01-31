@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Time Check</title>
+  <style>
+    :root{
+      /* ===== THEME TOKENS (editable via Theme panel) ===== */
+      --bg:#ffffff;
+
+      /* UI surface */
+      --card: rgba(255,255,255,0.58);
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      /* Board background controls */
+      --board-tint:#efe7e1;
+      --board-tint-a:0.12;
+      --board-image:none;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background: var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{ max-width:980px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
+
+    /* Board */
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.01);
+      z-index:0;
+      pointer-events:none;
+
+      /* image pop */
+      filter: saturate(1.25) contrast(1.15) brightness(1.05);
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+    }
+    .boardContent{ position:relative; z-index:2; }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button, input, select, textarea{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.78);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    textarea{
+      width:100%;
+      min-height: 92px;
+      resize: vertical;
+      line-height:1.35;
+    }
+    button{ cursor:pointer; user-select:none; }
+    button.soft{ background: rgba(243,239,233,0.72); }
+    button.primary{ background: rgba(239,231,225,0.80); }
+    button:active{ transform:translateY(1px); }
+
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
+    .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
+    .kpi .box{
+      flex:1; min-width:200px;
+      background: rgba(255,255,255,0.70);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .num{ font-weight:750; font-size:16px; }
+    .kpi .lab{ font-size:12px; color:var(--muted); }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.72);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .tiny{ font-size:12px; color:var(--muted); }
+    .danger{ border-color:#efc2c2; }
+
+    .results{
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+      background: rgba(255,255,255,0.72);
+    }
+    .resTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .resTitle{
+      margin:0;
+      font-weight:750;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    .bgWrap{ position:relative; margin-left:auto; }
+    .bgBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    }
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+    .bgPanel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 270px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.86);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+    }
+    .bgPanel.open{ display:block; }
+    .bgTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .bgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .bgRow label{ font-size:12px; color:var(--muted); }
+    .bgRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .bgRow input[type="range"]{ width: 150px; }
+    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgMiniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.90);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    }
+    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    /* Internal reset confirm */
+    .confirm{
+      margin-top:10px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+      background: rgba(255,255,255,0.72);
+    }
+    .confirmTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .confirmTitle{
+      margin:0;
+      font-weight:750;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    @media (max-width: 720px){
+      .kpi .box{ min-width:160px; }
+    }
+
+    .themeDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--ink);
+      box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Time Check</h1>
+    <div class="hint">Overhead: tiny interruptions, getting set up, and wrap-up</div>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Time reality check board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+          <div class="title">
+            <div>
+              <h2 style="margin:0;"></h2>
+            </div>
+
+            <!-- Top-right controls -->
+            <div class="row" style="justify-content:flex-end; gap:10px;">
+              <!-- Background settings -->
+              <div class="bgWrap" id="bgWrap">
+                <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                  <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
+                  <div class="bgTitle">Background</div>
+
+                  <div class="bgRow">
+                    <label for="bgColor">Tint</label>
+                    <input id="bgColor" type="color" value="#efe7e1" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="bgStrength">Strength</label>
+                    <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                  </div>
+
+                  <div class="bgDiv"></div>
+
+                  <div class="bgRow" style="align-items:flex-start;">
+                    <label for="bgImage">Image</label>
+                    <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+                  </div>
+
+                  <div class="bgRow">
+                    <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+                  </div>
+                </div>
+              </div>
+
+
+              <div class="bgWrap" id="themeWrap">
+                <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                  <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="bgPanel" id="themePanel" role="dialog" aria-label="Theme settings">
+                  <div class="bgTitle">Theme</div>
+
+                  <div class="bgRow">
+                    <label for="tBg">Page bg</label>
+                    <input id="tBg" type="color" value="#ffffff" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="tInk">Text</label>
+                    <input id="tInk" type="color" value="#2b2a28" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="tMuted">Muted</label>
+                    <input id="tMuted" type="color" value="#6a665f" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="tStroke">Borders</label>
+                    <input id="tStroke" type="color" value="#e9e4dd" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="tCardA">Card opacity</label>
+                    <input id="tCardA" type="range" min="35" max="95" value="58" />
+                  </div>
+
+                  <div class="bgDiv"></div>
+
+                  <div class="bgRow">
+                    <button id="tReset" class="bgMiniBtn" type="button">Reset theme</button>
+                  </div>
+
+                  <div class="bgHint tiny" style="margin-top:8px;">
+                    Tip: if your image is busy, raise “Card opacity”.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" aria-label="Input">
+            <input id="taskName" style="flex:1; min-width:240px;" placeholder="What are you doing?" />
+            <input id="estimateMin" type="number" min="1" step="1" style="width:160px;" placeholder="Estimate (min)" />
+
+            <span class="pill">
+              Overhead
+              <select id="overhead">
+                <option value="1.15">Light (+15%)</option>
+                <option value="1.30" selected>Normal (+30%)</option>
+                <option value="1.50">Heavy (+50%)</option>
+                <option value="2.00">Chaotic (×2)</option>
+              </select>
+            </span>
+
+            <button id="calcBtn" class="primary" type="button">Reality check</button>
+            <button id="saveBtn" class="soft" type="button">Save</button>
+            <button id="resetBtn" class="danger" type="button">Reset</button>
+          </div>
+
+          <div id="resetConfirm" class="confirm" style="display:none;">
+            <div class="confirmTop">
+              <p class="confirmTitle">Reset history?</p>
+              <span class="tiny">This can’t be undone.</span>
+            </div>
+            <div class="row">
+              <button id="resetYes" class="danger" type="button">Yes, reset</button>
+              <button id="resetNo" class="soft" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kpi" aria-label="Summary">
+            <div class="box">
+              <div class="num" id="kEst">—</div>
+              <div class="lab">Your estimate</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kReal">—</div>
+              <div class="lab">Reality time</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kDiff">—</div>
+              <div class="lab">Extra overhead</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="results" aria-label="Explanation">
+            <div class="resTop">
+              <p class="resTitle" id="resTitle">No check yet.</p>
+              <span class="pill"><span class="tiny" id="resPill">—</span></span>
+            </div>
+            <div class="tiny" id="resText">Enter a task + estimate, then click “Reality check”.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" style="justify-content:space-between; align-items:flex-end;">
+            <div class="tiny">Saved checks</div>
+            <span class="pill">
+              View
+              <select id="viewFilter">
+                <option value="all" selected>All</option>
+                <option value="today">Today</option>
+              </select>
+            </span>
+          </div>
+
+          <div style="height:10px;"></div>
+          <div id="history"></div>
+
+          <div class="divider"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------------
+   ✅ NEW: Theme settings module
+---------------------------------- */
+(function(){
+  const THEME_KEY = "time_check_theme_v1";
+
+  const DEFAULTS = {
+    bg: "#ffffff",
+    ink: "#2b2a28",
+    muted: "#6a665f",
+    stroke: "#e9e4dd",
+    cardA: 58, // %
+  };
+
+  const normalizeHex = (hex, fallback) => {
+    const s = String(hex || "").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+  };
+
+  const storageGet = () => {
+    try{ return JSON.parse(localStorage.getItem(THEME_KEY) || "null"); } catch {}
+    try{ return JSON.parse(sessionStorage.getItem(THEME_KEY) || "null"); } catch {}
+    return null;
+  };
+  const storageSet = (val) => {
+    const data = JSON.stringify(val);
+    try { localStorage.setItem(THEME_KEY, data); return; } catch {}
+    try { sessionStorage.setItem(THEME_KEY, data); return; } catch {}
+  };
+
+  const apply = (t) => {
+    const theme = { ...DEFAULTS, ...(t || {}) };
+
+    const bg = normalizeHex(theme.bg, DEFAULTS.bg);
+    const ink = normalizeHex(theme.ink, DEFAULTS.ink);
+    const muted = normalizeHex(theme.muted, DEFAULTS.muted);
+    const stroke = normalizeHex(theme.stroke, DEFAULTS.stroke);
+    const cardA = Math.max(35, Math.min(95, Number(theme.cardA)));
+
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.setProperty("--ink", ink);
+    document.documentElement.style.setProperty("--muted", muted);
+    document.documentElement.style.setProperty("--stroke", stroke);
+    document.documentElement.style.setProperty("--card", `rgba(255,255,255,${cardA/100})`);
+
+    const dot = document.getElementById("themeDot");
+    if(dot){
+      dot.style.background = ink;
+      dot.style.boxShadow = `0 0 0 6px rgba(243,239,233,${Math.min(0.32, 0.10 + (cardA/300))})`;
+    }
+
+    // sync UI
+    const tBg = document.getElementById("tBg");
+    const tInk = document.getElementById("tInk");
+    const tMuted = document.getElementById("tMuted");
+    const tStroke = document.getElementById("tStroke");
+    const tCardA = document.getElementById("tCardA");
+    if(tBg) tBg.value = bg;
+    if(tInk) tInk.value = ink;
+    if(tMuted) tMuted.value = muted;
+    if(tStroke) tStroke.value = stroke;
+    if(tCardA) tCardA.value = String(cardA);
+  };
+
+  const init = () => {
+    const themeBtn = document.getElementById("themeBtn");
+    const themePanel = document.getElementById("themePanel");
+    const tBg = document.getElementById("tBg");
+    const tInk = document.getElementById("tInk");
+    const tMuted = document.getElementById("tMuted");
+    const tStroke = document.getElementById("tStroke");
+    const tCardA = document.getElementById("tCardA");
+    const tReset = document.getElementById("tReset");
+
+    if(!themeBtn || !themePanel || !tBg || !tInk || !tMuted || !tStroke || !tCardA || !tReset) return;
+
+    apply(storageGet() || DEFAULTS);
+
+    const persist = () => {
+      const next = {
+        bg: tBg.value,
+        ink: tInk.value,
+        muted: tMuted.value,
+        stroke: tStroke.value,
+        cardA: Number(tCardA.value)
+      };
+      apply(next);
+      storageSet(next);
+    };
+
+    themeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      themePanel.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if(!themePanel.classList.contains("open")) return;
+      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+      if(!inside) themePanel.classList.remove("open");
+    });
+
+    tBg.addEventListener("input", persist);
+    tInk.addEventListener("input", persist);
+    tMuted.addEventListener("input", persist);
+    tStroke.addEventListener("input", persist);
+    tCardA.addEventListener("input", persist);
+
+    tReset.addEventListener("click", () => {
+      storageSet(DEFAULTS);
+      apply(DEFAULTS);
+    });
+  };
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+
+/* --------------------------
+   Background settings module
+--------------------------- */
+(function(){
+  const BG_KEY = "time_reality_check_bg_v1";
+
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function loadBg(){
+    try{
+      const raw = localStorage.getItem(BG_KEY);
+      if(raw) return JSON.parse(raw) || null;
+    }catch{}
+    return null;
+  }
+  function saveBg(bg){
+    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+  }
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function init(){
+    const boardTintEl = document.getElementById("boardTint");
+    const bgBtn = document.getElementById("bgBtn");
+    const bgPanel = document.getElementById("bgPanel");
+    const bgColor = document.getElementById("bgColor");
+    const bgStrength = document.getElementById("bgStrength");
+    const bgImage = document.getElementById("bgImage");
+    const bgRemove = document.getElementById("bgRemove");
+    const bgDot = document.getElementById("bgDot");
+
+    if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+
+    const bgState = loadBg() || { tint:"#efe7e1", strength:12, imageDataUrl:null };
+
+    function applyBg(){
+      const tint = bgState.tint || "#efe7e1";
+      const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
+
+      document.documentElement.style.setProperty("--board-tint", tint);
+      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+      document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
+
+      boardTintEl.style.background = hexToRgba(tint, strength);
+
+      if(bgDot){
+        bgDot.style.background = tint;
+        bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+      }
+    }
+
+    bgColor.value = bgState.tint;
+    bgStrength.value = String(bgState.strength);
+    applyBg();
+
+    bgBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      bgPanel.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if(!bgPanel.classList.contains("open")) return;
+      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      if(!inside) bgPanel.classList.remove("open");
+    });
+
+    bgColor.addEventListener("input", () => {
+      bgState.tint = bgColor.value;
+      applyBg();
+      saveBg(bgState);
+    });
+
+    bgStrength.addEventListener("input", () => {
+      bgState.strength = Number(bgStrength.value);
+      applyBg();
+      saveBg(bgState);
+    });
+
+    bgImage.addEventListener("change", async () => {
+      const file = bgImage.files && bgImage.files[0];
+      if(!file) return;
+      const dataUrl = await fileToDataUrl(file);
+      bgState.imageDataUrl = dataUrl;
+      applyBg();
+      saveBg(bgState);
+    });
+
+    bgRemove.addEventListener("click", () => {
+      bgState.imageDataUrl = null;
+      bgImage.value = "";
+      applyBg();
+      saveBg(bgState);
+    });
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+
+/* --------------------------
+   Time reality check module
+--------------------------- */
+(function(){
+  const KEY = "time_reality_check_v1";
+  const $ = (id)=>document.getElementById(id);
+
+  function defaultState(){
+    return {
+      last: null,          // {task, estMin, mult, realMin, savedAt}
+      history: [],         // newest first
+      view: "all"
+    };
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw) || {};
+      const base = defaultState();
+      base.last = parsed.last || null;
+      base.history = Array.isArray(parsed.history) ? parsed.history : [];
+      base.view = parsed.view || "all";
+      return base;
+    }catch{
+      return defaultState();
+    }
+  }
+
+  let state = load();
+
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch{}
+  }
+
+  function fmtMinutes(m){
+    const n = Math.max(0, Math.round(Number(m)||0));
+    if(n < 60) return `${n} min`;
+    const h = Math.floor(n / 60);
+    const r = n % 60;
+    return r ? `${h}h ${r}m` : `${h}h`;
+  }
+
+  function todayKey(ts){
+    const d = new Date(ts);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function overheadLabel(mult){
+    const m = Number(mult);
+    if(m === 1.15) return "Light (+15%)";
+    if(m === 1.30) return "Normal (+30%)";
+    if(m === 1.50) return "Heavy (+50%)";
+    if(m === 2.00) return "Chaotic (×2)";
+    return `×${m.toFixed(2)}`;
+  }
+
+  function compute(){
+    const task = ($("taskName").value || "").trim();
+    const estMin = Number($("estimateMin").value);
+    const mult = Number($("overhead").value);
+
+    if(!task){
+      $("resTitle").textContent = "Add a task name.";
+      $("resText").textContent = "Example: “Email replies” or “Write outline.”";
+      return null;
+    }
+    if(!isFinite(estMin) || estMin <= 0){
+      $("resTitle").textContent = "Add a valid estimate.";
+      $("resText").textContent = "Use minutes, like 15, 30, 45…";
+      return null;
+    }
+
+    const realMin = Math.max(1, Math.round(estMin * mult));
+    const extra = Math.max(0, realMin - Math.round(estMin));
+
+    const result = {
+      task,
+      estMin: Math.round(estMin),
+      mult,
+      realMin,
+      extraMin: extra,
+      at: Date.now()
+    };
+
+    state.last = result;
+    save();
+    render();
+    return result;
+  }
+
+  function renderKPIs(){
+    if(!state.last){
+      $("kEst").textContent = "—";
+      $("kReal").textContent = "—";
+      $("kDiff").textContent = "—";
+      return;
+    }
+    $("kEst").textContent = fmtMinutes(state.last.estMin);
+    $("kReal").textContent = fmtMinutes(state.last.realMin);
+    $("kDiff").textContent = `+${fmtMinutes(state.last.extraMin)}`;
+  }
+
+  function renderResult(){
+    if(!state.last){
+      $("resTitle").textContent = "No check yet.";
+      $("resPill").textContent = "—";
+      $("resText").textContent = "Enter a task + estimate, then click “Reality check”.";
+      return;
+    }
+
+    const r = state.last;
+    $("resTitle").textContent = r.task;
+    $("resPill").textContent = overheadLabel(r.mult);
+
+    const lines = [
+      `You estimated ${fmtMinutes(r.estMin)}.`,
+      `Reality time: ${fmtMinutes(r.realMin)} (adds ${fmtMinutes(r.extraMin)} overhead).`,
+    ];
+    $("resText").textContent = lines.join(" ");
+  }
+
+  function renderHistory(){
+    const root = $("history");
+    root.innerHTML = "";
+
+    const list = [...state.history];
+    if(state.view === "today"){
+      const today = todayKey(Date.now());
+      const filtered = list.filter(x => todayKey(x.at) === today);
+      renderList(filtered);
+      return;
+    }
+    renderList(list);
+
+    function renderList(arr){
+      if(arr.length === 0){
+        root.innerHTML = `<div class="tiny">Nothing saved yet.</div>`;
+        return;
+      }
+
+      for(const r of arr){
+        const box = document.createElement("div");
+        box.className = "results";
+        box.style.marginBottom = "8px";
+
+        const top = document.createElement("div");
+        top.className = "resTop";
+
+        const title = document.createElement("p");
+        title.className = "resTitle";
+        title.textContent = r.task;
+
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.innerHTML = `<span class="tiny">${overheadLabel(r.mult)}</span>`;
+
+        top.appendChild(title);
+        top.appendChild(pill);
+
+        const meta = document.createElement("div");
+        meta.className = "tiny";
+        meta.textContent = `${fmtMinutes(r.estMin)} → ${fmtMinutes(r.realMin)} (${fmtMinutes(r.extraMin)} overhead) · ${new Date(r.at).toLocaleString()}`;
+
+        const actions = document.createElement("div");
+        actions.className = "row";
+        actions.style.marginTop = "10px";
+
+        const useBtn = document.createElement("button");
+        useBtn.type = "button";
+        useBtn.className = "soft";
+        useBtn.textContent = "Use again";
+        useBtn.addEventListener("click", () => {
+          $("taskName").value = r.task;
+          $("estimateMin").value = String(r.estMin);
+          $("overhead").value = String(r.mult);
+          state.last = Object.assign({}, r, { at: Date.now() });
+          save();
+          render();
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "danger";
+        delBtn.textContent = "Remove";
+        delBtn.addEventListener("click", () => {
+          state.history = state.history.filter(x => x !== r);
+          save();
+          render();
+        });
+
+        actions.appendChild(useBtn);
+        actions.appendChild(delBtn);
+
+        box.appendChild(top);
+        box.appendChild(meta);
+        box.appendChild(actions);
+        root.appendChild(box);
+      }
+    }
+  }
+
+  function render(){
+    $("viewFilter").value = state.view;
+    renderKPIs();
+    renderResult();
+    renderHistory();
+    save();
+  }
+
+  function init(){
+    const required = ["taskName","estimateMin","overhead","calcBtn","saveBtn","resetBtn","resetConfirm","resetYes","resetNo","kEst","kReal","kDiff","resTitle","resPill","resText","viewFilter","history"];
+    for(const id of required){
+      if(!$(id)) return;
+    }
+
+    const resetConfirm = $("resetConfirm");
+
+    function hideResetConfirm(){ resetConfirm.style.display = "none"; }
+    function showResetConfirm(){
+      resetConfirm.style.display = "block";
+      const bgPanel = document.getElementById("bgPanel");
+      const themePanel = document.getElementById("themePanel");
+      if(bgPanel) bgPanel.classList.remove("open");
+      if(themePanel) themePanel.classList.remove("open");
+    }
+
+    $("calcBtn").addEventListener("click", compute);
+
+    $("saveBtn").addEventListener("click", () => {
+      if(!state.last) { compute(); }
+      if(!state.last) return;
+      state.history.unshift(state.last);
+      save();
+      render();
+    });
+
+    $("viewFilter").addEventListener("change", () => {
+      state.view = $("viewFilter").value;
+      render();
+    });
+
+    $("resetBtn").addEventListener("click", () => {
+      if(resetConfirm.style.display === "block") hideResetConfirm();
+      else showResetConfirm();
+    });
+
+    $("resetNo").addEventListener("click", hideResetConfirm);
+
+    $("resetYes").addEventListener("click", () => {
+      localStorage.removeItem(KEY);
+      state = defaultState();
+      hideResetConfirm();
+      render();
+    });
+
+    render();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

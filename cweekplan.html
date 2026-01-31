@@ -33,6 +33,19 @@
       --board-tint-a: 0.30;
       --board-image: none;
 
+      /* NEW: card / surface colors (theme-able) */
+      --day-card-base: #ffffff;
+      --day-card-a: 0.94;
+
+      --block-base: #ffffff;
+      --block-a: 0.72;
+
+      --input-base: #ffffff;
+      --input-a: 0.96;
+
+      /* Task tint strength (day color applied) */
+      --task-tint-a: 0.18;
+
       /* Layout / Scale */
       --board-radius: 26px;
       --radius: 20px;
@@ -44,8 +57,6 @@
       --day-min-h: 360px;
 
       --h1: 20px;
-      --sub: 14px;
-
       --label: 12px;
       --text: 15px;
 
@@ -56,15 +67,11 @@
       --row-radius: 16px;
 
       --header-pad: 14px 16px;
-
       --chip-pad: 8px 12px;
 
-      --focus-min-h: 48px;
-      --task-min-h: 44px;
-
-      /* NEW: multi-line input sizing */
-      --focus-lines: 2;
-      --task-lines: 2;
+      /* Fixed textarea heights (scroll reveals overflow) */
+      --focus-h: 74px;
+      --task-h: 68px;
     }
 
     *{ box-sizing: border-box; }
@@ -88,13 +95,6 @@
       justify-content: space-between;
       margin-bottom: 14px;
       flex-wrap: wrap;
-    }
-
-    .title{
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 260px;
     }
 
     h1{
@@ -159,7 +159,7 @@
       position: absolute;
       top: 48px;
       right: 0;
-      width: 330px;
+      width: 340px;
       border-radius: 18px;
       border: 1px solid var(--border);
       background: rgba(255,255,255, var(--panel-a));
@@ -317,6 +317,7 @@
 
     .day{
       background: rgba(255,255,255,0.94);
+      background: rgba(var(--day-card-base-rgb, 255,255,255), var(--day-card-a));
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
@@ -378,7 +379,7 @@
       border-radius: 16px;
       padding: 14px;
       border: 1px dashed rgba(var(--border-rgb), 0.14);
-      background: rgba(255,255,255,0.72);
+      background: rgba(var(--block-base-rgb,255,255,255), var(--block-a));
     }
 
     .block .label{
@@ -390,21 +391,20 @@
       text-transform: uppercase;
     }
 
-
     textarea{
       width: 100%;
       border: 1px solid rgba(var(--border-rgb), 0.10);
       border-radius: var(--input-radius);
       padding: var(--input-pad);
       outline: none;
-      background: rgba(255,255,255,0.96);
+      background: rgba(var(--input-base-rgb,255,255,255), var(--input-a));
       color: var(--ink);
       font-size: var(--text);
       line-height: 1.3;
       resize: none;
-      overflow: auto;
-      white-space: pre-wrap;      /* wrap lines */
-      overflow-wrap: anywhere;    /* break long words */
+      overflow: auto;            /* reveal overflow via scroll */
+      white-space: pre-wrap;     /* wrap lines */
+      overflow-wrap: anywhere;   /* break long words */
       word-break: break-word;
     }
     textarea:focus{
@@ -413,7 +413,8 @@
     }
 
     .focusInput{
-      min-height: calc(1.3em * var(--focus-lines) + 28px);
+      height: var(--focus-h);
+      max-height: var(--focus-h);
     }
 
     .tasks{
@@ -440,26 +441,16 @@
       min-height: 0;
     }
 
+
     .task-row{
       display: grid;
-      grid-template-columns: 20px 1fr 36px;
+      grid-template-columns: 1fr 36px;
       gap: 10px;
-      align-items: start; /* was center; allows taller textarea */
+      align-items: start;
       padding: var(--row-pad);
       border-radius: var(--row-radius);
       border: 1px solid rgba(var(--border-rgb), 0.08);
-      background: rgba(255,255,255,0.96);
-    }
-
-    .dot{
-      width: 12px;
-      height: 12px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 0 7px rgba(203,184,174,0.18);
-      justify-self: center;
-      flex: none;
-      margin-top: 10px; 
+      background: rgba(255,255,255,0.96); 
     }
 
     .taskInput{
@@ -468,7 +459,8 @@
       padding: 8px 2px;
       border-radius: 0;
       box-shadow: none;
-      min-height: calc(1.3em * var(--task-lines) + 16px);
+      height: var(--task-h);
+      max-height: var(--task-h);
     }
     .taskInput:focus{
       border: none;
@@ -558,6 +550,25 @@
 
             <div class="divider"></div>
 
+            <div class="row"><label for="tDayCardBase">Day card</label><input id="tDayCardBase" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDayCardA">Day card opacity</label><input id="tDayCardA" type="range" min="70" max="100" value="94" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBlockBase">Block bg</label><input id="tBlockBase" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tBlockA">Block opacity</label><input id="tBlockA" type="range" min="45" max="100" value="72" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tInputBase">Textbox bg</label><input id="tInputBase" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInputA">Textbox opacity</label><input id="tInputA" type="range" min="45" max="100" value="96" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tTaskTintA">Task color strength</label><input id="tTaskTintA" type="range" min="6" max="45" value="18" /></div>
+
+            <div class="divider"></div>
+
             <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e" /></div>
             <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10" /></div>
 
@@ -613,8 +624,6 @@
             <div class="row">
               <button class="mini-btn" id="removeImage" type="button">Remove image</button>
             </div>
-
-            <div style="font-size:12px;color:var(--muted);line-height:1.3;"></div>
           </div>
         </div>
       </div>
@@ -627,16 +636,15 @@
         <div class="grid" id="grid"></div>
 
         <div class="footer-note">
-          <div><span class="kbd">Enter</span> in a task field adds a new task</div>
-          <div><span class="kbd">Shift + Enter</span> in a task field adds a new line</div>
+          <div><span class="kbd">Enter</span> adds a new task</div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = "weekly_overview_v2";
-    const THEME_KEY   = "weekly_overview_theme_v2";
+    const STORAGE_KEY = "weekly_overview_v3";
+    const THEME_KEY   = "weekly_overview_theme_v3";
 
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -657,12 +665,12 @@
       const r = parseInt(h.slice(0,2), 16);
       const g = parseInt(h.slice(2,4), 16);
       const b = parseInt(h.slice(4,6), 16);
-      return `${r},${g},${b}`;
+      return { r, g, b, css: `${r},${g},${b}` };
     }
 
     function hexToRgba(hex, a){
-      const rgb = hexToRgbTuple(hex).split(",").map(Number);
-      return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+      const {r,g,b} = hexToRgbTuple(hex);
+      return `rgba(${r},${g},${b},${a})`;
     }
 
     function formatShortDate(d){
@@ -704,14 +712,6 @@
     }
 
     /* ============================
-       NEW: auto-grow textareas
-    ============================ */
-    function autoGrow(el, maxPx = 220){
-      el.style.height = "auto";
-      el.style.height = Math.min(el.scrollHeight, maxPx) + "px";
-    }
-
-    /* ============================
        Theme
     ============================ */
     const DEFAULT_THEME = {
@@ -719,6 +719,17 @@
       ink: "#2b2b2b",
       muted: "#7a7a7a",
       accent: "#cbb8ae",
+
+      dayCardBase: "#ffffff",
+      dayCardA: 0.94,
+
+      blockBase: "#ffffff",
+      blockA: 0.72,
+
+      inputBase: "#ffffff",
+      inputA: 0.96,
+
+      taskTintA: 0.18,
 
       borderColor: "#1e1e1e",
       borderA: 0.10,
@@ -740,7 +751,6 @@
         return raw ? JSON.parse(raw) : null;
       }catch{ return null; }
     }
-
     function themeSave(t){
       try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
     }
@@ -754,7 +764,21 @@
       r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
       r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
 
-      r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
+      const dayCard = hexToRgbTuple(theme.dayCardBase || DEFAULT_THEME.dayCardBase);
+      r.setProperty("--day-card-base-rgb", dayCard.css);
+      r.setProperty("--day-card-a", String(clamp(theme.dayCardA, 0.70, 1.00)));
+
+      const block = hexToRgbTuple(theme.blockBase || DEFAULT_THEME.blockBase);
+      r.setProperty("--block-base-rgb", block.css);
+      r.setProperty("--block-a", String(clamp(theme.blockA, 0.45, 1.00)));
+
+      const input = hexToRgbTuple(theme.inputBase || DEFAULT_THEME.inputBase);
+      r.setProperty("--input-base-rgb", input.css);
+      r.setProperty("--input-a", String(clamp(theme.inputA, 0.45, 1.00)));
+
+      r.setProperty("--task-tint-a", String(clamp(theme.taskTintA, 0.06, 0.45)));
+
+      r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor).css);
       r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
 
       r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
@@ -782,6 +806,9 @@
         document.head.appendChild(st);
       }
       st.textContent = `.board::after{ background: ${css} !important; }`;
+
+      // Repaint tasks (tint strength may have changed)
+      repaintAllTaskRows();
     }
 
     function themeSyncInputs(t){
@@ -792,6 +819,17 @@
       set("tInk", theme.ink);
       set("tMuted", theme.muted);
       set("tAccent", theme.accent);
+
+      set("tDayCardBase", theme.dayCardBase);
+      set("tDayCardA", Math.round(clamp(theme.dayCardA, 0.70, 1.00) * 100));
+
+      set("tBlockBase", theme.blockBase);
+      set("tBlockA", Math.round(clamp(theme.blockA, 0.45, 1.00) * 100));
+
+      set("tInputBase", theme.inputBase);
+      set("tInputA", Math.round(clamp(theme.inputA, 0.45, 1.00) * 100));
+
+      set("tTaskTintA", Math.round(clamp(theme.taskTintA, 0.06, 0.45) * 100));
 
       set("tBorderColor", theme.borderColor);
       set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
@@ -814,6 +852,17 @@
         ink: g("tInk")?.value,
         muted: g("tMuted")?.value,
         accent: g("tAccent")?.value,
+
+        dayCardBase: g("tDayCardBase")?.value,
+        dayCardA: clamp(Number(g("tDayCardA")?.value)/100, 0.70, 1.00),
+
+        blockBase: g("tBlockBase")?.value,
+        blockA: clamp(Number(g("tBlockA")?.value)/100, 0.45, 1.00),
+
+        inputBase: g("tInputBase")?.value,
+        inputA: clamp(Number(g("tInputA")?.value)/100, 0.45, 1.00),
+
+        taskTintA: clamp(Number(g("tTaskTintA")?.value)/100, 0.06, 0.45),
 
         borderColor: g("tBorderColor")?.value,
         borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
@@ -850,6 +899,10 @@
 
       const ids = [
         "tAppBg","tInk","tMuted","tAccent",
+        "tDayCardBase","tDayCardA",
+        "tBlockBase","tBlockA",
+        "tInputBase","tInputA",
+        "tTaskTintA",
         "tBorderColor","tBorderA",
         "tSurfaceA","tPanelA",
         "tBtnA","tBtnBorderA","tBtnInk",
@@ -882,18 +935,43 @@
     ============================ */
     function loadStore(){
       try{
-        const raw = localStorage.getItem("weekly_overview_v2");
+        const raw = localStorage.getItem(STORAGE_KEY);
         return raw ? JSON.parse(raw) : { weeks: {} };
       }catch{
         return { weeks: {} };
       }
     }
     function saveStore(store){
-      localStorage.setItem("weekly_overview_v2", JSON.stringify(store));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
     }
 
     /* ============================
-       UI + week logic
+       Task tint paint
+    ============================ */
+    function getCssVar(name){
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function paintTaskRow(rowEl, dayColor){
+      const a = clamp(Number(getCssVar("--task-tint-a")) || 0.18, 0.06, 0.45);
+      // Slight “glass” base + day tint
+      rowEl.style.background =
+        `linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.78)),
+         ${hexToRgba(dayColor, a)}`;
+      rowEl.style.backgroundBlendMode = "screen";
+    }
+
+    function repaintDayTaskRows(dayEl){
+      const color = dayEl.dataset.color || "#cbb8ae";
+      dayEl.querySelectorAll(".task-row").forEach(row => paintTaskRow(row, color));
+    }
+
+    function repaintAllTaskRows(){
+      $$(".day").forEach(repaintDayTaskRows);
+    }
+
+    /* ============================
+       Week UI
     ============================ */
     const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
     const defaultDayColors = ["#d9c6bd","#d6d0c8","#cdd5d0","#c9d7dd","#d1cde2","#e3d4d2","#d9d9e2"];
@@ -908,22 +986,15 @@
       header.style.background =
         `linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92)),
          radial-gradient(180px 110px at 16% 28%, ${hexToRgba(color, 0.22)}, transparent 72%)`;
-
-      dayEl.querySelectorAll(".dot").forEach(dot => {
-        dot.style.background = color;
-        dot.style.boxShadow = `0 0 0 7px ${hexToRgba(color, 0.18)}`;
-      });
     }
 
-    /* CHANGED: task now renders a textarea instead of input */
-    function taskRowHTML(color, value=""){
+    function taskRowHTML(value=""){
       const safe = (value ?? "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
         .replaceAll(">","&gt;");
       return `
         <div class="task-row">
-          <div class="dot" style="background:${color}; box-shadow: 0 0 0 7px ${hexToRgba(color, 0.18)}"></div>
           <textarea class="taskInput" rows="2" placeholder="Task…">${safe}</textarea>
           <button class="icon-btn removeTask" type="button" aria-label="Remove task" title="Remove">×</button>
         </div>
@@ -965,9 +1036,8 @@
         day.dataset.color = color;
 
         const tasks = (Array.isArray(dayData.tasks) && dayData.tasks.length) ? dayData.tasks : [""];
-        const tasksHtml = tasks.map(t => taskRowHTML(color, t)).join("");
+        const tasksHtml = tasks.map(t => taskRowHTML(t)).join("");
 
-        /* CHANGED: focus now textarea */
         const safeFocus = (dayData.focus ?? "")
           .replaceAll("&","&amp;")
           .replaceAll("<","&lt;")
@@ -987,7 +1057,7 @@
           <div class="day-body">
             <div class="block">
               <div class="label">Focus</div>
-              <textarea class="focusInput" rows="2" placeholder="One main thing…">${safeFocus}</textarea>
+              <textarea class="focusInput" rows="2" placeholder="">${safeFocus}</textarea>
             </div>
 
             <div class="tasks">
@@ -1000,10 +1070,8 @@
 
         grid.appendChild(day);
         setDayHeaderTint(day, color);
+        repaintDayTaskRows(day);
       });
-
-      // auto-grow initial
-      $$(".focusInput, .taskInput", grid).forEach(el => autoGrow(el));
 
       selectDay(selectedDayId);
       applyBackgroundFromWeek(weekData.background);
@@ -1168,20 +1236,14 @@
         const day = e.target.closest(".day");
         const color = e.target.value;
         day.dataset.color = color;
+
         setDayHeaderTint(day, color);
-
-        // update dots on existing task rows
-        day.querySelectorAll(".task-row .dot").forEach(dot => {
-          dot.style.background = color;
-          dot.style.boxShadow = `0 0 0 7px ${hexToRgba(color, 0.18)}`;
-        });
-
+        repaintDayTaskRows(day);
         snapshotWeekToStore();
         return;
       }
 
       if (e.target.classList.contains("focusInput") || e.target.classList.contains("taskInput")){
-        if (e.target.tagName === "TEXTAREA") autoGrow(e.target);
         snapshotWeekToStore();
       }
     });
@@ -1209,22 +1271,20 @@
 
     function addTask(dayEl, focusNew = true){
       const list = dayEl.querySelector(".taskList");
-      const color = dayEl.dataset.color || "#cbb8ae";
-
       const wrap = document.createElement("div");
-      wrap.innerHTML = taskRowHTML(color, "");
+      wrap.innerHTML = taskRowHTML("");
       const row = wrap.firstElementChild;
       list.appendChild(row);
 
-      const ta = row.querySelector(".taskInput");
-      autoGrow(ta);
+      // tint whole task row using day color
+      paintTaskRow(row, dayEl.dataset.color || "#cbb8ae");
 
       if (focusNew){
-        ta.focus({ preventScroll: false });
+        row.querySelector(".taskInput").focus({ preventScroll: false });
       }
     }
 
-    // Enter adds a new task, Shift+Enter makes a newline
+    // Enter adds a new task, Shift+Enter inserts newline
     grid.addEventListener("keydown", (e) => {
       if (e.target.classList && e.target.classList.contains("taskInput")){
         if (e.key === "Enter" && !e.shiftKey){
@@ -1238,9 +1298,78 @@
     window.addEventListener("beforeunload", () => snapshotWeekToStore());
 
     /* ============================
+       Theme UI boot
+    ============================ */
+    function applyRgbVarsForStaticCss(){
+      // (Ensures CSS rgb vars exist at load even before themeApply)
+      const root = document.documentElement.style;
+      root.setProperty("--day-card-base-rgb", "255,255,255");
+      root.setProperty("--block-base-rgb", "255,255,255");
+      root.setProperty("--input-base-rgb", "255,255,255");
+    }
+
+    function bootTheme(){
+      const saved = themeLoad() || DEFAULT_THEME;
+      themeApply(saved);
+      themeSyncInputs(saved);
+    }
+
+    /* ============================
+       Theme UI wiring
+    ============================ */
+    function initThemeUI(){
+      const themeBtn = $("#themeBtn");
+      const themePanel = $("#themePanel");
+      const themeReset = $("#themeReset");
+      if(!themeBtn || !themePanel || !themeReset) return;
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        $("#bgPanel")?.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if(!themePanel.classList.contains("open")) return;
+        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+        if(!inside) themePanel.classList.remove("open");
+      });
+
+      const ids = [
+        "tAppBg","tInk","tMuted","tAccent",
+        "tDayCardBase","tDayCardA",
+        "tBlockBase","tBlockA",
+        "tInputBase","tInputA",
+        "tTaskTintA",
+        "tBorderColor","tBorderA",
+        "tSurfaceA","tPanelA",
+        "tBtnA","tBtnBorderA","tBtnInk",
+        "tOverlayBase","tOverlayA"
+      ];
+
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener("input", () => {
+          const t = themeReadFromInputs();
+          themeApply(t);
+          themeSave(t);
+        });
+      });
+
+      themeReset.addEventListener("click", () => {
+        localStorage.removeItem(THEME_KEY);
+        themeApply(DEFAULT_THEME);
+        themeSyncInputs(DEFAULT_THEME);
+      });
+    }
+
+    /* ============================
        Boot
     ============================ */
+    applyRgbVarsForStaticCss();
     initThemeUI();
+    bootTheme();
     buildWeek(activeWeekId);
   </script>
 </body>

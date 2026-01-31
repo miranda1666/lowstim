@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Monthly Planner</title>
+  <style>
+    :root{
+      /* =========================
+         THEME TOKENS (editable)
+         ========================= */
+      --app-bg: #ffffff;
+      --board-radius: 24px;
+
+      --ink: #2b2b2b;
+      --muted: #7a7a7a;
+      --border: rgba(30, 30, 30, 0.10);
+      --shadow: 0 10px 26px rgba(20, 20, 20, 0.08);
+
+      /* Surfaces / accents */
+      --surface: rgba(255,255,255,0.92);          /* generic card surface */
+      --surface-soft: rgba(255,255,255,0.75);     /* pills & lighter surfaces */
+      --calendar-surface: rgba(255,255,255,0.60); /* calendar container */
+      --daycell-surface: rgba(255,255,255,0.92);  /* each day cell */
+      --dow-surface: rgba(255,255,255,0.55);      /* day-of-week header boxes */
+      --note-surface: rgba(255,255,255,0.95);     /* textareas */
+      --btn-surface: rgba(255,255,255,0.90);      /* icon buttons */
+      --chip-base: #cbb8ae;                       /* default goal chip color */
+      --focus-ring: rgba(203,184,174,0.18);       /* focus ring tint */
+
+      /* Board background controls */
+      --board-tint: #efe7e1;
+      --board-tint-a: 0.35;
+      --board-image: none;
+
+      /* Board overlay (keeps your nice lighting) */
+      --overlay-a: 0.38;
+      --overlay-rad-1: rgba(255,255,255,0.35);
+      --overlay-rad-2: rgba(255,255,255,0.25);
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--ink);
+      background:var(--app-bg);
+    }
+
+    .wrap{
+      max-width: 1760px;
+      margin: 22px auto;
+      padding: 16px;
+    }
+
+    .titlebar{
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    h1{
+      margin: 0;
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: 0.2px;
+    }
+
+    .controls{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .icon-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      box-shadow: 0 6px 18px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+
+    .bg-btn, .nav-btn{
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(30,30,30,0.10);
+      background: var(--btn-surface);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      -webkit-tap-highlight-color: transparent;
+      color: rgba(43,43,43,0.70);
+      font-weight: 800;
+      line-height: 1;
+    }
+    .bg-btn:active, .nav-btn:active{ transform: translateY(1px); }
+
+    .bg-dot{
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(30,30,30,0.14);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
+    }
+
+    /* ✅ NEW: Theme button dot */
+    .theme-dot{
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(30,30,30,0.14);
+      background: var(--ink);
+      box-shadow: 0 0 0 6px rgba(255,255,255,0.25);
+    }
+
+    .popover{ position: relative; }
+
+    .panel{
+      position: absolute;
+      top: 44px;
+      right: 0;
+      width: 260px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 18px 40px rgba(20,20,20,0.10);
+      backdrop-filter: blur(2px);
+      padding: 12px;
+      display: none;
+      z-index: 50;
+    }
+    .panel.open{ display: block; }
+
+    .panelTitle{
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.72);
+      margin: 0 0 8px 0;
+    }
+
+    .row{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+    }
+
+    .row label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="color"]{
+      width: 34px;
+      height: 26px;
+      border: 1px solid rgba(30,30,30,0.12);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    input[type="range"]{ width: 140px; }
+
+    .file{
+      width: 100%;
+      font-size: 12px;
+      color: rgba(43,43,43,0.75);
+    }
+
+    .mini-btn{
+      width: 100%;
+      border: 1px solid rgba(30,30,30,0.10);
+      background: rgba(255,255,255,0.90);
+      border-radius: 12px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 650;
+      color: rgba(43,43,43,0.85);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+
+    .divider{
+      height: 1px;
+      background: rgba(30,30,30,0.08);
+      margin: 8px 0;
+    }
+
+    .month-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      box-shadow: 0 6px 18px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+
+    .month-label{
+      font-size: 12px;
+      color: rgba(43,43,43,0.78);
+      min-width: 170px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .board{
+      border: 1px solid var(--border);
+      border-radius: var(--board-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      background: none;
+    }
+
+    .board::before{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(0.95);
+      transform: scale(1.02);
+    }
+
+    .board::after{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(900px 520px at 18% 20%, var(--overlay-rad-1), transparent 62%),
+        radial-gradient(700px 460px at 82% 34%, var(--overlay-rad-2), transparent 62%),
+        rgba(255,255,255,var(--overlay-a));
+      background-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .board-tint{
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+
+    .board-content{
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(2px);
+    }
+
+    .layout{
+      display: grid;
+      grid-template-columns: 1.9fr 0.45fr;
+      gap: 16px;
+      padding: 14px;
+    }
+
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    .calendar{
+      background: var(--calendar-surface);
+      border: 1px solid rgba(30,30,30,0.10);
+      border-radius: 20px;
+      padding: 12px;
+      box-shadow: 0 10px 24px rgba(20,20,20,0.06);
+      overflow: hidden;
+    }
+
+    .dow{
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+      padding: 2px 2px 10px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .dow div{
+      text-align: center;
+      padding: 8px 0;
+      border-radius: 12px;
+      background: var(--dow-surface);
+      border: 1px solid rgba(30,30,30,0.06);
+    }
+
+    .cal-grid{
+      display: grid;
+      grid-template-columns: repeat(7, minmax(160px, 1fr));
+      gap: 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
+
+    @media (min-width: 1400px){
+      .cal-grid{ overflow-x: visible; }
+    }
+
+    .daycell{
+      background: var(--daycell-surface);
+      border: 1px solid rgba(30,30,30,0.08);
+      border-radius: 16px;
+      min-height: 190px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 8px 18px rgba(20,20,20,0.05);
+      min-width: 160px;
+    }
+
+    .daycell.outside{ opacity: 0.55; }
+
+    .daytop{
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .daynum{
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(43,43,43,0.80);
+    }
+
+    .daynote{
+      width: 100%;
+      border: 1px solid rgba(30,30,30,0.10);
+      border-radius: 12px;
+      padding: 9px 10px;
+      outline: none;
+      background: var(--note-surface);
+      color: var(--ink);
+      font-size: 12px;
+      resize: none;
+      min-height: 64px;
+      line-height: 1.25;
+    }
+
+    .daynote:focus{
+      border-color: rgba(30,30,30,0.18);
+      box-shadow: 0 0 0 4px var(--focus-ring);
+    }
+
+    .goals-wrap{
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .goal-chip{
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 26px 26px;
+      gap: 8px;
+      align-items: start;
+      padding: 8px 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(30,30,30,0.08);
+      background: rgba(203,184,174,0.22);
+      min-width: 0;
+    }
+
+    .goalText{
+      width: 100%;
+      border: none;
+      background: transparent;
+      outline: none;
+      color: var(--ink);
+      font-size: 12px;
+      padding: 4px 2px;
+      min-width: 0;
+      resize: none;
+      min-height: 44px;
+      line-height: 1.25;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .gbtn{
+      width: 26px;
+      height: 26px;
+      border-radius: 10px;
+      border: 1px solid rgba(30,30,30,0.10);
+      background: rgba(255,255,255,0.75);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: rgba(43,43,43,0.72);
+      -webkit-tap-highlight-color: transparent;
+      font-weight: 900;
+      line-height: 1;
+      user-select: none;
+      padding: 0;
+    }
+    .gbtn:active{ transform: translateY(1px); }
+
+
+    .goalColorLabel{
+      position: relative;
+      overflow: hidden;
+    }
+    .goalColorPicker{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .add-goal{
+      width: 100%;
+      border: 1px solid rgba(30,30,30,0.10);
+      background: rgba(255,255,255,0.85);
+      border-radius: 12px;
+      padding: 8px 8px;
+      cursor: pointer;
+      color: rgba(43,43,43,0.78);
+      font-weight: 650;
+      font-size: 12px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .add-goal:active{ transform: translateY(1px); }
+
+    .side{
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card{
+      background: var(--surface);
+      border: 1px solid rgba(30,30,30,0.10);
+      border-radius: 20px;
+      padding: 12px;
+      box-shadow: 0 10px 24px rgba(20,20,20,0.06);
+    }
+
+    .card-title{
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .card-title h2{
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(43,43,43,0.85);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="titlebar">
+      <div class="title"></div>
+
+      <div class="controls">
+        <div class="month-pill" aria-label="Month navigation">
+          <button class="nav-btn" id="prevMonth" type="button" aria-label="Previous month" title="Previous month">‹</button>
+          <div class="month-label" id="monthLabel">Month</div>
+          <button class="nav-btn" id="nextMonth" type="button" aria-label="Next month" title="Next month">›</button>
+        </div>
+
+        <!-- Background panel -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <span class="bg-dot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <div class="panelTitle">Background</div>
+
+            <div class="row">
+              <label for="bgColor">Tint</label>
+              <input id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="row">
+              <label for="bgStrength">Tint strength</label>
+              <input id="bgStrength" type="range" min="0" max="70" value="35" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input id="bgImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="row">
+              <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+            </div>
+
+            <div class="hint"></div>
+          </div>
+        </div>
+
+        <!-- ✅ NEW: Theme panel -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <div class="panelTitle">Theme</div>
+
+            <div class="row">
+              <label for="tAppBg">App bg</label>
+              <input id="tAppBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="row">
+              <label for="tInk">Text</label>
+              <input id="tInk" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="row">
+              <label for="tMuted">Muted</label>
+              <input id="tMuted" type="color" value="#7a7a7a" />
+            </div>
+
+            <div class="row">
+              <label for="tBorder">Border tint</label>
+              <input id="tBorder" type="range" min="0" max="25" value="10" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label for="tSurfaceA">Card opacity</label>
+              <input id="tSurfaceA" type="range" min="60" max="100" value="92" />
+            </div>
+
+            <div class="row">
+              <label for="tSurfaceSoftA">Pills opacity</label>
+              <input id="tSurfaceSoftA" type="range" min="55" max="95" value="75" />
+            </div>
+
+            <div class="row">
+              <label for="tCalendarA">Calendar opacity</label>
+              <input id="tCalendarA" type="range" min="35" max="95" value="60" />
+            </div>
+
+            <div class="row">
+              <label for="tDaycellA">Daycell opacity</label>
+              <input id="tDaycellA" type="range" min="65" max="100" value="92" />
+            </div>
+
+            <div class="row">
+              <label for="tDowA">DOW opacity</label>
+              <input id="tDowA" type="range" min="35" max="95" value="55" />
+            </div>
+
+            <div class="row">
+              <label for="tNoteA">Note opacity</label>
+              <input id="tNoteA" type="range" min="70" max="100" value="95" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label for="tChipBase">Default goal chip</label>
+              <input id="tChipBase" type="color" value="#cbb8ae" />
+            </div>
+
+            <div class="row">
+              <label for="tFocus">Focus ring</label>
+              <input id="tFocus" type="color" value="#cbb8ae" />
+            </div>
+
+            <div class="row">
+              <label for="tFocusA">Focus strength</label>
+              <input id="tFocusA" type="range" min="6" max="35" value="18" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label for="tOverlayA">Overlay strength</label>
+              <input id="tOverlayA" type="range" min="0" max="70" value="38" />
+            </div>
+
+            <div class="row">
+              <button class="mini-btn" id="tReset" type="button">Reset theme</button>
+            </div>
+
+            <div class="hint tiny" style="margin-top:8px;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="board-tint" id="boardTint"></div>
+
+      <div class="board-content">
+        <div class="layout">
+          <section class="calendar" aria-label="Monthly calendar">
+            <div class="dow" aria-hidden="true">
+              <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+          </section>
+
+          <aside class="side" aria-label="Notes">
+            <div class="card">
+              <div class="card-title">
+                <h2>Notes</h2>
+                <div class="small">Monthly</div>
+              </div>
+              <textarea id="monthNotes" class="daynote"></textarea>
+            </div>
+          </aside>
+        </div>
+
+        <div class="footer-note"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "monthly_planner_v2_day_goals";
+    const THEME_KEY = "monthly_planner_theme_v1";
+
+    function loadStore(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : { months: {} };
+      }catch{
+        return { months: {} };
+      }
+    }
+
+    function saveStore(store){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    }
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+
+    function monthIdFromDate(d){
+      const x = new Date(d);
+      return `${x.getFullYear()}-${pad2(x.getMonth()+1)}`;
+    }
+
+    function addMonths(date, delta){
+      const d = new Date(date);
+      const day = d.getDate();
+      d.setDate(1);
+      d.setMonth(d.getMonth() + delta);
+      const last = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+      d.setDate(Math.min(day, last));
+      return d;
+    }
+
+    function prettyMonthLabel(monthId){
+      const [y,m] = monthId.split("-").map(Number);
+      const d = new Date(y, m-1, 1);
+      return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    }
+
+    function startOfCalendarGrid(year, monthIndex){
+      const first = new Date(year, monthIndex, 1);
+      const day = first.getDay();
+      const mondayIndex = (day === 0) ? 6 : day - 1;
+      const start = new Date(year, monthIndex, 1 - mondayIndex);
+      start.setHours(0,0,0,0);
+      return start;
+    }
+
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    function hexToRgba(hex, a){
+      const h = String(hex || "").replace("#","").trim();
+      const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+      const num = parseInt(full || "000000", 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function autoGrow(el){
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 260) + "px";
+    }
+
+    function chipBg(color){
+      return `linear-gradient(180deg, ${hexToRgba(color, 0.22)}, ${hexToRgba(color, 0.18)})`;
+    }
+
+    /* =========================
+       ✅ THEME MODULE (global)
+       ========================= */
+    const DEFAULT_THEME = {
+      appBg: "#ffffff",
+      ink: "#2b2b2b",
+      muted: "#7a7a7a",
+      borderPct: 10,      // maps to rgba alpha: borderPct/100
+      surfaceA: 92,       // %
+      surfaceSoftA: 75,   // %
+      calendarA: 60,      // %
+      daycellA: 92,       // %
+      dowA: 55,           // %
+      noteA: 95,          // %
+      chipBase: "#cbb8ae",
+      focusHex: "#cbb8ae",
+      focusA: 18,         // %
+      overlayA: 38        // %
+    };
+
+    const normalizeHex = (hex, fallback) => {
+      const s = String(hex || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+    };
+
+    function themeGet(){
+      try{
+        const raw = localStorage.getItem(THEME_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }catch{
+        return null;
+      }
+    }
+
+    function themeSet(val){
+      try{ localStorage.setItem(THEME_KEY, JSON.stringify(val)); }catch{}
+    }
+
+    function applyTheme(t){
+      const theme = { ...DEFAULT_THEME, ...(t || {}) };
+
+      const appBg = normalizeHex(theme.appBg, DEFAULT_THEME.appBg);
+      const ink = normalizeHex(theme.ink, DEFAULT_THEME.ink);
+      const muted = normalizeHex(theme.muted, DEFAULT_THEME.muted);
+
+      const chipBase = normalizeHex(theme.chipBase, DEFAULT_THEME.chipBase);
+      const focusHex = normalizeHex(theme.focusHex, DEFAULT_THEME.focusHex);
+
+      const borderPct = Math.max(0, Math.min(25, Number(theme.borderPct)));
+      const surfaceA = Math.max(60, Math.min(100, Number(theme.surfaceA)));
+      const surfaceSoftA = Math.max(55, Math.min(95, Number(theme.surfaceSoftA)));
+      const calendarA = Math.max(35, Math.min(95, Number(theme.calendarA)));
+      const daycellA = Math.max(65, Math.min(100, Number(theme.daycellA)));
+      const dowA = Math.max(35, Math.min(95, Number(theme.dowA)));
+      const noteA = Math.max(70, Math.min(100, Number(theme.noteA)));
+      const focusA = Math.max(6, Math.min(35, Number(theme.focusA)));
+      const overlayA = Math.max(0, Math.min(70, Number(theme.overlayA)));
+
+      document.documentElement.style.setProperty("--app-bg", appBg);
+      document.documentElement.style.setProperty("--ink", ink);
+      document.documentElement.style.setProperty("--muted", muted);
+      document.documentElement.style.setProperty("--border", `rgba(30,30,30,${borderPct/100})`);
+
+      document.documentElement.style.setProperty("--surface", `rgba(255,255,255,${surfaceA/100})`);
+      document.documentElement.style.setProperty("--surface-soft", `rgba(255,255,255,${surfaceSoftA/100})`);
+      document.documentElement.style.setProperty("--calendar-surface", `rgba(255,255,255,${calendarA/100})`);
+      document.documentElement.style.setProperty("--daycell-surface", `rgba(255,255,255,${daycellA/100})`);
+      document.documentElement.style.setProperty("--dow-surface", `rgba(255,255,255,${dowA/100})`);
+      document.documentElement.style.setProperty("--note-surface", `rgba(255,255,255,${noteA/100})`);
+
+      document.documentElement.style.setProperty("--chip-base", chipBase);
+      document.documentElement.style.setProperty("--focus-ring", hexToRgba(focusHex, focusA/100));
+
+      document.documentElement.style.setProperty("--overlay-a", String(overlayA/100));
+
+      // Update theme dot
+      const themeDot = document.getElementById("themeDot");
+      if(themeDot){
+        themeDot.style.background = ink;
+        themeDot.style.boxShadow = `0 0 0 6px rgba(255,255,255,${Math.min(0.35, 0.18 + (surfaceSoftA/300))})`;
+      }
+
+      // Sync inputs if present
+      const setVal = (id, v) => { const el = document.getElementById(id); if(el) el.value = String(v); };
+      setVal("tAppBg", appBg);
+      setVal("tInk", ink);
+      setVal("tMuted", muted);
+      setVal("tBorder", borderPct);
+      setVal("tSurfaceA", surfaceA);
+      setVal("tSurfaceSoftA", surfaceSoftA);
+      setVal("tCalendarA", calendarA);
+      setVal("tDaycellA", daycellA);
+      setVal("tDowA", dowA);
+      setVal("tNoteA", noteA);
+      setVal("tChipBase", chipBase);
+      setVal("tFocus", focusHex);
+      setVal("tFocusA", focusA);
+      setVal("tOverlayA", overlayA);
+    }
+
+    // Init theme UI
+    (function initThemePanel(){
+      const themeBtn = document.getElementById("themeBtn");
+      const themePanel = document.getElementById("themePanel");
+      if(!themeBtn || !themePanel) return;
+
+      const saved = themeGet();
+      applyTheme(saved || DEFAULT_THEME);
+
+      const persist = () => {
+        const next = {
+          appBg: document.getElementById("tAppBg")?.value,
+          ink: document.getElementById("tInk")?.value,
+          muted: document.getElementById("tMuted")?.value,
+          borderPct: Number(document.getElementById("tBorder")?.value),
+          surfaceA: Number(document.getElementById("tSurfaceA")?.value),
+          surfaceSoftA: Number(document.getElementById("tSurfaceSoftA")?.value),
+          calendarA: Number(document.getElementById("tCalendarA")?.value),
+          daycellA: Number(document.getElementById("tDaycellA")?.value),
+          dowA: Number(document.getElementById("tDowA")?.value),
+          noteA: Number(document.getElementById("tNoteA")?.value),
+          chipBase: document.getElementById("tChipBase")?.value,
+          focusHex: document.getElementById("tFocus")?.value,
+          focusA: Number(document.getElementById("tFocusA")?.value),
+          overlayA: Number(document.getElementById("tOverlayA")?.value),
+        };
+        applyTheme(next);
+        themeSet(next);
+      };
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if(!themePanel.classList.contains("open")) return;
+        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+        if(!inside) themePanel.classList.remove("open");
+      });
+
+      ["tAppBg","tInk","tMuted","tBorder","tSurfaceA","tSurfaceSoftA","tCalendarA","tDaycellA","tDowA","tNoteA","tChipBase","tFocus","tFocusA","tOverlayA"]
+        .forEach(id => {
+          const el = document.getElementById(id);
+          if(el) el.addEventListener("input", persist);
+        });
+
+      const reset = document.getElementById("tReset");
+      if(reset){
+        reset.addEventListener("click", () => {
+          themeSet(DEFAULT_THEME);
+          applyTheme(DEFAULT_THEME);
+        });
+      }
+    })();
+
+    let store = loadStore();
+    let activeMonthId = monthIdFromDate(new Date());
+
+    const calGrid = $("#calGrid");
+    const monthNotes = $("#monthNotes");
+
+    function ensureMonthData(monthId){
+      if (!store.months[monthId]){
+        store.months[monthId] = {
+          days: {},
+          notes: "",
+          background: { tint: "#efe7e1", strength: 35, imageDataUrl: null }
+        };
+        saveStore(store);
+      }
+      return store.months[monthId];
+    }
+
+    function dayKey(d){
+      const y = d.getFullYear();
+      const m = pad2(d.getMonth()+1);
+      const day = pad2(d.getDate());
+      return `${y}-${m}-${day}`;
+    }
+
+    function ensureDayData(monthData, key){
+      if (!monthData.days[key]){
+        monthData.days[key] = { note: "", goals: [] };
+      }
+      if (!Array.isArray(monthData.days[key].goals)) monthData.days[key].goals = [];
+      return monthData.days[key];
+    }
+
+    function goalChipHTML(goal){
+      const color = goal?.color || getComputedStyle(document.documentElement).getPropertyValue("--chip-base").trim() || "#cbb8ae";
+      const text = (goal?.text ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+
+      return `
+        <div class="goal-chip" data-kind="goal" style="background:${chipBg(color)};">
+          <textarea class="goalText" placeholder="Goal…">${text}</textarea>
+
+          <label class="gbtn goalColorLabel" title="Color">
+            •
+            <input class="goalColorPicker" type="color" value="${color}" aria-label="Goal color" />
+          </label>
+
+          <button class="gbtn removeGoalBtn" type="button" aria-label="Remove goal" title="Remove">×</button>
+        </div>
+      `;
+    }
+
+    function buildMonth(monthId){
+      activeMonthId = monthId;
+      const monthData = ensureMonthData(monthId);
+
+      $("#monthLabel").textContent = prettyMonthLabel(monthId);
+
+      applyBackgroundFromMonth(monthData.background);
+
+      monthNotes.value = monthData.notes || "";
+      autoGrow(monthNotes);
+
+      const [year, monthNum] = monthId.split("-").map(Number);
+      const monthIndex = monthNum - 1;
+
+      const start = startOfCalendarGrid(year, monthIndex);
+      const daysInView = 42;
+
+      calGrid.innerHTML = "";
+      for (let i = 0; i < daysInView; i++){
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+
+        const key = dayKey(d);
+        const inMonth = d.getMonth() === monthIndex;
+
+        const dayData = ensureDayData(monthData, key);
+        const note = dayData.note ?? "";
+        const goals = dayData.goals ?? [];
+
+        const cell = document.createElement("div");
+        cell.className = "daycell" + (inMonth ? "" : " outside");
+        cell.dataset.dateKey = key;
+
+        const goalsHtml = goals.map(g => goalChipHTML(g)).join("");
+
+        cell.innerHTML = `
+          <div class="daytop">
+            <div class="daynum">${d.getDate()}</div>
+          </div>
+
+          <div class="goals-wrap">
+            <div class="goalsListInDay" data-goals="1">
+              ${goalsHtml}
+            </div>
+            <button class="add-goal" type="button">+ goal</button>
+          </div>
+
+          <textarea class="daynote dayNoteInput" placeholder="Note…">${(note ?? "")
+            .replaceAll("&","&amp;")
+            .replaceAll("<","&lt;")
+            .replaceAll(">","&gt;")}</textarea>
+        `;
+
+        calGrid.appendChild(cell);
+      }
+
+      $$("textarea", calGrid).forEach(autoGrow);
+
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    }
+
+    function snapshotMonthToStore(){
+      const monthData = ensureMonthData(activeMonthId);
+
+      monthData.notes = monthNotes.value ?? "";
+
+      $$(".daycell").forEach(cell => {
+        const key = cell.dataset.dateKey;
+        const noteVal = cell.querySelector(".dayNoteInput")?.value ?? "";
+
+        const goals = [];
+        cell.querySelectorAll(".goal-chip").forEach(chip => {
+          const text = chip.querySelector(".goalText")?.value ?? "";
+          const picker = chip.querySelector(".goalColorPicker");
+          const color = picker?.value ?? (getComputedStyle(document.documentElement).getPropertyValue("--chip-base").trim() || "#cbb8ae");
+          goals.push({ text, color });
+        });
+
+        monthData.days[key] = {
+          ...(monthData.days[key] || {}),
+          note: noteVal,
+          goals
+        };
+      });
+
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    }
+
+    // Background (saved per month)
+    const boardTint = $("#boardTint");
+    const bgBtn = $("#bgBtn");
+    const bgPanel = $("#bgPanel");
+    const bgColor = $("#bgColor");
+    const bgStrength = $("#bgStrength");
+    const bgImage = $("#bgImage");
+    const removeImage = $("#removeImage");
+
+    function setBoardImage(dataUrlOrNull){
+      document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    }
+
+    function applyBoardTint(colorHex, strengthPct){
+      const strength = Number(strengthPct) / 100;
+      document.documentElement.style.setProperty("--board-tint", colorHex);
+      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+      const dot = document.querySelector(".bg-dot");
+      dot.style.background = colorHex;
+      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.1))}`;
+
+      boardTint.style.background = hexToRgba(colorHex, strength);
+    }
+
+    function applyBackgroundFromMonth(bg){
+      const tint = bg?.tint ?? "#efe7e1";
+      const strength = bg?.strength ?? 35;
+
+      bgColor.value = tint;
+      bgStrength.value = String(strength);
+
+      applyBoardTint(tint, strength);
+      setBoardImage(bg?.imageDataUrl ?? null);
+    }
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    bgBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      bgPanel.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!bgPanel.classList.contains("open")) return;
+      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      if (!inside) bgPanel.classList.remove("open");
+    });
+
+    bgColor.addEventListener("input", () => {
+      applyBoardTint(bgColor.value, bgStrength.value);
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.background = monthData.background || {};
+      monthData.background.tint = bgColor.value;
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    });
+
+    bgStrength.addEventListener("input", () => {
+      applyBoardTint(bgColor.value, bgStrength.value);
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.background = monthData.background || {};
+      monthData.background.strength = Number(bgStrength.value);
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    });
+
+    bgImage.addEventListener("change", async () => {
+      const file = bgImage.files && bgImage.files[0];
+      if (!file) return;
+
+      const dataUrl = await fileToDataUrl(file);
+      setBoardImage(dataUrl);
+
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.background = monthData.background || {};
+      monthData.background.imageDataUrl = dataUrl;
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    });
+
+    removeImage.addEventListener("click", () => {
+      setBoardImage(null);
+      bgImage.value = "";
+
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.background = monthData.background || {};
+      monthData.background.imageDataUrl = null;
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    });
+
+    // Month navigation
+    $("#prevMonth").addEventListener("click", () => {
+      snapshotMonthToStore();
+      const [y, m] = activeMonthId.split("-").map(Number);
+      const d = new Date(y, m-1, 15);
+      buildMonth(monthIdFromDate(addMonths(d, -1)));
+    });
+
+    $("#nextMonth").addEventListener("click", () => {
+      snapshotMonthToStore();
+      const [y, m] = activeMonthId.split("-").map(Number);
+      const d = new Date(y, m-1, 15);
+      buildMonth(monthIdFromDate(addMonths(d, 1)));
+    });
+
+    // Day-goal interactions + autosave
+    calGrid.addEventListener("click", (e) => {
+      const cell = e.target.closest(".daycell");
+      if (!cell) return;
+
+      const add = e.target.closest(".add-goal");
+      if (add){
+        const list = cell.querySelector(".goalsListInDay");
+        const base = getComputedStyle(document.documentElement).getPropertyValue("--chip-base").trim() || "#cbb8ae";
+        const goal = { text: "", color: base };
+        const wrap = document.createElement("div");
+        wrap.innerHTML = goalChipHTML(goal);
+        const chip = wrap.firstElementChild;
+        list.appendChild(chip);
+        const ta = chip.querySelector(".goalText");
+        ta?.focus({ preventScroll: false });
+        if (ta) autoGrow(ta);
+        snapshotMonthToStore();
+        return;
+      }
+
+      const rm = e.target.closest(".removeGoalBtn");
+      if (rm){
+        rm.closest(".goal-chip")?.remove();
+        snapshotMonthToStore();
+        return;
+      }
+    });
+
+    calGrid.addEventListener("input", (e) => {
+      if (e.target.classList.contains("dayNoteInput")){
+        autoGrow(e.target);
+        snapshotMonthToStore();
+        return;
+      }
+
+      if (e.target.classList.contains("goalText")){
+        autoGrow(e.target);
+        snapshotMonthToStore();
+        return;
+      }
+
+      if (e.target.classList.contains("goalColorPicker")){
+        const chip = e.target.closest(".goal-chip");
+        const color = e.target.value;
+        chip.style.background = chipBg(color);
+        snapshotMonthToStore();
+        return;
+      }
+    });
+
+    monthNotes.addEventListener("input", () => {
+      autoGrow(monthNotes);
+      snapshotMonthToStore();
+    });
+
+    window.addEventListener("beforeunload", () => snapshotMonthToStore());
+
+    buildMonth(activeMonthId);
+  </script>
+</body>
+</html>

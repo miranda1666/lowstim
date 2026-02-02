@@ -6,9 +6,6 @@
   <title>Weekly Overview</title>
   <style>
     :root{
-      /* =========================
-         THEME (Monthly Planner model)
-      ========================= */
       --app-bg: #ffffff;
 
       --ink: #2b2b2b;
@@ -32,7 +29,7 @@
       --overlay-base: #ffffff;
       --overlay-a: 0.34;
 
-      /* Board background (behind cards). Can be set via color OR image. */
+      /* Board background */
       --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
@@ -47,12 +44,11 @@
       --input-bg: #ffffff;
       --input-bg-a: 0.96;
 
-      /* TASK FULL BOX COLOR (from day color) */
-      --task-tint-a: 0.72;     /* how strong the day color fills task boxes */
-      --task-overlay-a: 0.12;  /* white veil to keep text readable */
+      /* TASK: full box fill strength (STRONGER DEFAULT) */
+      --task-tint-a: 0.90;
 
       /* =========================
-         LAYOUT / SCALE (bigger + less crowded)
+         LAYOUT / SCALE
       ========================= */
       --board-radius: 26px;
       --radius: 20px;
@@ -72,7 +68,6 @@
       --input-pad: 14px 14px;
       --input-radius: 14px;
 
-      --row-pad: 12px 14px;
       --row-radius: 16px;
 
       --header-pad: 14px 16px;
@@ -80,7 +75,7 @@
       --chip-pad: 8px 12px;
 
       --focus-min-h: 64px;
-      --task-min-h: 60px; /* IMPORTANT: less squished */
+      --task-min-h: 64px; /* less squished */
       --max-lines: 4;     /* visible lines before scroll */
     }
 
@@ -296,13 +291,12 @@
       transform: scale(1.02);
     }
 
-    /* single overlay only (no radials) */
     .board::after{
       content: "";
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: rgba(255,255,255,0.34); /* overridden by JS via overlayStyle */
+      background: rgba(255,255,255,0.34); /* overridden by JS */
     }
 
     .board-tint{
@@ -381,14 +375,6 @@
       font-weight: 650;
     }
 
-    .day-color{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
     .day-body{
       padding: 14px 14px 16px;
       display: flex;
@@ -413,7 +399,7 @@
       text-transform: uppercase;
     }
 
-    /* MULTILINE INPUTS (wrap + scroll) */
+    /* Multiline inputs (wrap + scroll) */
     textarea{
       width: 100%;
       border: 1px solid rgba(var(--border-rgb), 0.10);
@@ -424,9 +410,9 @@
       color: var(--ink);
       font-size: var(--text);
       line-height: 1.35;
-      resize: none;                 /* keep layout clean */
-      overflow: auto;               /* reveal extra text */
-      white-space: pre-wrap;        /* wrap */
+      resize: none;
+      overflow: auto;
+      white-space: pre-wrap;
       word-break: break-word;
     }
 
@@ -436,7 +422,7 @@
     }
 
     .focusInput{
-      min-height: calc(var(--focus-min-h));
+      min-height: var(--focus-min-h);
       max-height: calc(var(--max-lines) * 1.35em + 28px);
     }
 
@@ -463,26 +449,25 @@
       gap: 12px;
     }
 
-    /* TASK ROW: full box color from day color */
+    /* ✅ TASK ROW = FULL BOX COLOR */
     .task-row{
       display: grid;
-      grid-template-columns: 1fr 40px;
-      gap: 10px;
-      align-items: start;
-      padding: 0; /* internal padding comes from textarea + button */
+      grid-template-columns: 1fr 44px;
+      align-items: stretch;
       border-radius: var(--row-radius);
-      border: 1px solid rgba(var(--border-rgb), 0.08);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
       overflow: hidden;
-      background: rgba(255,255,255,0.9);
+      box-shadow: 0 10px 24px rgba(20,20,20,0.06);
     }
 
+    /* ✅ Make textarea transparent so row color shows */
     .task-row .taskInput{
       border: none;
       border-radius: 0;
+      background: transparent !important;
       box-shadow: none;
       min-height: var(--task-min-h);
       max-height: calc(var(--max-lines) * 1.35em + 28px);
-      padding-right: 12px;
     }
     .task-row .taskInput:focus{
       border: none;
@@ -490,20 +475,19 @@
       outline: none;
     }
 
+    /* ✅ Make button transparent so row color shows */
     .icon-btn{
-      width: 40px;
-      height: 100%;
-      min-height: var(--task-min-h);
+      width: 44px;
       border: none;
-      border-left: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.65);
+      border-left: 1px solid rgba(var(--border-rgb), 0.12);
+      background: transparent !important;
       cursor: pointer;
       display: grid;
       place-items: center;
-      color: rgba(43,43,43,0.72);
+      color: rgba(43,43,43,0.78);
       -webkit-tap-highlight-color: transparent;
       font-weight: 900;
-      font-size: 16px;
+      font-size: 18px;
     }
     .icon-btn:active{ transform: translateY(1px); }
 
@@ -595,7 +579,6 @@
 
             <div class="divider"></div>
 
-            <!-- NEW: day cards + block + input backgrounds -->
             <div class="row"><label for="tDayBg">Day card bg</label><input id="tDayBg" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tDayBgA">Day card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="94" /></div>
 
@@ -611,9 +594,8 @@
 
             <div class="divider"></div>
 
-            <!-- NEW: task box visibility -->
-            <div class="row"><label for="tTaskTintA">Task color fill</label><input id="tTaskTintA" type="range" min="10" max="100" value="72" /></div>
-            <div class="row"><label for="tTaskOverlayA">Task white veil</label><input id="tTaskOverlayA" type="range" min="5" max="40" value="12" /></div>
+            <!-- ✅ ONLY what you asked for: stronger full task color -->
+            <div class="row"><label for="tTaskTintA">Task color fill</label><input id="tTaskTintA" type="range" min="10" max="100" value="90" /></div>
 
             <div class="divider"></div>
 
@@ -654,6 +636,7 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -664,22 +647,16 @@
         <div class="grid" id="grid"></div>
 
         <div class="footer-note">
-          <div><span class="kbd">Enter</span> in a task field adds a new task.</div>
+          <div><span class="kbd">Enter</span> in a task field adds a new task. (<span class="kbd">Shift</span>+<span class="kbd">Enter</span> for a new line)</div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    /* ============================
-       Storage keys
-    ============================ */
-    const STORAGE_KEY = "weekly_overview_v3";
-    const THEME_KEY   = "weekly_overview_theme_v3";
+    const STORAGE_KEY = "weekly_overview_v4";
+    const THEME_KEY   = "weekly_overview_theme_v4";
 
-    /* ============================
-       Utils
-    ============================ */
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
@@ -746,7 +723,7 @@
     }
 
     /* ============================
-       Theme (global)
+       Theme
     ============================ */
     const DEFAULT_THEME = {
       appBg: "#ffffff",
@@ -776,8 +753,7 @@
       inputBg: "#ffffff",
       inputBgA: 0.96,
 
-      taskTintA: 0.72,
-      taskOverlayA: 0.12
+      taskTintA: 0.90
     };
 
     function themeLoad(){
@@ -820,7 +796,6 @@
       r.setProperty("--input-bg-a", String(clamp(theme.inputBgA, 0.60, 1.00)));
 
       r.setProperty("--task-tint-a", String(clamp(theme.taskTintA, 0.10, 1.00)));
-      r.setProperty("--task-overlay-a", String(clamp(theme.taskOverlayA, 0.05, 0.40)));
 
       // theme dot
       const dot = document.getElementById("themeDot");
@@ -843,7 +818,7 @@
       }
       st.textContent = `.board::after{ background: ${css} !important; }`;
 
-      // apply day/bg/block/input colors through lightweight styles
+      // day/block/input bg overrides
       let st2 = document.getElementById("surfaceStyle");
       if(!st2){
         st2 = document.createElement("style");
@@ -854,6 +829,8 @@
         .day{ background: ${hexToRgba(normHex(theme.dayBg, "#ffffff"), clamp(theme.dayBgA,0.70,1.00))} !important; }
         .block{ background: ${hexToRgba(normHex(theme.blockBg, "#ffffff"), clamp(theme.blockBgA,0.55,1.00))} !important; }
         textarea{ background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important; }
+        /* keep task textareas transparent so full row color shows */
+        .task-row .taskInput{ background: transparent !important; }
       `;
     }
 
@@ -889,7 +866,6 @@
       set("tInputBgA", Math.round(clamp(theme.inputBgA, 0.60, 1.00) * 100));
 
       set("tTaskTintA", Math.round(clamp(theme.taskTintA, 0.10, 1.00) * 100));
-      set("tTaskOverlayA", Math.round(clamp(theme.taskOverlayA, 0.05, 0.40) * 100));
     }
 
     function themeReadFromInputs(){
@@ -923,7 +899,6 @@
         inputBgA: clamp(Number(g("tInputBgA")?.value)/100, 0.60, 1.00),
 
         taskTintA: clamp(Number(g("tTaskTintA")?.value)/100, 0.10, 1.00),
-        taskOverlayA: clamp(Number(g("tTaskOverlayA")?.value)/100, 0.05, 0.40),
       };
     }
 
@@ -954,7 +929,7 @@
         "tDayBg","tDayBgA",
         "tBlockBg","tBlockBgA",
         "tInputBg","tInputBgA",
-        "tTaskTintA","tTaskOverlayA"
+        "tTaskTintA"
       ];
 
       ids.forEach(id => {
@@ -964,7 +939,6 @@
           const t = themeReadFromInputs();
           themeApply(t);
           themeSave(t);
-          // update task fills, since theme changes affect intensity
           applyTaskFillsForAllDays();
         });
       });
@@ -1018,8 +992,7 @@
       const safe = (value ?? "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"', "&quot;");
+        .replaceAll(">","&gt;");
       return `
         <div class="task-row">
           <textarea class="taskInput" placeholder="Task…">${safe}</textarea>
@@ -1049,20 +1022,10 @@
 
     function applyTaskFill(dayEl){
       const color = dayEl.dataset.color || "#cbb8ae";
-      const taskTintA = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--task-tint-a")) || 0.72;
-      const veilA = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--task-overlay-a")) || 0.12;
+      const taskTintA = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--task-tint-a")) || 0.90;
 
       dayEl.querySelectorAll(".task-row").forEach(row => {
-        // full box color
         row.style.background = hexToRgba(color, clamp(taskTintA, 0.10, 1.00));
-        // readability veil + subtle depth
-        row.style.boxShadow = `0 10px 24px rgba(20,20,20,0.06)`;
-        row.style.position = "relative";
-
-        // veil layer (keeps text readable while still full color)
-        row.style.setProperty("--veil", hexToRgba("#ffffff", clamp(veilA, 0.05, 0.40)));
-        row.style.backgroundImage = `linear-gradient(180deg, var(--veil), var(--veil))`;
-        row.style.backgroundBlendMode = "screen";
       });
     }
 
@@ -1106,7 +1069,7 @@
           <div class="day-body">
             <div class="block">
               <div class="label">Focus</div>
-              <textarea class="focusInput" placeholder="">${(dayData.focus ?? "")
+              <textarea class="focusInput" placeholder="One main thing…">${(dayData.focus ?? "")
                 .replaceAll("&","&amp;")
                 .replaceAll("<","&lt;")
                 .replaceAll(">","&gt;")}</textarea>
@@ -1346,76 +1309,6 @@
     });
 
     window.addEventListener("beforeunload", () => snapshotWeekToStore());
-
-    /* ============================
-       Theme panel wiring
-    ============================ */
-    function initThemeUI(){
-      const themeBtn = $("#themeBtn");
-      const themePanel = $("#themePanel");
-      const themeReset = $("#themeReset");
-      if(!themeBtn || !themePanel || !themeReset) return;
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        $("#bgPanel")?.classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        if(!themePanel.classList.contains("open")) return;
-        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-        if(!inside) themePanel.classList.remove("open");
-      });
-
-      const ids = [
-        "tAppBg","tInk","tMuted","tAccent",
-        "tBorderColor","tBorderA",
-        "tSurfaceA","tPanelA",
-        "tBtnA","tBtnBorderA","tBtnInk",
-        "tOverlayBase","tOverlayA",
-        "tDayBg","tDayBgA",
-        "tBlockBg","tBlockBgA",
-        "tInputBg","tInputBgA",
-        "tTaskTintA","tTaskOverlayA"
-      ];
-
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if(!el) return;
-        el.addEventListener("input", () => {
-          const t = themeReadFromInputs();
-          themeApply(t);
-          themeSave(t);
-          applyTaskFillsForAllDays();
-        });
-      });
-
-      themeReset.addEventListener("click", () => {
-        localStorage.removeItem(THEME_KEY);
-        themeApply(DEFAULT_THEME);
-        themeSyncInputs(DEFAULT_THEME);
-        applyTaskFillsForAllDays();
-      });
-
-      const saved = themeLoad() || DEFAULT_THEME;
-      themeApply(saved);
-      themeSyncInputs(saved);
-    }
-
-    /* ============================
-       Theme storage helpers
-    ============================ */
-    function themeLoad(){
-      try{
-        const raw = localStorage.getItem(THEME_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
-    }
-
-    function themeSave(t){
-      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-    }
 
     /* ============================
        Boot

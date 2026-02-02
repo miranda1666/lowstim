@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Notion Habit Builder / Tracker (AM + PM)</title>
+  <title>Skincare Tracker (AM + PM)</title>
   <style>
     :root{
       --app-bg: #ffffff;
@@ -25,7 +25,7 @@
 
       --accent: #cbb8ae; /* selection ring + theme dot */
 
-      /* overlay (single; no radials) */
+      /* overlay */
       --overlay-base: #ffffff;
       --overlay-a: 0.34;
 
@@ -34,7 +34,7 @@
       --board-tint-a: 0.30;
       --board-image: none;
 
-      /* Cards + blocks + inputs */
+      /* Day cards + blocks + inputs */
       --day-bg: #ffffff;
       --day-bg-a: 0.94;
 
@@ -44,15 +44,15 @@
       --input-bg: #ffffff;
       --input-bg-a: 0.96;
 
-      /* =========================
-         LAYOUT / SCALE
-      ========================= */
+      /* Layout */
       --board-radius: 26px;
       --radius: 20px;
 
       --page-max: 1320px;
       --gap: 16px;
       --pad: 18px;
+
+      --day-min-h: 420px;
 
       --h1: 20px;
       --sub: 14px;
@@ -63,18 +63,17 @@
       --input-pad: 12px 12px;
       --input-radius: 14px;
 
+      --row-radius: 16px;
       --header-pad: 14px 16px;
-
       --chip-pad: 8px 12px;
 
-      /* Day cells */
-      --cell-radius: 14px;
-      --cell-pad: 10px;
+      --max-lines: 4;
 
-      /* Mini boxes (AM/PM) */
-      --mini: 22px;
-      --mini-radius: 9px;
-      --mini-gap: 8px;
+      /* Skincare toggle colors */
+      --am-empty: #eae6e2;
+      --am-filled: #cbb8ae;
+      --pm-empty: #eae6e2;
+      --pm-filled: #c9d7dd;
     }
 
     *{ box-sizing: border-box; }
@@ -140,7 +139,7 @@
       backdrop-filter: blur(2px);
     }
 
-    .bg-btn, .theme-btn{
+    .bg-btn, .nav-btn, .theme-btn, .settings-btn{
       width: 38px;
       height: 38px;
       border-radius: 999px;
@@ -154,7 +153,7 @@
       font-weight: 900;
       line-height: 1;
     }
-    .bg-btn:active, .theme-btn:active{ transform: translateY(1px); }
+    .bg-btn:active, .nav-btn:active, .theme-btn:active, .settings-btn:active{ transform: translateY(1px); }
 
     .bg-dot, .theme-dot{
       width: 16px;
@@ -175,7 +174,7 @@
       position: absolute;
       top: 48px;
       right: 0;
-      width: 360px;
+      width: 380px;
       border-radius: 18px;
       border: 1px solid var(--border);
       background: rgba(255,255,255, var(--panel-a));
@@ -185,7 +184,7 @@
       display: none;
       z-index: 50;
 
-      /* so nothing is cut off */
+      /* allow scroll so nothing is cut off */
       max-height: calc(100vh - 120px);
       overflow: auto;
     }
@@ -249,6 +248,28 @@
       margin: 10px 0;
     }
 
+    .week-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: var(--chip-pad);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255, var(--surface-a));
+      box-shadow: 0 8px 22px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+
+    .week-label{
+      font-size: 13px;
+      color: rgba(43,43,43,0.80);
+      min-width: 170px;
+      text-align: center;
+      user-select: none;
+      font-weight: 650;
+      letter-spacing: 0.1px;
+    }
+
     /* Board */
     .board{
       border: 1px solid var(--border);
@@ -292,28 +313,46 @@
       backdrop-filter: blur(2px);
     }
 
-    /* Habit layout */
-    .content{
-      padding: var(--pad);
+    /* Grid */
+    .grid{
       display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(290px, 1fr);
       gap: var(--gap);
-      grid-template-columns: 360px 1fr;
-      align-items: start;
-      min-height: 520px;
+      padding: var(--pad);
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
     }
-    @media (max-width: 980px){
-      .content{ grid-template-columns: 1fr; }
+    @media (min-width: 1200px){
+      .grid{
+        grid-auto-flow: initial;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        overflow-x: visible;
+        scroll-snap-type: none;
+      }
     }
 
-    .card{
+    .day{
       background: rgba(255,255,255, var(--day-bg-a));
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: 0 10px 26px rgba(20,20,20,0.06);
+      min-height: var(--day-min-h);
+      display: flex;
+      flex-direction: column;
+      scroll-snap-align: start;
+      position: relative;
     }
 
-    .card-header{
+    .day.selected{
+      outline: 4px solid rgba(0,0,0,0); /* set by JS */
+      outline-offset: 3px;
+    }
+
+    .day-header{
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -322,23 +361,44 @@
       background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92));
     }
 
-    .card-title{
+    .day-title{
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      min-width: 0;
+    }
+    .day-name{
       font-weight: 800;
       font-size: 15px;
       letter-spacing: 0.15px;
+      white-space: nowrap;
     }
-
-    .card-sub{
+    .day-date{
       font-size: 13px;
       color: var(--muted);
       font-weight: 650;
+      white-space: nowrap;
     }
 
-    .card-body{
+    .today-chip{
+      margin-left: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.70);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.70);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .day-body{
       padding: 14px 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
+      flex: 1;
     }
 
     .block{
@@ -355,9 +415,70 @@
       font-weight: 700;
       letter-spacing: .02em;
       text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
 
-    input[type="text"], input[type="number"]{
+    .subpill{
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.70);
+      padding: 4px 10px;
+      border-radius: 999px;
+      color: rgba(43,43,43,0.70);
+      user-select: none;
+    }
+
+    .routine{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .step{
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      align-items: center;
+      gap: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(20,20,20,0.05);
+      background: rgba(255,255,255,0.75);
+      padding: 10px 12px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .step:active{ transform: translateY(1px); }
+
+    .tick{
+      width: 22px;
+      height: 22px;
+      border-radius: 9px;
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      background: var(--empty);
+      box-shadow: 0 8px 18px rgba(20,20,20,0.05);
+    }
+    .step.done .tick{
+      background: var(--filled);
+      filter: saturate(1.03) contrast(1.02);
+    }
+
+    .step-text{
+      font-size: 14px;
+      color: rgba(43,43,43,0.88);
+      font-weight: 700;
+      line-height: 1.25;
+      word-break: break-word;
+    }
+
+    textarea{
       width: 100%;
       border: 1px solid rgba(var(--border-rgb), 0.10);
       border-radius: var(--input-radius);
@@ -367,269 +488,17 @@
       color: var(--ink);
       font-size: var(--text);
       line-height: 1.35;
+      resize: none;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 70px;
+      max-height: calc(var(--max-lines) * 1.35em + 28px);
     }
-
-    input[type="text"]:focus, input[type="number"]:focus{
+    textarea:focus{
       border-color: rgba(var(--border-rgb), 0.18);
       box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
     }
-
-    .two-col{
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .hint{
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.35;
-    }
-
-    .add-btn{
-      width: 100%;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.90);
-      border-radius: 16px;
-      padding: 12px 12px;
-      cursor: pointer;
-      color: rgba(43,43,43,0.88);
-      font-weight: 800;
-      -webkit-tap-highlight-color: transparent;
-      font-size: 14px;
-      letter-spacing: 0.1px;
-    }
-    .add-btn:active{ transform: translateY(1px); }
-
-    .ghost-btn{
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.78);
-      border-radius: 14px;
-      padding: 10px 12px;
-      cursor: pointer;
-      color: rgba(43,43,43,0.86);
-      font-weight: 800;
-      -webkit-tap-highlight-color: transparent;
-      font-size: 13px;
-      letter-spacing: 0.1px;
-    }
-    .ghost-btn:active{ transform: translateY(1px); }
-
-    /* habits list scroll */
-    .habits{
-      display: flex;
-      flex-direction: column;
-      gap: var(--gap);
-      min-width: 0;
-      max-height: calc(100vh - 260px);
-      overflow: auto;
-      padding-right: 6px;
-    }
-    @media (max-width: 980px){
-      .habits{
-        max-height: none;
-        overflow: visible;
-        padding-right: 0;
-      }
-    }
-
-    .habit{
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .habit.selected{
-      outline: 4px solid rgba(0,0,0,0); /* set by JS */
-      outline-offset: 3px;
-    }
-
-    .habit-head{
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      padding: var(--header-pad);
-      border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
-      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92));
-    }
-
-    .habit-meta{
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 0;
-    }
-    .habit-name{
-      font-weight: 850;
-      font-size: 16px;
-      letter-spacing: 0.15px;
-      word-break: break-word;
-    }
-    .habit-progress{
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 650;
-    }
-
-    .habit-actions{
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .icon-btn{
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.70);
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      color: rgba(43,43,43,0.78);
-      -webkit-tap-highlight-color: transparent;
-      font-weight: 900;
-      font-size: 18px;
-      line-height: 1;
-      user-select: none;
-    }
-    .icon-btn:active{ transform: translateY(1px); }
-
-    .swatch{
-      position: relative;
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.70);
-      backdrop-filter: blur(2px);
-      overflow: hidden;
-      cursor: pointer;
-    }
-    .swatch::before{
-      content:"";
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(var(--border-rgb), 0.16);
-      background: var(--sw, var(--accent));
-      box-shadow: 0 0 0 6px rgba(0,0,0,0.06);
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-    .swatch input{
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      cursor: pointer;
-      border: 0;
-      margin: 0;
-      padding: 0;
-    }
-
-    .habit-body{
-      padding: 14px 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .day-grid{
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 12px;
-    }
-
-    .day-cell{
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      border-radius: var(--cell-radius);
-      padding: var(--cell-pad);
-      background: rgba(255,255,255,0.65);
-      box-shadow: 0 8px 18px rgba(20,20,20,0.05);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .day-top{
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .day-label{
-      font-weight: 800;
-      font-size: 13px;
-      color: rgba(43,43,43,0.85);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .day-date{
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 650;
-      white-space: nowrap;
-    }
-
-    .am-pm{
-      display: flex;
-      gap: var(--mini-gap);
-      align-items: center;
-      justify-content: flex-start;
-      flex-wrap: wrap;
-    }
-
-    .mini-wrap{
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      padding: 6px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.60);
-    }
-
-    .mini-tag{
-      font-size: 11px;
-      font-weight: 900;
-      color: rgba(43,43,43,0.65);
-      letter-spacing: .03em;
-    }
-
-    .mini{
-      width: var(--mini);
-      height: var(--mini);
-      border-radius: var(--mini-radius);
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: var(--empty, #eae6e2);
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      transition: transform 90ms ease, filter 120ms ease;
-      flex: 0 0 auto;
-    }
-    .mini:active{ transform: translateY(1px) scale(0.98); }
-
-    .mini.done{
-      background: var(--filled, var(--accent));
-      filter: saturate(1.03) contrast(1.02);
-    }
-
-    .habit.collapsed .habit-body{ display: none; }
-    .habit.collapsed .habit-head{ border-bottom: none; }
 
     .footer-note{
       padding: 0 var(--pad) var(--pad);
@@ -660,6 +529,58 @@
       z-index: 9999;
       display: none;
     }
+
+    /* Routine editor */
+    .list{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .line{
+      display: grid;
+      grid-template-columns: 1fr 44px;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .line input[type="text"]{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: 14px;
+      padding: 12px 12px;
+      outline: none;
+      background: rgba(255,255,255, var(--input-bg-a));
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .line input[type="text"]:focus{
+      border-color: rgba(var(--border-rgb), 0.18);
+      box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
+    }
+    .xbtn{
+      width: 44px;
+      border-radius: 14px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.78);
+      cursor: pointer;
+      font-weight: 900;
+      color: rgba(43,43,43,0.76);
+      -webkit-tap-highlight-color: transparent;
+      font-size: 18px;
+    }
+    .xbtn:active{ transform: translateY(1px); }
+    .addRowBtn{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.90);
+      border-radius: 14px;
+      padding: 11px 12px;
+      cursor: pointer;
+      font-weight: 850;
+      color: rgba(43,43,43,0.86);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .addRowBtn:active{ transform: translateY(1px); }
   </style>
 </head>
 
@@ -669,11 +590,53 @@
   <div class="wrap">
     <div class="titlebar">
       <div class="title">
-        <h1>Habit Builder</h1>
-        <div class="subtitle">Each day has AM + PM. Tap the mini boxes. Everything saves locally.</div>
+        <h1>Skincare Tracker</h1>
       </div>
 
       <div class="controls">
+        <div class="week-pill" aria-label="Week navigation">
+          <button class="nav-btn" id="prevWeek" type="button" aria-label="Previous week" title="Previous week">‹</button>
+          <div class="week-label" id="weekLabel">Week</div>
+          <button class="nav-btn" id="nextWeek" type="button" aria-label="Next week" title="Next week">›</button>
+        </div>
+
+        <div class="icon-pill">
+          <button class="settings-btn" id="todayBtn" type="button" aria-label="Jump to today" title="Jump to today">●</button>
+        </div>
+
+        <!-- ROUTINE SETTINGS -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="settings-btn" id="routineBtn" type="button" aria-label="Routine settings" title="Routine settings">≡</button>
+          </div>
+
+          <div class="panel" id="routinePanel" role="dialog" aria-label="Routine settings">
+            <div class="panelTitle">Routine</div>
+
+            <div class="row"><label for="amEmpty">AM empty</label><input id="amEmpty" type="color" value="#eae6e2" /></div>
+            <div class="row"><label for="amFilled">AM filled</label><input id="amFilled" type="color" value="#cbb8ae" /></div>
+            <div class="divider"></div>
+            <div class="row"><label for="pmEmpty">PM empty</label><input id="pmEmpty" type="color" value="#eae6e2" /></div>
+            <div class="row"><label for="pmFilled">PM filled</label><input id="pmFilled" type="color" value="#c9d7dd" /></div>
+
+            <div class="divider"></div>
+
+            <div class="panelTitle" style="margin-top:6px;">AM steps</div>
+            <div class="list" id="amList"></div>
+            <button class="addRowBtn" id="addAmStep" type="button">+ Add AM step</button>
+
+            <div class="divider"></div>
+
+            <div class="panelTitle">PM steps</div>
+            <div class="list" id="pmList"></div>
+            <button class="addRowBtn" id="addPmStep" type="button">+ Add PM step</button>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="resetRoutine" type="button">Reset routine</button>
+          </div>
+        </div>
+
         <!-- THEME -->
         <div class="popover">
           <div class="icon-pill">
@@ -712,8 +675,8 @@
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tDayBg">Card bg</label><input id="tDayBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tDayBgA">Card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="94" /></div>
+            <div class="row"><label for="tDayBg">Day card bg</label><input id="tDayBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDayBgA">Day card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="94" /></div>
 
             <div class="divider"></div>
 
@@ -774,100 +737,22 @@
 
     <div class="board" id="board">
       <div class="board-tint" id="boardTint"></div>
-
       <div class="board-content">
-        <div class="content">
-          <!-- Left: Add habit -->
-          <div class="card" id="addCard">
-            <div class="card-header">
-              <div style="display:flex; flex-direction:column; gap:4px;">
-                <div class="card-title">Add a habit</div>
-                <div class="card-sub">Creates a date-based sequence starting today</div>
-              </div>
-              <button class="ghost-btn" id="clearAll" type="button" title="Clear everything">Clear all</button>
-            </div>
-
-            <div class="card-body">
-              <div class="block">
-                <div class="label">Habit name</div>
-                <input id="habitName" type="text" placeholder="e.g. Stretching" maxlength="80" />
-              </div>
-
-              <div class="block">
-                <div class="label">How many days?</div>
-                <input id="habitDays" type="number" min="1" max="365" value="30" />
-                <div class="hint" style="margin-top:10px;">
-                  Each day has AM + PM. Full completion = all AM+PM checked.
-                </div>
-              </div>
-
-              <div class="block">
-                <div class="label">Habit colors (per habit)</div>
-
-                <div class="two-col">
-                  <div>
-                    <div class="hint" style="margin-bottom:8px;">Card background</div>
-                    <input id="cHabitBg" type="color" value="#ffffff" />
-                  </div>
-                  <div>
-                    <div class="hint" style="margin-bottom:8px;">Text</div>
-                    <input id="cHabitInk" type="color" value="#2b2b2b" />
-                  </div>
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="two-col">
-                  <div>
-                    <div class="hint" style="margin-bottom:8px;">Box border</div>
-                    <input id="cBoxBorder" type="color" value="#1e1e1e" />
-                  </div>
-                  <div>
-                    <div class="hint" style="margin-bottom:8px;">Boxes (empty)</div>
-                    <input id="cBoxEmpty" type="color" value="#eae6e2" />
-                  </div>
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="two-col">
-                  <div>
-                    <div class="hint" style="margin-bottom:8px;">Boxes (filled)</div>
-                    <input id="cBoxFilled" type="color" value="#cbb8ae" />
-                  </div>
-                  <div>
-                    <div class="hint" style="margin-bottom:8px;">(unused)</div>
-                    <input type="color" value="#ffffff" style="visibility:hidden" aria-hidden="true"/>
-                  </div>
-                </div>
-              </div>
-
-              <button class="add-btn" id="addHabitBtn" type="button">+ Add habit</button>
-
-              <div class="hint">
-                Tap a habit card to select it (accent ring). Tap AM/PM mini boxes to toggle.
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: Habits -->
-          <div class="habits" id="habits" aria-label="Habits list"></div>
-        </div>
+        <div class="grid" id="grid"></div>
 
         <div class="footer-note">
-          <div>Saved locally in your browser (per device & browser profile)</div>
-          <div><span class="kbd">Tip</span> Theme + Background help match your Notion page</div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const APP_KEY   = "notion_habit_builder_ampm_v1";
-    const THEME_KEY = "weekly_overview_theme_v5";
-    const BG_KEY    = "weekly_overview_bg_v5";
+    const STORE_KEY   = "skincare_tracker_store_v1";
+    const THEME_KEY   = "skincare_tracker_theme_v1";
+    const BG_KEY      = "skincare_tracker_bg_v1";
+    const ROUTINE_KEY = "skincare_tracker_routine_v1";
 
-    const $ = (sel, root=document) => root.querySelector(sel);
+    const $  = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
     function clamp(n, min, max){
@@ -894,43 +779,42 @@
       return `rgba(${r},${g},${b},${a})`;
     }
 
-    function uid(){
-      return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
-    }
-
-    function escapeHtml(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
     function toISODate(d){
       const x = new Date(d);
       x.setHours(0,0,0,0);
       return x.toISOString().slice(0,10);
     }
 
-    function addDaysISO(iso, n){
-      const d = new Date(iso + "T00:00:00");
-      d.setDate(d.getDate() + n);
-      return toISODate(d);
+    function mondayOfWeek(date){
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      d.setDate(d.getDate() + diff);
+      d.setHours(0,0,0,0);
+      return d;
     }
 
-    function shortDateLabel(iso){
-      const d = new Date(iso + "T00:00:00");
+    function addDays(d, n){
+      const x = new Date(d);
+      x.setDate(x.getDate() + n);
+      return x;
+    }
+
+    function formatShortDate(d){
       return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
 
-    function dayNameShort(iso){
-      const d = new Date(iso + "T00:00:00");
-      return d.toLocaleDateString(undefined, { weekday: "short" });
+    function prettyWeekLabel(weekId){
+      const mon = new Date(weekId + "T00:00:00");
+      const sun = addDays(mon, 6);
+      const opts = { month: "short", day: "numeric" };
+      const left = mon.toLocaleDateString(undefined, opts);
+      const right = sun.toLocaleDateString(undefined, opts);
+      return `${left} – ${right}`;
     }
 
     /* =========================
-       Theme
+       Theme (modeled on your code)
     ========================= */
     const DEFAULT_THEME = {
       appBg: "#ffffff",
@@ -966,6 +850,7 @@
         return raw ? JSON.parse(raw) : null;
       }catch{ return null; }
     }
+
     function themeSave(t){
       try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
     }
@@ -979,7 +864,7 @@
         document.head.appendChild(st);
       }
       st.textContent = `
-        .habit.selected{
+        .day.selected{
           outline-color: ${hexToRgba(accent, 0.62)} !important;
           box-shadow: 0 0 0 1px ${hexToRgba(accent, 0.22)} inset;
         }
@@ -1032,9 +917,9 @@
         document.head.appendChild(st2);
       }
       st2.textContent = `
-        .card, .habit{ background: ${hexToRgba(normHex(theme.dayBg, "#ffffff"), clamp(theme.dayBgA,0.70,1.00))} !important; }
+        .day{ background: ${hexToRgba(normHex(theme.dayBg, "#ffffff"), clamp(theme.dayBgA,0.70,1.00))} !important; }
         .block{ background: ${hexToRgba(normHex(theme.blockBg, "#ffffff"), clamp(theme.blockBgA,0.55,1.00))} !important; }
-        input[type="text"], input[type="number"]{ background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important; }
+        textarea{ background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important; }
       `;
     }
 
@@ -1104,12 +989,12 @@
       const themeBtn = $("#themeBtn");
       const themePanel = $("#themePanel");
       const themeReset = $("#themeReset");
-      if(!themeBtn || !themePanel || !themeReset) return;
 
       themeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         themePanel.classList.toggle("open");
         $("#bgPanel")?.classList.remove("open");
+        $("#routinePanel")?.classList.remove("open");
       });
 
       document.addEventListener("click", (e) => {
@@ -1126,7 +1011,7 @@
         "tOverlayBase","tOverlayA",
         "tDayBg","tDayBgA",
         "tBlockBg","tBlockBgA",
-        "tInputBg","tInputBgA",
+        "tInputBg","tInputBgA"
       ];
 
       ids.forEach(id => {
@@ -1153,16 +1038,6 @@
     /* =========================
        Background
     ========================= */
-    const boardTint = $("#boardTint");
-    const bgBtn = $("#bgBtn");
-    const bgPanel = $("#bgPanel");
-    const bgColor = $("#bgColor");
-    const bgStrength = $("#bgStrength");
-    const bgImage = $("#bgImage");
-    const removeImage = $("#removeImage");
-    const bgDot = $("#bgDot");
-    const bgReset = $("#bgReset");
-
     const DEFAULT_BG = { tint: "#efe7e1", strength: 30, imageDataUrl: null };
 
     function bgLoad(){
@@ -1186,70 +1061,22 @@
       document.documentElement.style.setProperty("--board-tint", tint);
       document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
+      const bgDot = $("#bgDot");
       if(bgDot){
         bgDot.style.background = tint;
         bgDot.style.boxShadow = `0 0 0 7px ${hexToRgba(tint, Math.min(0.30, strength + 0.10))}`;
       }
 
-      boardTint.style.background = hexToRgba(tint, strength);
+      $("#boardTint").style.background = hexToRgba(tint, strength);
     }
 
     function applyBackground(bg){
       const x = Object.assign({}, DEFAULT_BG, bg || {});
-      bgColor.value = x.tint;
-      bgStrength.value = String(x.strength);
+      $("#bgColor").value = x.tint;
+      $("#bgStrength").value = String(x.strength);
       applyBoardTint(x.tint, x.strength);
       setBoardImage(x.imageDataUrl);
     }
-
-    bgBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      bgPanel.classList.toggle("open");
-      $("#themePanel")?.classList.remove("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!bgPanel.classList.contains("open")) return;
-      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      if (!inside) bgPanel.classList.remove("open");
-    });
-
-    bgColor.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const cur = bgLoad() || DEFAULT_BG;
-      cur.tint = bgColor.value;
-      bgSave(cur);
-    });
-
-    bgStrength.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const cur = bgLoad() || DEFAULT_BG;
-      cur.strength = Number(bgStrength.value);
-      bgSave(cur);
-    });
-
-    bgImage.addEventListener("change", async () => {
-      const file = bgImage.files && bgImage.files[0];
-      if (!file) return;
-      const dataUrl = await fileToDataUrl(file);
-      setBoardImage(dataUrl);
-      const cur = bgLoad() || DEFAULT_BG;
-      cur.imageDataUrl = dataUrl;
-      bgSave(cur);
-    });
-
-    removeImage.addEventListener("click", () => {
-      setBoardImage(null);
-      bgImage.value = "";
-      const cur = bgLoad() || DEFAULT_BG;
-      cur.imageDataUrl = null;
-      bgSave(cur);
-    });
-
-    bgReset.addEventListener("click", () => {
-      localStorage.removeItem(BG_KEY);
-      applyBackground(DEFAULT_BG);
-    });
 
     function fileToDataUrl(file){
       return new Promise((resolve, reject) => {
@@ -1260,367 +1087,600 @@
       });
     }
 
+    function initBackgroundUI(){
+      const bgBtn = $("#bgBtn");
+      const bgPanel = $("#bgPanel");
+      const bgColor = $("#bgColor");
+      const bgStrength = $("#bgStrength");
+      const bgImage = $("#bgImage");
+      const removeImage = $("#removeImage");
+      const bgReset = $("#bgReset");
+
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+        $("#themePanel")?.classList.remove("open");
+        $("#routinePanel")?.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!bgPanel.classList.contains("open")) return;
+        const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+        if (!inside) bgPanel.classList.remove("open");
+      });
+
+      bgColor.addEventListener("input", () => {
+        applyBoardTint(bgColor.value, bgStrength.value);
+        const cur = bgLoad() || DEFAULT_BG;
+        cur.tint = bgColor.value;
+        bgSave(cur);
+      });
+
+      bgStrength.addEventListener("input", () => {
+        applyBoardTint(bgColor.value, bgStrength.value);
+        const cur = bgLoad() || DEFAULT_BG;
+        cur.strength = Number(bgStrength.value);
+        bgSave(cur);
+      });
+
+      bgImage.addEventListener("change", async () => {
+        const file = bgImage.files && bgImage.files[0];
+        if (!file) return;
+        const dataUrl = await fileToDataUrl(file);
+        setBoardImage(dataUrl);
+        const cur = bgLoad() || DEFAULT_BG;
+        cur.imageDataUrl = dataUrl;
+        bgSave(cur);
+      });
+
+      removeImage.addEventListener("click", () => {
+        setBoardImage(null);
+        bgImage.value = "";
+        const cur = bgLoad() || DEFAULT_BG;
+        cur.imageDataUrl = null;
+        bgSave(cur);
+      });
+
+      bgReset.addEventListener("click", () => {
+        localStorage.removeItem(BG_KEY);
+        applyBackground(DEFAULT_BG);
+      });
+
+      applyBackground(bgLoad() || DEFAULT_BG);
+    }
+
     /* =========================
-       Habits store
+       Routine + Colors
     ========================= */
-    function loadApp(){
+    const DEFAULT_ROUTINE = {
+      colors: {
+        amEmpty: "#eae6e2",
+        amFilled: "#cbb8ae",
+        pmEmpty: "#eae6e2",
+        pmFilled: "#c9d7dd"
+      },
+      am: [
+        "Cleanser",
+        "Hydrating toner / mist",
+        "Vitamin C / antioxidant",
+        "Moisturizer",
+        "SPF"
+      ],
+      pm: [
+        "Makeup remover / oil cleanse",
+        "Cleanser",
+        "Treatment (retinoid / acids)",
+        "Moisturizer",
+        "Lip balm"
+      ]
+    };
+
+    function routineLoad(){
       try{
-        const raw = localStorage.getItem(APP_KEY);
-        return raw ? JSON.parse(raw) : { habits: [] };
-      }catch{
-        return { habits: [] };
-      }
-    }
-    function saveApp(data){
-      localStorage.setItem(APP_KEY, JSON.stringify(data));
+        const raw = localStorage.getItem(ROUTINE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }catch{ return null; }
     }
 
-    let app = loadApp();
-    let selectedHabitId = null;
-    const habitsEl = $("#habits");
-
-    function ensureDays(h){
-      // h.daysList = ["YYYY-MM-DD", ...]
-      // h.checks = { "YYYY-MM-DD": { am: bool, pm: bool } }
-      if(!Array.isArray(h.daysList) || !h.daysList.length){
-        const start = h.startDate || toISODate(new Date());
-        const total = clamp(h.targetDays, 1, 365);
-        h.daysList = Array.from({length: total}, (_, i) => addDaysISO(start, i));
-      }
-      if(!h.checks || typeof h.checks !== "object") h.checks = {};
-      for(const iso of h.daysList){
-        if(!h.checks[iso]) h.checks[iso] = { am: false, pm: false };
-        if(typeof h.checks[iso].am !== "boolean") h.checks[iso].am = false;
-        if(typeof h.checks[iso].pm !== "boolean") h.checks[iso].pm = false;
-      }
+    function routineSave(r){
+      try{ localStorage.setItem(ROUTINE_KEY, JSON.stringify(r)); }catch{}
     }
 
-    function progressCounts(h){
-      ensureDays(h);
-      let done = 0;
-      const total = h.daysList.length * 2;
-      for(const iso of h.daysList){
-        const c = h.checks[iso];
-        if(c?.am) done++;
-        if(c?.pm) done++;
-      }
-      return { done, total };
+    function routineApplyColors(colors){
+      const c = colors || DEFAULT_ROUTINE.colors;
+      document.documentElement.style.setProperty("--am-empty", normHex(c.amEmpty, DEFAULT_ROUTINE.colors.amEmpty));
+      document.documentElement.style.setProperty("--am-filled", normHex(c.amFilled, DEFAULT_ROUTINE.colors.amFilled));
+      document.documentElement.style.setProperty("--pm-empty", normHex(c.pmEmpty, DEFAULT_ROUTINE.colors.pmEmpty));
+      document.documentElement.style.setProperty("--pm-filled", normHex(c.pmFilled, DEFAULT_ROUTINE.colors.pmFilled));
+
+      $("#amEmpty").value = normHex(c.amEmpty, DEFAULT_ROUTINE.colors.amEmpty);
+      $("#amFilled").value = normHex(c.amFilled, DEFAULT_ROUTINE.colors.amFilled);
+      $("#pmEmpty").value = normHex(c.pmEmpty, DEFAULT_ROUTINE.colors.pmEmpty);
+      $("#pmFilled").value = normHex(c.pmFilled, DEFAULT_ROUTINE.colors.pmFilled);
     }
 
-    function isComplete(h){
-      const { done, total } = progressCounts(h);
-      return total > 0 && done >= total;
+    function initRoutineUI(){
+      const routineBtn = $("#routineBtn");
+      const routinePanel = $("#routinePanel");
+
+      routineBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        routinePanel.classList.toggle("open");
+        $("#themePanel")?.classList.remove("open");
+        $("#bgPanel")?.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if(!routinePanel.classList.contains("open")) return;
+        const inside = e.target.closest("#routinePanel") || e.target.closest("#routineBtn");
+        if(!inside) routinePanel.classList.remove("open");
+      });
+
+      const amEmpty = $("#amEmpty");
+      const amFilled = $("#amFilled");
+      const pmEmpty = $("#pmEmpty");
+      const pmFilled = $("#pmFilled");
+
+      [amEmpty, amFilled, pmEmpty, pmFilled].forEach(el => {
+        el.addEventListener("input", () => {
+          const r = getRoutine();
+          r.colors = {
+            amEmpty: amEmpty.value,
+            amFilled: amFilled.value,
+            pmEmpty: pmEmpty.value,
+            pmFilled: pmFilled.value
+          };
+          routineApplyColors(r.colors);
+          routineSave(r);
+          rebuildWeek(activeWeekId); // repaint ticks
+        });
+      });
+
+      $("#addAmStep").addEventListener("click", () => {
+        const r = getRoutine();
+        r.am.push("New AM step");
+        routineSave(r);
+        renderRoutineEditor();
+        rebuildWeek(activeWeekId);
+      });
+
+      $("#addPmStep").addEventListener("click", () => {
+        const r = getRoutine();
+        r.pm.push("New PM step");
+        routineSave(r);
+        renderRoutineEditor();
+        rebuildWeek(activeWeekId);
+      });
+
+      $("#resetRoutine").addEventListener("click", () => {
+        localStorage.removeItem(ROUTINE_KEY);
+        routine = structuredClone(DEFAULT_ROUTINE);
+        routineApplyColors(routine.colors);
+        renderRoutineEditor();
+        // (we keep your existing history; only routine labels change)
+        rebuildWeek(activeWeekId);
+      });
+
+      // initial
+      routineApplyColors(getRoutine().colors);
+      renderRoutineEditor();
     }
 
-    function renderHabits(){
-      habitsEl.innerHTML = "";
+    let routine = routineLoad() || structuredClone(DEFAULT_ROUTINE);
+    function getRoutine(){
+      if(!routine) routine = structuredClone(DEFAULT_ROUTINE);
+      if(!routine.am || !Array.isArray(routine.am)) routine.am = structuredClone(DEFAULT_ROUTINE.am);
+      if(!routine.pm || !Array.isArray(routine.pm)) routine.pm = structuredClone(DEFAULT_ROUTINE.pm);
+      if(!routine.colors) routine.colors = structuredClone(DEFAULT_ROUTINE.colors);
+      return routine;
+    }
 
-      if(!app.habits.length){
-        const empty = document.createElement("div");
-        empty.className = "card";
-        empty.innerHTML = `
-          <div class="card-header">
-            <div style="display:flex; flex-direction:column; gap:4px;">
-              <div class="card-title">No habits yet</div>
-              <div class="card-sub">Add one on the left to get started.</div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="hint">This widget saves locally (no account). Each habit is date-based (AM+PM per day).</div>
-          </div>
+    function renderRoutineEditor(){
+      const r = getRoutine();
+
+      const amList = $("#amList");
+      const pmList = $("#pmList");
+      amList.innerHTML = "";
+      pmList.innerHTML = "";
+
+      const makeRow = (text, onText, onDel) => {
+        const row = document.createElement("div");
+        row.className = "line";
+        row.innerHTML = `
+          <input type="text" value="${escapeAttr(text)}" />
+          <button class="xbtn" type="button" aria-label="Remove">×</button>
         `;
-        habitsEl.appendChild(empty);
-        return;
-      }
+        const input = row.querySelector("input");
+        const del = row.querySelector("button");
+        input.addEventListener("input", () => onText(input.value));
+        del.addEventListener("click", () => onDel());
+        return row;
+      };
 
-      app.habits.forEach(h => {
-        ensureDays(h);
-
-        const habitBg = normHex(h.habitBg, "#ffffff");
-        const habitInk = normHex(h.habitInk, "#2b2b2b");
-        const empty = normHex(h.boxEmpty, "#eae6e2");
-        const filled = normHex(h.boxFilled, "#cbb8ae");
-        const boxBorder = normHex(h.boxBorder, "#1e1e1e");
-
-        const { done, total } = progressCounts(h);
-        const pct = Math.round((done / Math.max(1,total)) * 100);
-
-        const habit = document.createElement("section");
-        habit.className = "habit card" + (h.collapsed ? " collapsed" : "");
-        habit.dataset.id = h.id;
-
-        habit.style.background = habitBg;
-        habit.style.color = habitInk;
-
-        habit.innerHTML = `
-          <div class="habit-head">
-            <div class="habit-meta">
-              <div class="habit-name">${escapeHtml(h.name)}</div>
-              <div class="habit-progress">${done}/${total} checks • ${pct}% • starts ${shortDateLabel(h.startDate)}</div>
-            </div>
-
-            <div class="habit-actions" aria-label="Habit controls">
-              <div class="swatch" title="Card background" style="--sw:${habitBg}">
-                <input data-action="habitBg" type="color" value="${habitBg}" aria-label="Card background">
-              </div>
-              <div class="swatch" title="Text color" style="--sw:${habitInk}">
-                <input data-action="habitInk" type="color" value="${habitInk}" aria-label="Text color">
-              </div>
-              <div class="swatch" title="Mini boxes (empty)" style="--sw:${empty}">
-                <input data-action="boxEmpty" type="color" value="${empty}" aria-label="Empty mini box color">
-              </div>
-              <div class="swatch" title="Mini boxes (filled)" style="--sw:${filled}">
-                <input data-action="boxFilled" type="color" value="${filled}" aria-label="Filled mini box color">
-              </div>
-              <div class="swatch" title="Mini box border" style="--sw:${boxBorder}">
-                <input data-action="boxBorder" type="color" value="${boxBorder}" aria-label="Mini box border color">
-              </div>
-
-              <button class="icon-btn" data-action="collapse" type="button" title="${h.collapsed ? "Expand days" : "Collapse days"}" aria-label="Collapse/expand">
-                ${h.collapsed ? "▾" : "▴"}
-              </button>
-              <button class="icon-btn" data-action="reset" type="button" title="Reset checks" aria-label="Reset checks">↺</button>
-              <button class="icon-btn" data-action="delete" type="button" title="Delete habit" aria-label="Delete habit">×</button>
-            </div>
-          </div>
-
-          <div class="habit-body">
-            <div class="day-grid"
-              style="--empty:${empty}; --filled:${filled};"
-              aria-label="Days (AM/PM)"
-            ></div>
-          </div>
-        `;
-
-        habit.classList.toggle("selected", selectedHabitId === h.id);
-        habitsEl.appendChild(habit);
-
-        if(!h.collapsed){
-          const grid = habit.querySelector(".day-grid");
-
-          for(const iso of h.daysList){
-            const c = h.checks[iso] || { am:false, pm:false };
-
-            const cell = document.createElement("div");
-            cell.className = "day-cell";
-            cell.dataset.iso = iso;
-
-            cell.innerHTML = `
-              <div class="day-top">
-                <div class="day-label">${escapeHtml(dayNameShort(iso))}</div>
-                <div class="day-date">${escapeHtml(shortDateLabel(iso))}</div>
-              </div>
-
-              <div class="am-pm">
-                <div class="mini-wrap">
-                  <span class="mini-tag">AM</span>
-                  <div class="mini ${c.am ? "done" : ""}" data-slot="am" title="AM"></div>
-                </div>
-
-                <div class="mini-wrap">
-                  <span class="mini-tag">PM</span>
-                  <div class="mini ${c.pm ? "done" : ""}" data-slot="pm" title="PM"></div>
-                </div>
-              </div>
-            `;
-
-            // border color for the minis
-            cell.querySelectorAll(".mini").forEach(m => {
-              m.style.borderColor = hexToRgba(boxBorder, 0.18);
-            });
-
-            grid.appendChild(cell);
+      r.am.forEach((t, idx) => {
+        amList.appendChild(makeRow(t,
+          (v) => {
+            const rr = getRoutine();
+            rr.am[idx] = v;
+            routineSave(rr);
+            rebuildWeek(activeWeekId);
+          },
+          () => {
+            const rr = getRoutine();
+            rr.am.splice(idx, 1);
+            routineSave(rr);
+            renderRoutineEditor();
+            rebuildWeek(activeWeekId);
           }
-        }
+        ));
+      });
+
+      r.pm.forEach((t, idx) => {
+        pmList.appendChild(makeRow(t,
+          (v) => {
+            const rr = getRoutine();
+            rr.pm[idx] = v;
+            routineSave(rr);
+            rebuildWeek(activeWeekId);
+          },
+          () => {
+            const rr = getRoutine();
+            rr.pm.splice(idx, 1);
+            routineSave(rr);
+            renderRoutineEditor();
+            rebuildWeek(activeWeekId);
+          }
+        ));
       });
     }
 
-    function upsertHabit(id, patch){
-      const idx = app.habits.findIndex(x => x.id === id);
-      if(idx < 0) return;
-      app.habits[idx] = Object.assign({}, app.habits[idx], patch);
-      saveApp(app);
-      renderHabits();
-    }
-
-    function removeHabit(id){
-      app.habits = app.habits.filter(h => h.id !== id);
-      if(selectedHabitId === id) selectedHabitId = null;
-      saveApp(app);
-      renderHabits();
-    }
-
-    function resetHabitChecks(id){
-      const h = app.habits.find(x => x.id === id);
-      if(!h) return;
-      ensureDays(h);
-      for(const iso of h.daysList){
-        h.checks[iso] = { am:false, pm:false };
-      }
-      saveApp(app);
-      renderHabits();
-    }
-
-    function toggleCollapsed(id){
-      const h = app.habits.find(x => x.id === id);
-      if(!h) return;
-      h.collapsed = !h.collapsed;
-      saveApp(app);
-      renderHabits();
-    }
-
-    function toggleCheck(id, iso, slot){
-      const h = app.habits.find(x => x.id === id);
-      if(!h) return;
-      ensureDays(h);
-      if(!h.checks[iso]) h.checks[iso] = { am:false, pm:false };
-      h.checks[iso][slot] = !h.checks[iso][slot];
-      saveApp(app);
-      renderHabits();
-      if(isComplete(h)) confettiBurst();
+    function escapeAttr(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
     }
 
     /* =========================
-       Add habit UI
+       Store (per ISO date)
     ========================= */
-    const habitName = $("#habitName");
-    const habitDays = $("#habitDays");
-    const addHabitBtn = $("#addHabitBtn");
-
-    const cHabitBg   = $("#cHabitBg");
-    const cHabitInk  = $("#cHabitInk");
-    const cBoxBorder = $("#cBoxBorder");
-    const cBoxEmpty  = $("#cBoxEmpty");
-    const cBoxFilled = $("#cBoxFilled");
-
-    function addHabit(){
-      const name = (habitName.value || "").trim();
-      if(!name){
-        habitName.focus();
-        return;
+    function loadStore(){
+      try{
+        const raw = localStorage.getItem(STORE_KEY);
+        return raw ? JSON.parse(raw) : { days: {} };
+      }catch{
+        return { days: {} };
       }
-
-      const targetDays = clamp(habitDays.value, 1, 365);
-      const startDate = toISODate(new Date());
-
-      const h = {
-        id: uid(),
-        name,
-        startDate,
-        targetDays,
-        daysList: Array.from({length: targetDays}, (_, i) => addDaysISO(startDate, i)),
-        checks: {},
-
-        collapsed: false,
-
-        habitBg: normHex(cHabitBg.value, "#ffffff"),
-        habitInk: normHex(cHabitInk.value, "#2b2b2b"),
-        boxBorder: normHex(cBoxBorder.value, "#1e1e1e"),
-        boxEmpty: normHex(cBoxEmpty.value, "#eae6e2"),
-        boxFilled: normHex(cBoxFilled.value, "#cbb8ae"),
-      };
-
-      // init checks
-      for(const iso of h.daysList){
-        h.checks[iso] = { am:false, pm:false };
-      }
-
-      app.habits.unshift(h);
-      selectedHabitId = h.id;
-      saveApp(app);
-      renderHabits();
-
-      habitName.value = "";
-      habitName.focus();
+    }
+    function saveStore(s){
+      localStorage.setItem(STORE_KEY, JSON.stringify(s));
     }
 
-    addHabitBtn.addEventListener("click", addHabit);
-    habitName.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){
-        e.preventDefault();
-        addHabit();
+    // day record schema:
+    // store.days[iso] = { am: boolean[], pm: boolean[], note: string }
+    let store = loadStore();
+
+    function ensureDay(iso){
+      const r = getRoutine();
+      if(!store.days[iso]){
+        store.days[iso] = {
+          am: new Array(r.am.length).fill(false),
+          pm: new Array(r.pm.length).fill(false),
+          note: ""
+        };
+      }else{
+        // adjust lengths if routine changed
+        const d = store.days[iso];
+        if(!Array.isArray(d.am)) d.am = [];
+        if(!Array.isArray(d.pm)) d.pm = [];
+        while(d.am.length < r.am.length) d.am.push(false);
+        while(d.pm.length < r.pm.length) d.pm.push(false);
+        d.am = d.am.slice(0, r.am.length);
+        d.pm = d.pm.slice(0, r.pm.length);
+        if(typeof d.note !== "string") d.note = "";
       }
-    });
-    habitDays.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){
-        e.preventDefault();
-        addHabit();
+      return store.days[iso];
+    }
+
+    function dayCompletion(iso){
+      const r = getRoutine();
+      const d = ensureDay(iso);
+      const amDone = r.am.length ? d.am.every(Boolean) : true;
+      const pmDone = r.pm.length ? d.pm.every(Boolean) : true;
+      return { amDone, pmDone, allDone: amDone && pmDone };
+    }
+
+    /* =========================
+       Week UI
+    ========================= */
+    const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const grid = $("#grid");
+
+    let selectedDayIso = toISODate(new Date());
+    let activeWeekId = toISODate(mondayOfWeek(new Date()));
+
+    function rebuildWeek(weekId){
+      activeWeekId = weekId;
+      $("#weekLabel").textContent = prettyWeekLabel(weekId);
+
+      const monday = new Date(weekId + "T00:00:00");
+      grid.innerHTML = "";
+
+      for(let i=0;i<7;i++){
+        const date = addDays(monday, i);
+        const iso = toISODate(date);
+        const dayData = ensureDay(iso);
+        const isToday = iso === toISODate(new Date());
+
+        const r = getRoutine();
+        const { amDone, pmDone } = dayCompletion(iso);
+
+        const day = document.createElement("section");
+        day.className = "day";
+        day.dataset.iso = iso;
+
+        day.innerHTML = `
+          <div class="day-header">
+            <div class="day-title">
+              <div class="day-name">${dayNames[i]}${isToday ? ` <span class="today-chip">Today</span>` : ""}</div>
+              <div class="day-date">${formatShortDate(date)}</div>
+            </div>
+          </div>
+
+          <div class="day-body">
+            <div class="block" data-part="am">
+              <div class="label">
+                <span>AM</span>
+                <span class="subpill">${amDone ? "done" : "in progress"}</span>
+              </div>
+              <div class="routine" data-routine="am"></div>
+            </div>
+
+            <div class="block" data-part="pm">
+              <div class="label">
+                <span>PM</span>
+                <span class="subpill">${pmDone ? "done" : "in progress"}</span>
+              </div>
+              <div class="routine" data-routine="pm"></div>
+            </div>
+
+            <div class="block">
+              <div class="label">Notes</div>
+              <textarea class="note" placeholder="">${escapeText(dayData.note)}</textarea>
+            </div>
+          </div>
+        `;
+
+        // build routines
+        const amWrap = day.querySelector('[data-routine="am"]');
+        const pmWrap = day.querySelector('[data-routine="pm"]');
+
+        const amEmpty = getComputedStyle(document.documentElement).getPropertyValue("--am-empty").trim() || "#eae6e2";
+        const amFilled = getComputedStyle(document.documentElement).getPropertyValue("--am-filled").trim() || "#cbb8ae";
+        const pmEmpty = getComputedStyle(document.documentElement).getPropertyValue("--pm-empty").trim() || "#eae6e2";
+        const pmFilled = getComputedStyle(document.documentElement).getPropertyValue("--pm-filled").trim() || "#c9d7dd";
+
+        r.am.forEach((label, idx) => {
+          const step = document.createElement("div");
+          step.className = "step" + (dayData.am[idx] ? " done" : "");
+          step.dataset.slot = "am";
+          step.dataset.idx = String(idx);
+          step.style.setProperty("--empty", amEmpty);
+          step.style.setProperty("--filled", amFilled);
+          step.innerHTML = `
+            <div class="tick" aria-hidden="true"></div>
+            <div class="step-text">${escapeHtml(label)}</div>
+          `;
+          amWrap.appendChild(step);
+        });
+
+        r.pm.forEach((label, idx) => {
+          const step = document.createElement("div");
+          step.className = "step" + (dayData.pm[idx] ? " done" : "");
+          step.dataset.slot = "pm";
+          step.dataset.idx = String(idx);
+          step.style.setProperty("--empty", pmEmpty);
+          step.style.setProperty("--filled", pmFilled);
+          step.innerHTML = `
+            <div class="tick" aria-hidden="true"></div>
+            <div class="step-text">${escapeHtml(label)}</div>
+          `;
+          pmWrap.appendChild(step);
+        });
+
+        grid.appendChild(day);
+      }
+
+      selectDay(selectedDayIso);
+    }
+
+    function escapeText(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function selectDay(iso){
+      selectedDayIso = iso;
+      $$(".day").forEach(d => d.classList.toggle("selected", d.dataset.iso === iso));
+    }
+
+    /* =========================
+       Interactions + autosave
+    ========================= */
+    grid.addEventListener("click", (e) => {
+      const dayEl = e.target.closest(".day");
+      if(!dayEl) return;
+      const iso = dayEl.dataset.iso;
+
+      // select day on card click (but not when clicking textarea)
+      if(!e.target.closest("textarea")){
+        selectDay(iso);
+      }
+
+      // toggle step
+      const step = e.target.closest(".step");
+      if(step){
+        const slot = step.dataset.slot; // am/pm
+        const idx = Number(step.dataset.idx);
+        if(slot !== "am" && slot !== "pm") return;
+        if(!Number.isFinite(idx)) return;
+
+        const d = ensureDay(iso);
+        const arr = slot === "am" ? d.am : d.pm;
+        arr[idx] = !arr[idx];
+        saveStore(store);
+
+        // update UI quickly
+        step.classList.toggle("done", arr[idx]);
+
+        // refresh done pills + confetti if day completed
+        const { amDone, pmDone, allDone } = dayCompletion(iso);
+        dayEl.querySelector('[data-part="am"] .subpill').textContent = amDone ? "done" : "in progress";
+        dayEl.querySelector('[data-part="pm"] .subpill').textContent = pmDone ? "done" : "in progress";
+        if(allDone) confettiBurst();
+
+        return;
       }
     });
 
-    $("#clearAll").addEventListener("click", () => {
-      if(!confirm("Clear all habits? This removes everything saved locally for this widget.")) return;
-      localStorage.removeItem(APP_KEY);
-      app = { habits: [] };
-      selectedHabitId = null;
-      renderHabits();
+    grid.addEventListener("input", (e) => {
+      const note = e.target.closest("textarea.note");
+      if(!note) return;
+      const dayEl = note.closest(".day");
+      if(!dayEl) return;
+      const iso = dayEl.dataset.iso;
+      const d = ensureDay(iso);
+      d.note = note.value ?? "";
+      saveStore(store);
     });
 
     /* =========================
-       Habit interactions
+       Week navigation
     ========================= */
-    habitsEl.addEventListener("click", (e) => {
-      const habit = e.target.closest(".habit");
-      if(!habit) return;
-      const id = habit.dataset.id;
-
-      // toggle AM/PM mini
-      const mini = e.target.closest(".mini");
-      if(mini){
-        const cell = e.target.closest(".day-cell");
-        const iso = cell?.dataset?.iso;
-        const slot = mini.dataset.slot;
-        if(iso && (slot === "am" || slot === "pm")){
-          toggleCheck(id, iso, slot);
-        }
-        return;
-      }
-
-      // buttons
-      const btn = e.target.closest("button[data-action]");
-      if(btn){
-        const action = btn.dataset.action;
-        if(action === "delete") removeHabit(id);
-        if(action === "reset") resetHabitChecks(id);
-        if(action === "collapse") toggleCollapsed(id);
-        return;
-      }
-
-      // per-habit color inputs should not select habit
-      if(e.target.closest("input")) return;
-
-      // select habit card
-      selectedHabitId = id;
-      renderHabits();
+    $("#prevWeek").addEventListener("click", () => {
+      const mon = new Date(activeWeekId + "T00:00:00");
+      rebuildWeek(toISODate(addDays(mon, -7)));
     });
 
-    habitsEl.addEventListener("input", (e) => {
-      const input = e.target.closest("input[data-action]");
-      if(!input) return;
-
-      const habit = input.closest(".habit");
-      const id = habit?.dataset?.id;
-      const action = input.dataset.action;
-      if(!id) return;
-
-      const val = normHex(input.value, "#ffffff");
-      const patch = {};
-
-      if(action === "habitBg")   patch.habitBg = val;
-      if(action === "habitInk")  patch.habitInk = val;
-      if(action === "boxEmpty")  patch.boxEmpty = val;
-      if(action === "boxFilled") patch.boxFilled = val;
-      if(action === "boxBorder") patch.boxBorder = val;
-
-      upsertHabit(id, patch);
+    $("#nextWeek").addEventListener("click", () => {
+      const mon = new Date(activeWeekId + "T00:00:00");
+      rebuildWeek(toISODate(addDays(mon, 7)));
     });
+
+    $("#todayBtn").addEventListener("click", () => {
+      const today = new Date();
+      const weekId = toISODate(mondayOfWeek(today));
+      selectedDayIso = toISODate(today);
+      rebuildWeek(weekId);
+
+      // scroll grid to today's card on small screens
+      setTimeout(() => {
+        const el = $(`.day[data-iso="${selectedDayIso}"]`);
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+      }, 60);
+    });
+
+    /* =========================
+       Popovers: close on outside click
+    ========================= */
+    function initPopovers(){
+      const themePanel = $("#themePanel");
+      const bgPanel = $("#bgPanel");
+      const routinePanel = $("#routinePanel");
+
+      $("#themeBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        bgPanel.classList.remove("open");
+        routinePanel.classList.remove("open");
+      });
+
+      $("#bgBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+        themePanel.classList.remove("open");
+        routinePanel.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+        const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+        const insideRoutine = e.target.closest("#routinePanel") || e.target.closest("#routineBtn");
+
+        if(themePanel.classList.contains("open") && !insideTheme) themePanel.classList.remove("open");
+        if(bgPanel.classList.contains("open") && !insideBg) bgPanel.classList.remove("open");
+        if(routinePanel.classList.contains("open") && !insideRoutine) routinePanel.classList.remove("open");
+      });
+    }
+
+    /* =========================
+       Theme UI wiring
+    ========================= */
+    function initThemeSettings(){
+      const ids = [
+        "tAppBg","tInk","tMuted","tAccent",
+        "tBorderColor","tBorderA",
+        "tSurfaceA","tPanelA",
+        "tBtnA","tBtnBorderA",
+        "tOverlayBase","tOverlayA",
+        "tDayBg","tDayBgA",
+        "tBlockBg","tBlockBgA",
+        "tInputBg","tInputBgA"
+      ];
+
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener("input", () => {
+          const t = themeReadFromInputs();
+          themeApply(t);
+          themeSave(t);
+        });
+      });
+
+      $("#themeReset").addEventListener("click", () => {
+        localStorage.removeItem(THEME_KEY);
+        themeApply(DEFAULT_THEME);
+        themeSyncInputs(DEFAULT_THEME);
+      });
+
+      const saved = themeLoad() || DEFAULT_THEME;
+      themeApply(saved);
+      themeSyncInputs(saved);
+    }
+
+    /* =========================
+       Background UI wiring
+    ========================= */
+    function initBackgroundSettings(){
+      initBackgroundUI();
+      $("#bgImage").addEventListener("change", async () => {
+        const file = $("#bgImage").files && $("#bgImage").files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataUrl(file);
+        setBoardImage(dataUrl);
+        const cur = bgLoad() || DEFAULT_BG;
+        cur.imageDataUrl = dataUrl;
+        bgSave(cur);
+      });
+    }
 
     /* =========================
        Confetti (no external libs)
     ========================= */
     const confettiCanvas = document.getElementById("confetti");
     const ctx = confettiCanvas.getContext("2d");
-    let confettiTimer = null;
+    let confettiLock = false;
 
     function resizeConfetti(){
       confettiCanvas.width = Math.floor(window.innerWidth * devicePixelRatio);
@@ -1630,7 +1690,8 @@
     window.addEventListener("resize", resizeConfetti);
 
     function confettiBurst(){
-      if(confettiTimer) return;
+      if(confettiLock) return;
+      confettiLock = true;
       resizeConfetti();
       confettiCanvas.style.display = "block";
 
@@ -1661,7 +1722,7 @@
       }
 
       const start = performance.now();
-      const duration = 1200;
+      const duration = 1100;
 
       function tick(now){
         const t = now - start;
@@ -1690,46 +1751,40 @@
         }else{
           ctx.clearRect(0,0,W,H);
           confettiCanvas.style.display = "none";
-          confettiTimer = null;
+          confettiLock = false;
         }
       }
 
-      confettiTimer = setTimeout(() => {}, duration);
       requestAnimationFrame(tick);
-    }
-
-    /* =========================
-       Popover wiring
-    ========================= */
-    function initPopovers(){
-      const themeBtn = $("#themeBtn");
-      const themePanel = $("#themePanel");
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        $("#bgPanel")?.classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        if(themePanel.classList.contains("open")){
-          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-          if(!inside) themePanel.classList.remove("open");
-        }
-        if(bgPanel.classList.contains("open")){
-          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-          if(!inside) bgPanel.classList.remove("open");
-        }
-      });
     }
 
     /* =========================
        Boot
     ========================= */
-    initThemeUI();
-    initPopovers();
-    applyBackground(bgLoad() || DEFAULT_BG);
-    renderHabits();
+    function boot(){
+      initPopovers();
+      initThemeUI();
+      initThemeSettings();
+      initBackgroundSettings();
+
+      // routine init
+      routine = routineLoad() || structuredClone(DEFAULT_ROUTINE);
+      routineSave(getRoutine());
+      routineApplyColors(getRoutine().colors);
+      initRoutineUI();
+
+      // store init
+      store = loadStore();
+
+      // build week
+      activeWeekId = toISODate(mondayOfWeek(new Date()));
+      selectedDayIso = toISODate(new Date());
+      rebuildWeek(activeWeekId);
+
+      // apply saved background + theme (done by init funcs)
+    }
+
+    boot();
   </script>
 </body>
 </html>

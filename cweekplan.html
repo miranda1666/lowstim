@@ -346,9 +346,8 @@
       position: relative;
     }
 
-    /* ✅ Accent controls the selection ring */
     .day.selected{
-      outline: 4px solid rgba(0,0,0,0); /* fallback */
+      outline: 4px solid rgba(0,0,0,0); /* set by JS */
       outline-offset: 3px;
     }
 
@@ -377,17 +376,16 @@
       font-weight: 650;
     }
 
-    /* ✅ Day color picker hidden until needed (hover/focus/selected) */
+    /* ✅ FIXED: centered swatch (input no longer affects layout) */
     .day-color{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      position: relative;
       width: 34px;
       height: 34px;
       border-radius: 12px;
       border: 1px solid rgba(var(--border-rgb), 0.10);
       background: rgba(255,255,255,0.70);
       backdrop-filter: blur(2px);
+
       opacity: 0;
       transform: translateY(-2px);
       pointer-events: none;
@@ -402,23 +400,31 @@
     }
 
     .dayColorInput{
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
-      padding: 0;
       border: 0;
+      margin: 0;
+      padding: 0;
       opacity: 0;
       cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
     }
-    /* visible swatch */
+
     .day-color::before{
       content:"";
+      position: absolute;
       width: 14px;
       height: 14px;
       border-radius: 999px;
       border: 1px solid rgba(var(--border-rgb), 0.16);
-      background: var(--accent);
+      background: var(--swatch, var(--accent));
       box-shadow: 0 0 0 6px rgba(0,0,0,0.06);
-      display: block;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       pointer-events: none;
     }
 
@@ -495,7 +501,6 @@
       gap: 12px;
     }
 
-    /* Task row = full box color */
     .task-row{
       display: grid;
       grid-template-columns: 1fr 44px;
@@ -856,7 +861,6 @@
 
       r.setProperty("--task-tint-a", String(clamp(theme.taskTintA, 0.10, 1.00)));
 
-      // theme dot uses accent
       const dot = document.getElementById("themeDot");
       if(dot){
         const accent = normHex(theme.accent, DEFAULT_THEME.accent);
@@ -864,10 +868,8 @@
         dot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
       }
 
-      // selection ring uses accent
       setSelectionRingFromAccent(theme.accent);
 
-      // overlay (single)
       const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
       const overlayA = clamp(theme.overlayA, 0.00, 0.70);
       const css = hexToRgba(overlayBase, overlayA);
@@ -880,7 +882,6 @@
       }
       st.textContent = `.board::after{ background: ${css} !important; }`;
 
-      // day/block/input bg overrides
       let st2 = document.getElementById("surfaceStyle");
       if(!st2){
         st2 = document.createElement("style");
@@ -1096,7 +1097,6 @@
     }
 
     function syncDayPickerSwatches(){
-      // make each picker swatch show the day's current color (not accent)
       $$(".day").forEach(dayEl => {
         const color = dayEl.dataset.color || "#cbb8ae";
         const box = dayEl.querySelector(".day-color");
@@ -1105,20 +1105,6 @@
           box.style.borderColor = hexToRgba(color, 0.25);
         }
       });
-
-      // update ::before dynamically via a style tag (so we can use per-element --swatch)
-      let st = document.getElementById("daySwatchStyle");
-      if(!st){
-        st = document.createElement("style");
-        st.id = "daySwatchStyle";
-        document.head.appendChild(st);
-      }
-      st.textContent = `
-        .day-color::before{
-          background: var(--swatch, var(--accent)) !important;
-          box-shadow: 0 0 0 6px rgba(0,0,0,0.06);
-        }
-      `;
     }
 
     function buildWeek(weekId){

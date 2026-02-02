@@ -6,76 +6,72 @@
   <title>Mini MP3 Player</title>
   <style>
     :root{
-      /* ========= THEME (global) ========= */
+      /* ========= THEME ========= */
       --app-bg: #ffffff;
-      --ink: #2b2b2b;
-      --muted: #7a7a7a;
+      --ink: #1f1f1f;
+      --muted: #6f6f6f;
 
       --accent: #cbb8ae;
 
       --border-rgb: 30,30,30;
-      --border-a: 0.10;
+      --border-a: 0.12;
       --border: rgba(var(--border-rgb), var(--border-a));
 
-      --surface-a: 0.78; /* top controls */
+      --surface-a: 0.80; /* top controls */
       --panel-a: 0.92;   /* popovers */
-
-      --btn-a: 0.90;
-      --btn-border-a: 0.10;
-      --btn-ink: rgba(43,43,43,0.72);
+      --btn-a: 0.92;
+      --btn-border-a: 0.12;
+      --btn-ink: rgba(31,31,31,0.78);
 
       --overlay-base: #ffffff;
-      --overlay-a: 0.34;
+      --overlay-a: 0.30;
 
-      /* ========= BACKGROUND (board) ========= */
-      --board-radius: 22px;
-      --board-tint: #efe7e1;
-      --board-tint-a: 0.30;
-      --board-image: none;
-
-      /* ========= COMPONENT COLORS ========= */
-      --card-bg: #ffffff;
-      --card-a: 0.92;
-
-      --list-bg: #ffffff;
-      --list-a: 0.88;
-
-      --input-bg: #ffffff;
-      --input-a: 0.92;
+      /* component colors */
+      --card-bg: #ffffff;   --card-a: 0.92;
+      --list-bg: #ffffff;   --list-a: 0.88;
+      --input-bg: #ffffff;  --input-a: 0.94;
 
       --progress-track: rgba(30,30,30,0.12);
       --progress-fill: var(--accent);
 
-      --shadow: 0 12px 34px rgba(20,20,20,0.08);
+      /* ========= BACKGROUND ========= */
+      --board-radius: 18px;
+      --board-tint: #efe7e1;
+      --board-tint-a: 0.30;
+      --board-image: none;
 
-      /* ========= SIZE ========= */
+      /* ========= RETRO / SIZE ========= */
       --max-w: 560px;
-      --pad: 14px;
+      --pad: 12px;
       --gap: 10px;
 
-      --h1: 14px;
+      --r: 16px;
+      --shadow: 0 14px 36px rgba(20,20,20,0.10);
+
+      --btn: 30px;
       --text: 13px;
       --small: 12px;
-
-      --btn: 32px;
-      --r: 18px;
+      --lcd: #e9efe9; /* default LCD background */
+      --chrome1: rgba(255,255,255,0.95);
+      --chrome2: rgba(255,255,255,0.70);
+      --chromeBorder: rgba(30,30,30,0.10);
     }
 
-    *{ box-sizing: border-box; }
+    *{ box-sizing:border-box; }
     body{
-      margin: 0;
-      background: var(--app-bg);
-      color: var(--ink);
+      margin:0;
+      background:var(--app-bg);
+      color:var(--ink);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
 
-    /* =============== FRAME =============== */
     .wrap{
       max-width: var(--max-w);
-      margin: 16px auto;
+      margin: 14px auto;
       padding: 12px;
     }
 
+    /* ===== board ===== */
     .board{
       position: relative;
       border-radius: var(--board-radius);
@@ -84,7 +80,6 @@
       overflow: hidden;
       background: none;
     }
-
     .board::before{
       content:"";
       position:absolute;
@@ -93,36 +88,33 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      filter: saturate(1.02) contrast(1.03);
+      filter: saturate(1.02) contrast(1.02);
       transform: scale(1.02);
     }
-
     .board::after{
       content:"";
       position:absolute;
       inset:0;
       pointer-events:none;
-      background: rgba(255,255,255,0.34); /* overridden by JS */
+      background: rgba(255,255,255,0.30); /* overridden by JS */
     }
-
     .board-tint{
       position:absolute;
       inset:0;
       pointer-events:none;
-      mix-blend-mode: multiply;
-      background: rgba(0,0,0,0);
+      mix-blend-mode:multiply;
+      background: rgba(0,0,0,0); /* set by JS */
     }
-
     .content{
       position: relative;
       z-index: 2;
       padding: var(--pad);
-      backdrop-filter: blur(2px);
-      display: grid;
+      display:grid;
       gap: var(--gap);
+      backdrop-filter: blur(2px);
     }
 
-    /* =============== TOP BAR =============== */
+    /* ===== topbar (very discreet) ===== */
     .topbar{
       display:flex;
       align-items:center;
@@ -136,31 +128,27 @@
       gap: 8px;
       min-width: 0;
     }
-
     .brand h1{
-      margin: 0;
-      font-size: var(--h1);
-      font-weight: 850;
-      letter-spacing: .06em;
+      margin:0;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .16em;
       text-transform: uppercase;
       white-space: nowrap;
     }
-
     .tag{
       font-size: 11px;
       color: var(--muted);
-      letter-spacing: .02em;
       white-space: nowrap;
-      opacity: .9;
+      letter-spacing: .02em;
     }
 
     .controls{
       display:flex;
       align-items:center;
-      gap: 8px;
+      gap: 6px;
     }
 
-    /* super discreet buttons */
     .iconbtn{
       width: var(--btn);
       height: var(--btn);
@@ -179,44 +167,55 @@
     }
     .iconbtn:active{ transform: translateY(1px); }
 
+    .filebtn{ position: relative; overflow: hidden; }
+    .filebtn input[type="file"]{
+      position:absolute; inset:0; opacity:0;
+      cursor:pointer;
+    }
+
     .dot{
-      width: 12px; height: 12px; border-radius: 999px;
+      width: 11px; height: 11px;
+      border-radius: 999px;
       border: 1px solid rgba(var(--border-rgb),0.14);
       background: var(--accent);
       box-shadow: 0 0 0 6px rgba(203,184,174,0.22);
     }
     .bgdot{
-      width: 12px; height: 12px; border-radius: 999px;
+      width: 11px; height: 11px;
+      border-radius: 999px;
       border: 1px solid rgba(var(--border-rgb),0.14);
       background: var(--board-tint);
-      box-shadow: 0 0 0 6px rgba(239,231,225,0.28);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.26);
     }
 
     .popover{ position: relative; }
-
     .panel{
       position:absolute;
       right: 0;
-      top: 40px;
-      width: 330px;
-      border-radius: 18px;
+      top: 38px;
+      width: 340px;
+      border-radius: 16px;
       border: 1px solid var(--border);
       background: rgba(255,255,255, var(--panel-a));
       box-shadow: 0 22px 50px rgba(20,20,20,0.12);
-      padding: 14px;
+      padding: 12px;
       display:none;
       z-index: 50;
       backdrop-filter: blur(2px);
+
+      /* FIX: allow scroll if panel is taller than widget */
+      max-height: min(70vh, 420px);
+      overflow: auto;
     }
     .panel.open{ display:block; }
 
     .panelTitle{
       margin: 0 0 10px 0;
       font-size: 11px;
-      font-weight: 850;
-      letter-spacing: .12em;
+      font-weight: 900;
+      letter-spacing: .14em;
       text-transform: uppercase;
-      color: rgba(43,43,43,0.68);
+      color: rgba(31,31,31,0.62);
     }
 
     .row{
@@ -224,7 +223,7 @@
       align-items:center;
       justify-content: space-between;
       gap: 12px;
-      padding: 9px 0;
+      padding: 8px 0;
     }
     .row label{
       font-size: 12px;
@@ -232,19 +231,18 @@
     }
 
     input[type="color"]{
-      width: 36px;
+      width: 34px;
       height: 28px;
-      border: 1px solid rgba(var(--border-rgb), 0.12);
+      border: 1px solid rgba(var(--border-rgb),0.12);
       border-radius: 10px;
-      padding: 0;
+      padding:0;
       background: transparent;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      cursor:pointer;
     }
-    input[type="range"]{ width: 170px; }
+    input[type="range"]{ width: 175px; }
 
     .divider{
-      height:1px;
+      height: 1px;
       background: rgba(var(--border-rgb),0.08);
       margin: 10px 0;
     }
@@ -254,86 +252,62 @@
       border: 1px solid var(--border);
       background: rgba(255,255,255,0.92);
       border-radius: 14px;
-      padding: 11px 12px;
+      padding: 10px 12px;
       cursor: pointer;
-      font-weight: 800;
-      color: rgba(43,43,43,0.86);
+      font-weight: 850;
+      color: rgba(31,31,31,0.86);
       -webkit-tap-highlight-color: transparent;
     }
     .mini-btn:active{ transform: translateY(1px); }
 
-    /* file button (discreet) */
-    .filebtn{
-      position: relative;
-      overflow: hidden;
-    }
-    .filebtn input[type="file"]{
-      position:absolute;
-      inset:0;
-      opacity:0;
-      cursor:pointer;
-    }
-
-    /* =============== PLAYER CARD =============== */
+    /* ===== player card (retro chrome + LCD) ===== */
     .card{
       border-radius: var(--r);
       border: 1px solid var(--border);
       background: rgba(255,255,255, var(--card-a));
       box-shadow: 0 12px 30px rgba(20,20,20,0.06);
-      overflow: hidden;
+      overflow:hidden;
     }
 
     .player{
-      padding: 14px;
-      display: grid;
+      padding: 12px;
+      display:grid;
       gap: 10px;
     }
 
-    /* retro/pinterest-ish header */
-    .now{
+    .chrome{
+      border-radius: 14px;
+      border: 1px solid var(--chromeBorder);
+      background:
+        linear-gradient(180deg, var(--chrome1), var(--chrome2));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.9),
+        inset 0 -1px 0 rgba(30,30,30,0.06);
+      padding: 10px;
+    }
+
+    .lcd{
+      border-radius: 12px;
+      border: 1px solid rgba(var(--border-rgb),0.10);
+      background: var(--lcd);
+      box-shadow:
+        inset 0 2px 8px rgba(30,30,30,0.10),
+        0 10px 20px rgba(20,20,20,0.06);
+      padding: 10px 10px;
+      display:grid;
+      gap: 4px;
+    }
+
+    .lcdTop{
       display:flex;
       align-items:center;
       justify-content: space-between;
       gap: 10px;
     }
 
-    .nowLeft{
-      min-width: 0;
-      display:flex;
-      align-items:center;
-      gap: 10px;
-    }
-
-    .disc{
-      width: 34px; height: 34px; border-radius: 999px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background:
-        radial-gradient(circle at 35% 35%, rgba(255,255,255,0.85), rgba(255,255,255,0.1) 55%),
-        linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.25));
-      box-shadow: 0 10px 18px rgba(20,20,20,0.08);
-      position: relative;
-      flex: none;
-    }
-    .disc::after{
-      content:"";
-      position:absolute;
-      left:50%; top:50%;
-      width: 8px; height: 8px;
-      transform: translate(-50%,-50%);
-      border-radius: 999px;
-      background: rgba(var(--border-rgb),0.18);
-      box-shadow: 0 0 0 6px rgba(var(--border-rgb),0.06);
-    }
-
-    .trackTitle{
-      min-width: 0;
-      display:flex;
-      flex-direction: column;
-      gap: 2px;
-    }
     .trackName{
+      font-weight: 900;
       font-size: 13px;
-      font-weight: 850;
       letter-spacing: .02em;
       white-space: nowrap;
       overflow: hidden;
@@ -342,22 +316,29 @@
     }
     .trackMeta{
       font-size: 12px;
-      color: var(--muted);
+      color: rgba(31,31,31,0.62);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 320px;
     }
 
+    .status{
+      font-size: 11px;
+      color: rgba(31,31,31,0.62);
+      white-space: nowrap;
+    }
+
     .transport{
       display:flex;
       align-items:center;
-      gap: 8px;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .tbtn{
-      width: 36px; height: 36px;
-      border-radius: 14px;
+      width: 36px; height: 34px;
+      border-radius: 12px;
       border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
       background: rgba(255,255,255, var(--btn-a));
       color: var(--btn-ink);
@@ -367,33 +348,30 @@
       font-weight: 900;
       user-select:none;
       -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 10px 18px rgba(20,20,20,0.06);
     }
     .tbtn:active{ transform: translateY(1px); }
-
     .tbtn.primary{
-      border-radius: 16px;
-      background: rgba(255,255,255, 0.96);
-      box-shadow: 0 10px 22px rgba(20,20,20,0.06);
+      width: 44px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.96);
     }
 
-    /* progress */
-    .bar{
-      display:grid;
-      gap: 8px;
-    }
+    .bar{ display:grid; gap: 8px; }
+
     .timeRow{
       display:flex;
       align-items:center;
       justify-content: space-between;
       font-size: 12px;
-      color: var(--muted);
+      color: rgba(31,31,31,0.62);
     }
 
     input[type="range"].seek{
       width: 100%;
       -webkit-appearance: none;
       appearance: none;
-      height: 12px;
+      height: 14px;
       background: transparent;
       cursor: pointer;
     }
@@ -404,13 +382,13 @@
       border: 1px solid rgba(var(--border-rgb),0.08);
     }
     input[type="range"].seek::-webkit-slider-thumb{
-      -webkit-appearance: none;
-      appearance: none;
+      -webkit-appearance:none;
+      appearance:none;
       width: 18px; height: 18px;
       border-radius: 999px;
       margin-top: -5px;
       background: var(--progress-fill);
-      border: 1px solid rgba(var(--border-rgb),0.10);
+      border: 1px solid rgba(var(--border-rgb),0.12);
       box-shadow: 0 0 0 6px rgba(203,184,174,0.20);
     }
     input[type="range"].seek::-moz-range-track{
@@ -423,7 +401,7 @@
       width: 18px; height: 18px;
       border-radius: 999px;
       background: var(--progress-fill);
-      border: 1px solid rgba(var(--border-rgb),0.10);
+      border: 1px solid rgba(var(--border-rgb),0.12);
       box-shadow: 0 0 0 6px rgba(203,184,174,0.20);
     }
 
@@ -434,22 +412,20 @@
       gap: 10px;
       margin-top: 2px;
     }
-
     .vol{
       display:flex;
       align-items:center;
       gap: 10px;
-      color: var(--muted);
       font-size: 12px;
+      color: rgba(31,31,31,0.62);
       white-space: nowrap;
     }
-
     input[type="range"].volrange{
       width: 140px;
       accent-color: var(--accent);
     }
 
-    /* =============== PLAYLIST =============== */
+    /* ===== playlist ===== */
     .playlist{
       border-top: 1px solid rgba(var(--border-rgb),0.08);
       padding: 10px;
@@ -462,14 +438,14 @@
       align-items:center;
       justify-content: space-between;
       gap: 10px;
-      padding: 4px 6px;
+      padding: 2px 4px;
     }
     .listHeader .label{
       font-size: 11px;
-      font-weight: 850;
-      letter-spacing: .12em;
+      font-weight: 900;
+      letter-spacing: .14em;
       text-transform: uppercase;
-      color: rgba(43,43,43,0.62);
+      color: rgba(31,31,31,0.58);
     }
     .listHeader .hint{
       font-size: 12px;
@@ -486,16 +462,16 @@
     }
 
     .item{
-      border-radius: 16px;
+      border-radius: 14px;
       border: 1px solid rgba(var(--border-rgb),0.10);
       background: rgba(255,255,255, var(--list-a));
-      box-shadow: 0 10px 24px rgba(20,20,20,0.05);
-      padding: 10px 10px;
+      box-shadow: 0 10px 22px rgba(20,20,20,0.05);
+      padding: 10px;
       display:grid;
       grid-template-columns: 1fr auto;
       gap: 10px;
       align-items: center;
-      cursor: pointer;
+      cursor:pointer;
       -webkit-tap-highlight-color: transparent;
     }
     .item:hover{ transform: translateY(-1px); }
@@ -504,15 +480,10 @@
       outline-offset: 2px;
     }
 
-    .itemMain{
-      min-width: 0;
-      display:grid;
-      gap: 4px;
-    }
-
+    .itemMain{ min-width:0; display:grid; gap: 4px; }
     .itemName{
       font-size: var(--text);
-      font-weight: 800;
+      font-weight: 900;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -523,22 +494,18 @@
       justify-content: space-between;
       gap: 10px;
       font-size: 12px;
-      color: var(--muted);
+      color: rgba(31,31,31,0.62);
     }
 
-    .itemBtns{
-      display:flex;
-      align-items:center;
-      gap: 8px;
-    }
+    .itemBtns{ display:flex; align-items:center; gap: 8px; }
 
     .ib{
-      width: 34px; height: 34px;
-      border-radius: 14px;
+      width: 32px; height: 32px;
+      border-radius: 12px;
       border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
       background: rgba(255,255,255, var(--btn-a));
       color: var(--btn-ink);
-      cursor: pointer;
+      cursor:pointer;
       display:grid;
       place-items:center;
       font-weight: 900;
@@ -546,22 +513,16 @@
     }
     .ib:active{ transform: translateY(1px); }
 
-    /* rename modal-ish inline */
-    .renameRow{
-      display:none;
-      gap: 8px;
-      align-items:center;
-      margin-top: 6px;
-    }
+    .renameRow{ display:none; gap: 8px; align-items:center; margin-top: 6px; }
     .item.renaming .renameRow{ display:flex; }
 
     .nameInput{
       width: 100%;
       border: 1px solid rgba(var(--border-rgb),0.10);
-      border-radius: 14px;
-      padding: 10px 12px;
+      border-radius: 12px;
+      padding: 9px 10px;
       font-size: 13px;
-      outline: none;
+      outline:none;
       color: var(--ink);
       background: rgba(255,255,255, var(--input-a));
     }
@@ -570,11 +531,18 @@
       box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
     }
 
-    .footnote{
+    .note{
       font-size: 12px;
       color: var(--muted);
-      text-align:center;
+      line-height: 1.35;
+      text-align: center;
       padding: 2px 4px;
+    }
+
+    /* make panels usable even if narrow */
+    @media (max-width: 420px){
+      .panel{ width: 300px; }
+      input[type="range"]{ width: 150px; }
     }
   </style>
 </head>
@@ -589,7 +557,7 @@
           </div>
 
           <div class="controls">
-            <!-- Discreet Add Files -->
+            <!-- Discreet add -->
             <button class="iconbtn filebtn" type="button" aria-label="Add songs" title="Add songs">
               ＋
               <input id="fileInput" type="file" accept="audio/*" multiple />
@@ -605,30 +573,30 @@
                 <div class="panelTitle">Theme</div>
 
                 <div class="row"><label for="tAppBg">App bg</label><input id="tAppBg" type="color" value="#ffffff"></div>
-                <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b"></div>
-                <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a"></div>
+                <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#1f1f1f"></div>
+                <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#6f6f6f"></div>
                 <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae"></div>
 
                 <div class="divider"></div>
 
                 <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e"></div>
-                <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10"></div>
+                <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="12"></div>
 
                 <div class="divider"></div>
 
-                <div class="row"><label for="tSurfaceA">Surface opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="78"></div>
+                <div class="row"><label for="tSurfaceA">Surface opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="80"></div>
                 <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92"></div>
 
                 <div class="divider"></div>
 
-                <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="90"></div>
-                <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10"></div>
-                <div class="row"><label for="tBtnInk">Btn ink</label><input id="tBtnInk" type="color" value="#2b2b2b"></div>
+                <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="92"></div>
+                <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="12"></div>
+                <div class="row"><label for="tBtnInk">Btn ink</label><input id="tBtnInk" type="color" value="#1f1f1f"></div>
 
                 <div class="divider"></div>
 
                 <div class="row"><label for="tOverlayBase">Overlay color</label><input id="tOverlayBase" type="color" value="#ffffff"></div>
-                <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="34"></div>
+                <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="30"></div>
 
                 <div class="divider"></div>
 
@@ -643,12 +611,18 @@
                 <div class="divider"></div>
 
                 <div class="row"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff"></div>
-                <div class="row"><label for="tInputA">Input opacity</label><input id="tInputA" type="range" min="70" max="100" value="92"></div>
+                <div class="row"><label for="tInputA">Input opacity</label><input id="tInputA" type="range" min="70" max="100" value="94"></div>
 
                 <div class="divider"></div>
 
                 <div class="row"><label for="tProgTrack">Progress track</label><input id="tProgTrack" type="color" value="#d6d6d6"></div>
                 <div class="row"><label for="tProgFill">Progress fill</label><input id="tProgFill" type="color" value="#cbb8ae"></div>
+
+                <div class="divider"></div>
+
+                <div class="row"><label for="tLcd">LCD bg</label><input id="tLcd" type="color" value="#e9efe9"></div>
+                <div class="row"><label for="tChrome1">Chrome top</label><input id="tChrome1" type="color" value="#ffffff"></div>
+                <div class="row"><label for="tChrome2">Chrome bottom</label><input id="tChrome2" type="color" value="#f2f2f2"></div>
 
                 <div class="divider"></div>
 
@@ -678,44 +652,49 @@
                 <div class="row">
                   <button class="mini-btn" id="removeImage" type="button">Remove image</button>
                 </div>
+
+                <div class="note" id="bgNote"></div>
               </div>
             </div>
 
           </div>
         </div>
 
-        <!-- PLAYER -->
         <div class="card">
           <div class="player">
-            <div class="now">
-              <div class="nowLeft">
-                <div class="disc" aria-hidden="true"></div>
-                <div class="trackTitle">
+            <div class="chrome">
+              <div class="lcd">
+                <div class="lcdTop">
                   <div class="trackName" id="nowName">No song selected</div>
-                  <div class="trackMeta" id="nowMeta">Upload files to start</div>
+                  <div class="status" id="status">Ready</div>
                 </div>
               </div>
+
+              <div style="height:10px"></div>
 
               <div class="transport">
                 <button class="tbtn" id="prevBtn" type="button" title="Previous">‹‹</button>
                 <button class="tbtn primary" id="playBtn" type="button" title="Play/Pause">►</button>
                 <button class="tbtn" id="nextBtn" type="button" title="Next">››</button>
               </div>
-            </div>
 
-            <div class="bar">
-              <div class="timeRow">
-                <div id="tCur">0:00</div>
-                <div id="tDur">0:00</div>
-              </div>
-              <input class="seek" id="seek" type="range" min="0" max="1000" value="0" />
-              <div class="mixRow">
-                <div class="vol">
-                  <span>VOL</span>
-                  <input class="volrange" id="vol" type="range" min="0" max="100" value="85" />
+              <div style="height:10px"></div>
+
+              <div class="bar">
+                <div class="timeRow">
+                  <div id="tCur">0:00</div>
+                  <div id="tDur">0:00</div>
                 </div>
-                <div class="vol" id="status" style="justify-content:flex-end;">Ready</div>
+                <input class="seek" id="seek" type="range" min="0" max="1000" value="0" />
+                <div class="mixRow">
+                  <div class="vol">
+                    <span>VOL</span>
+                    <input class="volrange" id="vol" type="range" min="0" max="100" value="85" />
+                  </div>
+                  <div class="vol" id="persistNote">Saving: on</div>
+                </div>
               </div>
+
             </div>
           </div>
 
@@ -723,11 +702,12 @@
             <div class="listHeader">
               <div class="label">Playlist</div>
             </div>
+
             <div class="list" id="list"></div>
+            <div class="note" id="infoNote"></div>
           </div>
         </div>
 
-        <div class="footnote" id="dbNote"></div>
       </div>
     </div>
   </div>
@@ -736,15 +716,20 @@
 
   <script>
     /* =========================
-       Keys + DB (IndexedDB for audio blobs)
+       Why you saw “blocked localStorage/IndexedDB”
+       - Some embedded contexts (or strict browser/privacy settings) block storage.
+       - If IndexedDB is blocked, we can still PLAY files in-session, but we can't persist songs after reload.
+       This build falls back gracefully and shows a clear message.
     ========================= */
-    const DB_NAME = "mini_mp3_player_db_v1";
+
+    const DB_NAME = "mini_mp3_player_db_v2";
     const DB_VER  = 1;
     const STORE   = "tracks";
-    const THEME_KEY = "mini_mp3_theme_v1";
-    const BG_KEY    = "mini_mp3_bg_v1";
+    const THEME_KEY = "mini_mp3_theme_v2";
+    const BG_KEY    = "mini_mp3_bg_v2";
 
     const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
     function clamp(n,min,max){
       n = Number(n);
@@ -777,19 +762,61 @@
       return `${m}:${String(s).padStart(2,"0")}`;
     }
 
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+    function escapeAttr(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    /* =========================
+       Storage wrappers (graceful fallback)
+    ========================= */
+    let storageOK = true;
+    function safeGet(key){
+      if(!storageOK) return null;
+      try{ return localStorage.getItem(key); }catch{ storageOK = false; return null; }
+    }
+    function safeSet(key, val){
+      if(!storageOK) return false;
+      try{ localStorage.setItem(key, val); return true; }catch{ storageOK = false; return false; }
+    }
+    function safeRemove(key){
+      if(!storageOK) return false;
+      try{ localStorage.removeItem(key); return true; }catch{ storageOK = false; return false; }
+    }
+
+    /* =========================
+       IndexedDB (songs). If blocked => session-only mode.
+    ========================= */
+    let idbOK = true;
     async function openDB(){
+      if(!idbOK) throw new Error("idb_blocked");
       return new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, DB_VER);
+        let req;
+        try{
+          req = indexedDB.open(DB_NAME, DB_VER);
+        }catch(err){
+          idbOK = false;
+          reject(err);
+          return;
+        }
         req.onupgradeneeded = () => {
           const db = req.result;
           if(!db.objectStoreNames.contains(STORE)){
-            const os = db.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
-            os.createIndex("order", "order", { unique: false });
-            os.createIndex("createdAt", "createdAt", { unique: false });
+            const os = db.createObjectStore(STORE, { keyPath:"id", autoIncrement:true });
+            os.createIndex("order", "order", { unique:false });
           }
         };
         req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+        req.onerror = () => reject(req.error || new Error("idb_error"));
       });
     }
 
@@ -801,6 +828,17 @@
         const idx = os.index("order");
         const req = idx.getAll();
         req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbGet(id){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readonly");
+        const os = tx.objectStore(STORE);
+        const req = os.get(id);
+        req.onsuccess = () => resolve(req.result || null);
         req.onerror = () => reject(req.error);
       });
     }
@@ -838,60 +876,82 @@
       });
     }
 
-    async function dbGet(id){
-      const db = await openDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE, "readonly");
-        const os = tx.objectStore(STORE);
-        const req = os.get(id);
-        req.onsuccess = () => resolve(req.result || null);
-        req.onerror = () => reject(req.error);
-      });
+    /* Session-only fallback when IDB is blocked */
+    let sessionTracks = []; // {id, name, filename, blob, order, duration}
+    let sessionId = 1;
+    function sessionAll(){
+      return Promise.resolve(sessionTracks.slice().sort((a,b)=>(a.order??0)-(b.order??0)));
+    }
+    function sessionGet(id){
+      return Promise.resolve(sessionTracks.find(t=>t.id===id) || null);
+    }
+    function sessionAdd(track){
+      track.id = sessionId++;
+      sessionTracks.push(track);
+      return Promise.resolve(track.id);
+    }
+    function sessionPut(track){
+      const i = sessionTracks.findIndex(t=>t.id===track.id);
+      if(i>=0) sessionTracks[i] = track;
+      return Promise.resolve(true);
+    }
+    function sessionDel(id){
+      sessionTracks = sessionTracks.filter(t=>t.id!==id);
+      return Promise.resolve(true);
     }
 
+    async function songAll(){ return idbOK ? dbAll() : sessionAll(); }
+    async function songGet(id){ return idbOK ? dbGet(id) : sessionGet(id); }
+    async function songAdd(t){ return idbOK ? dbAdd(t) : sessionAdd(t); }
+    async function songPut(t){ return idbOK ? dbPut(t) : sessionPut(t); }
+    async function songDel(id){ return idbOK ? dbDelete(id) : sessionDel(id); }
+
     /* =========================
-       Theme (same model as your planners)
+       Theme
     ========================= */
     const DEFAULT_THEME = {
-      appBg: "#ffffff",
-      ink: "#2b2b2b",
-      muted: "#7a7a7a",
-      accent: "#cbb8ae",
+      appBg:"#ffffff",
+      ink:"#1f1f1f",
+      muted:"#6f6f6f",
+      accent:"#cbb8ae",
 
-      borderColor: "#1e1e1e",
-      borderA: 0.10,
+      borderColor:"#1e1e1e",
+      borderA:0.12,
 
-      surfaceA: 0.78,
-      panelA: 0.92,
+      surfaceA:0.80,
+      panelA:0.92,
 
-      btnA: 0.90,
-      btnBorderA: 0.10,
-      btnInk: "#2b2b2b",
+      btnA:0.92,
+      btnBorderA:0.12,
+      btnInk:"#1f1f1f",
 
-      overlayBase: "#ffffff",
-      overlayA: 0.34,
+      overlayBase:"#ffffff",
+      overlayA:0.30,
 
-      cardBg: "#ffffff",
-      cardA: 0.92,
+      cardBg:"#ffffff",
+      cardA:0.92,
 
-      listBg: "#ffffff",
-      listA: 0.88,
+      listBg:"#ffffff",
+      listA:0.88,
 
-      inputBg: "#ffffff",
-      inputA: 0.92,
+      inputBg:"#ffffff",
+      inputA:0.94,
 
-      progTrack: "#d6d6d6",
-      progFill: "#cbb8ae",
+      progTrack:"#d6d6d6",
+      progFill:"#cbb8ae",
+
+      lcd:"#e9efe9",
+      chrome1:"#ffffff",
+      chrome2:"#f2f2f2"
     };
 
     function themeLoad(){
-      try{
-        const raw = localStorage.getItem(THEME_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
+      const raw = safeGet(THEME_KEY);
+      if(!raw) return null;
+      try{ return JSON.parse(raw); }catch{ return null; }
     }
     function themeSave(t){
-      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+      safeSet(THEME_KEY, JSON.stringify(t));
     }
 
     function themeApply(t){
@@ -913,69 +973,52 @@
 
       r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
       r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
-      r.setProperty("--btn-ink", hexToRgba(normHex(theme.btnInk, "#2b2b2b"), 0.72));
+      r.setProperty("--btn-ink", hexToRgba(normHex(theme.btnInk, "#1f1f1f"), 0.78));
 
-      r.setProperty("--card-bg", normHex(theme.cardBg, DEFAULT_THEME.cardBg));
       r.setProperty("--card-a", String(clamp(theme.cardA, 0.70, 1.00)));
-
-      r.setProperty("--list-bg", normHex(theme.listBg, DEFAULT_THEME.listBg));
       r.setProperty("--list-a", String(clamp(theme.listA, 0.70, 1.00)));
-
-      r.setProperty("--input-bg", normHex(theme.inputBg, DEFAULT_THEME.inputBg));
       r.setProperty("--input-a", String(clamp(theme.inputA, 0.70, 1.00)));
 
       r.setProperty("--progress-track", normHex(theme.progTrack, "#d6d6d6"));
       r.setProperty("--progress-fill", normHex(theme.progFill, accent));
 
-      // Theme dot
+      r.setProperty("--lcd", normHex(theme.lcd, "#e9efe9"));
+      r.setProperty("--chrome1", hexToRgba(normHex(theme.chrome1, "#ffffff"), 0.95));
+      r.setProperty("--chrome2", hexToRgba(normHex(theme.chrome2, "#f2f2f2"), 0.70));
+
+      // theme dot
       const dot = $("#themeDot");
       if(dot){
         dot.style.background = accent;
         dot.style.boxShadow = `0 0 0 6px ${hexToRgba(accent, 0.22)}`;
       }
 
-      // Active list outline uses accent (simple + consistent)
-      let st = document.getElementById("accentStyle");
-      if(!st){
-        st = document.createElement("style");
-        st.id = "accentStyle";
-        document.head.appendChild(st);
-      }
-      st.textContent = `
-        .item.active{ outline-color: ${hexToRgba(accent, 0.62)} !important; }
-        input[type="range"].volrange{ accent-color: ${accent}; }
-      `;
-
-      // Overlay
+      // overlay
       const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
       const overlayA = clamp(theme.overlayA, 0.00, 0.70);
       const css = hexToRgba(overlayBase, overlayA);
-      let st2 = document.getElementById("overlayStyle");
+
+      let st = document.getElementById("overlayStyle");
+      if(!st){
+        st = document.createElement("style");
+        st.id = "overlayStyle";
+        document.head.appendChild(st);
+      }
+      st.textContent = `.board::after{ background:${css} !important; }`;
+
+      // active outline uses accent
+      let st2 = document.getElementById("accentStyle");
       if(!st2){
         st2 = document.createElement("style");
-        st2.id = "overlayStyle";
+        st2.id = "accentStyle";
         document.head.appendChild(st2);
       }
-      st2.textContent = `.board::after{ background: ${css} !important; }`;
-
-      // Component bg colors (card/list/input)
-      let st3 = document.getElementById("componentStyle");
-      if(!st3){
-        st3 = document.createElement("style");
-        st3.id = "componentStyle";
-        document.head.appendChild(st3);
-      }
-      st3.textContent = `
-        .card{ background: ${hexToRgba(normHex(theme.cardBg, "#fff"), clamp(theme.cardA,0.70,1.00))} !important; }
-        .item{ background: ${hexToRgba(normHex(theme.listBg, "#fff"), clamp(theme.listA,0.70,1.00))} !important; }
-        .nameInput{ background: ${hexToRgba(normHex(theme.inputBg, "#fff"), clamp(theme.inputA,0.70,1.00))} !important; }
-        .player{ background: transparent !important; }
-      `;
+      st2.textContent = `.item.active{ outline-color:${hexToRgba(accent, 0.62)} !important; }`;
     }
 
     function themeSyncInputs(t){
       const theme = Object.assign({}, DEFAULT_THEME, t || {});
-      const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
+      const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=String(val); };
 
       set("tAppBg", theme.appBg);
       set("tInk", theme.ink);
@@ -983,30 +1026,33 @@
       set("tAccent", theme.accent);
 
       set("tBorderColor", theme.borderColor);
-      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+      set("tBorderA", Math.round(clamp(theme.borderA,0.04,0.30)*100));
 
-      set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
-      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+      set("tSurfaceA", Math.round(clamp(theme.surfaceA,0.40,0.98)*100));
+      set("tPanelA", Math.round(clamp(theme.panelA,0.60,0.98)*100));
 
-      set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
-      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+      set("tBtnA", Math.round(clamp(theme.btnA,0.55,1.00)*100));
+      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA,0.00,0.30)*100));
       set("tBtnInk", theme.btnInk);
 
       set("tOverlayBase", theme.overlayBase);
-      set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
+      set("tOverlayA", Math.round(clamp(theme.overlayA,0.00,0.70)*100));
 
       set("tCardBg", theme.cardBg);
-      set("tCardA", Math.round(clamp(theme.cardA, 0.70, 1.00) * 100));
+      set("tCardA", Math.round(clamp(theme.cardA,0.70,1.00)*100));
 
       set("tListBg", theme.listBg);
-      set("tListA", Math.round(clamp(theme.listA, 0.70, 1.00) * 100));
+      set("tListA", Math.round(clamp(theme.listA,0.70,1.00)*100));
 
       set("tInputBg", theme.inputBg);
-      set("tInputA", Math.round(clamp(theme.inputA, 0.70, 1.00) * 100));
+      set("tInputA", Math.round(clamp(theme.inputA,0.70,1.00)*100));
 
-      // for progress track, use hex input; default to a soft gray
       set("tProgTrack", normHex(theme.progTrack, "#d6d6d6"));
       set("tProgFill", normHex(theme.progFill, theme.accent));
+
+      set("tLcd", theme.lcd);
+      set("tChrome1", theme.chrome1);
+      set("tChrome2", theme.chrome2);
     }
 
     function themeReadFromInputs(){
@@ -1041,26 +1087,14 @@
 
         progTrack: g("tProgTrack")?.value,
         progFill: g("tProgFill")?.value,
+
+        lcd: g("tLcd")?.value,
+        chrome1: g("tChrome1")?.value,
+        chrome2: g("tChrome2")?.value,
       };
     }
 
     function initThemeUI(){
-      const themeBtn = $("#themeBtn");
-      const themePanel = $("#themePanel");
-      const themeReset = $("#themeReset");
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        $("#bgPanel").classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        if(!themePanel.classList.contains("open")) return;
-        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-        if(!inside) themePanel.classList.remove("open");
-      });
-
       const ids = [
         "tAppBg","tInk","tMuted","tAccent",
         "tBorderColor","tBorderA",
@@ -1070,9 +1104,10 @@
         "tCardBg","tCardA",
         "tListBg","tListA",
         "tInputBg","tInputA",
-        "tProgTrack","tProgFill"
+        "tProgTrack","tProgFill",
+        "tLcd","tChrome1","tChrome2"
       ];
-      ids.forEach(id => {
+      ids.forEach(id=>{
         const el = document.getElementById(id);
         if(!el) return;
         el.addEventListener("input", () => {
@@ -1082,8 +1117,8 @@
         });
       });
 
-      themeReset.addEventListener("click", () => {
-        localStorage.removeItem(THEME_KEY);
+      $("#themeReset").addEventListener("click", () => {
+        safeRemove(THEME_KEY);
         themeApply(DEFAULT_THEME);
         themeSyncInputs(DEFAULT_THEME);
       });
@@ -1094,25 +1129,19 @@
     }
 
     /* =========================
-       Background settings
+       Background settings (FIXED + persisted)
     ========================= */
     const boardTint = $("#boardTint");
-    const bgBtn = $("#bgBtn");
-    const bgPanel = $("#bgPanel");
-    const bgColor = $("#bgColor");
-    const bgStrength = $("#bgStrength");
-    const bgImage = $("#bgImage");
-    const removeImage = $("#removeImage");
     const bgDot = $("#bgDot");
+    const bgNote = $("#bgNote");
 
     function bgLoad(){
-      try{
-        const raw = localStorage.getItem(BG_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
+      const raw = safeGet(BG_KEY);
+      if(!raw) return null;
+      try{ return JSON.parse(raw); }catch{ return null; }
     }
     function bgSave(bg){
-      try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+      safeSet(BG_KEY, JSON.stringify(bg));
     }
 
     function setBoardImage(dataUrlOrNull){
@@ -1127,7 +1156,7 @@
       document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
       bgDot.style.background = tint;
-      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.26, strength + 0.10))}`;
 
       boardTint.style.background = hexToRgba(tint, strength);
     }
@@ -1135,65 +1164,13 @@
     function applyBackground(bg){
       const tint = bg?.tint ?? "#efe7e1";
       const strength = bg?.strength ?? 30;
-      bgColor.value = tint;
-      bgStrength.value = String(strength);
+
+      $("#bgColor").value = tint;
+      $("#bgStrength").value = String(strength);
 
       applyBoardTint(tint, strength);
       setBoardImage(bg?.imageDataUrl ?? null);
     }
-
-    bgBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      bgPanel.classList.toggle("open");
-      $("#themePanel").classList.remove("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      if(!bgPanel.classList.contains("open")) return;
-      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      if(!inside) bgPanel.classList.remove("open");
-    });
-
-    bgColor.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const bg = bgLoad() || {};
-      bg.tint = bgColor.value;
-      bg.strength = Number(bgStrength.value);
-      bg.imageDataUrl = bg.imageDataUrl ?? null;
-      bgSave(bg);
-    });
-
-    bgStrength.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const bg = bgLoad() || {};
-      bg.tint = bgColor.value;
-      bg.strength = Number(bgStrength.value);
-      bg.imageDataUrl = bg.imageDataUrl ?? null;
-      bgSave(bg);
-    });
-
-    bgImage.addEventListener("change", async () => {
-      const file = bgImage.files && bgImage.files[0];
-      if(!file) return;
-      const dataUrl = await fileToDataUrl(file);
-      setBoardImage(dataUrl);
-
-      const bg = bgLoad() || {};
-      bg.tint = bgColor.value;
-      bg.strength = Number(bgStrength.value);
-      bg.imageDataUrl = dataUrl;
-      bgSave(bg);
-    });
-
-    removeImage.addEventListener("click", () => {
-      setBoardImage(null);
-      bgImage.value = "";
-      const bg = bgLoad() || {};
-      bg.tint = bgColor.value;
-      bg.strength = Number(bgStrength.value);
-      bg.imageDataUrl = null;
-      bgSave(bg);
-    });
 
     function fileToDataUrl(file){
       return new Promise((resolve, reject) => {
@@ -1204,359 +1181,56 @@
       });
     }
 
-    /* =========================
-       Player state
-    ========================= */
-    const audio = $("#audio");
-    const listEl = $("#list");
-    const nowName = $("#nowName");
-    const nowMeta = $("#nowMeta");
-    const playBtn = $("#playBtn");
-    const prevBtn = $("#prevBtn");
-    const nextBtn = $("#nextBtn");
-    const seek = $("#seek");
-    const vol = $("#vol");
-    const tCur = $("#tCur");
-    const tDur = $("#tDur");
-    const statusEl = $("#status");
-    const fileInput = $("#fileInput");
-    const dbNote = $("#dbNote");
+    function initBgUI(){
+      const saved = bgLoad() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
+      applyBackground(saved);
 
-    let tracks = [];
-    let activeId = null;
-    let activeUrl = null;
-    let seeking = false;
-
-    function setStatus(s){ statusEl.textContent = s; }
-
-    function revokeActiveUrl(){
-      if(activeUrl){
-        URL.revokeObjectURL(activeUrl);
-        activeUrl = null;
-      }
-    }
-
-    async function refresh(){
-      tracks = await dbAll();
-      tracks.sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
-      renderList();
-      updateNowPlayingUI();
-      showDBNote();
-    }
-
-    function showDBNote(){
-      // helpful hint: indexedDB exists and songs persist
-      dbNote.textContent = tracks.length
-        ? "Songs are saved locally in your browser (IndexedDB)."
-        : "Add songs with the + button. Songs are saved locally in your browser.";
-    }
-
-    function renderList(){
-      listEl.innerHTML = "";
-      tracks.forEach(t => {
-        const item = document.createElement("div");
-        item.className = "item" + (t.id === activeId ? " active" : "");
-        item.dataset.id = String(t.id);
-
-        item.innerHTML = `
-          <div class="itemMain">
-            <div class="itemName">${escapeHtml(t.name || "Untitled")}</div>
-            <div class="itemSub">
-              <span>${escapeHtml(t.filename || "")}</span>
-              <span>${(typeof t.duration === "number") ? fmtTime(t.duration) : ""}</span>
-            </div>
-
-            <div class="renameRow">
-              <input class="nameInput" type="text" value="${escapeAttr(t.name || "")}" />
-              <button class="ib saveRename" type="button" title="Save">✓</button>
-            </div>
-          </div>
-
-          <div class="itemBtns">
-            <button class="ib renameBtn" type="button" title="Rename">✎</button>
-            <button class="ib delBtn" type="button" title="Delete">×</button>
-          </div>
-        `;
-
-        listEl.appendChild(item);
+      $("#bgColor").addEventListener("input", () => {
+        applyBoardTint($("#bgColor").value, $("#bgStrength").value);
+        const bg = bgLoad() || {};
+        bg.tint = $("#bgColor").value;
+        bg.strength = Number($("#bgStrength").value);
+        bg.imageDataUrl = bg.imageDataUrl ?? null;
+        bgSave(bg);
       });
 
-      // accent outline for active item
-      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#cbb8ae";
-      $$(".item").forEach(el => {
-        if(el.classList.contains("active")){
-          el.style.outlineColor = hexToRgba(accent, 0.62);
-        }
+      $("#bgStrength").addEventListener("input", () => {
+        applyBoardTint($("#bgColor").value, $("#bgStrength").value);
+        const bg = bgLoad() || {};
+        bg.tint = $("#bgColor").value;
+        bg.strength = Number($("#bgStrength").value);
+        bg.imageDataUrl = bg.imageDataUrl ?? null;
+        bgSave(bg);
       });
-    }
 
-    function updateNowPlayingUI(){
-      const t = tracks.find(x => x.id === activeId) || null;
-      if(!t){
-        nowName.textContent = "No song selected";
-        nowMeta.textContent = "Upload files to start";
-        tCur.textContent = "0:00";
-        tDur.textContent = "0:00";
-        playBtn.textContent = "►";
-        return;
-      }
-      nowName.textContent = t.name || "Untitled";
-      nowMeta.textContent = t.filename || "";
-    }
+      $("#bgImage").addEventListener("change", async () => {
+        const file = $("#bgImage").files && $("#bgImage").files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataUrl(file);
+        setBoardImage(dataUrl);
 
-    async function setActive(id, autoplay = false){
-      if(id === activeId && audio.src) return;
-
-      const t = tracks.find(x => x.id === id);
-      if(!t) return;
-
-      activeId = id;
-      updateNowPlayingUI();
-      renderList();
-
-      // load blob -> object URL
-      revokeActiveUrl();
-      const fresh = await dbGet(id);
-      if(!fresh || !fresh.blob){
-        setStatus("Missing file");
-        return;
-      }
-      activeUrl = URL.createObjectURL(fresh.blob);
-      audio.src = activeUrl;
-      audio.load();
-      setStatus("Loaded");
-
-      if(autoplay){
-        try{ await audio.play(); }catch{}
-      }
-      syncPlayIcon();
-    }
-
-    function syncPlayIcon(){
-      playBtn.textContent = audio.paused ? "►" : "❚❚";
-    }
-
-    function nextTrack(){
-      if(!tracks.length) return;
-      const idx = tracks.findIndex(t => t.id === activeId);
-      const next = tracks[(idx >= 0 ? idx + 1 : 0) % tracks.length];
-      setActive(next.id, true);
-    }
-
-    function prevTrack(){
-      if(!tracks.length) return;
-      const idx = tracks.findIndex(t => t.id === activeId);
-      const prev = tracks[(idx > 0 ? idx - 1 : tracks.length - 1)];
-      setActive(prev.id, true);
-    }
-
-    playBtn.addEventListener("click", async () => {
-      if(!tracks.length){
-        setStatus("Add a song first");
-        return;
-      }
-      if(!activeId){
-        await setActive(tracks[0].id, true);
-        return;
-      }
-      if(audio.paused){
-        try{ await audio.play(); }catch{}
-      }else{
-        audio.pause();
-      }
-      syncPlayIcon();
-    });
-
-    nextBtn.addEventListener("click", nextTrack);
-    prevBtn.addEventListener("click", prevTrack);
-
-    audio.addEventListener("play", () => { setStatus("Playing"); syncPlayIcon(); });
-    audio.addEventListener("pause", () => { setStatus("Paused"); syncPlayIcon(); });
-    audio.addEventListener("ended", () => { setStatus("Ended"); syncPlayIcon(); nextTrack(); });
-
-    audio.addEventListener("loadedmetadata", async () => {
-      tDur.textContent = fmtTime(audio.duration || 0);
-      setStatus("Ready");
-      // persist duration if missing
-      const t = tracks.find(x => x.id === activeId);
-      if(t && (typeof t.duration !== "number" || !Number.isFinite(t.duration))){
-        t.duration = Number.isFinite(audio.duration) ? audio.duration : null;
-        await dbPut(t);
-        await refresh();
-      }
-    });
-
-    audio.addEventListener("timeupdate", () => {
-      if(seeking) return;
-      const d = audio.duration || 0;
-      const c = audio.currentTime || 0;
-      tCur.textContent = fmtTime(c);
-      tDur.textContent = fmtTime(d);
-      const v = d ? Math.round((c/d) * 1000) : 0;
-      seek.value = String(v);
-    });
-
-    seek.addEventListener("input", () => { seeking = true; });
-    seek.addEventListener("change", () => {
-      const d = audio.duration || 0;
-      const v = Number(seek.value) / 1000;
-      if(d) audio.currentTime = v * d;
-      seeking = false;
-    });
-
-    vol.addEventListener("input", () => {
-      audio.volume = clamp(Number(vol.value)/100, 0, 1);
-    });
-    audio.volume = clamp(Number(vol.value)/100, 0, 1);
-
-    /* Playlist interactions */
-    listEl.addEventListener("click", async (e) => {
-      const item = e.target.closest(".item");
-      if(!item) return;
-      const id = Number(item.dataset.id);
-
-      if(e.target.closest(".delBtn")){
-        // delete
-        const wasActive = (id === activeId);
-        if(wasActive){
-          audio.pause();
-          revokeActiveUrl();
-          audio.removeAttribute("src");
-          activeId = null;
-        }
-        await dbDelete(id);
-
-        // re-pack orders
-        const all = await dbAll();
-        all.sort((a,b)=> (a.order??0)-(b.order??0));
-        for(let i=0;i<all.length;i++){
-          all[i].order = i;
-          await dbPut(all[i]);
-        }
-
-        await refresh();
-        if(wasActive && tracks.length){
-          await setActive(tracks[0].id, false);
-        }
-        return;
-      }
-
-      if(e.target.closest(".renameBtn")){
-        item.classList.toggle("renaming");
-        const inp = item.querySelector(".nameInput");
-        inp?.focus();
-        inp?.select();
-        return;
-      }
-
-      if(e.target.closest(".saveRename")){
-        const inp = item.querySelector(".nameInput");
-        const name = (inp?.value || "").trim() || "Untitled";
-        const t = tracks.find(x => x.id === id);
-        if(t){
-          t.name = name;
-          await dbPut(t);
-          await refresh();
-          if(id === activeId) updateNowPlayingUI();
-        }
-        return;
-      }
-
-      // click item to play
-      await setActive(id, true);
-    });
-
-    listEl.addEventListener("keydown", async (e) => {
-      if(!e.target.classList.contains("nameInput")) return;
-      if(e.key === "Enter"){
-        e.preventDefault();
-        e.target.closest(".item")?.querySelector(".saveRename")?.click();
-      }
-      if(e.key === "Escape"){
-        e.preventDefault();
-        e.target.closest(".item")?.classList.remove("renaming");
-      }
-    });
-
-    /* Upload files */
-    fileInput.addEventListener("change", async () => {
-      const files = Array.from(fileInput.files || []);
-      fileInput.value = "";
-      if(!files.length) return;
-
-      setStatus("Importing…");
-
-      const existing = await dbAll();
-      const maxOrder = existing.reduce((m,t)=>Math.max(m, Number(t.order ?? -1)), -1);
-
-      let order = maxOrder + 1;
-      for(const f of files){
-        const nameGuess = (f.name || "Untitled").replace(/\.[^.]+$/, "");
-        const track = {
-          name: nameGuess,
-          filename: f.name || "",
-          type: f.type || "audio/*",
-          blob: f,
-          createdAt: Date.now(),
-          order: order++,
-          duration: null
-        };
-
-        const id = await dbAdd(track);
-
-        // compute duration (optional)
-        try{
-          const dur = await computeDurationFromBlob(f);
-          const saved = await dbGet(id);
-          if(saved){
-            saved.duration = Number.isFinite(dur) ? dur : null;
-            await dbPut(saved);
-          }
-        }catch{}
-      }
-
-      await refresh();
-      setStatus("Imported");
-
-      if(!activeId && tracks.length){
-        await setActive(tracks[0].id, false);
-      }
-    });
-
-    function computeDurationFromBlob(blob){
-      return new Promise((resolve, reject) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("audio");
-        a.preload = "metadata";
-        a.src = url;
-        a.onloadedmetadata = () => {
-          const d = a.duration;
-          URL.revokeObjectURL(url);
-          resolve(d);
-        };
-        a.onerror = () => {
-          URL.revokeObjectURL(url);
-          reject(new Error("metadata"));
-        };
+        const bg = bgLoad() || {};
+        bg.tint = $("#bgColor").value;
+        bg.strength = Number($("#bgStrength").value);
+        bg.imageDataUrl = dataUrl;
+        bgSave(bg);
       });
-    }
 
-    function escapeHtml(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
-    }
-    function escapeAttr(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
+      $("#removeImage").addEventListener("click", () => {
+        setBoardImage(null);
+        $("#bgImage").value = "";
+        const bg = bgLoad() || {};
+        bg.tint = $("#bgColor").value;
+        bg.strength = Number($("#bgStrength").value);
+        bg.imageDataUrl = null;
+        bgSave(bg);
+      });
+
+      bgNote.textContent = "";
     }
 
     /* =========================
-       Popovers
+       Popovers (single, clean)
     ========================= */
     function initPopovers(){
       const themeBtn = $("#themeBtn");
@@ -1588,92 +1262,388 @@
       });
     }
 
-    /* Theme UI wiring */
-    function initThemePanel(){
-      const themeReset = $("#themeReset");
-      const ids = [
-        "tAppBg","tInk","tMuted","tAccent",
-        "tBorderColor","tBorderA",
-        "tSurfaceA","tPanelA",
-        "tBtnA","tBtnBorderA","tBtnInk",
-        "tOverlayBase","tOverlayA",
-        "tCardBg","tCardA",
-        "tListBg","tListA",
-        "tInputBg","tInputA",
-        "tProgTrack","tProgFill"
-      ];
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if(!el) return;
-        el.addEventListener("input", () => {
-          const t = themeReadFromInputs();
-          themeApply(t);
-          themeSave(t);
-        });
-      });
+    /* =========================
+       Player
+    ========================= */
+    const audio = $("#audio");
+    const listEl = $("#list");
+    const fileInput = $("#fileInput");
 
-      themeReset.addEventListener("click", () => {
-        localStorage.removeItem(THEME_KEY);
-        themeApply(DEFAULT_THEME);
-        themeSyncInputs(DEFAULT_THEME);
+    const nowName = $("#nowName");
+    const nowMeta = $("#nowMeta");
+    const statusEl = $("#status");
+    const persistNote = $("#persistNote");
+
+    const playBtn = $("#playBtn");
+    const prevBtn = $("#prevBtn");
+    const nextBtn = $("#nextBtn");
+
+    const seek = $("#seek");
+    const vol = $("#vol");
+    const tCur = $("#tCur");
+    const tDur = $("#tDur");
+
+    const infoNote = $("#infoNote");
+
+    let tracks = [];
+    let activeId = null;
+    let activeUrl = null;
+    let seeking = false;
+
+    function setStatus(s){ statusEl.textContent = s; }
+
+    function revokeActiveUrl(){
+      if(activeUrl){
+        URL.revokeObjectURL(activeUrl);
+        activeUrl = null;
+      }
+    }
+
+    function syncPlayIcon(){
+      playBtn.textContent = audio.paused ? "►" : "❚❚";
+    }
+
+    async function refresh(){
+      tracks = await songAll();
+      tracks.sort((a,b)=>(a.order??0)-(b.order??0));
+      renderList();
+      updateNowUI();
+    }
+
+    function renderList(){
+      listEl.innerHTML = "";
+      const accent = (getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#cbb8ae");
+
+      tracks.forEach(t => {
+        const item = document.createElement("div");
+        item.className = "item" + (t.id === activeId ? " active" : "");
+        item.dataset.id = String(t.id);
+
+        item.innerHTML = `
+          <div class="itemMain">
+            <div class="itemName">${escapeHtml(t.name || "Untitled")}</div>
+            <div class="itemSub">
+              <span>${escapeHtml(t.filename || "")}</span>
+              <span>${(typeof t.duration === "number" && Number.isFinite(t.duration)) ? fmtTime(t.duration) : ""}</span>
+            </div>
+            <div class="renameRow">
+              <input class="nameInput" type="text" value="${escapeAttr(t.name || "")}" />
+              <button class="ib saveRename" type="button" title="Save">✓</button>
+            </div>
+          </div>
+          <div class="itemBtns">
+            <button class="ib renameBtn" type="button" title="Rename">✎</button>
+            <button class="ib delBtn" type="button" title="Delete">×</button>
+          </div>
+        `;
+
+        if(t.id === activeId){
+          item.style.outlineColor = hexToRgba(accent, 0.62);
+        }
+
+        listEl.appendChild(item);
       });
     }
 
-    /* Background UI wiring */
-    function initBgPanel(){
-      const saved = bgLoad() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
-      applyBackground(saved);
-
-      bgColor.addEventListener("input", () => {
-        applyBoardTint(bgColor.value, bgStrength.value);
-        const bg = bgLoad() || {};
-        bg.tint = bgColor.value;
-        bg.strength = Number(bgStrength.value);
-        bg.imageDataUrl = bg.imageDataUrl ?? null;
-        bgSave(bg);
-      });
-
-      bgStrength.addEventListener("input", () => {
-        applyBoardTint(bgColor.value, bgStrength.value);
-        const bg = bgLoad() || {};
-        bg.tint = bgColor.value;
-        bg.strength = Number(bgStrength.value);
-        bg.imageDataUrl = bg.imageDataUrl ?? null;
-        bgSave(bg);
-      });
+    function updateNowUI(){
+      const t = tracks.find(x=>x.id===activeId) || null;
+      if(!t){
+        nowName.textContent = "No song selected";
+        nowMeta.textContent = "Tap + to add audio files";
+        tCur.textContent = "0:00";
+        tDur.textContent = "0:00";
+        seek.value = "0";
+        syncPlayIcon();
+        return;
+      }
+      nowName.textContent = t.name || "Untitled";
+      nowMeta.textContent = t.filename || "";
     }
 
-    /* Boot */
-    (async function boot(){
-      initPopovers();
+    async function setActive(id, autoplay){
+      const t = tracks.find(x=>x.id===id);
+      if(!t) return;
 
-      // Theme
-      const savedTheme = themeLoad() || DEFAULT_THEME;
-      themeApply(savedTheme);
-      themeSyncInputs(savedTheme);
-      initThemePanel();
+      activeId = id;
+      renderList();
+      updateNowUI();
 
-      // Background
-      initBgPanel();
-
-      // Background image handlers need fileToDataUrl
-      // (already wired above)
-
-      // Render
-      try{
-        await refresh();
-      }catch(err){
-        dbNote.textContent = "Note: Your browser blocked local storage/IndexedDB.";
+      // load audio blob
+      revokeActiveUrl();
+      const full = await songGet(id);
+      if(!full || !full.blob){
+        setStatus("Missing file");
+        return;
       }
 
-      // Controls
-      $("#themeReset").addEventListener("click", () => setStatus("Theme reset"));
-      $("#removeImage").addEventListener("click", () => setStatus("Background cleared"));
+      activeUrl = URL.createObjectURL(full.blob);
+      audio.src = activeUrl;
+      audio.load();
 
-      // Progress track/thumb style shadows should follow accent if user changes
-      // (thumb shadow is fine as-is)
+      // wait a microtask so src sticks reliably in some embeds
+      await Promise.resolve();
+
+      if(autoplay){
+        try{
+          await audio.play(); // must be from a user gesture; our calls come from click handlers
+          setStatus("Playing");
+        }catch(err){
+          setStatus("Press play");
+        }
+      }else{
+        setStatus("Ready");
+      }
+      syncPlayIcon();
+    }
+
+    function nextTrack(){
+      if(!tracks.length) return;
+      const idx = tracks.findIndex(t=>t.id===activeId);
+      const next = tracks[(idx >= 0 ? idx + 1 : 0) % tracks.length];
+      setActive(next.id, true);
+    }
+
+    function prevTrack(){
+      if(!tracks.length) return;
+      const idx = tracks.findIndex(t=>t.id===activeId);
+      const prev = tracks[(idx > 0 ? idx - 1 : tracks.length - 1)];
+      setActive(prev.id, true);
+    }
+
+    playBtn.addEventListener("click", async () => {
+      if(!tracks.length){
+        setStatus("Add a song first");
+        return;
+      }
+      if(!activeId){
+        await setActive(tracks[0].id, true);
+        return;
+      }
+      if(audio.paused){
+        try{ await audio.play(); setStatus("Playing"); }catch{ setStatus("Press play"); }
+      }else{
+        audio.pause();
+        setStatus("Paused");
+      }
+      syncPlayIcon();
+    });
+
+    nextBtn.addEventListener("click", nextTrack);
+    prevBtn.addEventListener("click", prevTrack);
+
+    audio.addEventListener("loadedmetadata", async () => {
+      tDur.textContent = fmtTime(audio.duration || 0);
+      // persist duration if we can
+      const t = tracks.find(x=>x.id===activeId);
+      if(t && (typeof t.duration !== "number" || !Number.isFinite(t.duration))){
+        t.duration = Number.isFinite(audio.duration) ? audio.duration : null;
+        try{ await songPut(t); await refresh(); }catch{}
+      }
+    });
+
+    audio.addEventListener("timeupdate", () => {
+      if(seeking) return;
+      const d = audio.duration || 0;
+      const c = audio.currentTime || 0;
+      tCur.textContent = fmtTime(c);
+      tDur.textContent = fmtTime(d);
+      seek.value = String(d ? Math.round((c/d)*1000) : 0);
+    });
+
+    audio.addEventListener("play", syncPlayIcon);
+    audio.addEventListener("pause", syncPlayIcon);
+    audio.addEventListener("ended", () => { syncPlayIcon(); nextTrack(); });
+
+    seek.addEventListener("input", () => { seeking = true; });
+    seek.addEventListener("change", () => {
+      const d = audio.duration || 0;
+      if(d){
+        audio.currentTime = (Number(seek.value)/1000) * d;
+      }
+      seeking = false;
+    });
+
+    vol.addEventListener("input", () => {
+      audio.volume = clamp(Number(vol.value)/100, 0, 1);
+    });
+    audio.volume = clamp(Number(vol.value)/100, 0, 1);
+
+    /* playlist interactions */
+    listEl.addEventListener("click", async (e) => {
+      const item = e.target.closest(".item");
+      if(!item) return;
+      const id = Number(item.dataset.id);
+
+      if(e.target.closest(".delBtn")){
+        const wasActive = (id === activeId);
+        if(wasActive){
+          audio.pause();
+          revokeActiveUrl();
+          audio.removeAttribute("src");
+          activeId = null;
+        }
+        await songDel(id);
+
+        // re-pack order
+        const all = await songAll();
+        all.sort((a,b)=>(a.order??0)-(b.order??0));
+        for(let i=0;i<all.length;i++){
+          all[i].order = i;
+          await songPut(all[i]);
+        }
+
+        await refresh();
+        if(wasActive && tracks.length) await setActive(tracks[0].id, false);
+        return;
+      }
+
+      if(e.target.closest(".renameBtn")){
+        item.classList.toggle("renaming");
+        const inp = item.querySelector(".nameInput");
+        inp?.focus();
+        inp?.select();
+        return;
+      }
+
+      if(e.target.closest(".saveRename")){
+        const inp = item.querySelector(".nameInput");
+        const name = (inp?.value || "").trim() || "Untitled";
+        const t = tracks.find(x=>x.id===id);
+        if(t){
+          t.name = name;
+          await songPut(t);
+          await refresh();
+          if(id === activeId) updateNowUI();
+        }
+        item.classList.remove("renaming");
+        return;
+      }
+
+      await setActive(id, true);
+    });
+
+    listEl.addEventListener("keydown", (e) => {
+      if(!e.target.classList.contains("nameInput")) return;
+      if(e.key === "Enter"){
+        e.preventDefault();
+        e.target.closest(".item")?.querySelector(".saveRename")?.click();
+      }
+      if(e.key === "Escape"){
+        e.preventDefault();
+        e.target.closest(".item")?.classList.remove("renaming");
+      }
+    });
+
+    /* upload */
+    function computeDurationFromBlob(blob){
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("audio");
+        a.preload = "metadata";
+        a.src = url;
+        a.onloadedmetadata = () => {
+          const d = a.duration;
+          URL.revokeObjectURL(url);
+          resolve(d);
+        };
+        a.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("metadata"));
+        };
+      });
+    }
+
+    fileInput.addEventListener("change", async () => {
+      const files = Array.from(fileInput.files || []);
+      fileInput.value = "";
+      if(!files.length) return;
+
+      setStatus("Importing…");
+
+      const existing = await songAll().catch(()=>[]);
+      const maxOrder = existing.reduce((m,t)=>Math.max(m, Number(t.order ?? -1)), -1);
+      let order = maxOrder + 1;
+
+      for(const f of files){
+        const nameGuess = (f.name || "Untitled").replace(/\.[^.]+$/, "");
+        const track = {
+          name: nameGuess,
+          filename: f.name || "",
+          type: f.type || "audio/*",
+          blob: f,
+          createdAt: Date.now(),
+          order: order++,
+          duration: null
+        };
+
+        const id = await songAdd(track);
+
+        // duration (best effort)
+        try{
+          const dur = await computeDurationFromBlob(f);
+          const saved = await songGet(id);
+          if(saved){
+            saved.duration = Number.isFinite(dur) ? dur : null;
+            await songPut(saved);
+          }
+        }catch{}
+      }
+
+      await refresh();
+      setStatus("Imported");
+      if(!activeId && tracks.length) await setActive(tracks[0].id, false);
+    });
+
+    /* =========================
+       Boot
+    ========================= */
+    async function boot(){
+      initPopovers();
+      initThemeUI();
+      initBgUI();
+
+      // Try IndexedDB once, then fall back to session mode if blocked
+      try{
+        await openDB();
+        idbOK = true;
+      }catch{
+        idbOK = false;
+      }
+
+      // Show clear message (instead of confusing “blocked”)
+      if(!idbOK){
+        persistNote.textContent = "Saving: off";
+        infoNote.textContent =
+          "Your embed/browser is blocking IndexedDB, so songs won’t persist after reload.";
+      }else{
+        persistNote.textContent = "Saving: on";
+        infoNote.textContent =
+          "Songs are saved locally in your browser.";
+      }
+
+      if(!storageOK){
+        // background/theme persistence relies on localStorage
+        bgNote.textContent = "Theme/background settings saving is off.";
+      }else{
+        bgNote.textContent = "";
+      }
+
+      // Finally load tracks
+      try{
+        await refresh();
+      }catch{
+        // If IDB throws after initial check, fall back to session mode
+        idbOK = false;
+        persistNote.textContent = "Saving: off";
+        infoNote.textContent =
+          "Storage is blocked in this embed, so songs won’t persist after reload.";
+        await refresh().catch(()=>{});
+      }
+
       setStatus("Ready");
-    })();
+    }
+
+    boot();
   </script>
 </body>
 </html>

@@ -23,7 +23,7 @@
       --btn-border-a: 0.10;
       --btn-ink: rgba(43,43,43,0.72);
 
-      --accent: #cbb8ae; /* drives selection ring + theme dot */
+      --accent: #cbb8ae; /* selection ring + theme dot */
 
       /* overlay (single; no radials) */
       --overlay-base: #ffffff;
@@ -295,6 +295,7 @@
       gap: var(--gap);
       grid-template-columns: 360px 1fr;
       align-items: start;
+      min-height: 520px;
     }
     @media (max-width: 980px){
       .content{ grid-template-columns: 1fr; }
@@ -410,16 +411,29 @@
     }
     .ghost-btn:active{ transform: translateY(1px); }
 
+    /* ✅ habits list can scroll */
     .habits{
       display: flex;
       flex-direction: column;
       gap: var(--gap);
       min-width: 0;
+      max-height: calc(100vh - 260px);
+      overflow: auto;
+      padding-right: 6px; /* space for scrollbar */
+    }
+    @media (max-width: 980px){
+      .habits{
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
+      }
     }
 
     .habit{
       position: relative;
       overflow: hidden;
+      cursor: pointer; /* makes it feel clickable */
+      user-select: none;
     }
 
     .habit.selected{
@@ -476,6 +490,7 @@
       font-weight: 900;
       font-size: 18px;
       line-height: 1;
+      user-select: none;
     }
     .icon-btn:active{ transform: translateY(1px); }
 
@@ -488,6 +503,7 @@
       background: rgba(255,255,255,0.70);
       backdrop-filter: blur(2px);
       overflow: hidden;
+      cursor: pointer;
     }
     .swatch::before{
       content:"";
@@ -548,6 +564,10 @@
       background: var(--filled, var(--accent));
       filter: saturate(1.03) contrast(1.02);
     }
+
+    /* ✅ collapsed state */
+    .habit.collapsed .habit-body{ display: none; }
+    .habit.collapsed .habit-head{ border-bottom: none; }
 
     .footer-note{
       padding: 0 var(--pad) var(--pad);
@@ -621,7 +641,6 @@
 
             <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="92" /></div>
             <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10" /></div>
-            <div class="row"><label for="tBtnInk">Btn icon/text</label><input id="tBtnInk" type="color" value="#2b2b2b" /></div>
 
             <div class="divider"></div>
 
@@ -700,7 +719,7 @@
             <div class="card-header">
               <div style="display:flex; flex-direction:column; gap:4px;">
                 <div class="card-title">Add a habit</div>
-                <div class="card-sub">Pick colors + number of days required to build the habit (boxes)</div>
+                <div class="card-sub">Pick habit colors + number of days needed (boxes)</div>
               </div>
               <button class="ghost-btn" id="clearAll" type="button" title="Clear everything">Clear all</button>
             </div>
@@ -719,16 +738,29 @@
               </div>
 
               <div class="block">
-                <div class="label">Habit colors</div>
+                <div class="label">Habit colors (per habit)</div>
 
                 <div class="two-col">
                   <div>
-                    <div class="hint" style="margin-bottom:8px;">Habit background</div>
+                    <div class="hint" style="margin-bottom:8px;">Card background</div>
                     <input id="cHabitBg" type="color" value="#ffffff" />
                   </div>
                   <div>
-                    <div class="hint" style="margin-bottom:8px;">Habit header tint</div>
+                    <div class="hint" style="margin-bottom:8px;">Header tint glow</div>
                     <input id="cHabitTint" type="color" value="#cbb8ae" />
+                  </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="two-col">
+                  <div>
+                    <div class="hint" style="margin-bottom:8px;">Text</div>
+                    <input id="cHabitInk" type="color" value="#2b2b2b" />
+                  </div>
+                  <div>
+                    <div class="hint" style="margin-bottom:8px;">Box border</div>
+                    <input id="cBoxBorder" type="color" value="#1e1e1e" />
                   </div>
                 </div>
 
@@ -744,19 +776,6 @@
                     <input id="cBoxFilled" type="color" value="#cbb8ae" />
                   </div>
                 </div>
-
-                <div class="divider"></div>
-
-                <div class="two-col">
-                  <div>
-                    <div class="hint" style="margin-bottom:8px;">Box border</div>
-                    <input id="cBoxBorder" type="color" value="#1e1e1e" />
-                  </div>
-                  <div>
-                    <div class="hint" style="margin-bottom:8px;">Text color</div>
-                    <input id="cHabitInk" type="color" value="#2b2b2b" />
-                  </div>
-                </div>
               </div>
 
               <button class="add-btn" id="addHabitBtn" type="button">+ Add habit</button>
@@ -767,7 +786,7 @@
           </div>
 
           <!-- Right: Habits -->
-          <div class="habits" id="habits"></div>
+          <div class="habits" id="habits" aria-label="Habits list"></div>
         </div>
 
         <div class="footer-note">
@@ -777,8 +796,8 @@
   </div>
 
   <script>
-    const APP_KEY   = "notion_habit_builder_v1";
-    const THEME_KEY = "weekly_overview_theme_v5";  // keep same key style as provided
+    const APP_KEY   = "notion_habit_builder_v2";
+    const THEME_KEY = "weekly_overview_theme_v5";
     const BG_KEY    = "weekly_overview_bg_v5";
 
     const $ = (sel, root=document) => root.querySelector(sel);
@@ -822,7 +841,7 @@
     }
 
     /* =========================
-       Theme (same mechanics)
+       Theme (btn icon/text removed)
     ========================= */
     const DEFAULT_THEME = {
       appBg: "#ffffff",
@@ -838,7 +857,6 @@
 
       btnA: 0.92,
       btnBorderA: 0.10,
-      btnInk: "#2b2b2b",
 
       overlayBase: "#ffffff",
       overlayA: 0.34,
@@ -897,16 +915,6 @@
 
       r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
       r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
-      r.setProperty("--btn-ink", hexToRgba(normHex(theme.btnInk, "#2b2b2b"), 0.72));
-
-      r.setProperty("--day-bg", normHex(theme.dayBg, DEFAULT_THEME.dayBg));
-      r.setProperty("--day-bg-a", String(clamp(theme.dayBgA, 0.70, 1.00)));
-
-      r.setProperty("--block-bg", normHex(theme.blockBg, DEFAULT_THEME.blockBg));
-      r.setProperty("--block-bg-a", String(clamp(theme.blockBgA, 0.55, 1.00)));
-
-      r.setProperty("--input-bg", normHex(theme.inputBg, DEFAULT_THEME.inputBg));
-      r.setProperty("--input-bg-a", String(clamp(theme.inputBgA, 0.60, 1.00)));
 
       const dot = $("#themeDot");
       if(dot){
@@ -959,7 +967,6 @@
 
       set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
       set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
-      set("tBtnInk", theme.btnInk);
 
       set("tOverlayBase", theme.overlayBase);
       set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
@@ -990,7 +997,6 @@
 
         btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
         btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
-        btnInk: g("tBtnInk")?.value,
 
         overlayBase: g("tOverlayBase")?.value,
         overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
@@ -1028,7 +1034,7 @@
         "tAppBg","tInk","tMuted","tAccent",
         "tBorderColor","tBorderA",
         "tSurfaceA","tPanelA",
-        "tBtnA","tBtnBorderA","tBtnInk",
+        "tBtnA","tBtnBorderA",
         "tOverlayBase","tOverlayA",
         "tDayBg","tDayBgA",
         "tBlockBg","tBlockBgA",
@@ -1057,7 +1063,7 @@
     }
 
     /* =========================
-       Background (same vibe)
+       Background
     ========================= */
     const boardTint = $("#boardTint");
     const bgBtn = $("#bgBtn");
@@ -1069,11 +1075,7 @@
     const bgDot = $("#bgDot");
     const bgReset = $("#bgReset");
 
-    const DEFAULT_BG = {
-      tint: "#efe7e1",
-      strength: 30,
-      imageDataUrl: null
-    };
+    const DEFAULT_BG = { tint: "#efe7e1", strength: 30, imageDataUrl: null };
 
     function bgLoad(){
       try{
@@ -1153,7 +1155,6 @@
     removeImage.addEventListener("click", () => {
       setBoardImage(null);
       bgImage.value = "";
-
       const cur = bgLoad() || DEFAULT_BG;
       cur.imageDataUrl = null;
       bgSave(cur);
@@ -1174,7 +1175,7 @@
     }
 
     /* =========================
-       App store (habits)
+       Habits store
     ========================= */
     function loadApp(){
       try{
@@ -1224,7 +1225,6 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="hint">Your habits and theme/background settings save locally (no accounts needed).</div>
           </div>
         `;
         habitsEl.appendChild(empty);
@@ -1236,16 +1236,16 @@
         const doneN = countDone(h);
         const pct = Math.round((doneN / total) * 100);
 
-        const habit = document.createElement("section");
-        habit.className = "habit card";
-        habit.dataset.id = h.id;
-
-        // per-habit styling
         const habitBg = normHex(h.habitBg, "#ffffff");
         const habitInk = normHex(h.habitInk, "#2b2b2b");
         const empty = normHex(h.boxEmpty, "#eae6e2");
         const filled = normHex(h.boxFilled, "#cbb8ae");
         const boxBorder = normHex(h.boxBorder, "#1e1e1e");
+        const tint = normHex(h.habitTint, "#cbb8ae");
+
+        const habit = document.createElement("section");
+        habit.className = "habit card" + (h.collapsed ? " collapsed" : "");
+        habit.dataset.id = h.id;
 
         habit.style.background = hexToRgba(habitBg, 1.0);
         habit.style.color = habitInk;
@@ -1257,12 +1257,15 @@
               <div class="habit-progress">${doneN}/${total} days • ${pct}%</div>
             </div>
 
-            <div class="habit-actions">
-              <div class="swatch" title="Habit background" style="--sw:${habitBg}">
-                <input data-action="habitBg" type="color" value="${habitBg}" aria-label="Habit background">
+            <div class="habit-actions" aria-label="Habit controls">
+              <div class="swatch" title="Card background" style="--sw:${habitBg}">
+                <input data-action="habitBg" type="color" value="${habitBg}" aria-label="Card background">
               </div>
-              <div class="swatch" title="Header tint" style="--sw:${normHex(h.habitTint, '#cbb8ae')}">
-                <input data-action="habitTint" type="color" value="${normHex(h.habitTint, '#cbb8ae')}" aria-label="Habit header tint">
+              <div class="swatch" title="Header tint glow" style="--sw:${tint}">
+                <input data-action="habitTint" type="color" value="${tint}" aria-label="Header tint">
+              </div>
+              <div class="swatch" title="Text color" style="--sw:${habitInk}">
+                <input data-action="habitInk" type="color" value="${habitInk}" aria-label="Text color">
               </div>
               <div class="swatch" title="Boxes (empty)" style="--sw:${empty}">
                 <input data-action="boxEmpty" type="color" value="${empty}" aria-label="Empty box color">
@@ -1270,6 +1273,13 @@
               <div class="swatch" title="Boxes (filled)" style="--sw:${filled}">
                 <input data-action="boxFilled" type="color" value="${filled}" aria-label="Filled box color">
               </div>
+              <div class="swatch" title="Box border" style="--sw:${boxBorder}">
+                <input data-action="boxBorder" type="color" value="${boxBorder}" aria-label="Box border color">
+              </div>
+
+              <button class="icon-btn" data-action="collapse" type="button" title="${h.collapsed ? "Expand boxes" : "Collapse boxes"}" aria-label="Collapse/expand">
+                ${h.collapsed ? "▾" : "▴"}
+              </button>
               <button class="icon-btn" data-action="reset" type="button" title="Reset boxes" aria-label="Reset boxes">↺</button>
               <button class="icon-btn" data-action="delete" type="button" title="Delete habit" aria-label="Delete habit">×</button>
             </div>
@@ -1277,34 +1287,29 @@
 
           <div class="habit-body">
             <div class="boxes"
-              style="
-                --empty: ${empty};
-                --filled: ${filled};
-              "
+              style="--empty:${empty}; --filled:${filled};"
               data-box-border="${boxBorder}"
+              aria-label="Habit boxes"
             ></div>
           </div>
         `;
 
-        // selection ring
         habit.classList.toggle("selected", selectedHabitId === h.id);
 
         habitsEl.appendChild(habit);
+        setHabitHeaderTint(habit, tint);
 
-        setHabitHeaderTint(habit, h.habitTint || "#cbb8ae");
-
-        // build boxes
-        const boxesWrap = habit.querySelector(".boxes");
-        boxesWrap.style.setProperty("--empty", empty);
-        boxesWrap.style.setProperty("--filled", filled);
-
-        for(let i=0;i<total;i++){
-          const b = document.createElement("div");
-          b.className = "box" + ((h.done && h.done[i]) ? " done" : "");
-          b.dataset.idx = String(i);
-          b.title = `Day ${i+1}`;
-          b.style.borderColor = hexToRgba(boxBorder, 0.18);
-          boxesWrap.appendChild(b);
+        // build boxes only if not collapsed (keeps DOM lighter)
+        if(!h.collapsed){
+          const boxesWrap = habit.querySelector(".boxes");
+          for(let i=0;i<total;i++){
+            const b = document.createElement("div");
+            b.className = "box" + ((h.done && h.done[i]) ? " done" : "");
+            b.dataset.idx = String(i);
+            b.title = `Day ${i+1}`;
+            b.style.borderColor = hexToRgba(boxBorder, 0.18);
+            boxesWrap.appendChild(b);
+          }
         }
       });
     }
@@ -1325,13 +1330,19 @@
       renderHabits();
     }
 
+    function ensureDoneArray(h){
+      const total = clamp(h.days, 1, 365);
+      h.done = Array.isArray(h.done) ? h.done.slice(0, total) : new Array(total).fill(false);
+      while(h.done.length < total) h.done.push(false);
+      return total;
+    }
+
     function toggleBox(habitId, idx){
       const h = app.habits.find(x => x.id === habitId);
       if(!h) return;
 
-      const total = clamp(h.days, 1, 365);
-      h.done = Array.isArray(h.done) ? h.done.slice(0, total) : new Array(total).fill(false);
-      while(h.done.length < total) h.done.push(false);
+      const total = ensureDoneArray(h);
+      if(idx < 0 || idx >= total) return;
 
       h.done[idx] = !h.done[idx];
 
@@ -1346,8 +1357,16 @@
     function resetHabitBoxes(habitId){
       const h = app.habits.find(x => x.id === habitId);
       if(!h) return;
-      const total = clamp(h.days, 1, 365);
+      const total = ensureDoneArray(h);
       h.done = new Array(total).fill(false);
+      saveApp(app);
+      renderHabits();
+    }
+
+    function toggleCollapsed(habitId){
+      const h = app.habits.find(x => x.id === habitId);
+      if(!h) return;
+      h.collapsed = !h.collapsed;
       saveApp(app);
       renderHabits();
     }
@@ -1361,10 +1380,10 @@
 
     const cHabitBg   = $("#cHabitBg");
     const cHabitTint = $("#cHabitTint");
+    const cHabitInk  = $("#cHabitInk");
+    const cBoxBorder = $("#cBoxBorder");
     const cBoxEmpty  = $("#cBoxEmpty");
     const cBoxFilled = $("#cBoxFilled");
-    const cBoxBorder = $("#cBoxBorder");
-    const cHabitInk  = $("#cHabitInk");
 
     function addHabit(){
       const name = (habitName.value || "").trim();
@@ -1380,13 +1399,15 @@
         days,
         done: new Array(days).fill(false),
 
+        collapsed: false,
+
         habitBg: normHex(cHabitBg.value, "#ffffff"),
         habitTint: normHex(cHabitTint.value, "#cbb8ae"),
         habitInk: normHex(cHabitInk.value, "#2b2b2b"),
 
+        boxBorder: normHex(cBoxBorder.value, "#1e1e1e"),
         boxEmpty: normHex(cBoxEmpty.value, "#eae6e2"),
         boxFilled: normHex(cBoxFilled.value, "#cbb8ae"),
-        boxBorder: normHex(cBoxBorder.value, "#1e1e1e"),
       };
 
       app.habits.unshift(h);
@@ -1413,7 +1434,7 @@
     });
 
     $("#clearAll").addEventListener("click", () => {
-      if(!confirm("Clear all habits? This removes everything saved locally for this widget.")) return;
+      if(!confirm("Clear all habits? This removes everything saved for this widget.")) return;
       localStorage.removeItem(APP_KEY);
       app = { habits: [] };
       selectedHabitId = null;
@@ -1422,57 +1443,60 @@
 
     /* =========================
        Habit interactions
+       - Clicking a habit selects it (ring)
+       - Clicking boxes toggles days
+       - Buttons do actions
+       - Color inputs update per-habit colors (including habitInk + boxBorder)
     ========================= */
     habitsEl.addEventListener("click", (e) => {
       const habit = e.target.closest(".habit");
-      if(habit && !e.target.closest("input, button")){
-        selectedHabitId = habit.dataset.id;
-        renderHabits();
-        return;
-      }
+      if(!habit) return;
+      const id = habit.dataset.id;
 
-      const btn = e.target.closest("button[data-action]");
-      if(btn){
-        const hEl = e.target.closest(".habit");
-        const id = hEl?.dataset?.id;
-        const action = btn.dataset.action;
-        if(!id) return;
-
-        if(action === "delete"){
-          removeHabit(id);
-        }else if(action === "reset"){
-          resetHabitBoxes(id);
-        }
-        return;
-      }
-
+      // If you click on a box, toggle it
       const box = e.target.closest(".box");
       if(box){
-        const hEl = box.closest(".habit");
-        const id = hEl?.dataset?.id;
         const idx = Number(box.dataset.idx);
-        if(!id || !Number.isFinite(idx)) return;
-        toggleBox(id, idx);
+        if(Number.isFinite(idx)) toggleBox(id, idx);
         return;
       }
+
+      // If you click a button, run its action
+      const btn = e.target.closest("button[data-action]");
+      if(btn){
+        const action = btn.dataset.action;
+        if(action === "delete") removeHabit(id);
+        if(action === "reset") resetHabitBoxes(id);
+        if(action === "collapse") toggleCollapsed(id);
+        return;
+      }
+
+      // Ignore clicks on inputs (color pickers)
+      if(e.target.closest("input")) return;
+
+      // Otherwise: select habit (this is the “click on a habit” behavior)
+      selectedHabitId = id;
+      renderHabits();
     });
 
     habitsEl.addEventListener("input", (e) => {
       const input = e.target.closest("input[data-action]");
       if(!input) return;
 
-      const hEl = input.closest(".habit");
-      const id = hEl?.dataset?.id;
+      const habit = input.closest(".habit");
+      const id = habit?.dataset?.id;
       const action = input.dataset.action;
       if(!id) return;
 
       const val = normHex(input.value, "#ffffff");
       const patch = { id };
 
-      if(action === "habitBg") patch.habitBg = val;
+      if(action === "habitBg")   patch.habitBg = val;
       if(action === "habitTint") patch.habitTint = val;
-      if(action === "boxEmpty") patch.boxEmpty = val;
+      if(action === "habitInk")  patch.habitInk = val;
+      if(action === "boxEmpty")  patch.boxEmpty = val;
       if(action === "boxFilled") patch.boxFilled = val;
+      if(action === "boxBorder") patch.boxBorder = val;
 
       upsertHabit(patch);
     });
@@ -1492,7 +1516,7 @@
     window.addEventListener("resize", resizeConfetti);
 
     function confettiBurst(){
-      if(confettiTimer) return; // don't spam
+      if(confettiTimer) return;
       resizeConfetti();
       confettiCanvas.style.display = "block";
 
@@ -1570,11 +1594,7 @@
        Boot
     ========================= */
     initThemeUI();
-
-    // Background boot
     applyBackground(bgLoad() || DEFAULT_BG);
-
-    // Popovers already wired; apply overlay & selection ring via theme
     renderHabits();
   </script>
 </body>

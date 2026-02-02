@@ -1,0 +1,1679 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini MP3 Player</title>
+  <style>
+    :root{
+      /* ========= THEME (global) ========= */
+      --app-bg: #ffffff;
+      --ink: #2b2b2b;
+      --muted: #7a7a7a;
+
+      --accent: #cbb8ae;
+
+      --border-rgb: 30,30,30;
+      --border-a: 0.10;
+      --border: rgba(var(--border-rgb), var(--border-a));
+
+      --surface-a: 0.78; /* top controls */
+      --panel-a: 0.92;   /* popovers */
+
+      --btn-a: 0.90;
+      --btn-border-a: 0.10;
+      --btn-ink: rgba(43,43,43,0.72);
+
+      --overlay-base: #ffffff;
+      --overlay-a: 0.34;
+
+      /* ========= BACKGROUND (board) ========= */
+      --board-radius: 22px;
+      --board-tint: #efe7e1;
+      --board-tint-a: 0.30;
+      --board-image: none;
+
+      /* ========= COMPONENT COLORS ========= */
+      --card-bg: #ffffff;
+      --card-a: 0.92;
+
+      --list-bg: #ffffff;
+      --list-a: 0.88;
+
+      --input-bg: #ffffff;
+      --input-a: 0.92;
+
+      --progress-track: rgba(30,30,30,0.12);
+      --progress-fill: var(--accent);
+
+      --shadow: 0 12px 34px rgba(20,20,20,0.08);
+
+      /* ========= SIZE ========= */
+      --max-w: 560px;
+      --pad: 14px;
+      --gap: 10px;
+
+      --h1: 14px;
+      --text: 13px;
+      --small: 12px;
+
+      --btn: 32px;
+      --r: 18px;
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin: 0;
+      background: var(--app-bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
+    /* =============== FRAME =============== */
+    .wrap{
+      max-width: var(--max-w);
+      margin: 16px auto;
+      padding: 12px;
+    }
+
+    .board{
+      position: relative;
+      border-radius: var(--board-radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      background: none;
+    }
+
+    .board::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(1.02) contrast(1.03);
+      transform: scale(1.02);
+    }
+
+    .board::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background: rgba(255,255,255,0.34); /* overridden by JS */
+    }
+
+    .board-tint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      mix-blend-mode: multiply;
+      background: rgba(0,0,0,0);
+    }
+
+    .content{
+      position: relative;
+      z-index: 2;
+      padding: var(--pad);
+      backdrop-filter: blur(2px);
+      display: grid;
+      gap: var(--gap);
+    }
+
+    /* =============== TOP BAR =============== */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:baseline;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .brand h1{
+      margin: 0;
+      font-size: var(--h1);
+      font-weight: 850;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .tag{
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: .02em;
+      white-space: nowrap;
+      opacity: .9;
+    }
+
+    .controls{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+
+    /* super discreet buttons */
+    .iconbtn{
+      width: var(--btn);
+      height: var(--btn);
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
+      background: rgba(255,255,255, var(--btn-a));
+      box-shadow: 0 8px 18px rgba(20,20,20,0.06);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--btn-ink);
+      font-weight: 900;
+      line-height: 1;
+      user-select:none;
+    }
+    .iconbtn:active{ transform: translateY(1px); }
+
+    .dot{
+      width: 12px; height: 12px; border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb),0.14);
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(203,184,174,0.22);
+    }
+    .bgdot{
+      width: 12px; height: 12px; border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb),0.14);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.28);
+    }
+
+    .popover{ position: relative; }
+
+    .panel{
+      position:absolute;
+      right: 0;
+      top: 40px;
+      width: 330px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255, var(--panel-a));
+      box-shadow: 0 22px 50px rgba(20,20,20,0.12);
+      padding: 14px;
+      display:none;
+      z-index: 50;
+      backdrop-filter: blur(2px);
+    }
+    .panel.open{ display:block; }
+
+    .panelTitle{
+      margin: 0 0 10px 0;
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.68);
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 0;
+    }
+    .row label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="color"]{
+      width: 36px;
+      height: 28px;
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"]{ width: 170px; }
+
+    .divider{
+      height:1px;
+      background: rgba(var(--border-rgb),0.08);
+      margin: 10px 0;
+    }
+
+    .mini-btn{
+      width: 100%;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.92);
+      border-radius: 14px;
+      padding: 11px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      color: rgba(43,43,43,0.86);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+
+    /* file button (discreet) */
+    .filebtn{
+      position: relative;
+      overflow: hidden;
+    }
+    .filebtn input[type="file"]{
+      position:absolute;
+      inset:0;
+      opacity:0;
+      cursor:pointer;
+    }
+
+    /* =============== PLAYER CARD =============== */
+    .card{
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255, var(--card-a));
+      box-shadow: 0 12px 30px rgba(20,20,20,0.06);
+      overflow: hidden;
+    }
+
+    .player{
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    /* retro/pinterest-ish header */
+    .now{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .nowLeft{
+      min-width: 0;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+
+    .disc{
+      width: 34px; height: 34px; border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background:
+        radial-gradient(circle at 35% 35%, rgba(255,255,255,0.85), rgba(255,255,255,0.1) 55%),
+        linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.25));
+      box-shadow: 0 10px 18px rgba(20,20,20,0.08);
+      position: relative;
+      flex: none;
+    }
+    .disc::after{
+      content:"";
+      position:absolute;
+      left:50%; top:50%;
+      width: 8px; height: 8px;
+      transform: translate(-50%,-50%);
+      border-radius: 999px;
+      background: rgba(var(--border-rgb),0.18);
+      box-shadow: 0 0 0 6px rgba(var(--border-rgb),0.06);
+    }
+
+    .trackTitle{
+      min-width: 0;
+      display:flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .trackName{
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: .02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 320px;
+    }
+    .trackMeta{
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 320px;
+    }
+
+    .transport{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+
+    .tbtn{
+      width: 36px; height: 36px;
+      border-radius: 14px;
+      border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
+      background: rgba(255,255,255, var(--btn-a));
+      color: var(--btn-ink);
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tbtn:active{ transform: translateY(1px); }
+
+    .tbtn.primary{
+      border-radius: 16px;
+      background: rgba(255,255,255, 0.96);
+      box-shadow: 0 10px 22px rgba(20,20,20,0.06);
+    }
+
+    /* progress */
+    .bar{
+      display:grid;
+      gap: 8px;
+    }
+    .timeRow{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="range"].seek{
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 12px;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"].seek::-webkit-slider-runnable-track{
+      height: 10px;
+      border-radius: 999px;
+      background: var(--progress-track);
+      border: 1px solid rgba(var(--border-rgb),0.08);
+    }
+    input[type="range"].seek::-webkit-slider-thumb{
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 999px;
+      margin-top: -5px;
+      background: var(--progress-fill);
+      border: 1px solid rgba(var(--border-rgb),0.10);
+      box-shadow: 0 0 0 6px rgba(203,184,174,0.20);
+    }
+    input[type="range"].seek::-moz-range-track{
+      height: 10px;
+      border-radius: 999px;
+      background: var(--progress-track);
+      border: 1px solid rgba(var(--border-rgb),0.08);
+    }
+    input[type="range"].seek::-moz-range-thumb{
+      width: 18px; height: 18px;
+      border-radius: 999px;
+      background: var(--progress-fill);
+      border: 1px solid rgba(var(--border-rgb),0.10);
+      box-shadow: 0 0 0 6px rgba(203,184,174,0.20);
+    }
+
+    .mixRow{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .vol{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    input[type="range"].volrange{
+      width: 140px;
+      accent-color: var(--accent);
+    }
+
+    /* =============== PLAYLIST =============== */
+    .playlist{
+      border-top: 1px solid rgba(var(--border-rgb),0.08);
+      padding: 10px;
+      display:grid;
+      gap: 10px;
+    }
+
+    .listHeader{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 6px;
+    }
+    .listHeader .label{
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.62);
+    }
+    .listHeader .hint{
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .list{
+      display:grid;
+      gap: 10px;
+      max-height: 240px;
+      overflow: auto;
+      padding: 4px;
+    }
+
+    .item{
+      border-radius: 16px;
+      border: 1px solid rgba(var(--border-rgb),0.10);
+      background: rgba(255,255,255, var(--list-a));
+      box-shadow: 0 10px 24px rgba(20,20,20,0.05);
+      padding: 10px 10px;
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .item:hover{ transform: translateY(-1px); }
+    .item.active{
+      outline: 3px solid rgba(0,0,0,0);
+      outline-offset: 2px;
+    }
+
+    .itemMain{
+      min-width: 0;
+      display:grid;
+      gap: 4px;
+    }
+
+    .itemName{
+      font-size: var(--text);
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .itemSub{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .itemBtns{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+
+    .ib{
+      width: 34px; height: 34px;
+      border-radius: 14px;
+      border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
+      background: rgba(255,255,255, var(--btn-a));
+      color: var(--btn-ink);
+      cursor: pointer;
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ib:active{ transform: translateY(1px); }
+
+    /* rename modal-ish inline */
+    .renameRow{
+      display:none;
+      gap: 8px;
+      align-items:center;
+      margin-top: 6px;
+    }
+    .item.renaming .renameRow{ display:flex; }
+
+    .nameInput{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb),0.10);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 13px;
+      outline: none;
+      color: var(--ink);
+      background: rgba(255,255,255, var(--input-a));
+    }
+    .nameInput:focus{
+      border-color: rgba(var(--border-rgb),0.18);
+      box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
+    }
+
+    .footnote{
+      font-size: 12px;
+      color: var(--muted);
+      text-align:center;
+      padding: 2px 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="board" id="board">
+      <div class="board-tint" id="boardTint"></div>
+
+      <div class="content">
+        <div class="topbar">
+          <div class="brand">
+          </div>
+
+          <div class="controls">
+            <!-- Discreet Add Files -->
+            <button class="iconbtn filebtn" type="button" aria-label="Add songs" title="Add songs">
+              ＋
+              <input id="fileInput" type="file" accept="audio/*" multiple />
+            </button>
+
+            <!-- Theme -->
+            <div class="popover">
+              <button class="iconbtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme">
+                <span class="dot" id="themeDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+                <div class="panelTitle">Theme</div>
+
+                <div class="row"><label for="tAppBg">App bg</label><input id="tAppBg" type="color" value="#ffffff"></div>
+                <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b"></div>
+                <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a"></div>
+                <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae"></div>
+
+                <div class="divider"></div>
+
+                <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e"></div>
+                <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10"></div>
+
+                <div class="divider"></div>
+
+                <div class="row"><label for="tSurfaceA">Surface opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="78"></div>
+                <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92"></div>
+
+                <div class="divider"></div>
+
+                <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="90"></div>
+                <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10"></div>
+                <div class="row"><label for="tBtnInk">Btn ink</label><input id="tBtnInk" type="color" value="#2b2b2b"></div>
+
+                <div class="divider"></div>
+
+                <div class="row"><label for="tOverlayBase">Overlay color</label><input id="tOverlayBase" type="color" value="#ffffff"></div>
+                <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="34"></div>
+
+                <div class="divider"></div>
+
+                <div class="row"><label for="tCardBg">Card bg</label><input id="tCardBg" type="color" value="#ffffff"></div>
+                <div class="row"><label for="tCardA">Card opacity</label><input id="tCardA" type="range" min="70" max="100" value="92"></div>
+
+                <div class="divider"></div>
+
+                <div class="row"><label for="tListBg">List bg</label><input id="tListBg" type="color" value="#ffffff"></div>
+                <div class="row"><label for="tListA">List opacity</label><input id="tListA" type="range" min="70" max="100" value="88"></div>
+
+                <div class="divider"></div>
+
+                <div class="row"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff"></div>
+                <div class="row"><label for="tInputA">Input opacity</label><input id="tInputA" type="range" min="70" max="100" value="92"></div>
+
+                <div class="divider"></div>
+
+                <div class="row"><label for="tProgTrack">Progress track</label><input id="tProgTrack" type="color" value="#d6d6d6"></div>
+                <div class="row"><label for="tProgFill">Progress fill</label><input id="tProgFill" type="color" value="#cbb8ae"></div>
+
+                <div class="divider"></div>
+
+                <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+              </div>
+            </div>
+
+            <!-- Background -->
+            <div class="popover">
+              <button class="iconbtn" id="bgBtn" type="button" aria-label="Background settings" title="Background">
+                <span class="bgdot" id="bgDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+                <div class="panelTitle">Background</div>
+
+                <div class="row"><label for="bgColor">Tint</label><input id="bgColor" type="color" value="#efe7e1"></div>
+                <div class="row"><label for="bgStrength">Tint strength</label><input id="bgStrength" type="range" min="0" max="70" value="30"></div>
+
+                <div class="divider"></div>
+
+                <div class="row" style="align-items:flex-start;">
+                  <label for="bgImage">Image</label>
+                  <input id="bgImage" type="file" accept="image/*" />
+                </div>
+
+                <div class="row">
+                  <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- PLAYER -->
+        <div class="card">
+          <div class="player">
+            <div class="now">
+              <div class="nowLeft">
+                <div class="disc" aria-hidden="true"></div>
+                <div class="trackTitle">
+                  <div class="trackName" id="nowName">No song selected</div>
+                  <div class="trackMeta" id="nowMeta">Upload files to start</div>
+                </div>
+              </div>
+
+              <div class="transport">
+                <button class="tbtn" id="prevBtn" type="button" title="Previous">‹‹</button>
+                <button class="tbtn primary" id="playBtn" type="button" title="Play/Pause">►</button>
+                <button class="tbtn" id="nextBtn" type="button" title="Next">››</button>
+              </div>
+            </div>
+
+            <div class="bar">
+              <div class="timeRow">
+                <div id="tCur">0:00</div>
+                <div id="tDur">0:00</div>
+              </div>
+              <input class="seek" id="seek" type="range" min="0" max="1000" value="0" />
+              <div class="mixRow">
+                <div class="vol">
+                  <span>VOL</span>
+                  <input class="volrange" id="vol" type="range" min="0" max="100" value="85" />
+                </div>
+                <div class="vol" id="status" style="justify-content:flex-end;">Ready</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="playlist">
+            <div class="listHeader">
+              <div class="label">Playlist</div>
+            </div>
+            <div class="list" id="list"></div>
+          </div>
+        </div>
+
+        <div class="footnote" id="dbNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="audio" preload="metadata"></audio>
+
+  <script>
+    /* =========================
+       Keys + DB (IndexedDB for audio blobs)
+    ========================= */
+    const DB_NAME = "mini_mp3_player_db_v1";
+    const DB_VER  = 1;
+    const STORE   = "tracks";
+    const THEME_KEY = "mini_mp3_theme_v1";
+    const BG_KEY    = "mini_mp3_bg_v1";
+
+    const $ = (sel, root=document) => root.querySelector(sel);
+
+    function clamp(n,min,max){
+      n = Number(n);
+      if(!Number.isFinite(n)) return min;
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function normHex(hex, fallback){
+      const s = String(hex || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+    }
+
+    function hexToRgbTuple(hex){
+      const h = normHex(hex, "#ffffff").slice(1);
+      const r = parseInt(h.slice(0,2),16);
+      const g = parseInt(h.slice(2,4),16);
+      const b = parseInt(h.slice(4,6),16);
+      return `${r},${g},${b}`;
+    }
+
+    function hexToRgba(hex,a){
+      const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function fmtTime(sec){
+      sec = Math.max(0, Math.floor(sec || 0));
+      const m = Math.floor(sec/60);
+      const s = sec % 60;
+      return `${m}:${String(s).padStart(2,"0")}`;
+    }
+
+    async function openDB(){
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VER);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if(!db.objectStoreNames.contains(STORE)){
+            const os = db.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
+            os.createIndex("order", "order", { unique: false });
+            os.createIndex("createdAt", "createdAt", { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbAll(){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readonly");
+        const os = tx.objectStore(STORE);
+        const idx = os.index("order");
+        const req = idx.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbAdd(track){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readwrite");
+        const os = tx.objectStore(STORE);
+        const req = os.add(track);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbPut(track){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readwrite");
+        const os = tx.objectStore(STORE);
+        const req = os.put(track);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbDelete(id){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readwrite");
+        const os = tx.objectStore(STORE);
+        const req = os.delete(id);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function dbGet(id){
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readonly");
+        const os = tx.objectStore(STORE);
+        const req = os.get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    /* =========================
+       Theme (same model as your planners)
+    ========================= */
+    const DEFAULT_THEME = {
+      appBg: "#ffffff",
+      ink: "#2b2b2b",
+      muted: "#7a7a7a",
+      accent: "#cbb8ae",
+
+      borderColor: "#1e1e1e",
+      borderA: 0.10,
+
+      surfaceA: 0.78,
+      panelA: 0.92,
+
+      btnA: 0.90,
+      btnBorderA: 0.10,
+      btnInk: "#2b2b2b",
+
+      overlayBase: "#ffffff",
+      overlayA: 0.34,
+
+      cardBg: "#ffffff",
+      cardA: 0.92,
+
+      listBg: "#ffffff",
+      listA: 0.88,
+
+      inputBg: "#ffffff",
+      inputA: 0.92,
+
+      progTrack: "#d6d6d6",
+      progFill: "#cbb8ae",
+    };
+
+    function themeLoad(){
+      try{
+        const raw = localStorage.getItem(THEME_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }catch{ return null; }
+    }
+    function themeSave(t){
+      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+    }
+
+    function themeApply(t){
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
+      const r = document.documentElement.style;
+
+      r.setProperty("--app-bg", normHex(theme.appBg, DEFAULT_THEME.appBg));
+      r.setProperty("--ink", normHex(theme.ink, DEFAULT_THEME.ink));
+      r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
+
+      const accent = normHex(theme.accent, DEFAULT_THEME.accent);
+      r.setProperty("--accent", accent);
+
+      r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
+      r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
+
+      r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
+      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
+
+      r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
+      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
+      r.setProperty("--btn-ink", hexToRgba(normHex(theme.btnInk, "#2b2b2b"), 0.72));
+
+      r.setProperty("--card-bg", normHex(theme.cardBg, DEFAULT_THEME.cardBg));
+      r.setProperty("--card-a", String(clamp(theme.cardA, 0.70, 1.00)));
+
+      r.setProperty("--list-bg", normHex(theme.listBg, DEFAULT_THEME.listBg));
+      r.setProperty("--list-a", String(clamp(theme.listA, 0.70, 1.00)));
+
+      r.setProperty("--input-bg", normHex(theme.inputBg, DEFAULT_THEME.inputBg));
+      r.setProperty("--input-a", String(clamp(theme.inputA, 0.70, 1.00)));
+
+      r.setProperty("--progress-track", normHex(theme.progTrack, "#d6d6d6"));
+      r.setProperty("--progress-fill", normHex(theme.progFill, accent));
+
+      // Theme dot
+      const dot = $("#themeDot");
+      if(dot){
+        dot.style.background = accent;
+        dot.style.boxShadow = `0 0 0 6px ${hexToRgba(accent, 0.22)}`;
+      }
+
+      // Active list outline uses accent (simple + consistent)
+      let st = document.getElementById("accentStyle");
+      if(!st){
+        st = document.createElement("style");
+        st.id = "accentStyle";
+        document.head.appendChild(st);
+      }
+      st.textContent = `
+        .item.active{ outline-color: ${hexToRgba(accent, 0.62)} !important; }
+        input[type="range"].volrange{ accent-color: ${accent}; }
+      `;
+
+      // Overlay
+      const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
+      const overlayA = clamp(theme.overlayA, 0.00, 0.70);
+      const css = hexToRgba(overlayBase, overlayA);
+      let st2 = document.getElementById("overlayStyle");
+      if(!st2){
+        st2 = document.createElement("style");
+        st2.id = "overlayStyle";
+        document.head.appendChild(st2);
+      }
+      st2.textContent = `.board::after{ background: ${css} !important; }`;
+
+      // Component bg colors (card/list/input)
+      let st3 = document.getElementById("componentStyle");
+      if(!st3){
+        st3 = document.createElement("style");
+        st3.id = "componentStyle";
+        document.head.appendChild(st3);
+      }
+      st3.textContent = `
+        .card{ background: ${hexToRgba(normHex(theme.cardBg, "#fff"), clamp(theme.cardA,0.70,1.00))} !important; }
+        .item{ background: ${hexToRgba(normHex(theme.listBg, "#fff"), clamp(theme.listA,0.70,1.00))} !important; }
+        .nameInput{ background: ${hexToRgba(normHex(theme.inputBg, "#fff"), clamp(theme.inputA,0.70,1.00))} !important; }
+        .player{ background: transparent !important; }
+      `;
+    }
+
+    function themeSyncInputs(t){
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
+      const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
+
+      set("tAppBg", theme.appBg);
+      set("tInk", theme.ink);
+      set("tMuted", theme.muted);
+      set("tAccent", theme.accent);
+
+      set("tBorderColor", theme.borderColor);
+      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+
+      set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
+      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+
+      set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
+      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+      set("tBtnInk", theme.btnInk);
+
+      set("tOverlayBase", theme.overlayBase);
+      set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
+
+      set("tCardBg", theme.cardBg);
+      set("tCardA", Math.round(clamp(theme.cardA, 0.70, 1.00) * 100));
+
+      set("tListBg", theme.listBg);
+      set("tListA", Math.round(clamp(theme.listA, 0.70, 1.00) * 100));
+
+      set("tInputBg", theme.inputBg);
+      set("tInputA", Math.round(clamp(theme.inputA, 0.70, 1.00) * 100));
+
+      // for progress track, use hex input; default to a soft gray
+      set("tProgTrack", normHex(theme.progTrack, "#d6d6d6"));
+      set("tProgFill", normHex(theme.progFill, theme.accent));
+    }
+
+    function themeReadFromInputs(){
+      const g = (id)=>document.getElementById(id);
+      return {
+        appBg: g("tAppBg")?.value,
+        ink: g("tInk")?.value,
+        muted: g("tMuted")?.value,
+        accent: g("tAccent")?.value,
+
+        borderColor: g("tBorderColor")?.value,
+        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
+
+        surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
+        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
+
+        btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
+        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
+        btnInk: g("tBtnInk")?.value,
+
+        overlayBase: g("tOverlayBase")?.value,
+        overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
+
+        cardBg: g("tCardBg")?.value,
+        cardA: clamp(Number(g("tCardA")?.value)/100, 0.70, 1.00),
+
+        listBg: g("tListBg")?.value,
+        listA: clamp(Number(g("tListA")?.value)/100, 0.70, 1.00),
+
+        inputBg: g("tInputBg")?.value,
+        inputA: clamp(Number(g("tInputA")?.value)/100, 0.70, 1.00),
+
+        progTrack: g("tProgTrack")?.value,
+        progFill: g("tProgFill")?.value,
+      };
+    }
+
+    function initThemeUI(){
+      const themeBtn = $("#themeBtn");
+      const themePanel = $("#themePanel");
+      const themeReset = $("#themeReset");
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        $("#bgPanel").classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if(!themePanel.classList.contains("open")) return;
+        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+        if(!inside) themePanel.classList.remove("open");
+      });
+
+      const ids = [
+        "tAppBg","tInk","tMuted","tAccent",
+        "tBorderColor","tBorderA",
+        "tSurfaceA","tPanelA",
+        "tBtnA","tBtnBorderA","tBtnInk",
+        "tOverlayBase","tOverlayA",
+        "tCardBg","tCardA",
+        "tListBg","tListA",
+        "tInputBg","tInputA",
+        "tProgTrack","tProgFill"
+      ];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener("input", () => {
+          const t = themeReadFromInputs();
+          themeApply(t);
+          themeSave(t);
+        });
+      });
+
+      themeReset.addEventListener("click", () => {
+        localStorage.removeItem(THEME_KEY);
+        themeApply(DEFAULT_THEME);
+        themeSyncInputs(DEFAULT_THEME);
+      });
+
+      const saved = themeLoad() || DEFAULT_THEME;
+      themeApply(saved);
+      themeSyncInputs(saved);
+    }
+
+    /* =========================
+       Background settings
+    ========================= */
+    const boardTint = $("#boardTint");
+    const bgBtn = $("#bgBtn");
+    const bgPanel = $("#bgPanel");
+    const bgColor = $("#bgColor");
+    const bgStrength = $("#bgStrength");
+    const bgImage = $("#bgImage");
+    const removeImage = $("#removeImage");
+    const bgDot = $("#bgDot");
+
+    function bgLoad(){
+      try{
+        const raw = localStorage.getItem(BG_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }catch{ return null; }
+    }
+    function bgSave(bg){
+      try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+    }
+
+    function setBoardImage(dataUrlOrNull){
+      document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    }
+
+    function applyBoardTint(colorHex, strengthPct){
+      const tint = normHex(colorHex, "#efe7e1");
+      const strength = clamp(Number(strengthPct)/100, 0, 0.70);
+
+      document.documentElement.style.setProperty("--board-tint", tint);
+      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+
+      boardTint.style.background = hexToRgba(tint, strength);
+    }
+
+    function applyBackground(bg){
+      const tint = bg?.tint ?? "#efe7e1";
+      const strength = bg?.strength ?? 30;
+      bgColor.value = tint;
+      bgStrength.value = String(strength);
+
+      applyBoardTint(tint, strength);
+      setBoardImage(bg?.imageDataUrl ?? null);
+    }
+
+    bgBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      bgPanel.classList.toggle("open");
+      $("#themePanel").classList.remove("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if(!bgPanel.classList.contains("open")) return;
+      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      if(!inside) bgPanel.classList.remove("open");
+    });
+
+    bgColor.addEventListener("input", () => {
+      applyBoardTint(bgColor.value, bgStrength.value);
+      const bg = bgLoad() || {};
+      bg.tint = bgColor.value;
+      bg.strength = Number(bgStrength.value);
+      bg.imageDataUrl = bg.imageDataUrl ?? null;
+      bgSave(bg);
+    });
+
+    bgStrength.addEventListener("input", () => {
+      applyBoardTint(bgColor.value, bgStrength.value);
+      const bg = bgLoad() || {};
+      bg.tint = bgColor.value;
+      bg.strength = Number(bgStrength.value);
+      bg.imageDataUrl = bg.imageDataUrl ?? null;
+      bgSave(bg);
+    });
+
+    bgImage.addEventListener("change", async () => {
+      const file = bgImage.files && bgImage.files[0];
+      if(!file) return;
+      const dataUrl = await fileToDataUrl(file);
+      setBoardImage(dataUrl);
+
+      const bg = bgLoad() || {};
+      bg.tint = bgColor.value;
+      bg.strength = Number(bgStrength.value);
+      bg.imageDataUrl = dataUrl;
+      bgSave(bg);
+    });
+
+    removeImage.addEventListener("click", () => {
+      setBoardImage(null);
+      bgImage.value = "";
+      const bg = bgLoad() || {};
+      bg.tint = bgColor.value;
+      bg.strength = Number(bgStrength.value);
+      bg.imageDataUrl = null;
+      bgSave(bg);
+    });
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    /* =========================
+       Player state
+    ========================= */
+    const audio = $("#audio");
+    const listEl = $("#list");
+    const nowName = $("#nowName");
+    const nowMeta = $("#nowMeta");
+    const playBtn = $("#playBtn");
+    const prevBtn = $("#prevBtn");
+    const nextBtn = $("#nextBtn");
+    const seek = $("#seek");
+    const vol = $("#vol");
+    const tCur = $("#tCur");
+    const tDur = $("#tDur");
+    const statusEl = $("#status");
+    const fileInput = $("#fileInput");
+    const dbNote = $("#dbNote");
+
+    let tracks = [];
+    let activeId = null;
+    let activeUrl = null;
+    let seeking = false;
+
+    function setStatus(s){ statusEl.textContent = s; }
+
+    function revokeActiveUrl(){
+      if(activeUrl){
+        URL.revokeObjectURL(activeUrl);
+        activeUrl = null;
+      }
+    }
+
+    async function refresh(){
+      tracks = await dbAll();
+      tracks.sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
+      renderList();
+      updateNowPlayingUI();
+      showDBNote();
+    }
+
+    function showDBNote(){
+      // helpful hint: indexedDB exists and songs persist
+      dbNote.textContent = tracks.length
+        ? "Songs are saved locally in your browser (IndexedDB)."
+        : "Add songs with the + button. Songs are saved locally in your browser.";
+    }
+
+    function renderList(){
+      listEl.innerHTML = "";
+      tracks.forEach(t => {
+        const item = document.createElement("div");
+        item.className = "item" + (t.id === activeId ? " active" : "");
+        item.dataset.id = String(t.id);
+
+        item.innerHTML = `
+          <div class="itemMain">
+            <div class="itemName">${escapeHtml(t.name || "Untitled")}</div>
+            <div class="itemSub">
+              <span>${escapeHtml(t.filename || "")}</span>
+              <span>${(typeof t.duration === "number") ? fmtTime(t.duration) : ""}</span>
+            </div>
+
+            <div class="renameRow">
+              <input class="nameInput" type="text" value="${escapeAttr(t.name || "")}" />
+              <button class="ib saveRename" type="button" title="Save">✓</button>
+            </div>
+          </div>
+
+          <div class="itemBtns">
+            <button class="ib renameBtn" type="button" title="Rename">✎</button>
+            <button class="ib delBtn" type="button" title="Delete">×</button>
+          </div>
+        `;
+
+        listEl.appendChild(item);
+      });
+
+      // accent outline for active item
+      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#cbb8ae";
+      $$(".item").forEach(el => {
+        if(el.classList.contains("active")){
+          el.style.outlineColor = hexToRgba(accent, 0.62);
+        }
+      });
+    }
+
+    function updateNowPlayingUI(){
+      const t = tracks.find(x => x.id === activeId) || null;
+      if(!t){
+        nowName.textContent = "No song selected";
+        nowMeta.textContent = "Upload files to start";
+        tCur.textContent = "0:00";
+        tDur.textContent = "0:00";
+        playBtn.textContent = "►";
+        return;
+      }
+      nowName.textContent = t.name || "Untitled";
+      nowMeta.textContent = t.filename || "";
+    }
+
+    async function setActive(id, autoplay = false){
+      if(id === activeId && audio.src) return;
+
+      const t = tracks.find(x => x.id === id);
+      if(!t) return;
+
+      activeId = id;
+      updateNowPlayingUI();
+      renderList();
+
+      // load blob -> object URL
+      revokeActiveUrl();
+      const fresh = await dbGet(id);
+      if(!fresh || !fresh.blob){
+        setStatus("Missing file");
+        return;
+      }
+      activeUrl = URL.createObjectURL(fresh.blob);
+      audio.src = activeUrl;
+      audio.load();
+      setStatus("Loaded");
+
+      if(autoplay){
+        try{ await audio.play(); }catch{}
+      }
+      syncPlayIcon();
+    }
+
+    function syncPlayIcon(){
+      playBtn.textContent = audio.paused ? "►" : "❚❚";
+    }
+
+    function nextTrack(){
+      if(!tracks.length) return;
+      const idx = tracks.findIndex(t => t.id === activeId);
+      const next = tracks[(idx >= 0 ? idx + 1 : 0) % tracks.length];
+      setActive(next.id, true);
+    }
+
+    function prevTrack(){
+      if(!tracks.length) return;
+      const idx = tracks.findIndex(t => t.id === activeId);
+      const prev = tracks[(idx > 0 ? idx - 1 : tracks.length - 1)];
+      setActive(prev.id, true);
+    }
+
+    playBtn.addEventListener("click", async () => {
+      if(!tracks.length){
+        setStatus("Add a song first");
+        return;
+      }
+      if(!activeId){
+        await setActive(tracks[0].id, true);
+        return;
+      }
+      if(audio.paused){
+        try{ await audio.play(); }catch{}
+      }else{
+        audio.pause();
+      }
+      syncPlayIcon();
+    });
+
+    nextBtn.addEventListener("click", nextTrack);
+    prevBtn.addEventListener("click", prevTrack);
+
+    audio.addEventListener("play", () => { setStatus("Playing"); syncPlayIcon(); });
+    audio.addEventListener("pause", () => { setStatus("Paused"); syncPlayIcon(); });
+    audio.addEventListener("ended", () => { setStatus("Ended"); syncPlayIcon(); nextTrack(); });
+
+    audio.addEventListener("loadedmetadata", async () => {
+      tDur.textContent = fmtTime(audio.duration || 0);
+      setStatus("Ready");
+      // persist duration if missing
+      const t = tracks.find(x => x.id === activeId);
+      if(t && (typeof t.duration !== "number" || !Number.isFinite(t.duration))){
+        t.duration = Number.isFinite(audio.duration) ? audio.duration : null;
+        await dbPut(t);
+        await refresh();
+      }
+    });
+
+    audio.addEventListener("timeupdate", () => {
+      if(seeking) return;
+      const d = audio.duration || 0;
+      const c = audio.currentTime || 0;
+      tCur.textContent = fmtTime(c);
+      tDur.textContent = fmtTime(d);
+      const v = d ? Math.round((c/d) * 1000) : 0;
+      seek.value = String(v);
+    });
+
+    seek.addEventListener("input", () => { seeking = true; });
+    seek.addEventListener("change", () => {
+      const d = audio.duration || 0;
+      const v = Number(seek.value) / 1000;
+      if(d) audio.currentTime = v * d;
+      seeking = false;
+    });
+
+    vol.addEventListener("input", () => {
+      audio.volume = clamp(Number(vol.value)/100, 0, 1);
+    });
+    audio.volume = clamp(Number(vol.value)/100, 0, 1);
+
+    /* Playlist interactions */
+    listEl.addEventListener("click", async (e) => {
+      const item = e.target.closest(".item");
+      if(!item) return;
+      const id = Number(item.dataset.id);
+
+      if(e.target.closest(".delBtn")){
+        // delete
+        const wasActive = (id === activeId);
+        if(wasActive){
+          audio.pause();
+          revokeActiveUrl();
+          audio.removeAttribute("src");
+          activeId = null;
+        }
+        await dbDelete(id);
+
+        // re-pack orders
+        const all = await dbAll();
+        all.sort((a,b)=> (a.order??0)-(b.order??0));
+        for(let i=0;i<all.length;i++){
+          all[i].order = i;
+          await dbPut(all[i]);
+        }
+
+        await refresh();
+        if(wasActive && tracks.length){
+          await setActive(tracks[0].id, false);
+        }
+        return;
+      }
+
+      if(e.target.closest(".renameBtn")){
+        item.classList.toggle("renaming");
+        const inp = item.querySelector(".nameInput");
+        inp?.focus();
+        inp?.select();
+        return;
+      }
+
+      if(e.target.closest(".saveRename")){
+        const inp = item.querySelector(".nameInput");
+        const name = (inp?.value || "").trim() || "Untitled";
+        const t = tracks.find(x => x.id === id);
+        if(t){
+          t.name = name;
+          await dbPut(t);
+          await refresh();
+          if(id === activeId) updateNowPlayingUI();
+        }
+        return;
+      }
+
+      // click item to play
+      await setActive(id, true);
+    });
+
+    listEl.addEventListener("keydown", async (e) => {
+      if(!e.target.classList.contains("nameInput")) return;
+      if(e.key === "Enter"){
+        e.preventDefault();
+        e.target.closest(".item")?.querySelector(".saveRename")?.click();
+      }
+      if(e.key === "Escape"){
+        e.preventDefault();
+        e.target.closest(".item")?.classList.remove("renaming");
+      }
+    });
+
+    /* Upload files */
+    fileInput.addEventListener("change", async () => {
+      const files = Array.from(fileInput.files || []);
+      fileInput.value = "";
+      if(!files.length) return;
+
+      setStatus("Importing…");
+
+      const existing = await dbAll();
+      const maxOrder = existing.reduce((m,t)=>Math.max(m, Number(t.order ?? -1)), -1);
+
+      let order = maxOrder + 1;
+      for(const f of files){
+        const nameGuess = (f.name || "Untitled").replace(/\.[^.]+$/, "");
+        const track = {
+          name: nameGuess,
+          filename: f.name || "",
+          type: f.type || "audio/*",
+          blob: f,
+          createdAt: Date.now(),
+          order: order++,
+          duration: null
+        };
+
+        const id = await dbAdd(track);
+
+        // compute duration (optional)
+        try{
+          const dur = await computeDurationFromBlob(f);
+          const saved = await dbGet(id);
+          if(saved){
+            saved.duration = Number.isFinite(dur) ? dur : null;
+            await dbPut(saved);
+          }
+        }catch{}
+      }
+
+      await refresh();
+      setStatus("Imported");
+
+      if(!activeId && tracks.length){
+        await setActive(tracks[0].id, false);
+      }
+    });
+
+    function computeDurationFromBlob(blob){
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("audio");
+        a.preload = "metadata";
+        a.src = url;
+        a.onloadedmetadata = () => {
+          const d = a.duration;
+          URL.revokeObjectURL(url);
+          resolve(d);
+        };
+        a.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("metadata"));
+        };
+      });
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+    function escapeAttr(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    /* =========================
+       Popovers
+    ========================= */
+    function initPopovers(){
+      const themeBtn = $("#themeBtn");
+      const themePanel = $("#themePanel");
+      const bgBtn = $("#bgBtn");
+      const bgPanel = $("#bgPanel");
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        bgPanel.classList.remove("open");
+      });
+
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+        themePanel.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if(themePanel.classList.contains("open")){
+          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if(!inside) themePanel.classList.remove("open");
+        }
+        if(bgPanel.classList.contains("open")){
+          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          if(!inside) bgPanel.classList.remove("open");
+        }
+      });
+    }
+
+    /* Theme UI wiring */
+    function initThemePanel(){
+      const themeReset = $("#themeReset");
+      const ids = [
+        "tAppBg","tInk","tMuted","tAccent",
+        "tBorderColor","tBorderA",
+        "tSurfaceA","tPanelA",
+        "tBtnA","tBtnBorderA","tBtnInk",
+        "tOverlayBase","tOverlayA",
+        "tCardBg","tCardA",
+        "tListBg","tListA",
+        "tInputBg","tInputA",
+        "tProgTrack","tProgFill"
+      ];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener("input", () => {
+          const t = themeReadFromInputs();
+          themeApply(t);
+          themeSave(t);
+        });
+      });
+
+      themeReset.addEventListener("click", () => {
+        localStorage.removeItem(THEME_KEY);
+        themeApply(DEFAULT_THEME);
+        themeSyncInputs(DEFAULT_THEME);
+      });
+    }
+
+    /* Background UI wiring */
+    function initBgPanel(){
+      const saved = bgLoad() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
+      applyBackground(saved);
+
+      bgColor.addEventListener("input", () => {
+        applyBoardTint(bgColor.value, bgStrength.value);
+        const bg = bgLoad() || {};
+        bg.tint = bgColor.value;
+        bg.strength = Number(bgStrength.value);
+        bg.imageDataUrl = bg.imageDataUrl ?? null;
+        bgSave(bg);
+      });
+
+      bgStrength.addEventListener("input", () => {
+        applyBoardTint(bgColor.value, bgStrength.value);
+        const bg = bgLoad() || {};
+        bg.tint = bgColor.value;
+        bg.strength = Number(bgStrength.value);
+        bg.imageDataUrl = bg.imageDataUrl ?? null;
+        bgSave(bg);
+      });
+    }
+
+    /* Boot */
+    (async function boot(){
+      initPopovers();
+
+      // Theme
+      const savedTheme = themeLoad() || DEFAULT_THEME;
+      themeApply(savedTheme);
+      themeSyncInputs(savedTheme);
+      initThemePanel();
+
+      // Background
+      initBgPanel();
+
+      // Background image handlers need fileToDataUrl
+      // (already wired above)
+
+      // Render
+      try{
+        await refresh();
+      }catch(err){
+        dbNote.textContent = "Note: Your browser blocked local storage/IndexedDB.";
+      }
+
+      // Controls
+      $("#themeReset").addEventListener("click", () => setStatus("Theme reset"));
+      $("#removeImage").addEventListener("click", () => setStatus("Background cleared"));
+
+      // Progress track/thumb style shadows should follow accent if user changes
+      // (thumb shadow is fine as-is)
+      setStatus("Ready");
+    })();
+  </script>
+</body>
+</html>

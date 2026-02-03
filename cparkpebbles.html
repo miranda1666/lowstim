@@ -1615,7 +1615,6 @@
         const time = new Date(it.created).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
         return `
           <div class="park-item" data-id="${it.id}">
-            <div class="car" title="Click to recolor">${carSvg(it.color, it.carStyle)}</div>
             <div class="park-text">
               <div class="t">${escapeHtml(it.text)}</div>
               <div class="meta">Parked at ${time}</div>

@@ -85,6 +85,11 @@
     }
 
     *{ box-sizing: border-box; }
+    html, body{
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
     body{
       margin: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
@@ -322,18 +327,27 @@
       backdrop-filter: blur(2px);
     }
 
+    .board, .wrap{
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
     /* always roomy: horizontal scroll */
-    .grid{
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(var(--card-min-w), 1fr);
-      gap: var(--gap);
-      padding: var(--pad);
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-    }
+.grid{
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(var(--card-min-w), 1fr);
+  gap: var(--gap);
+  padding: var(--pad);
+
+  overflow-x: auto;
+  overflow-y: hidden;           /* NEW */
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+
+  max-width: 100%;              /* NEW */
+}
 
     .day{
       background: rgba(255,255,255, var(--day-bg-a));

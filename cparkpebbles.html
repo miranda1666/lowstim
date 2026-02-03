@@ -6,8 +6,9 @@
   <title>Not Today Parking Lot + Gratitude Pebbles</title>
   <style>
     :root{
-      /* ===== Base ===== */
+      /* ===== Global base ===== */
       --app-bg: #ffffff;
+
       --ink: #2b2b2b;
       --muted: #7a7a7a;
 
@@ -22,7 +23,7 @@
       --btn-a: 0.92;
       --btn-border-a: 0.10;
 
-      --accent: #cbb8ae; /* selection ring + theme dot */
+      --accent: #cbb8ae;
 
       /* overlay */
       --overlay-base: #ffffff;
@@ -33,22 +34,40 @@
       --board-tint-a: 0.30;
       --board-image: none;
 
-      /* Cards */
-      --card-bg: #ffffff;
-      --card-bg-a: 0.94;
+      /* ===== Per-half theme variables (FULL COVERAGE) ===== */
+      /* LEFT (Parking lot) */
+      --left-card-bg: #ffffff;
+      --left-card-a: 0.94;
+      --left-header-bg: #ffffff;
+      --left-header-a: 0.92;
+      --left-block-bg: #ffffff;
+      --left-block-a: 0.78;
+      --left-item-bg: #ffffff;
+      --left-item-a: 0.82;
+      --left-input-bg: #ffffff;
+      --left-input-a: 0.96;
 
-      --panel-card-bg: #ffffff;
-      --panel-card-a: 0.78;
+      /* RIGHT (Pebbles) */
+      --right-card-bg: #ffffff;
+      --right-card-a: 0.94;
+      --right-header-bg: #ffffff;
+      --right-header-a: 0.92;
+      --right-block-bg: #ffffff;
+      --right-block-a: 0.78;
+      --right-stage-bg: #ffffff;
+      --right-stage-a: 0.76;
+      --right-tower-bg: #ffffff;
+      --right-tower-a: 0.45;
+      --right-input-bg: #ffffff;
+      --right-input-a: 0.96;
 
-      /* Pebbles */
-      --pebble-base: #d9d9e2; /* default pebble color if user doesn't pick */
+      /* Pebbles (right) */
       --pebble-outline-a: 0.14;
 
       /* Layout */
       --page-max: 1400px;
       --board-radius: 26px;
       --radius: 22px;
-
       --gap: 18px;
       --pad: 18px;
 
@@ -104,7 +123,7 @@
       font-size: var(--sub);
       color: var(--muted);
       line-height: 1.35;
-      max-width: 70ch;
+      max-width: 72ch;
     }
 
     .controls{
@@ -163,7 +182,7 @@
       position: absolute;
       top: 48px;
       right: 0;
-      width: 420px;
+      width: 460px;
       border-radius: 18px;
       border: 1px solid var(--border);
       background: rgba(255,255,255, var(--panel-a));
@@ -181,10 +200,19 @@
     .panelTitle{
       margin: 0 0 10px 0;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: .10em;
       text-transform: uppercase;
       color: rgba(43,43,43,0.70);
+    }
+
+    .subPanelTitle{
+      margin: 14px 0 8px 0;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.62);
     }
 
     .row{
@@ -198,6 +226,7 @@
       font-size: 12px;
       color: var(--muted);
     }
+
     input[type="color"]{
       width: 36px;
       height: 28px;
@@ -208,29 +237,7 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    input[type="range"]{ width: 190px; }
-    input[type="text"], textarea, select{
-      width: 100%;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      border-radius: var(--input-radius);
-      padding: var(--input-pad);
-      outline: none;
-      background: rgba(255,255,255, 0.96);
-      color: var(--ink);
-      font-size: 14px;
-      line-height: 1.3;
-    }
-    textarea{ min-height: 90px; resize: vertical; }
-    input[type="text"]:focus, textarea:focus, select:focus{
-      border-color: rgba(var(--border-rgb), 0.18);
-      box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
-    }
-
-    .divider{
-      height: 1px;
-      background: rgba(var(--border-rgb), 0.08);
-      margin: 10px 0;
-    }
+    input[type="range"]{ width: 210px; }
 
     .mini-btn{
       width: 100%;
@@ -244,6 +251,12 @@
       -webkit-tap-highlight-color: transparent;
     }
     .mini-btn:active{ transform: translateY(1px); }
+
+    .divider{
+      height: 1px;
+      background: rgba(var(--border-rgb), 0.08);
+      margin: 10px 0;
+    }
 
     .file{
       width: 100%;
@@ -264,7 +277,6 @@
       backdrop-filter: blur(2px);
       user-select: none;
     }
-
     .nav-label{
       font-size: 13px;
       color: rgba(43,43,43,0.80);
@@ -300,7 +312,7 @@
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: rgba(255,255,255,0.34);
+      background: rgba(255,255,255,0.34); /* overridden by JS */
     }
     .board-tint{
       position: absolute;
@@ -329,7 +341,6 @@
     .col{
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      background: rgba(255,255,255, var(--card-bg-a));
       box-shadow: 0 10px 26px rgba(20,20,20,0.06);
       overflow: hidden;
       min-width: min(100%, var(--col-min));
@@ -337,6 +348,10 @@
       flex-direction: column;
       min-height: 640px;
     }
+
+    /* per-half card backgrounds */
+    #leftCol{ background: rgba(255,255,255, var(--left-card-a)); }
+    #rightCol{ background: rgba(255,255,255, var(--right-card-a)); }
 
     .col-header{
       padding: var(--header-pad);
@@ -346,8 +361,9 @@
       justify-content: space-between;
       gap: 12px;
       flex-wrap: wrap;
-      background: rgba(255,255,255,0.9);
     }
+    #leftCol .col-header{ background: rgba(255,255,255, var(--left-header-a)); }
+    #rightCol .col-header{ background: rgba(255,255,255, var(--right-header-a)); }
 
     .col-title{
       display: flex;
@@ -378,20 +394,40 @@
       border-radius: 18px;
       padding: 14px;
       border: 1px dashed rgba(var(--border-rgb), 0.14);
-      background: rgba(255,255,255, var(--panel-card-a));
     }
+    #leftCol .block{ background: rgba(255,255,255, var(--left-block-a)); }
+    #rightCol .block{ background: rgba(255,255,255, var(--right-block-a)); }
 
     .block .label{
       font-size: 12px;
       color: var(--muted);
       margin-bottom: 10px;
-      font-weight: 850;
+      font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+    }
+
+    input[type="text"], select{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: var(--input-radius);
+      padding: var(--input-pad);
+      outline: none;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.3;
+      background: rgba(255,255,255,0.96);
+    }
+    #leftCol input[type="text"], #leftCol select{ background: rgba(255,255,255, var(--left-input-a)); }
+    #rightCol input[type="text"], #rightCol select{ background: rgba(255,255,255, var(--right-input-a)); }
+
+    input[type="text"]:focus, select:focus{
+      border-color: rgba(var(--border-rgb), 0.18);
+      box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
     }
 
     /* ===== Parking lot items ===== */
@@ -422,9 +458,9 @@
       border-radius: 18px;
       border: 1px solid rgba(var(--border-rgb), 0.10);
       box-shadow: 0 10px 24px rgba(20,20,20,0.05);
-      background: rgba(255,255,255,0.82);
       padding: 12px;
     }
+    #leftCol .park-item{ background: rgba(255,255,255, var(--left-item-a)); }
 
     .park-text{
       display: flex;
@@ -464,6 +500,7 @@
       height: 50px;
       display: grid;
       place-items: center;
+      cursor: pointer;
     }
     .car svg{
       width: 86px;
@@ -485,19 +522,19 @@
     .month-stage{
       border-radius: 18px;
       border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.76);
       box-shadow: 0 10px 24px rgba(20,20,20,0.05);
       padding: 14px;
       overflow: auto;
       min-height: 420px;
     }
+    #rightCol .month-stage{ background: rgba(255,255,255, var(--right-stage-a)); }
 
     .towers{
       display: flex;
       gap: 14px;
       align-items: flex-end;
       padding: 10px 6px 4px;
-      min-width: 740px; /* gives space; scrolls on smaller screens */
+      min-width: 740px;
     }
 
     .tower{
@@ -510,8 +547,8 @@
       padding: 8px 6px;
       border-radius: 16px;
       border: 1px dashed rgba(var(--border-rgb), 0.14);
-      background: rgba(255,255,255,0.45);
       position: relative;
+      background: rgba(255,255,255, var(--right-tower-a));
     }
 
     .tower .daycap{
@@ -525,6 +562,7 @@
       padding: 4px 8px;
       border-radius: 999px;
       user-select: none;
+      cursor: pointer;
     }
 
     .stack{
@@ -547,7 +585,6 @@
       position: relative;
     }
     .pebble:active{ transform: translateY(1px); }
-
     .pebble::after{
       content: "";
       position: absolute;
@@ -562,6 +599,46 @@
       font-size: 13px;
       color: rgba(43,43,43,0.68);
       line-height: 1.35;
+    }
+
+    .pillRow{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pill{
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.70);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.70);
+      padding: 4px 10px;
+      border-radius: 999px;
+      user-select: none;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.75);
+    }
+
+    .footer-note{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 0 2px 4px;
     }
 
     /* ===== Modal ===== */
@@ -607,45 +684,6 @@
       font-size: 12px;
       color: rgba(43,43,43,0.64);
     }
-    .pillRow{
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .pill{
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: rgba(43,43,43,0.70);
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.70);
-      padding: 4px 10px;
-      border-radius: 999px;
-      user-select: none;
-    }
-
-    .kbd{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12px;
-      padding: 3px 8px;
-      border-radius: 10px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.75);
-    }
-
-    .footer-note{
-      margin-top: 14px;
-      color: var(--muted);
-      font-size: 13px;
-      display: flex;
-      gap: 10px;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      padding: 0 2px 4px;
-    }
   </style>
 </head>
 
@@ -653,7 +691,6 @@
   <div class="wrap">
     <div class="titlebar">
       <div class="title">
-        <h1>Not Today Parking Lot + Gratitude Pebbles</h1>
         <div class="subtitle">
         </div>
       </div>
@@ -682,8 +719,10 @@
           </div>
 
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
-            <div class="panelTitle">Theme</div>
 
+
+            <!-- Global -->
+            <div class="subPanelTitle">Global</div>
             <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
             <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
@@ -709,19 +748,65 @@
             <div class="row"><label for="tOverlayBase">Overlay color</label><input id="tOverlayBase" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="34" /></div>
 
+            <!-- Left -->
             <div class="divider"></div>
-
-            <div class="row"><label for="tCardBg">Main card bg</label><input id="tCardBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tCardBgA">Main card opacity</label><input id="tCardBgA" type="range" min="70" max="100" value="94" /></div>
-
-            <div class="divider"></div>
-
-            <div class="row"><label for="tPanelCardBg">Inner blocks bg</label><input id="tPanelCardBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tPanelCardA">Inner blocks opacity</label><input id="tPanelCardA" type="range" min="45" max="100" value="78" /></div>
+            <div class="subPanelTitle">Left (Parking Lot)</div>
+            <div class="row"><label for="tLeftCardBg">Card bg</label><input id="tLeftCardBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftCardA">Card opacity</label><input id="tLeftCardA" type="range" min="70" max="100" value="94" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tPebbleBase">Default pebble color</label><input id="tPebbleBase" type="color" value="#d9d9e2" /></div>
+            <div class="row"><label for="tLeftHeaderBg">Header bg</label><input id="tLeftHeaderBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftHeaderA">Header opacity</label><input id="tLeftHeaderA" type="range" min="70" max="100" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tLeftBlockBg">Blocks bg</label><input id="tLeftBlockBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftBlockA">Blocks opacity</label><input id="tLeftBlockA" type="range" min="45" max="100" value="78" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tLeftItemBg">Items bg</label><input id="tLeftItemBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftItemA">Items opacity</label><input id="tLeftItemA" type="range" min="45" max="100" value="82" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tLeftInputBg">Inputs bg</label><input id="tLeftInputBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftInputA">Inputs opacity</label><input id="tLeftInputA" type="range" min="60" max="100" value="96" /></div>
+
+            <!-- Right -->
+            <div class="divider"></div>
+            <div class="subPanelTitle">Right (Pebbles)</div>
+            <div class="row"><label for="tRightCardBg">Card bg</label><input id="tRightCardBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightCardA">Card opacity</label><input id="tRightCardA" type="range" min="70" max="100" value="94" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightHeaderBg">Header bg</label><input id="tRightHeaderBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightHeaderA">Header opacity</label><input id="tRightHeaderA" type="range" min="70" max="100" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightBlockBg">Blocks bg</label><input id="tRightBlockBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightBlockA">Blocks opacity</label><input id="tRightBlockA" type="range" min="45" max="100" value="78" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightStageBg">Stage bg</label><input id="tRightStageBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightStageA">Stage opacity</label><input id="tRightStageA" type="range" min="45" max="100" value="76" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightTowerBg">Tower bg</label><input id="tRightTowerBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightTowerA">Tower opacity</label><input id="tRightTowerA" type="range" min="20" max="100" value="45" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightInputBg">Inputs bg</label><input id="tRightInputBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightInputA">Inputs opacity</label><input id="tRightInputA" type="range" min="60" max="100" value="96" /></div>
+
+            <div class="divider"></div>
+
             <div class="row"><label for="tPebbleOutlineA">Pebble outline</label><input id="tPebbleOutlineA" type="range" min="5" max="30" value="14" /></div>
 
             <div class="divider"></div>
@@ -767,6 +852,7 @@
             <button class="mini-btn" id="bgReset" type="button">Reset background</button>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -775,21 +861,22 @@
 
       <div class="board-content">
         <div class="two">
-          <!-- LEFT: Parking lot -->
-          <section class="col" aria-label="Not today parking lot">
+          <!-- LEFT -->
+          <section class="col" id="leftCol" aria-label="Not today parking lot" tabindex="-1">
             <div class="col-header">
               <div class="col-title">
                 <strong>Not Today Parking Lot</strong>
                 <span>Didn't complete it today? Park it here!</span>
               </div>
-              <div class="pillRow" style="display:flex; gap:10px; align-items:center;">
+              <div class="pillRow">
                 <span class="pill" id="parkCountPill">0 parked</span>
+                <span class="pill">Click car to recolor</span>
               </div>
             </div>
 
             <div class="col-body">
               <div class="block">
-                <div class="label">Add a parked item <span class="kbd">Enter</span></div>
+                <div class="label">Add a task</div>
                 <div class="park-form">
                   <input id="parkText" type="text" placeholder="" />
                   <input id="parkColor" type="color" value="#e0565b" title="Car color" />
@@ -805,21 +892,20 @@
               </div>
 
               <div class="footer-note">
-                <div><span class="kbd">Click</span> car = recolor</div>
-                <div><span class="kbd">×</span> removes</div>
               </div>
             </div>
           </section>
 
-          <!-- RIGHT: Pebbles -->
-          <section class="col" aria-label="Daily gratitude pebbles">
+          <!-- RIGHT -->
+          <section class="col" id="rightCol" aria-label="Daily gratitude pebbles" tabindex="-1">
             <div class="col-header">
               <div class="col-title">
                 <strong>Daily Gratitude Pebbles</strong>
-                <span>What are you greatful for today?</span>
+                <span>What's one thing you're greatful for today?</span>
               </div>
-              <div class="pillRow" style="display:flex; gap:10px; align-items:center;">
+              <div class="pillRow">
                 <span class="pill" id="pebbleCountPill">0 pebbles</span>
+                <span class="pill">Click pebble to read</span>
               </div>
             </div>
 
@@ -836,16 +922,12 @@
                   </select>
                   <button class="mini-btn" id="addPebble" type="button">Add pebble</button>
                 </div>
-                <div class="row" style="padding-top:12px;">
-                  <label for="gratColor" style="min-width:160px;">Pebble color</label>
-                  <input id="gratColor" type="color" value="#d9d9e2" title="Pebble color" />
-                </div>
-                <div class="hint">
+                <div class="hint" style="margin-top:10px;">
                 </div>
               </div>
 
               <div class="block">
-                <div class="label">Monthly towers <span class="pill" id="monthPill">—</span></div>
+                <div class="label">This month's pebbles<span class="pill" id="monthPill">—</span></div>
                 <div class="month-stage" id="monthStage">
                   <div class="towers" id="towers"></div>
                 </div>
@@ -875,7 +957,6 @@
           <span class="pill" id="modalDate">—</span>
           <span class="pill" id="modalSize">—</span>
         </div>
-        <div class="small">Gratitude note:</div>
         <div id="modalText" style="font-weight:800; line-height:1.35; overflow-wrap:anywhere;"></div>
         <div class="divider"></div>
         <button class="mini-btn" id="deletePebble" type="button">Delete this pebble</button>
@@ -887,9 +968,9 @@
     /* =========================
        Storage keys
     ========================= */
-    const STORE_KEY = "not_today_parkinglot_gratitude_v1";
-    const THEME_KEY = "not_today_parkinglot_gratitude_theme_v1";
-    const BG_KEY    = "not_today_parkinglot_gratitude_bg_v1";
+    const STORE_KEY = "not_today_parkinglot_gratitude_v2";
+    const THEME_KEY = "not_today_parkinglot_gratitude_theme_v2";
+    const BG_KEY    = "not_today_parkinglot_gratitude_bg_v2";
 
     const $  = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -923,43 +1004,26 @@
       x.setHours(0,0,0,0);
       return x.toISOString().slice(0,10);
     }
-
-    function parseISO(iso){
-      return new Date(iso + "T00:00:00");
-    }
-
+    function parseISO(iso){ return new Date(iso + "T00:00:00"); }
     function addDays(iso, n){
       const d = parseISO(iso);
       d.setDate(d.getDate() + n);
       return toISODate(d);
     }
-
-    function monthId(iso){
-      // YYYY-MM
-      return iso.slice(0,7);
-    }
-
+    function monthId(iso){ return iso.slice(0,7); } // YYYY-MM
     function prettyDayLabel(iso){
       const d = parseISO(iso);
-      const opts = { weekday: "short", month: "short", day: "numeric", year: "numeric" };
-      return d.toLocaleDateString(undefined, opts);
+      return d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
     }
-
     function prettyMonthLabel(ym){
       const d = new Date(ym + "-01T00:00:00");
-      const opts = { month: "long", year: "numeric" };
-      return d.toLocaleDateString(undefined, opts);
+      return d.toLocaleDateString(undefined, { month:"long", year:"numeric" });
     }
-
     function daysInMonth(ym){
       const [y,m] = ym.split("-").map(Number);
       return new Date(y, m, 0).getDate();
     }
-
-    function uid(){
-      return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
-    }
-
+    function uid(){ return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
     function escapeHtml(s){
       return String(s ?? "")
         .replaceAll("&","&amp;")
@@ -969,8 +1033,6 @@
 
     /* =========================
        Store
-       store = { parkingByDay: { [iso]: [{id,text,color,carStyle,created}] },
-                 pebblesByDay: { [iso]: [{id,text,color,sizePx,created}] } }
     ========================= */
     function loadStore(){
       try{
@@ -980,60 +1042,73 @@
         return { parkingByDay: {}, pebblesByDay: {} };
       }
     }
-
     function saveStore(s){
       localStorage.setItem(STORE_KEY, JSON.stringify(s));
     }
-
     let store = loadStore();
-
     function ensureDay(iso){
       if(!store.parkingByDay[iso]) store.parkingByDay[iso] = [];
       if(!store.pebblesByDay[iso]) store.pebblesByDay[iso] = [];
     }
 
     /* =========================
-       Theme
+       Theme (NOW ACTUALLY APPLIES COLORS)
+       We set CSS variables + also generate tiny styles to cover bg colors.
     ========================= */
     const DEFAULT_THEME = {
+      /* Global */
       appBg: "#ffffff",
       ink: "#2b2b2b",
       muted: "#7a7a7a",
       accent: "#cbb8ae",
-
       borderColor: "#1e1e1e",
       borderA: 0.10,
-
       surfaceA: 0.78,
       panelA: 0.92,
-
       btnA: 0.92,
       btnBorderA: 0.10,
-
       overlayBase: "#ffffff",
       overlayA: 0.34,
 
-      cardBg: "#ffffff",
-      cardBgA: 0.94,
+      /* Left */
+      leftCardBg: "#ffffff",
+      leftCardA: 0.94,
+      leftHeaderBg: "#ffffff",
+      leftHeaderA: 0.92,
+      leftBlockBg: "#ffffff",
+      leftBlockA: 0.78,
+      leftItemBg: "#ffffff",
+      leftItemA: 0.82,
+      leftInputBg: "#ffffff",
+      leftInputA: 0.96,
 
-      panelCardBg: "#ffffff",
-      panelCardA: 0.78,
+      /* Right */
+      rightCardBg: "#ffffff",
+      rightCardA: 0.94,
+      rightHeaderBg: "#ffffff",
+      rightHeaderA: 0.92,
+      rightBlockBg: "#ffffff",
+      rightBlockA: 0.78,
+      rightStageBg: "#ffffff",
+      rightStageA: 0.76,
+      rightTowerBg: "#ffffff",
+      rightTowerA: 0.45,
+      rightInputBg: "#ffffff",
+      rightInputA: 0.96,
 
-      pebbleBase: "#d9d9e2",
+      /* Pebble */
       pebbleOutlineA: 0.14
     };
 
     function themeLoad(){
-      try{
-        const raw = localStorage.getItem(THEME_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
+      try{ const raw = localStorage.getItem(THEME_KEY); return raw ? JSON.parse(raw) : null; }
+      catch{ return null; }
     }
     function themeSave(t){
       try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
     }
 
-    function setSelectionAccent(accentHex){
+    function setAccentStyles(accentHex){
       const accent = normHex(accentHex, DEFAULT_THEME.accent);
       let st = document.getElementById("accentStyle");
       if(!st){
@@ -1045,6 +1120,9 @@
         .col:focus-within{
           box-shadow: 0 0 0 4px ${hexToRgba(accent, 0.35)}, 0 10px 26px rgba(20,20,20,0.06);
         }
+        input[type="text"]:focus, select:focus{
+          box-shadow: 0 0 0 5px ${hexToRgba(accent, 0.18)};
+        }
       `;
     }
 
@@ -1052,6 +1130,7 @@
       const theme = Object.assign({}, DEFAULT_THEME, t || {});
       const r = document.documentElement.style;
 
+      /* Global */
       r.setProperty("--app-bg", normHex(theme.appBg, DEFAULT_THEME.appBg));
       r.setProperty("--ink", normHex(theme.ink, DEFAULT_THEME.ink));
       r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
@@ -1059,129 +1138,183 @@
 
       r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
       r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
-
       r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
       r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
-
       r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
       r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
 
-      r.setProperty("--card-bg", normHex(theme.cardBg, "#ffffff"));
-      r.setProperty("--card-bg-a", String(clamp(theme.cardBgA, 0.70, 1.00)));
+      r.setProperty("--overlay-base", normHex(theme.overlayBase, DEFAULT_THEME.overlayBase));
+      r.setProperty("--overlay-a", String(clamp(theme.overlayA, 0.00, 0.70)));
 
-      r.setProperty("--panel-card-bg", normHex(theme.panelCardBg, "#ffffff"));
-      r.setProperty("--panel-card-a", String(clamp(theme.panelCardA, 0.45, 1.00)));
+      /* Left variables */
+      r.setProperty("--left-card-a", String(clamp(theme.leftCardA, 0.70, 1.00)));
+      r.setProperty("--left-header-a", String(clamp(theme.leftHeaderA, 0.70, 1.00)));
+      r.setProperty("--left-block-a", String(clamp(theme.leftBlockA, 0.45, 1.00)));
+      r.setProperty("--left-item-a", String(clamp(theme.leftItemA, 0.45, 1.00)));
+      r.setProperty("--left-input-a", String(clamp(theme.leftInputA, 0.60, 1.00)));
 
-      r.setProperty("--pebble-base", normHex(theme.pebbleBase, "#d9d9e2"));
+      /* Right variables */
+      r.setProperty("--right-card-a", String(clamp(theme.rightCardA, 0.70, 1.00)));
+      r.setProperty("--right-header-a", String(clamp(theme.rightHeaderA, 0.70, 1.00)));
+      r.setProperty("--right-block-a", String(clamp(theme.rightBlockA, 0.45, 1.00)));
+      r.setProperty("--right-stage-a", String(clamp(theme.rightStageA, 0.45, 1.00)));
+      r.setProperty("--right-tower-a", String(clamp(theme.rightTowerA, 0.20, 1.00)));
+      r.setProperty("--right-input-a", String(clamp(theme.rightInputA, 0.60, 1.00)));
+
+      /* Pebble */
       r.setProperty("--pebble-outline-a", String(clamp(theme.pebbleOutlineA, 0.05, 0.30)));
 
-      // update theme dot
-      const dot = $("#themeDot");
-      if(dot){
+      /* Update dots */
+      const themeDot = $("#themeDot");
+      if(themeDot){
         const accent = normHex(theme.accent, DEFAULT_THEME.accent);
-        dot.style.background = accent;
-        dot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
+        themeDot.style.background = accent;
+        themeDot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
       }
-      setSelectionAccent(theme.accent);
+      setAccentStyles(theme.accent);
 
-      // overlay
-      const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
-      const overlayA = clamp(theme.overlayA, 0.00, 0.70);
-      const css = hexToRgba(overlayBase, overlayA);
-
-      let st = document.getElementById("overlayStyle");
-      if(!st){
-        st = document.createElement("style");
-        st.id = "overlayStyle";
-        document.head.appendChild(st);
+      /* Overlay actually applies */
+      let overlayStyle = document.getElementById("overlayStyle");
+      if(!overlayStyle){
+        overlayStyle = document.createElement("style");
+        overlayStyle.id = "overlayStyle";
+        document.head.appendChild(overlayStyle);
       }
-      st.textContent = `.board::after{ background: ${css} !important; }`;
+      const ov = hexToRgba(normHex(theme.overlayBase, "#ffffff"), clamp(theme.overlayA, 0, 0.70));
+      overlayStyle.textContent = `.board::after{ background: ${ov} !important; }`;
 
-      // inner blocks bg
-      let st2 = document.getElementById("blockStyle");
-      if(!st2){
-        st2 = document.createElement("style");
-        st2.id = "blockStyle";
-        document.head.appendChild(st2);
+      /* Per-half color application for all areas */
+      let halfStyle = document.getElementById("halfThemeStyle");
+      if(!halfStyle){
+        halfStyle = document.createElement("style");
+        halfStyle.id = "halfThemeStyle";
+        document.head.appendChild(halfStyle);
       }
-      const blockBg = normHex(theme.panelCardBg, "#ffffff");
-      const blockA = clamp(theme.panelCardA, 0.45, 1.00);
-      st2.textContent = `
-        .block{ background: ${hexToRgba(blockBg, blockA)} !important; }
-        input[type="text"], textarea, select{ background: ${hexToRgba(blockBg, Math.min(0.96, blockA + 0.18))} !important; }
+
+      const leftCard   = hexToRgba(normHex(theme.leftCardBg, "#ffffff"), clamp(theme.leftCardA, 0.70, 1.00));
+      const leftHead   = hexToRgba(normHex(theme.leftHeaderBg, "#ffffff"), clamp(theme.leftHeaderA, 0.70, 1.00));
+      const leftBlock  = hexToRgba(normHex(theme.leftBlockBg, "#ffffff"), clamp(theme.leftBlockA, 0.45, 1.00));
+      const leftItem   = hexToRgba(normHex(theme.leftItemBg, "#ffffff"), clamp(theme.leftItemA, 0.45, 1.00));
+      const leftInput  = hexToRgba(normHex(theme.leftInputBg, "#ffffff"), clamp(theme.leftInputA, 0.60, 1.00));
+
+      const rightCard  = hexToRgba(normHex(theme.rightCardBg, "#ffffff"), clamp(theme.rightCardA, 0.70, 1.00));
+      const rightHead  = hexToRgba(normHex(theme.rightHeaderBg, "#ffffff"), clamp(theme.rightHeaderA, 0.70, 1.00));
+      const rightBlock = hexToRgba(normHex(theme.rightBlockBg, "#ffffff"), clamp(theme.rightBlockA, 0.45, 1.00));
+      const rightStage = hexToRgba(normHex(theme.rightStageBg, "#ffffff"), clamp(theme.rightStageA, 0.45, 1.00));
+      const rightTower = hexToRgba(normHex(theme.rightTowerBg, "#ffffff"), clamp(theme.rightTowerA, 0.20, 1.00));
+      const rightInput = hexToRgba(normHex(theme.rightInputBg, "#ffffff"), clamp(theme.rightInputA, 0.60, 1.00));
+
+      halfStyle.textContent = `
+        /* Left */
+        #leftCol{ background: ${leftCard} !important; }
+        #leftCol .col-header{ background: ${leftHead} !important; }
+        #leftCol .block{ background: ${leftBlock} !important; }
+        #leftCol .park-item{ background: ${leftItem} !important; }
+        #leftCol input[type="text"]{ background: ${leftInput} !important; }
+
+        /* Right */
+        #rightCol{ background: ${rightCard} !important; }
+        #rightCol .col-header{ background: ${rightHead} !important; }
+        #rightCol .block{ background: ${rightBlock} !important; }
+        #rightCol .month-stage{ background: ${rightStage} !important; }
+        #rightCol .tower{ background: ${rightTower} !important; }
+        #rightCol input[type="text"], #rightCol select{ background: ${rightInput} !important; }
       `;
-
-      // main card bg
-      let st3 = document.getElementById("cardStyle");
-      if(!st3){
-        st3 = document.createElement("style");
-        st3.id = "cardStyle";
-        document.head.appendChild(st3);
-      }
-      const cardBg = normHex(theme.cardBg, "#ffffff");
-      const cardA = clamp(theme.cardBgA, 0.70, 1.00);
-      st3.textContent = `.col{ background: ${hexToRgba(cardBg, cardA)} !important; }`;
     }
 
     function themeSyncInputs(t){
       const theme = Object.assign({}, DEFAULT_THEME, t || {});
       const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
 
+      /* Global */
       set("tAppBg", theme.appBg);
       set("tInk", theme.ink);
       set("tMuted", theme.muted);
       set("tAccent", theme.accent);
-
       set("tBorderColor", theme.borderColor);
       set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
-
       set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
       set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
-
       set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
       set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
-
       set("tOverlayBase", theme.overlayBase);
       set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
 
-      set("tCardBg", theme.cardBg);
-      set("tCardBgA", Math.round(clamp(theme.cardBgA, 0.70, 1.00) * 100));
+      /* Left */
+      set("tLeftCardBg", theme.leftCardBg);
+      set("tLeftCardA", Math.round(clamp(theme.leftCardA, 0.70, 1.00) * 100));
+      set("tLeftHeaderBg", theme.leftHeaderBg);
+      set("tLeftHeaderA", Math.round(clamp(theme.leftHeaderA, 0.70, 1.00) * 100));
+      set("tLeftBlockBg", theme.leftBlockBg);
+      set("tLeftBlockA", Math.round(clamp(theme.leftBlockA, 0.45, 1.00) * 100));
+      set("tLeftItemBg", theme.leftItemBg);
+      set("tLeftItemA", Math.round(clamp(theme.leftItemA, 0.45, 1.00) * 100));
+      set("tLeftInputBg", theme.leftInputBg);
+      set("tLeftInputA", Math.round(clamp(theme.leftInputA, 0.60, 1.00) * 100));
 
-      set("tPanelCardBg", theme.panelCardBg);
-      set("tPanelCardA", Math.round(clamp(theme.panelCardA, 0.45, 1.00) * 100));
+      /* Right */
+      set("tRightCardBg", theme.rightCardBg);
+      set("tRightCardA", Math.round(clamp(theme.rightCardA, 0.70, 1.00) * 100));
+      set("tRightHeaderBg", theme.rightHeaderBg);
+      set("tRightHeaderA", Math.round(clamp(theme.rightHeaderA, 0.70, 1.00) * 100));
+      set("tRightBlockBg", theme.rightBlockBg);
+      set("tRightBlockA", Math.round(clamp(theme.rightBlockA, 0.45, 1.00) * 100));
+      set("tRightStageBg", theme.rightStageBg);
+      set("tRightStageA", Math.round(clamp(theme.rightStageA, 0.45, 1.00) * 100));
+      set("tRightTowerBg", theme.rightTowerBg);
+      set("tRightTowerA", Math.round(clamp(theme.rightTowerA, 0.20, 1.00) * 100));
+      set("tRightInputBg", theme.rightInputBg);
+      set("tRightInputA", Math.round(clamp(theme.rightInputA, 0.60, 1.00) * 100));
 
-      set("tPebbleBase", theme.pebbleBase);
+      /* Pebble */
       set("tPebbleOutlineA", Math.round(clamp(theme.pebbleOutlineA, 0.05, 0.30) * 100));
     }
 
     function themeReadFromInputs(){
       const g = (id)=>document.getElementById(id);
       return {
+        /* Global */
         appBg: g("tAppBg")?.value,
         ink: g("tInk")?.value,
         muted: g("tMuted")?.value,
         accent: g("tAccent")?.value,
-
         borderColor: g("tBorderColor")?.value,
         borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
-
         surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
         panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
-
         btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
         btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
-
         overlayBase: g("tOverlayBase")?.value,
         overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
 
-        cardBg: g("tCardBg")?.value,
-        cardBgA: clamp(Number(g("tCardBgA")?.value)/100, 0.70, 1.00),
+        /* Left */
+        leftCardBg: g("tLeftCardBg")?.value,
+        leftCardA: clamp(Number(g("tLeftCardA")?.value)/100, 0.70, 1.00),
+        leftHeaderBg: g("tLeftHeaderBg")?.value,
+        leftHeaderA: clamp(Number(g("tLeftHeaderA")?.value)/100, 0.70, 1.00),
+        leftBlockBg: g("tLeftBlockBg")?.value,
+        leftBlockA: clamp(Number(g("tLeftBlockA")?.value)/100, 0.45, 1.00),
+        leftItemBg: g("tLeftItemBg")?.value,
+        leftItemA: clamp(Number(g("tLeftItemA")?.value)/100, 0.45, 1.00),
+        leftInputBg: g("tLeftInputBg")?.value,
+        leftInputA: clamp(Number(g("tLeftInputA")?.value)/100, 0.60, 1.00),
 
-        panelCardBg: g("tPanelCardBg")?.value,
-        panelCardA: clamp(Number(g("tPanelCardA")?.value)/100, 0.45, 1.00),
+        /* Right */
+        rightCardBg: g("tRightCardBg")?.value,
+        rightCardA: clamp(Number(g("tRightCardA")?.value)/100, 0.70, 1.00),
+        rightHeaderBg: g("tRightHeaderBg")?.value,
+        rightHeaderA: clamp(Number(g("tRightHeaderA")?.value)/100, 0.70, 1.00),
+        rightBlockBg: g("tRightBlockBg")?.value,
+        rightBlockA: clamp(Number(g("tRightBlockA")?.value)/100, 0.45, 1.00),
+        rightStageBg: g("tRightStageBg")?.value,
+        rightStageA: clamp(Number(g("tRightStageA")?.value)/100, 0.45, 1.00),
+        rightTowerBg: g("tRightTowerBg")?.value,
+        rightTowerA: clamp(Number(g("tRightTowerA")?.value)/100, 0.20, 1.00),
+        rightInputBg: g("tRightInputBg")?.value,
+        rightInputA: clamp(Number(g("tRightInputA")?.value)/100, 0.60, 1.00),
 
-        pebbleBase: g("tPebbleBase")?.value,
-        pebbleOutlineA: clamp(Number(g("tPebbleOutlineA")?.value)/100, 0.05, 0.30)
+        /* Pebble */
+        pebbleOutlineA: clamp(Number(g("tPebbleOutlineA")?.value)/100, 0.05, 0.30),
       };
     }
 
@@ -1203,14 +1336,24 @@
       });
 
       const ids = [
+        /* Global */
         "tAppBg","tInk","tMuted","tAccent",
-        "tBorderColor","tBorderA",
-        "tSurfaceA","tPanelA",
+        "tBorderColor","tBorderA","tSurfaceA","tPanelA",
         "tBtnA","tBtnBorderA",
         "tOverlayBase","tOverlayA",
-        "tCardBg","tCardBgA",
-        "tPanelCardBg","tPanelCardA",
-        "tPebbleBase","tPebbleOutlineA"
+
+        /* Left */
+        "tLeftCardBg","tLeftCardA","tLeftHeaderBg","tLeftHeaderA",
+        "tLeftBlockBg","tLeftBlockA","tLeftItemBg","tLeftItemA",
+        "tLeftInputBg","tLeftInputA",
+
+        /* Right */
+        "tRightCardBg","tRightCardA","tRightHeaderBg","tRightHeaderA",
+        "tRightBlockBg","tRightBlockA","tRightStageBg","tRightStageA",
+        "tRightTowerBg","tRightTowerA","tRightInputBg","tRightInputA",
+
+        /* Pebble */
+        "tPebbleOutlineA"
       ];
 
       ids.forEach(id => {
@@ -1220,9 +1363,6 @@
           const t = themeReadFromInputs();
           themeApply(t);
           themeSave(t);
-          // keep default pebble picker in sync
-          $("#gratColor").value = normHex(t.pebbleBase, "#d9d9e2");
-          renderAll();
         });
       });
 
@@ -1230,26 +1370,21 @@
         localStorage.removeItem(THEME_KEY);
         themeApply(DEFAULT_THEME);
         themeSyncInputs(DEFAULT_THEME);
-        $("#gratColor").value = DEFAULT_THEME.pebbleBase;
-        renderAll();
       });
 
       const saved = themeLoad() || DEFAULT_THEME;
       themeApply(saved);
       themeSyncInputs(saved);
-      $("#gratColor").value = normHex(saved.pebbleBase, DEFAULT_THEME.pebbleBase);
     }
 
     /* =========================
-       Background
+       Background (now definitely works)
     ========================= */
     const DEFAULT_BG = { tint: "#efe7e1", strength: 30, imageDataUrl: null };
 
     function bgLoad(){
-      try{
-        const raw = localStorage.getItem(BG_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
+      try{ const raw = localStorage.getItem(BG_KEY); return raw ? JSON.parse(raw) : null; }
+      catch{ return null; }
     }
     function bgSave(bg){
       try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
@@ -1354,7 +1489,6 @@
     function carSvg(color, styleId=0){
       const fill = normHex(color, "#e0565b");
       const styles = [
-        // rounded beetle-ish
         (c)=>`
           <svg viewBox="0 0 240 140" aria-hidden="true">
             <path d="M44 92c3-20 12-43 26-52 18-12 62-16 86-14 20 2 32 8 42 20 10 12 17 33 20 46 2 8 3 20-10 22H52c-12-2-10-14-8-22z" fill="${c}"/>
@@ -1371,7 +1505,6 @@
             <path d="M44 92c-3 12 0 22 12 22h128c12 0 22-10 24-22" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="4"/>
           </svg>
         `,
-        // boxy vintage
         (c)=>`
           <svg viewBox="0 0 240 140" aria-hidden="true">
             <path d="M48 84c4-22 14-38 30-46 18-9 62-10 92-6 18 2 32 10 40 26 6 12 10 28 12 42 1 8-2 16-12 16H60c-12 0-14-10-12-16z" fill="${c}"/>
@@ -1386,7 +1519,6 @@
             <rect x="202" y="78" rx="8" ry="8" width="20" height="14" fill="rgba(255,255,255,0.70)"/>
           </svg>
         `,
-        // little coupe
         (c)=>`
           <svg viewBox="0 0 240 140" aria-hidden="true">
             <path d="M46 94c6-22 20-40 40-48 28-11 76-10 98-2 18 7 30 24 36 46 2 10-2 22-14 22H60c-14 0-18-12-14-18z" fill="${c}"/>
@@ -1402,30 +1534,19 @@
           </svg>
         `
       ];
-
-      const f = styles[styleId % styles.length];
-      return f(fill);
+      return styles[(styleId||0) % styles.length](fill);
     }
-
-    function randomCarStyle(){
-      return Math.floor(Math.random() * 3);
-    }
+    function randomCarStyle(){ return Math.floor(Math.random() * 3); }
 
     /* =========================
        Pebble sizing
     ========================= */
     function sizePxFromChoice(choice){
       const base = () => Math.floor(22 + Math.random()*26); // 22..48
-      if(choice === "sm") return Math.floor(18 + Math.random()*10); // 18..28
-      if(choice === "md") return Math.floor(26 + Math.random()*14); // 26..40
-      if(choice === "lg") return Math.floor(36 + Math.random()*22); // 36..58
+      if(choice === "sm") return Math.floor(18 + Math.random()*10);
+      if(choice === "md") return Math.floor(26 + Math.random()*14);
+      if(choice === "lg") return Math.floor(36 + Math.random()*22);
       return base();
-    }
-
-    function pastelFromAccent(){
-      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#cbb8ae";
-      // blend accent with white a bit
-      return hexToRgba(normHex(accent, "#cbb8ae"), 1.0);
     }
 
     /* =========================
@@ -1442,25 +1563,24 @@
     }
 
     /* =========================
-       Parking lot operations
+       Parking lot
     ========================= */
     function addParked(){
       const text = ($("#parkText").value || "").trim();
       if(!text) return;
 
       ensureDay(activeDay);
-
       const color = normHex($("#parkColor").value, "#e0565b");
-      const item = {
+
+      store.parkingByDay[activeDay].unshift({
         id: uid(),
         text,
         color,
         carStyle: randomCarStyle(),
         created: Date.now()
-      };
-      store.parkingByDay[activeDay].unshift(item);
-      saveStore(store);
+      });
 
+      saveStore(store);
       $("#parkText").value = "";
       renderParking();
     }
@@ -1476,11 +1596,8 @@
       ensureDay(activeDay);
       const item = store.parkingByDay[activeDay].find(x => x.id === id);
       if(!item) return;
-
-      // cycle hue-ish by random pleasant colors
       const palette = ["#e0565b","#f2994a","#f2c94c","#6fcf97","#56ccf2","#9b51e0","#eb7aa1","#2d9cdb","#27ae60","#b08968"];
-      const next = palette[Math.floor(Math.random()*palette.length)];
-      item.color = next;
+      item.color = palette[Math.floor(Math.random()*palette.length)];
       saveStore(store);
       renderParking();
     }
@@ -1489,11 +1606,10 @@
       ensureDay(activeDay);
       const list = $("#parkList");
       const items = store.parkingByDay[activeDay] || [];
-
       $("#parkCountPill").textContent = `${items.length} parked`;
 
       if(!items.length){
-        list.innerHTML = `<div class="hint">Nothing parked for this day. (That’s a win.)</div>`;
+        list.innerHTML = `<div class="hint">Nothing parked for this day.</div>`;
         return;
       }
 
@@ -1511,7 +1627,6 @@
         `;
       }).join("");
 
-      // wire events
       $$(".park-item", list).forEach(row => {
         const id = row.getAttribute("data-id");
         row.querySelector(".car").addEventListener("click", () => recolorParked(id));
@@ -1520,7 +1635,7 @@
     }
 
     /* =========================
-       Pebble operations
+       Pebbles
     ========================= */
     function addPebble(){
       const text = ($("#gratText").value || "").trim();
@@ -1531,21 +1646,15 @@
       const choice = $("#gratSize").value;
       const sizePx = sizePxFromChoice(choice);
 
-      const defaultPebble = getComputedStyle(document.documentElement).getPropertyValue("--pebble-base").trim() || "#d9d9e2";
-      const picked = normHex($("#gratColor").value, normHex(defaultPebble, "#d9d9e2"));
-
-      const pebble = {
+      store.pebblesByDay[activeDay].push({
         id: uid(),
         text,
-        color: picked,
         sizePx,
         created: Date.now(),
         day: activeDay
-      };
+      });
 
-      store.pebblesByDay[activeDay].push(pebble);
       saveStore(store);
-
       $("#gratText").value = "";
       renderMonthTowers();
       renderPebbleCountPill();
@@ -1565,19 +1674,22 @@
       $("#pebbleCountPill").textContent = `${n} pebbles`;
     }
 
-    /* =========================
-       Month towers rendering
-    ========================= */
+    function daysInMonthTower(){
+      const nDays = daysInMonth(activeMonth);
+      const [yy,mm] = activeMonth.split("-");
+      const pad2 = (x)=>String(x).padStart(2,"0");
+      const result = [];
+      for(let d=1; d<=nDays; d++) result.push(`${yy}-${mm}-${pad2(d)}`);
+      return result;
+    }
+
     function renderMonthTowers(){
       const towers = $("#towers");
       towers.innerHTML = "";
 
-      const nDays = daysInMonth(activeMonth);
-      const [yy,mm] = activeMonth.split("-");
-      const pad2 = (x)=>String(x).padStart(2,"0");
+      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#cbb8ae";
 
-      for(let d=1; d<=nDays; d++){
-        const iso = `${yy}-${mm}-${pad2(d)}`;
+      daysInMonthTower().forEach(iso => {
         ensureDay(iso);
 
         const dayPebbles = store.pebblesByDay[iso] || [];
@@ -1592,32 +1704,31 @@
         towers.appendChild(tower);
 
         const stack = tower.querySelector(".stack");
-        if(!dayPebbles.length){
-          // keep stack height airy; show nothing
-        }else{
-          // stack them in order they were added
-          dayPebbles.forEach(p => {
-            const el = document.createElement("div");
-            el.className = "pebble";
-            el.style.width = `${p.sizePx}px`;
-            el.style.height = `${Math.max(16, Math.floor(p.sizePx * 0.72))}px`;
-            el.style.setProperty("--pebble", normHex(p.color, "#d9d9e2"));
-            el.title = "Click to read";
-            el.dataset.id = p.id;
-            el.dataset.iso = iso;
-            stack.appendChild(el);
 
-            el.addEventListener("click", () => openPebbleModal(iso, p.id));
-          });
-        }
+        dayPebbles.forEach((p, idx) => {
+          const el = document.createElement("div");
+          el.className = "pebble";
+          el.style.width  = `${p.sizePx}px`;
+          el.style.height = `${Math.max(16, Math.floor(p.sizePx * 0.72))}px`;
 
-        // click daycap selects that day quickly
+          // Softly varied pebble tones from accent (no picker needed)
+          const a = 0.85 - Math.min(0.35, idx * 0.03);
+          el.style.setProperty("--pebble", hexToRgba(normHex(accent, "#cbb8ae"), clamp(a, 0.45, 0.90)));
+
+          el.title = "Click to read";
+          el.dataset.id = p.id;
+          el.dataset.iso = iso;
+
+          stack.appendChild(el);
+          el.addEventListener("click", () => openPebbleModal(iso, p.id));
+        });
+
         tower.querySelector(".daycap").addEventListener("click", () => {
           activeDay = iso;
           syncLabels();
           renderAll();
         });
-      }
+      });
     }
 
     /* =========================
@@ -1647,9 +1758,7 @@
     }
 
     $("#modalClose").addEventListener("click", closeModal);
-    modal.addEventListener("click", (e) => {
-      if(e.target === modal) closeModal();
-    });
+    modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
 
     $("#deletePebble").addEventListener("click", () => {
       if(!modalCtx.iso || !modalCtx.id) return;
@@ -1678,11 +1787,12 @@
       const d = new Date(activeMonth + "-01T00:00:00");
       d.setMonth(d.getMonth() - 1);
       activeMonth = d.toISOString().slice(0,7);
-      // keep day in same month if possible, else clamp
+
       const dayNum = Number(activeDay.slice(8,10));
       const maxD = daysInMonth(activeMonth);
       const clamped = String(Math.min(dayNum, maxD)).padStart(2,"0");
       activeDay = `${activeMonth}-${clamped}`;
+
       syncLabels();
       renderAll();
     });
@@ -1691,35 +1801,31 @@
       const d = new Date(activeMonth + "-01T00:00:00");
       d.setMonth(d.getMonth() + 1);
       activeMonth = d.toISOString().slice(0,7);
+
       const dayNum = Number(activeDay.slice(8,10));
       const maxD = daysInMonth(activeMonth);
       const clamped = String(Math.min(dayNum, maxD)).padStart(2,"0");
       activeDay = `${activeMonth}-${clamped}`;
+
       syncLabels();
       renderAll();
     });
 
     /* =========================
-       Input shortcuts
+       Inputs
     ========================= */
     $("#parkText").addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){
-        e.preventDefault();
-        addParked();
-      }
+      if(e.key === "Enter"){ e.preventDefault(); addParked(); }
     });
     $("#gratText").addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){
-        e.preventDefault();
-        addPebble();
-      }
+      if(e.key === "Enter"){ e.preventDefault(); addPebble(); }
     });
 
     $("#addPark").addEventListener("click", addParked);
     $("#addPebble").addEventListener("click", addPebble);
 
     /* =========================
-       Render all
+       Render
     ========================= */
     function renderAll(){
       ensureDay(activeDay);
@@ -1733,42 +1839,14 @@
        Boot
     ========================= */
     function boot(){
-      // Panels
-      const themeBtn = $("#themeBtn");
-      const themePanel = $("#themePanel");
-      const bgBtn = $("#bgBtn");
-      const bgPanel = $("#bgPanel");
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        bgPanel.classList.remove("open");
-      });
-      bgBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        bgPanel.classList.toggle("open");
-        themePanel.classList.remove("open");
-      });
-      document.addEventListener("click", (e) => {
-        const insideAny =
-          e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
-          e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-        if(!insideAny){
-          themePanel.classList.remove("open");
-          bgPanel.classList.remove("open");
-        }
-      });
-
-      // Init theme + bg
+      // init theme + bg
       initThemeUI();
       initBgUI();
 
-      // Theme reset already wired in initThemeUI(); add bg reset already wired in initBgUI()
-
-      // Store
+      // store
       store = loadStore();
 
-      // Start state
+      // state
       activeDay = toISODate(new Date());
       activeMonth = monthId(activeDay);
 

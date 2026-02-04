@@ -8,7 +8,7 @@
   <style>
     /* Subtle cream palette (default) */
     :root{
-      --page:#ffffff;              /* pure white as requested */
+      --page:#ffffff;              /* pure white */
       --card:#fffdf7;              /* warm cream */
       --stroke:rgba(80,60,20,.08);
       --shadow: 0 18px 60px rgba(40, 30, 10, .10);
@@ -19,7 +19,6 @@
       --iconBd:rgba(58,50,38,.18);
 
       --trackText:#3a3226;
-      --muted:#6a5f4f;
 
       --progressTrack:rgba(58,50,38,.16);
       --progressFill:#ffffff;
@@ -40,10 +39,7 @@
       color: var(--trackText);
     }
 
-    /* Embed friendly size */
-    .wrap{
-      width: min(860px, 92vw);
-    }
+    .wrap{ width: min(860px, 92vw); }
 
     .player{
       border-radius: var(--radius);
@@ -134,7 +130,6 @@
       flex: 1 1 auto;
       display:flex;
       align-items:center;
-      gap: 10px;
     }
     .trackTitle{
       font-size: 15px;
@@ -202,10 +197,24 @@
     }
     summary::-webkit-details-marker{ display:none; }
 
-    .panel{
-      margin-top: 12px;
-      display:grid;
-      gap: 12px;
+    .panel{ margin-top: 12px; display:grid; gap: 12px; }
+    .statusLine{
+      font-size: 12px;
+      color: rgba(58,50,38,.60);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(58,50,38,.06);
+      border: 1px solid rgba(58,50,38,.08);
+      font-weight: 700;
     }
 
     .grid{
@@ -221,12 +230,7 @@
       .grid{ grid-template-columns: 1fr; }
     }
 
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      min-width:0;
-    }
+    .field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
     label{
       font-size: 12px;
       color: rgba(58,50,38,.70);
@@ -253,12 +257,7 @@
     }
     textarea{ min-height: 92px; resize: vertical; }
 
-    .rowBtns{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
+    .rowBtns{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .miniBtn{
       border-radius: 12px;
       border: 1px solid rgba(58,50,38,.16);
@@ -277,37 +276,18 @@
       line-height: 1.35;
     }
 
-    .statusLine{
-      font-size: 12px;
-      color: rgba(58,50,38,.60);
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(58,50,38,.06);
-      border: 1px solid rgba(58,50,38,.08);
-      font-weight: 700;
-    }
-
     .hidden { display:none !important; }
   </style>
 </head>
 
 <body>
   <div class="wrap">
-    <div class="player" id="player">
+    <div class="player">
       <div class="media">
         <img id="gifImg" alt="GIF" />
         <canvas id="freezeCanvas"></canvas>
 
-        <div class="stamp" id="stamp">
+        <div class="stamp">
           <div id="stampDate"></div>
           <div id="stampTime"></div>
         </div>
@@ -361,7 +341,7 @@
         <div class="panel">
           <div class="statusLine">
             <span class="badge" id="countBadge">1 / 1</span>
-            <span class="badge" id="modeBadge">Paused</span>
+            <span class="badge" id="modeBadge">Playing</span>
           </div>
 
           <div class="grid">
@@ -420,14 +400,7 @@
   </div>
 
   <script>
-    /**
-     * Fixes you requested:
-     * - All subtle cream colors; page background is pure white (#ffffff).
-     * - Removed "reset to single default" button and removed pause-support text.
-     * - Fixed Add GIF URL (now reliably updates list + persists).
-     * - Fixed Apply List (rebuilds state, resets index safely, refreshes UI immediately).
-     */
-
+    // Default GIF (only one)
     const DEFAULT_GIFS = [
       {
         title: "It started Raining…",
@@ -438,24 +411,22 @@
     const $ = (s) => document.querySelector(s);
     const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-    // Per-embed scoping: each GitHub Pages URL path gets its own storage bucket
-    const STORAGE_KEY = "notion_gif_player_v4:" + location.pathname;
+    // Per-embed scope
+    const STORAGE_KEY = "notion_gif_player_v5:" + location.pathname;
 
     function loadState(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch(_){ return null; }
+      try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }
+      catch(_){ return null; }
     }
     function saveState(){
       try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){}
     }
 
-    // State
+    // State (default: PLAYING so the GIF animates immediately)
     const state = {
       gifs: DEFAULT_GIFS.slice(),
       index: 0,
-      playing: false,
+      playing: true,
       shuffle: false,
       intervalSec: 12,
       colors: {
@@ -468,7 +439,7 @@
       }
     };
 
-    // Restore
+    // Restore persisted
     const persisted = loadState();
     if(persisted){
       if(Array.isArray(persisted.gifs) && persisted.gifs.length){
@@ -517,8 +488,8 @@
     const gifListBox = $("#gifListBox");
     const applyListBtn = $("#applyListBtn");
 
-    // Object URL cache for reliable "freeze frame" on some hosts (best effort)
-    const objectUrlCache = new Map(); // originalUrl -> objectUrl
+    // Object URLs (optional; helps freeze sometimes)
+    const objectUrlCache = new Map();
 
     function applyColors(){
       document.documentElement.style.setProperty("--page", state.colors.page);
@@ -553,8 +524,6 @@
       modeBadge.textContent = state.playing ? "Playing" : "Paused";
     }
 
-    // Try to make GIF drawable (so freeze works) by fetching to a blob when possible.
-    // If the host blocks CORS, we still show the GIF, but canvas draw may fail (we just hide image when paused).
     async function resolveGifSrc(url){
       const u = String(url || "").trim();
       if(!u) return { src: "" };
@@ -569,7 +538,7 @@
         objectUrlCache.set(u, obj);
         return { src: obj };
       }catch(_){
-        return { src: u };
+        return { src: u }; // direct URL fallback (still plays)
       }
     }
 
@@ -578,15 +547,12 @@
       gifImg.style.display = "block";
     }
 
-    function freeze(){
+    // IMPORTANT FIX: only freeze if we successfully drew a frame.
+    // Otherwise, leave the GIF visible so it never looks “stuck”.
+    function freezeIfPossible(){
       const w = gifImg.naturalWidth || 0;
       const h = gifImg.naturalHeight || 0;
-
-      if(!w || !h){
-        gifImg.style.display = "none";
-        freezeCanvas.style.display = "block";
-        return;
-      }
+      if(!w || !h) return false;
 
       const rect = gifImg.getBoundingClientRect();
       const cw = Math.max(1, Math.round(rect.width));
@@ -598,10 +564,12 @@
       try{
         ctx.drawImage(gifImg, 0, 0, cw, ch);
       }catch(_){
-        // if draw fails (tainted), still "pause" by hiding image
+        return false;
       }
+
       gifImg.style.display = "none";
       freezeCanvas.style.display = "block";
+      return true;
     }
 
     function cacheBust(url){
@@ -676,8 +644,8 @@
         trackTitle.textContent = "No GIFs";
         gifImg.removeAttribute("src");
         unfreeze();
-        updateBadges();
         gifListBox.value = "";
+        updateBadges();
         saveState();
         return;
       }
@@ -690,16 +658,14 @@
 
       const { src } = await resolveGifSrc(cur.url);
 
-      // Restart if requested: for direct URLs, cache-bust; for object URLs, re-assigning is enough.
+      // If restarting and this is a direct URL, cache-bust so it visibly animates again
       if(restart && !objectUrlCache.has(cur.url)){
         gifImg.src = cacheBust(cur.url);
       }else{
         gifImg.src = src;
       }
 
-      // ✅ Ensure the textarea always reflects the current list (fix for "Apply list doesn't update")
       gifListBox.value = state.gifs.map(g => g.url).join("\n");
-
       updateBadges();
       setPlayIcon();
       saveState();
@@ -707,48 +673,44 @@
 
     function play(){
       state.playing = true;
+      unfreeze();           // ensure GIF is visible
       setPlayIcon();
-      unfreeze();
-      showGif(state.index, { restart:true });
       startTimers();
       updateBadges();
       saveState();
+      // restart current to feel responsive
+      showGif(state.index, { restart:true });
     }
 
     function pause(){
       state.playing = false;
-      setPlayIcon();
       stopTimers();
-      freeze();
+      setPlayIcon();
       updateBadges();
       saveState();
+
+      // Try to freeze; if it fails, keep GIF visible (so it still “plays” rather than looking broken)
+      freezeIfPossible();
     }
 
-    function togglePlay(){
-      state.playing ? pause() : play();
-    }
+    function togglePlay(){ state.playing ? pause() : play(); }
 
-    // ---- Add/Remove/Apply List (fixed) ----
-    function normalizeUrlsFromTextarea(text){
-      return text
-        .split("\n")
-        .map(s => s.trim())
-        .filter(Boolean);
+    function normalizeUrls(text){
+      return text.split("\n").map(s => s.trim()).filter(Boolean);
     }
 
     function addGif(url){
       const cleaned = String(url || "").trim();
       if(!cleaned) return;
 
-      // ✅ Add, update textarea immediately, switch to it
       state.gifs.push({ title: `GIF ${state.gifs.length + 1}`, url: cleaned });
       state.index = state.gifs.length - 1;
 
-      gifListBox.value = state.gifs.map(g => g.url).join("\n"); // keep in sync
+      gifListBox.value = state.gifs.map(g => g.url).join("\n");
       gifUrlInput.value = "";
 
-      showGif(state.index, { restart: state.playing });
       saveState();
+      showGif(state.index, { restart: state.playing });
     }
 
     function removeCurrent(){
@@ -757,15 +719,14 @@
       state.gifs.splice(state.index, 1);
       state.index = clamp(state.index, 0, Math.max(0, state.gifs.length - 1));
 
-      gifListBox.value = state.gifs.map(g => g.url).join("\n"); // keep in sync
-      showGif(state.index, { restart: state.playing });
+      gifListBox.value = state.gifs.map(g => g.url).join("\n");
       saveState();
+      showGif(state.index, { restart: state.playing });
     }
 
     function applyList(){
-      const lines = normalizeUrlsFromTextarea(gifListBox.value);
+      const lines = normalizeUrls(gifListBox.value);
 
-      // If empty, just revert to default single GIF to avoid a "blank" widget in Notion
       if(lines.length === 0){
         state.gifs = DEFAULT_GIFS.slice();
         state.index = 0;
@@ -774,14 +735,11 @@
         state.index = clamp(state.index, 0, state.gifs.length - 1);
       }
 
-      // ✅ Force UI sync immediately
       gifListBox.value = state.gifs.map(g => g.url).join("\n");
-      showGif(state.index, { restart: state.playing });
-      updateBadges();
       saveState();
+      showGif(state.index, { restart: state.playing });
     }
 
-    // ---- Colors ----
     function wireColor(input, key){
       input.addEventListener("input", () => {
         state.colors[key] = input.value;
@@ -796,17 +754,8 @@
       shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
       saveState();
     });
-
-    prevBtn.addEventListener("click", () => {
-      showGif(prevIndex(), { restart: state.playing });
-      if(state.playing){ progStart = Date.now(); progress.value = "0"; }
-    });
-
-    nextBtn.addEventListener("click", () => {
-      showGif(nextIndex(), { restart: state.playing });
-      if(state.playing){ progStart = Date.now(); progress.value = "0"; }
-    });
-
+    prevBtn.addEventListener("click", () => showGif(prevIndex(), { restart: state.playing }));
+    nextBtn.addEventListener("click", () => showGif(nextIndex(), { restart: state.playing }));
     playBtn.addEventListener("click", togglePlay);
 
     progress.addEventListener("input", () => {
@@ -826,10 +775,7 @@
 
     addGifBtn.addEventListener("click", () => addGif(gifUrlInput.value));
     gifUrlInput.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){
-        e.preventDefault();
-        addGif(gifUrlInput.value);
-      }
+      if(e.key === "Enter"){ e.preventDefault(); addGif(gifUrlInput.value); }
     });
 
     removeCurrentBtn.addEventListener("click", removeCurrent);
@@ -842,7 +788,7 @@
     wireColor(cProgTrack, "progTrack");
     wireColor(cProgFill, "progFill");
 
-    // Timestamp: viewer local time (like screenshot vibe)
+    // Timestamp
     function formatStamp(d){
       const day = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
       const time = d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
@@ -852,23 +798,27 @@
     formatStamp(new Date());
     setInterval(() => formatStamp(new Date()), 30 * 1000);
 
-    // Init
-    function init(){
+    // Init (IMPORTANT: do NOT call pause() on load; that was hiding the GIF before it loaded)
+    async function init(){
       applyColors();
       shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
       intervalSecInput.value = String(state.intervalSec);
-
-      // Ensure textarea shows current persisted list on load
       gifListBox.value = state.gifs.map(g => g.url).join("\n");
-
       setPlayIcon();
-      showGif(state.index);
-      if(state.playing) play();
-      else pause();
+      updateBadges();
+
+      await showGif(state.index, { restart: false });
+
+      if(state.playing){
+        startTimers();
+      }else{
+        // leave GIF visible even when "paused" (unless user explicitly presses pause)
+        stopTimers();
+      }
     }
     init();
 
-    // Cleanup object URLs
+    // Cleanup
     window.addEventListener("beforeunload", () => {
       for(const obj of objectUrlCache.values()){
         try{ URL.revokeObjectURL(obj); }catch(_){}

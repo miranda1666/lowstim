@@ -6,20 +6,19 @@
   <title>Notion GIF Player Widget</title>
 
   <style>
-    /* Subtle cream palette (default) */
     :root{
-      --page:#ffffff;              /* pure white */
-      --card:#fffdf7;              /* warm cream */
+      /* subtle creams */
+      --page:#ffffff;                 /* pure white */
+      --card:#fffdf7;                 /* warm cream */
       --stroke:rgba(80,60,20,.08);
       --shadow: 0 18px 60px rgba(40, 30, 10, .10);
 
-      --bar:#e7ddcf;               /* cream bar */
-      --barText:#3a3226;           /* cocoa text */
-      --iconBg:rgba(255,255,255,.55);
+      --bar:#e7ddcf;                  /* cream bar */
+      --barText:#3a3226;              /* cocoa text */
+      --iconBg:rgba(255,255,255,.60);
       --iconBd:rgba(58,50,38,.18);
 
       --trackText:#3a3226;
-
       --progressTrack:rgba(58,50,38,.16);
       --progressFill:#ffffff;
 
@@ -82,6 +81,22 @@
       backdrop-filter: blur(6px);
     }
 
+    .errorToast{
+      position:absolute;
+      top:14px;
+      left:14px;
+      right:14px;
+      padding:10px 12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(80,60,20,.12);
+      color: rgba(58,50,38,.88);
+      font-size: 12px;
+      font-weight: 650;
+      box-shadow: 0 10px 26px rgba(0,0,0,.10);
+      display:none;
+    }
+
     .bar{
       background: var(--bar);
       color: var(--barText);
@@ -122,7 +137,6 @@
     }
     .btn:hover{ filter: brightness(0.99); }
     .btn:active{ transform: translateY(1px); }
-
     .btn svg{ width:18px; height:18px; fill: currentColor; }
 
     .track{
@@ -284,6 +298,7 @@
   <div class="wrap">
     <div class="player">
       <div class="media">
+        <div class="errorToast" id="errToast"></div>
         <img id="gifImg" alt="GIF" />
         <canvas id="freezeCanvas"></canvas>
 
@@ -400,19 +415,43 @@
   </div>
 
   <script>
-    // Default GIF (only one)
+    // Use a reliable direct GIF endpoint as the default (this is the key fix).
+    // If any variant fails, we automatically try others.
+    const DEFAULT_GIF_ID = "Dsvz9D6FBdmk8";
+    const DEFAULT_TITLE = "It started Raining…";
+
+    function giphyCandidatesFromId(id){
+      const clean = String(id || "").trim();
+      return [
+        `https://i.giphy.com/${clean}.gif`,
+        `https://media.giphy.com/media/${clean}/giphy.gif`,
+        `https://media1.giphy.com/media/${clean}/giphy.gif`,
+        `https://media2.giphy.com/media/${clean}/giphy.gif`,
+        `https://media3.giphy.com/media/${clean}/giphy.gif`
+      ];
+    }
+
+    // If the user pastes a long Giphy URL, try to extract the ID and generate reliable candidates.
+    function extractGiphyId(url){
+      const u = String(url || "");
+      // matches /media/<ID>/giphy.gif OR /media/<ID>/... OR i.giphy.com/<ID>.gif
+      const m1 = u.match(/\/media\/([a-zA-Z0-9]+)\//);
+      if(m1 && m1[1]) return m1[1];
+      const m2 = u.match(/i\.giphy\.com\/([a-zA-Z0-9]+)\.gif/);
+      if(m2 && m2[1]) return m2[1];
+      // matches .../giphy.gif with trailing /<ID>/giphy.gif
+      const m3 = u.match(/\/([a-zA-Z0-9]+)\/giphy\.gif/);
+      if(m3 && m3[1]) return m3[1];
+      return null;
+    }
+
     const DEFAULT_GIFS = [
-      {
-        title: "It started Raining…",
-        url: "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGgzaXVjaXR6YmxiZ280M3l3ZTlrdTE4bWxtMHF4cGgyeHg5MzFsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Dsvz9D6FBdmk8/giphy.gif"
-      }
+      { title: DEFAULT_TITLE, url: `https://i.giphy.com/${DEFAULT_GIF_ID}.gif` }
     ];
 
     const $ = (s) => document.querySelector(s);
     const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-
-    // Per-embed scope
-    const STORAGE_KEY = "notion_gif_player_v5:" + location.pathname;
+    const STORAGE_KEY = "notion_gif_player_v6:" + location.pathname;
 
     function loadState(){
       try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }
@@ -422,7 +461,6 @@
       try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){}
     }
 
-    // State (default: PLAYING so the GIF animates immediately)
     const state = {
       gifs: DEFAULT_GIFS.slice(),
       index: 0,
@@ -439,7 +477,6 @@
       }
     };
 
-    // Restore persisted
     const persisted = loadState();
     if(persisted){
       if(Array.isArray(persisted.gifs) && persisted.gifs.length){
@@ -458,11 +495,11 @@
       }
     }
 
-    // UI
     const gifImg = $("#gifImg");
     const freezeCanvas = $("#freezeCanvas");
     const trackTitle = $("#trackTitle");
     const progress = $("#progress");
+    const errToast = $("#errToast");
 
     const shuffleBtn = $("#shuffleBtn");
     const prevBtn = $("#prevBtn");
@@ -487,9 +524,6 @@
     const removeCurrentBtn = $("#removeCurrentBtn");
     const gifListBox = $("#gifListBox");
     const applyListBtn = $("#applyListBtn");
-
-    // Object URLs (optional; helps freeze sometimes)
-    const objectUrlCache = new Map();
 
     function applyColors(){
       document.documentElement.style.setProperty("--page", state.colors.page);
@@ -524,22 +558,11 @@
       modeBadge.textContent = state.playing ? "Playing" : "Paused";
     }
 
-    async function resolveGifSrc(url){
-      const u = String(url || "").trim();
-      if(!u) return { src: "" };
-
-      if(objectUrlCache.has(u)) return { src: objectUrlCache.get(u) };
-
-      try{
-        const resp = await fetch(u, { mode: "cors", cache: "force-cache" });
-        if(!resp.ok) throw new Error("fetch failed");
-        const blob = await resp.blob();
-        const obj = URL.createObjectURL(blob);
-        objectUrlCache.set(u, obj);
-        return { src: obj };
-      }catch(_){
-        return { src: u }; // direct URL fallback (still plays)
-      }
+    function showError(msg){
+      errToast.textContent = msg;
+      errToast.style.display = "block";
+      clearTimeout(showError._t);
+      showError._t = setTimeout(() => { errToast.style.display = "none"; }, 5200);
     }
 
     function unfreeze(){
@@ -547,9 +570,7 @@
       gifImg.style.display = "block";
     }
 
-    // IMPORTANT FIX: only freeze if we successfully drew a frame.
-    // Otherwise, leave the GIF visible so it never looks “stuck”.
-    function freezeIfPossible(){
+    function freezeIfDrawable(){
       const w = gifImg.naturalWidth || 0;
       const h = gifImg.naturalHeight || 0;
       if(!w || !h) return false;
@@ -581,7 +602,6 @@
     function nextIndex(){
       const total = state.gifs.length;
       if(total <= 1) return state.index;
-
       if(state.shuffle){
         let n = state.index;
         for(let tries=0; tries<12 && n === state.index; tries++){
@@ -595,7 +615,6 @@
     function prevIndex(){
       const total = state.gifs.length;
       if(total <= 1) return state.index;
-
       if(state.shuffle){
         let n = state.index;
         for(let tries=0; tries<12 && n === state.index; tries++){
@@ -637,9 +656,35 @@
       }, 80);
     }
 
+    // Core: load GIF with fallbacks. This is what fixes “GIF not showing”.
+    async function setImgWithFallbacks(candidates){
+      return new Promise((resolve) => {
+        let i = 0;
+
+        const tryNext = () => {
+          if(i >= candidates.length){
+            resolve({ ok:false, tried:candidates });
+            return;
+          }
+          const url = candidates[i++];
+          gifImg.onload = () => resolve({ ok:true, url });
+          gifImg.onerror = () => tryNext();
+          gifImg.src = url;
+        };
+
+        tryNext();
+      });
+    }
+
+    function candidatesForUrl(url){
+      const id = extractGiphyId(url);
+      if(id) return giphyCandidatesFromId(id).map(u => cacheBust(u)); // bust cache so retries are real
+      // non-giphy or unknown: just try as-is + cachebust
+      return [cacheBust(url), url];
+    }
+
     async function showGif(index, { restart=false } = {}){
       const total = state.gifs.length;
-
       if(!total){
         trackTitle.textContent = "No GIFs";
         gifImg.removeAttribute("src");
@@ -653,16 +698,16 @@
       state.index = clamp(index, 0, total - 1);
       const cur = state.gifs[state.index];
 
-      trackTitle.textContent = cur.title || "GIF Player";
+      trackTitle.textContent = cur.title || DEFAULT_TITLE;
       unfreeze();
 
-      const { src } = await resolveGifSrc(cur.url);
+      const baseCandidates = candidatesForUrl(cur.url);
+      const candidates = restart ? baseCandidates : baseCandidates.map(u => u.replace(/([?&])v=[^&]+/, "$1v=init"));
 
-      // If restarting and this is a direct URL, cache-bust so it visibly animates again
-      if(restart && !objectUrlCache.has(cur.url)){
-        gifImg.src = cacheBust(cur.url);
-      }else{
-        gifImg.src = src;
+      const res = await setImgWithFallbacks(candidates);
+
+      if(!res.ok){
+        showError("Couldn’t load that GIF (host blocked it). Try a different direct .gif URL.");
       }
 
       gifListBox.value = state.gifs.map(g => g.url).join("\n");
@@ -673,12 +718,11 @@
 
     function play(){
       state.playing = true;
-      unfreeze();           // ensure GIF is visible
+      unfreeze();
       setPlayIcon();
       startTimers();
       updateBadges();
       saveState();
-      // restart current to feel responsive
       showGif(state.index, { restart:true });
     }
 
@@ -689,8 +733,8 @@
       updateBadges();
       saveState();
 
-      // Try to freeze; if it fails, keep GIF visible (so it still “plays” rather than looking broken)
-      freezeIfPossible();
+      // Freeze only if drawable; otherwise keep GIF visible (so it never looks broken).
+      freezeIfDrawable();
     }
 
     function togglePlay(){ state.playing ? pause() : play(); }
@@ -748,12 +792,12 @@
       });
     }
 
-    // Events
     shuffleBtn.addEventListener("click", () => {
       state.shuffle = !state.shuffle;
       shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
       saveState();
     });
+
     prevBtn.addEventListener("click", () => showGif(prevIndex(), { restart: state.playing }));
     nextBtn.addEventListener("click", () => showGif(nextIndex(), { restart: state.playing }));
     playBtn.addEventListener("click", togglePlay);
@@ -788,7 +832,6 @@
     wireColor(cProgTrack, "progTrack");
     wireColor(cProgFill, "progFill");
 
-    // Timestamp
     function formatStamp(d){
       const day = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
       const time = d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
@@ -798,7 +841,6 @@
     formatStamp(new Date());
     setInterval(() => formatStamp(new Date()), 30 * 1000);
 
-    // Init (IMPORTANT: do NOT call pause() on load; that was hiding the GIF before it loaded)
     async function init(){
       applyColors();
       shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
@@ -807,23 +849,14 @@
       setPlayIcon();
       updateBadges();
 
-      await showGif(state.index, { restart: false });
+      // Always show something immediately:
+      await showGif(state.index, { restart:true });
 
-      if(state.playing){
-        startTimers();
-      }else{
-        // leave GIF visible even when "paused" (unless user explicitly presses pause)
-        stopTimers();
-      }
+      if(state.playing) startTimers();
+      else stopTimers();
     }
-    init();
 
-    // Cleanup
-    window.addEventListener("beforeunload", () => {
-      for(const obj of objectUrlCache.values()){
-        try{ URL.revokeObjectURL(obj); }catch(_){}
-      }
-    });
+    init();
   </script>
 </body>
 </html>

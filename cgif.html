@@ -3,818 +3,335 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Notion GIF Player Widget</title>
+  <title>Notion GIF Player</title>
 
   <style>
     :root{
-      --page:#ffffff;            /* pure white */
-      --card:#fffdf7;            /* warm cream */
+      --page:#ffffff;
+      --card:#fffdf7;
+      --bar:#e9dfd1;
+      --barText:#3a3226;
+
       --stroke:rgba(80,60,20,.08);
-      --shadow: 0 18px 60px rgba(40, 30, 10, .10);
-
-      --bar:#e7ddcf;             /* cream bar */
-      --barText:#3a3226;         /* cocoa text */
-      --iconBg:rgba(255,255,255,.60);
-      --iconBd:rgba(58,50,38,.18);
-
-      --trackText:#3a3226;
-      --progressTrack:rgba(58,50,38,.16);
-      --progressFill:#ffffff;
+      --shadow:0 18px 60px rgba(40,30,10,.10);
 
       --radius:22px;
     }
 
-    html, body { height: 100%; }
     body{
       margin:0;
+      padding:20px;
+      background:var(--page);
+      font-family:system-ui, sans-serif;
       display:flex;
       justify-content:center;
-      align-items:flex-start;
-      padding:18px;
-      box-sizing:border-box;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: var(--page);
-      color: var(--trackText);
     }
-
-    .wrap{ width: min(860px, 92vw); }
 
     .player{
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      width:min(700px,95vw);
+      border-radius:var(--radius);
       overflow:hidden;
-      border: 1px solid var(--stroke);
-      background: var(--card);
+      background:var(--card);
+      box-shadow:var(--shadow);
+      border:1px solid var(--stroke);
     }
 
+    /* GIF area */
     .media{
       position:relative;
-      background: #f3efe7;
-      aspect-ratio: 16 / 9;
       width:100%;
-      overflow:hidden;
+      aspect-ratio:16/9;
+      background:#f4efe6;
     }
 
-    /* renderer layers */
-    .layer{
-      position:absolute;
-      inset:0;
+    .media img,
+    .media canvas{
       width:100%;
       height:100%;
-      border:0;
+      object-fit:cover;
+      display:block;
+    }
+
+    canvas{
       display:none;
     }
 
-    img.layer{
-      object-fit:cover;
-    }
-
-    iframe.layer{
-      background: #f3efe7;
-    }
-
+    /* Date overlay */
     .stamp{
       position:absolute;
-      left:16px;
+      left:14px;
       bottom:14px;
-      color: rgba(255,255,255,.92);
-      font-size: 14px;
-      font-weight: 650;
-      text-shadow: 0 2px 10px rgba(0,0,0,.35);
-      letter-spacing:.2px;
-      user-select:none;
+      padding:8px 10px;
+      border-radius:14px;
+      background:rgba(0,0,0,.15);
+      color:white;
+      font-weight:600;
+      font-size:13px;
       line-height:1.2;
-      background: rgba(0,0,0,.14);
-      padding: 8px 10px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.18);
-      backdrop-filter: blur(6px);
+      backdrop-filter:blur(6px);
     }
 
+    /* Control bar */
     .bar{
-      background: var(--bar);
-      color: var(--barText);
-      padding: 14px 16px;
       display:flex;
       align-items:center;
-      gap: 14px;
-    }
-
-    .left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width: 0;
-      flex: 1 1 auto;
-    }
-
-    .controls{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex: 0 0 auto;
+      gap:12px;
+      padding:14px;
+      background:var(--bar);
     }
 
     .btn{
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      border: 1.5px solid var(--iconBd);
-      background: var(--iconBg);
-      color: var(--barText);
-      display:inline-flex;
+      width:40px;
+      height:40px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.15);
+      background:rgba(255,255,255,.65);
+      cursor:pointer;
+      display:flex;
       align-items:center;
       justify-content:center;
-      cursor:pointer;
-      user-select:none;
-      transition: transform .06s ease, filter .15s ease;
-    }
-    .btn:hover{ filter: brightness(0.99); }
-    .btn:active{ transform: translateY(1px); }
-    .btn svg{ width:18px; height:18px; fill: currentColor; }
-
-    .track{
-      min-width: 0;
-      flex: 1 1 auto;
-      display:flex;
-      align-items:center;
-    }
-    .trackTitle{
-      font-size: 15px;
-      font-weight: 650;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: var(--trackText);
-      opacity:.96;
     }
 
-    .right{
-      flex: 0 0 auto;
-      display:flex;
-      align-items:center;
-      gap:10px;
+    .btn svg{
+      width:18px;
+      height:18px;
+      fill:var(--barText);
     }
 
-    .slider{
-      width: 280px;
-      max-width: 34vw;
-      height: 10px;
-      -webkit-appearance: none;
-      appearance: none;
-      background: var(--progressTrack);
-      border-radius: 999px;
-      outline:none;
-      cursor:pointer;
-    }
-    .slider::-webkit-slider-thumb{
-      -webkit-appearance:none;
-      appearance:none;
-      width: 18px;
-      height: 18px;
-      border-radius: 6px;
-      background: var(--progressFill);
-      border: 1px solid rgba(58,50,38,.12);
-      box-shadow: 0 4px 14px rgba(0,0,0,.10);
-    }
-    .slider::-moz-range-thumb{
-      width: 18px;
-      height: 18px;
-      border-radius: 6px;
-      background: var(--progressFill);
-      border: 1px solid rgba(58,50,38,.12);
-      box-shadow: 0 4px 14px rgba(0,0,0,.10);
+    .title{
+      flex:1;
+      font-weight:650;
+      color:var(--barText);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
-    details.customize{
-      border-top: 1px solid rgba(80,60,20,.08);
-      background: rgba(80,60,20,.02);
-      padding: 10px 14px 14px;
-    }
-    summary{
-      cursor:pointer;
-      user-select:none;
-      list-style:none;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      color: rgba(58,50,38,.75);
-      font-weight: 700;
-      font-size: 13px;
-    }
-    summary::-webkit-details-marker{ display:none; }
-
-    .panel{ margin-top: 12px; display:grid; gap: 12px; }
-    .statusLine{
-      font-size: 12px;
-      color: rgba(58,50,38,.60);
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(58,50,38,.06);
-      border: 1px solid rgba(58,50,38,.08);
-      font-weight: 700;
+    /* Slider */
+    input[type="range"]{
+      width:200px;
+      max-width:30vw;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-    }
-    @media (max-width: 720px){
-      .grid{ grid-template-columns: 1fr 1fr; }
-      .slider{ width: 180px; }
-    }
-    @media (max-width: 420px){
-      .grid{ grid-template-columns: 1fr; }
+    /* Customize panel */
+    details{
+      padding:12px 14px;
+      border-top:1px solid rgba(0,0,0,.08);
+      background:rgba(0,0,0,.02);
     }
 
-    .field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
-    label{
-      font-size: 12px;
-      color: rgba(58,50,38,.70);
-      font-weight: 700;
-    }
-    input[type="color"]{
-      height: 38px;
-      border-radius: 12px;
-      border: 1px solid rgba(58,50,38,.14);
-      background: #fff;
-      padding: 4px;
-      cursor:pointer;
-    }
-    input[type="text"], textarea, input[type="number"]{
-      border-radius: 12px;
-      border: 1px solid rgba(58,50,38,.14);
-      background: #fff;
-      padding: 10px 10px;
-      font-size: 13px;
-      outline:none;
+    textarea,input{
       width:100%;
+      padding:8px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.15);
+      margin-top:6px;
+      font-size:13px;
       box-sizing:border-box;
-      color: rgba(58,50,38,.92);
     }
-    textarea{ min-height: 92px; resize: vertical; }
 
-    .rowBtns{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .miniBtn{
-      border-radius: 12px;
-      border: 1px solid rgba(58,50,38,.16);
-      background: #fff;
-      padding: 10px 12px;
+      margin-top:8px;
+      padding:8px 12px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.15);
+      background:white;
       cursor:pointer;
-      font-weight: 800;
-      font-size: 13px;
-      color: rgba(58,50,38,.92);
+      font-weight:650;
     }
-    .miniBtn:active{ transform: translateY(1px); }
-
-    .hint{
-      font-size: 12px;
-      color: rgba(58,50,38,.62);
-      line-height: 1.35;
-    }
-
-    .hidden { display:none !important; }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="player">
-      <div class="media">
+<div class="player">
 
-        <iframe id="giphyFrame" class="layer" title="GIF"></iframe>
-        <img id="gifImg" class="layer" alt="GIF" />
+  <!-- GIF Display -->
+  <div class="media">
+    <img id="gifImg" />
+    <canvas id="freezeCanvas"></canvas>
 
-        <div class="stamp">
-          <div id="stampDate"></div>
-          <div id="stampTime"></div>
-        </div>
-      </div>
-
-      <div class="bar">
-        <div class="left">
-          <div class="controls">
-            <button class="btn" id="shuffleBtn" title="Shuffle">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M17 3h4v4h-2V6.41l-4.29 4.3-1.42-1.42L17.59 5H17V3zM3 7h4.59l3 3-1.42 1.42L6.76 9H3V7zm0 10h3.76l2.41-2.41 1.42 1.42-3 2.99H3v-2zm18-2v4h-4v-2h.59l-4.88-4.88 1.42-1.42L18.59 17H19v-2h2z"/>
-              </svg>
-            </button>
-
-            <button class="btn" id="prevBtn" title="Previous">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6h2v12H6V6zm3.5 6 10 6V6l-10 6z"/>
-              </svg>
-            </button>
-
-            <button class="btn" id="playBtn" title="Play/Pause">
-              <svg id="playIcon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-              <svg id="pauseIcon" class="hidden" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"/>
-              </svg>
-            </button>
-
-            <button class="btn" id="nextBtn" title="Next">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M16 6h2v12h-2V6zM5 18l10-6L5 6v12z"/>
-              </svg>
-            </button>
-          </div>
-
-          <div class="track">
-          </div>
-        </div>
-
-        <div class="right">
-          <input id="progress" class="slider" type="range" min="0" max="1000" value="0" />
-        </div>
-      </div>
-
-      <details class="customize">
-        <summary>
-          <span>Customize</span>
-        </summary>
-
-        <div class="panel">
-          <div class="statusLine">
-            <span class="badge" id="countBadge">1 / 1</span>
-            <span class="badge" id="modeBadge">Playing</span>
-          </div>
-
-          <div class="grid">
-            <div class="field">
-              <label>Page background</label>
-              <input type="color" id="cPage" value="#ffffff" />
-            </div>
-            <div class="field">
-              <label>Card background</label>
-              <input type="color" id="cCard" value="#fffdf7" />
-            </div>
-            <div class="field">
-              <label>Bar color</label>
-              <input type="color" id="cBar" value="#e7ddcf" />
-            </div>
-            <div class="field">
-              <label>Bar text</label>
-              <input type="color" id="cBarText" value="#3a3226" />
-            </div>
-            <div class="field">
-              <label>Progress track</label>
-              <input type="color" id="cProgTrack" value="#d8cfbf" />
-            </div>
-            <div class="field">
-              <label>Progress thumb</label>
-              <input type="color" id="cProgFill" value="#ffffff" />
-            </div>
-          </div>
-
-          <div class="grid">
-            <div class="field">
-              <label>Auto-advance (seconds)</label>
-              <input type="number" id="intervalSec" min="2" max="300" step="1" value="12" />
-            </div>
-
-            <div class="field" style="grid-column: span 2;">
-              <label>Add a GIF URL (Giphy or direct .gif)</label>
-              <input type="text" id="gifUrlInput" placeholder="https://giphy.com/gifs/... or https://.../file.gif" />
-              <div class="rowBtns" style="margin-top:8px;">
-                <button class="miniBtn" id="addGifBtn" type="button">Add</button>
-                <button class="miniBtn" id="removeCurrentBtn" type="button">Remove current</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>GIF list (one URL per line)</label>
-            <textarea id="gifListBox" spellcheck="false"></textarea>
-            <div class="rowBtns">
-              <button class="miniBtn" id="applyListBtn" type="button">Apply list</button>
-            </div>
-          </div>
-        </div>
-      </details>
+    <div class="stamp">
+      <div id="stampDate"></div>
+      <div id="stampTime"></div>
     </div>
   </div>
 
-  <script>
-    // ✅ Default: your GIF
-    const DEFAULT_URL = "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGgzaXVjaXR6YmxiZ280M3l3ZTlrdTE4bWxtMHF4cGgyeHg5MzFsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Dsvz9D6FBdmk8/giphy.gif";
-    const DEFAULT_TITLE = "It started Raining…";
-
-    const DEFAULT_GIFS = [{ title: DEFAULT_TITLE, url: DEFAULT_URL }];
-
-    const $ = (s) => document.querySelector(s);
-    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-
-    // per-embed isolation
-    const STORAGE_KEY = "notion_gif_player_v7:" + location.pathname;
-
-    function loadState(){ try{ const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; }catch(_){ return null; } }
-    function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){ } }
-
-    const state = {
-      gifs: DEFAULT_GIFS.slice(),
-      index: 0,
-      playing: true,
-      shuffle: false,
-      intervalSec: 12,
-      colors: {
-        page: "#ffffff",
-        card: "#fffdf7",
-        bar:  "#e7ddcf",
-        barText: "#3a3226",
-        progTrack: "#d8cfbf",
-        progFill: "#ffffff"
-      }
-    };
-
-    const persisted = loadState();
-    if(persisted){
-      if(Array.isArray(persisted.gifs) && persisted.gifs.length){
-        state.gifs = persisted.gifs.map((g, i) => {
-          if(typeof g === "string") return { title: `GIF ${i+1}`, url: g };
-          if(g && typeof g.url === "string") return { title: g.title || `GIF ${i+1}`, url: g.url };
-          return null;
-        }).filter(Boolean);
-      }
-      if(Number.isInteger(persisted.index)) state.index = clamp(persisted.index, 0, Math.max(0, state.gifs.length - 1));
-      if(typeof persisted.playing === "boolean") state.playing = persisted.playing;
-      if(typeof persisted.shuffle === "boolean") state.shuffle = persisted.shuffle;
-      if(Number.isFinite(persisted.intervalSec)) state.intervalSec = clamp(persisted.intervalSec, 2, 300);
-      if(persisted.colors && typeof persisted.colors === "object"){
-        state.colors = { ...state.colors, ...persisted.colors };
-      }
-    }
-
-    const giphyFrame = $("#giphyFrame");
-    const gifImg = $("#gifImg");
-    const trackTitle = $("#trackTitle");
-    const progress = $("#progress");
-
-    const shuffleBtn = $("#shuffleBtn");
-    const prevBtn = $("#prevBtn");
-    const playBtn = $("#playBtn");
-    const nextBtn = $("#nextBtn");
-    const playIcon = $("#playIcon");
-    const pauseIcon = $("#pauseIcon");
-
-    const countBadge = $("#countBadge");
-    const modeBadge = $("#modeBadge");
-
-    const cPage = $("#cPage");
-    const cCard = $("#cCard");
-    const cBar = $("#cBar");
-    const cBarText = $("#cBarText");
-    const cProgTrack = $("#cProgTrack");
-    const cProgFill = $("#cProgFill");
-
-    const intervalSecInput = $("#intervalSec");
-    const gifUrlInput = $("#gifUrlInput");
-    const addGifBtn = $("#addGifBtn");
-    const removeCurrentBtn = $("#removeCurrentBtn");
-    const gifListBox = $("#gifListBox");
-    const applyListBtn = $("#applyListBtn");
-
-    function applyColors(){
-      document.documentElement.style.setProperty("--page", state.colors.page);
-      document.documentElement.style.setProperty("--card", state.colors.card);
-      document.documentElement.style.setProperty("--bar", state.colors.bar);
-      document.documentElement.style.setProperty("--barText", state.colors.barText);
-      document.documentElement.style.setProperty("--progressTrack", state.colors.progTrack);
-      document.documentElement.style.setProperty("--progressFill", state.colors.progFill);
-
-      cPage.value = state.colors.page;
-      cCard.value = state.colors.card;
-      cBar.value = state.colors.bar;
-      cBarText.value = state.colors.barText;
-      cProgTrack.value = state.colors.progTrack;
-      cProgFill.value = state.colors.progFill;
-    }
-
-    function setPlayIcon(){
-      if(state.playing){
-        playIcon.classList.add("hidden");
-        pauseIcon.classList.remove("hidden");
-      }else{
-        pauseIcon.classList.add("hidden");
-        playIcon.classList.remove("hidden");
-      }
-    }
-
-    function updateBadges(){
-      const total = state.gifs.length;
-      const idx = total ? (state.index + 1) : 0;
-      countBadge.textContent = `${idx} / ${total}`;
-      modeBadge.textContent = state.playing ? "Playing" : "Paused";
-    }
-
-    // --- Giphy detection + embed URL ---
-    function extractGiphyId(url){
-      const u = String(url || "");
-
-      // /media/<ID>/...
-      const m1 = u.match(/\/media\/([a-zA-Z0-9]+)\//);
-      if(m1 && m1[1]) return m1[1];
-
-      // .../gifs/...-<ID>  (common giphy page urls)
-      const m2 = u.match(/-([a-zA-Z0-9]+)$/);
-      if(m2 && m2[1] && m2[1].length >= 6) return m2[1];
-
-      // i.giphy.com/<ID>.gif
-      const m3 = u.match(/i\.giphy\.com\/([a-zA-Z0-9]+)\.gif/);
-      if(m3 && m3[1]) return m3[1];
-
-      // .../<ID>/giphy.gif
-      const m4 = u.match(/\/([a-zA-Z0-9]+)\/giphy\.gif/);
-      if(m4 && m4[1]) return m4[1];
-
-      return null;
-    }
-
-    function isGiphyUrl(url){
-      const u = String(url || "").toLowerCase();
-      return u.includes("giphy.com");
-    }
-
-    function giphyEmbedSrcFromId(id){
-      // autoplay is on by default; we can "pause" by clearing src.
-      // Hide attribution UI inside the embed:
-      return `https://giphy.com/embed/${encodeURIComponent(id)}?hideSocial=true&hideFeedback=true&hideActions=true`;
-    }
-
-    function showRenderer(which){
-      // which: "giphy" | "img"
-      giphyFrame.style.display = (which === "giphy") ? "block" : "none";
-      gifImg.style.display     = (which === "img") ? "block" : "none";
-    }
-
-    function stopRenderers(){
-      // stop iframe playback by clearing src
-      giphyFrame.removeAttribute("src");
-      gifImg.removeAttribute("src");
-      showRenderer("img");
-    }
-
-    // --- playback timers (auto-advance) ---
-    let tickTimer = null;
-    let progTimer = null;
-    let progStart = 0;
-
-    function stopTimers(){
-      if(tickTimer) clearInterval(tickTimer);
-      if(progTimer) clearInterval(progTimer);
-      tickTimer = null;
-      progTimer = null;
-      progress.value = "0";
-    }
-
-    function startTimers(){
-      stopTimers();
-      if(!state.playing) return;
-
-      const ms = state.intervalSec * 1000;
-      progStart = Date.now();
-
-      tickTimer = setInterval(() => {
-        showGif(nextIndex(), { restart:true });
-        progStart = Date.now();
-      }, ms);
-
-      progTimer = setInterval(() => {
-        const elapsed = Date.now() - progStart;
-        const pct = clamp(elapsed / ms, 0, 1);
-        progress.value = String(Math.round(pct * 1000));
-      }, 80);
-    }
-
-    function nextIndex(){
-      const total = state.gifs.length;
-      if(total <= 1) return state.index;
-      if(state.shuffle){
-        let n = state.index;
-        for(let tries=0; tries<12 && n === state.index; tries++){
-          n = Math.floor(Math.random() * total);
-        }
-        return (n === state.index) ? (state.index + 1) % total : n;
-      }
-      return (state.index + 1) % total;
-    }
-
-    function prevIndex(){
-      const total = state.gifs.length;
-      if(total <= 1) return state.index;
-      if(state.shuffle){
-        let n = state.index;
-        for(let tries=0; tries<12 && n === state.index; tries++){
-          n = Math.floor(Math.random() * total);
-        }
-        return (n === state.index) ? (state.index - 1 + total) % total : n;
-      }
-      return (state.index - 1 + total) % total;
-    }
-
-    function cacheBust(url){
-      const u = String(url || "");
-      const sep = u.includes("?") ? "&" : "?";
-      return u + sep + "v=" + Date.now().toString(36);
-    }
-
-    async function showGif(index, { restart=false } = {}){
-      const total = state.gifs.length;
-      if(!total){
-        trackTitle.textContent = "No GIFs";
-        stopRenderers();
-        gifListBox.value = "";
-        updateBadges();
-        saveState();
-        return;
-      }
-
-      state.index = clamp(index, 0, total - 1);
-      const cur = state.gifs[state.index];
-
-      trackTitle.textContent = cur.title || DEFAULT_TITLE;
-
-      // Prefer Giphy embed if it’s a giphy url (most reliable in embeds)
-      const gid = isGiphyUrl(cur.url) ? extractGiphyId(cur.url) : null;
-
-      stopRenderers();
-
-      if(gid){
-        showRenderer("giphy");
-        // restart by re-setting src (when playing)
-        if(state.playing){
-          giphyFrame.src = giphyEmbedSrcFromId(gid);
-        }else{
-          // paused: keep it stopped
-          giphyFrame.removeAttribute("src");
-        }
-      }else{
-        showRenderer("img");
-        // For direct GIFs, just load it (cache-bust on restart)
-        gifImg.onerror = () => {
-          // if direct image fails but it *was* a giphy link, user should paste giphy page link instead
-          // (no toast here to keep UI minimal)
-        };
-        gifImg.src = restart ? cacheBust(cur.url) : cur.url;
-      }
-
-      gifListBox.value = state.gifs.map(g => g.url).join("\n");
-      updateBadges();
-      setPlayIcon();
-      saveState();
-    }
-
-    function play(){
-      state.playing = true;
-      setPlayIcon();
-      startTimers();
-      updateBadges();
-      saveState();
-      showGif(state.index, { restart:true });
-    }
-
-    function pause(){
-      state.playing = false;
-      stopTimers();
-      setPlayIcon();
-      updateBadges();
-      saveState();
-      // Stop animation: clear iframe src if using giphy; for img we can’t truly pause, but we keep it shown.
-      showGif(state.index, { restart:false });
-    }
-
-    function togglePlay(){ state.playing ? pause() : play(); }
-
-    function normalizeUrls(text){
-      return text.split("\n").map(s => s.trim()).filter(Boolean);
-    }
-
-    function addGif(url){
-      const cleaned = String(url || "").trim();
-      if(!cleaned) return;
-
-      state.gifs.push({ title: `GIF ${state.gifs.length + 1}`, url: cleaned });
-      state.index = state.gifs.length - 1;
-
-      gifListBox.value = state.gifs.map(g => g.url).join("\n");
-      gifUrlInput.value = "";
-
-      saveState();
-      showGif(state.index, { restart: state.playing });
-    }
-
-    function removeCurrent(){
-      if(state.gifs.length === 0) return;
-
-      state.gifs.splice(state.index, 1);
-      state.index = clamp(state.index, 0, Math.max(0, state.gifs.length - 1));
-
-      gifListBox.value = state.gifs.map(g => g.url).join("\n");
-      saveState();
-      showGif(state.index, { restart: state.playing });
-    }
-
-    function applyList(){
-      const lines = normalizeUrls(gifListBox.value);
-
-      if(lines.length === 0){
-        state.gifs = DEFAULT_GIFS.slice();
-        state.index = 0;
-      }else{
-        state.gifs = lines.map((u, i) => ({ title: `GIF ${i+1}`, url: u }));
-        state.index = clamp(state.index, 0, state.gifs.length - 1);
-      }
-
-      gifListBox.value = state.gifs.map(g => g.url).join("\n");
-      saveState();
-      showGif(state.index, { restart: state.playing });
-    }
-
-    function wireColor(input, key){
-      input.addEventListener("input", () => {
-        state.colors[key] = input.value;
-        applyColors();
-        saveState();
-      });
-    }
-
-    // Events
-    shuffleBtn.addEventListener("click", () => {
-      state.shuffle = !state.shuffle;
-      shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
-      saveState();
-    });
-
-    prevBtn.addEventListener("click", () => showGif(prevIndex(), { restart: state.playing }));
-    nextBtn.addEventListener("click", () => showGif(nextIndex(), { restart: state.playing }));
-    playBtn.addEventListener("click", togglePlay);
-
-    progress.addEventListener("input", () => {
-      if(!state.playing) return;
-      const pct = clamp(parseInt(progress.value, 10) / 1000, 0, 1);
-      const ms = state.intervalSec * 1000;
-      progStart = Date.now() - Math.round(pct * ms);
-    });
-
-    intervalSecInput.addEventListener("change", () => {
-      const v = clamp(parseInt(intervalSecInput.value || "12", 10), 2, 300);
-      state.intervalSec = v;
-      intervalSecInput.value = String(v);
-      saveState();
-      if(state.playing) startTimers();
-    });
-
-    addGifBtn.addEventListener("click", () => addGif(gifUrlInput.value));
-    gifUrlInput.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){ e.preventDefault(); addGif(gifUrlInput.value); }
-    });
-
-    removeCurrentBtn.addEventListener("click", removeCurrent);
-    applyListBtn.addEventListener("click", applyList);
-
-    wireColor(cPage, "page");
-    wireColor(cCard, "card");
-    wireColor(cBar, "bar");
-    wireColor(cBarText, "barText");
-    wireColor(cProgTrack, "progTrack");
-    wireColor(cProgFill, "progFill");
-
-    // Timestamp
-    function formatStamp(d){
-      const day = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
-      const time = d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
-      $("#stampDate").textContent = day;
-      $("#stampTime").textContent = time;
-    }
-    formatStamp(new Date());
-    setInterval(() => formatStamp(new Date()), 30 * 1000);
-
-    // Init
-    async function init(){
-      applyColors();
-      shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
-      intervalSecInput.value = String(state.intervalSec);
-      gifListBox.value = state.gifs.map(g => g.url).join("\n");
-      setPlayIcon();
-      updateBadges();
-
-      await showGif(state.index, { restart:true });
-      if(state.playing) startTimers(); else stopTimers();
-    }
-    init();
-  </script>
+  <!-- Controls -->
+  <div class="bar">
+    <button class="btn" id="shuffleBtn" title="Shuffle">
+      <svg viewBox="0 0 24 24"><path d="M17 3h4v4h-2V6.4l-4.3 4.3-1.4-1.4L17.6 5H17V3z"/></svg>
+    </button>
+
+    <button class="btn" id="prevBtn" title="Previous">
+      <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 10 6V6z"/></svg>
+    </button>
+
+    <button class="btn" id="playBtn" title="Play/Pause">
+      <svg id="pauseIcon" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+      <svg id="playIcon" viewBox="0 0 24 24" style="display:none;"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+
+    <button class="btn" id="nextBtn" title="Next">
+      <svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM5 18l10-6L5 6z"/></svg>
+    </button>
+
+    <div class="title" id="trackTitle">Tenor GIF Player</div>
+
+    <input id="progress" type="range" min="0" max="1000" value="0" />
+  </div>
+
+  <!-- Customize -->
+  <details>
+    <summary><b>Customize GIF List</b></summary>
+
+    <label>Add GIF URL</label>
+    <input id="gifUrlInput" placeholder="https://...gif" />
+    <button class="miniBtn" id="addGifBtn">Add GIF</button>
+
+    <label style="margin-top:10px;">GIF List (one per line)</label>
+    <textarea id="gifListBox"></textarea>
+    <button class="miniBtn" id="applyListBtn">Apply List</button>
+  </details>
+
+</div>
+
+<script>
+/* ✅ Default Tenor GIF */
+const DEFAULT_GIFS = [
+  { title: "Tenor Default", url: "https://tenor.com/Jt3l.gif" }
+];
+
+/* Local isolated storage */
+const STORAGE_KEY = "gif_player_widget:" + location.pathname;
+
+let state = {
+  gifs: DEFAULT_GIFS,
+  index: 0,
+  playing: true,
+  shuffle: false
+};
+
+const saved = localStorage.getItem(STORAGE_KEY);
+if(saved){
+  state = JSON.parse(saved);
+}
+
+/* Elements */
+const gifImg = document.getElementById("gifImg");
+const canvas = document.getElementById("freezeCanvas");
+const ctx = canvas.getContext("2d");
+
+const playBtn = document.getElementById("playBtn");
+const playIcon = document.getElementById("playIcon");
+const pauseIcon = document.getElementById("pauseIcon");
+
+const gifUrlInput = document.getElementById("gifUrlInput");
+const gifListBox = document.getElementById("gifListBox");
+
+/* Save */
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/* Load GIF */
+function showGif(){
+  const cur = state.gifs[state.index];
+  gifImg.src = cur.url + "?v=" + Date.now();
+  document.getElementById("trackTitle").textContent = cur.title;
+
+  gifListBox.value = state.gifs.map(g=>g.url).join("\n");
+
+  gifImg.style.display="block";
+  canvas.style.display="none";
+}
+
+/* Freeze */
+function freeze(){
+  canvas.width = gifImg.clientWidth;
+  canvas.height = gifImg.clientHeight;
+  ctx.drawImage(gifImg,0,0,canvas.width,canvas.height);
+
+  gifImg.style.display="none";
+  canvas.style.display="block";
+}
+
+/* Play/Pause */
+function togglePlay(){
+  state.playing = !state.playing;
+  save();
+
+  if(state.playing){
+    playIcon.style.display="none";
+    pauseIcon.style.display="block";
+    showGif();
+  }else{
+    pauseIcon.style.display="none";
+    playIcon.style.display="block";
+    freeze();
+  }
+}
+
+/* Navigation */
+function nextGif(){
+  if(state.shuffle){
+    state.index = Math.floor(Math.random()*state.gifs.length);
+  }else{
+    state.index = (state.index+1)%state.gifs.length;
+  }
+  save();
+  showGif();
+}
+
+function prevGif(){
+  state.index = (state.index-1+state.gifs.length)%state.gifs.length;
+  save();
+  showGif();
+}
+
+/* Add GIF */
+document.getElementById("addGifBtn").onclick = ()=>{
+  const url = gifUrlInput.value.trim();
+  if(!url) return;
+
+  state.gifs.push({ title:"GIF "+state.gifs.length, url });
+  state.index = state.gifs.length-1;
+  gifUrlInput.value="";
+  save();
+  showGif();
+};
+
+/* Apply list */
+document.getElementById("applyListBtn").onclick = ()=>{
+  const urls = gifListBox.value.split("\n").map(x=>x.trim()).filter(Boolean);
+  state.gifs = urls.map((u,i)=>({title:"GIF "+(i+1),url:u}));
+  state.index=0;
+  save();
+  showGif();
+};
+
+/* Buttons */
+document.getElementById("nextBtn").onclick = nextGif;
+document.getElementById("prevBtn").onclick = prevGif;
+document.getElementById("shuffleBtn").onclick = ()=>{
+  state.shuffle=!state.shuffle;
+  save();
+};
+playBtn.onclick = togglePlay;
+
+/* Timestamp */
+function updateStamp(){
+  const d = new Date();
+  document.getElementById("stampDate").textContent =
+    d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  document.getElementById("stampTime").textContent =
+    d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+}
+setInterval(updateStamp,30000);
+updateStamp();
+
+/* Init */
+showGif();
+</script>
+
 </body>
 </html>

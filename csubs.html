@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Subscriptions Tracker</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#ffffffcc;
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      /* theme extras (so we can cover "everything") */
+      --item-bg:#ffffff;
+      --input-bg:#ffffff;
+      --accent:#cbb8ae; /* theme dot */
+
+      /* Board background */
+      --board-tint:#ffffff;
+      --board-tint-a:0.30;
+      --board-image:none;
+    }
+
+    *{box-sizing:border-box}
+    html,body{width:100%; max-width:100%; overflow-x:hidden;}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background: var(--bg);
+      padding:28px 18px;
+    }
+
+    .wrap{max-width:900px; margin:0 auto;}
+    h1{margin:0; font-size:18px}
+    .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
+
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.02);
+      z-index:0;
+      pointer-events:none;
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      /* set by JS (overlay) if you ever want it; left blank intentionally */
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+    }
+    .boardContent{
+      position:relative;
+      z-index:2;
+    }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+      backdrop-filter: blur(8px);
+    }
+
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title h2{margin:0; font-size:14px; font-weight:650; letter-spacing:.2px}
+    .hint{color:var(--muted); font-size:12px}
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+
+    button, input, select{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background: var(--input-bg);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button{cursor:pointer}
+    button.soft{background:var(--soft)}
+    button:active{transform:translateY(1px)}
+    .divider{height:1px; background:var(--stroke); margin:12px 0}
+
+    .kpi{
+      display:flex; gap:12px; flex-wrap:wrap;
+    }
+    .kpi .box{
+      flex:1; min-width:180px;
+      background:var(--soft);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .num{font-weight:750; font-size:16px}
+    .kpi .lab{font-size:12px; color:var(--muted)}
+
+    .list{display:flex; flex-direction:column; gap:8px}
+    .item{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background: var(--item-bg);
+    }
+    .item .meta{display:flex; flex-direction:column; gap:2px}
+    .item .meta b{font-size:13px}
+    .item .meta span{font-size:12px; color:var(--muted)}
+    .tag{
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:var(--soft);
+      cursor:pointer;
+      user-select:none;
+    }
+    .tag.off{opacity:.65}
+    .right{display:flex; gap:8px; align-items:center}
+    .smallbtn{padding:8px 10px; border-radius:12px}
+    .danger{border-color:#efc2c2}
+    .tiny{font-size:12px; color:var(--muted)}
+    label.tiny{display:inline-flex; align-items:center; gap:8px}
+
+    /* ===== Popovers (Background + Theme) ===== */
+    .tools{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-left:auto;
+    }
+
+    .popWrap{ position:relative; }
+
+    .iconBtn{
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+      cursor:pointer;
+    }
+
+    .dot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.30);
+    }
+    .themeDot{
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(203,184,174,0.25);
+    }
+
+    .panel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 300px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+
+      /* ✅ never cut off */
+      max-height: min(70vh, 520px);
+      overflow:auto;
+    }
+    .panel.open{ display:block; }
+
+    .panelTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+
+    .pRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .pRow label{ font-size:12px; color:var(--muted); }
+    .pRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .pRow input[type="range"]{ width: 160px; }
+    .pFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .miniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.95);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+      cursor:pointer;
+    }
+    .pDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Subscriptions</h1>
+
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+          <div class="title">
+            <h2>Add a subscription</h2>
+
+            <div class="tools">
+              <!-- THEME -->
+              <div class="popWrap" id="themeWrap">
+                <button class="iconBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                  <span class="dot themeDot" id="themeDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+                  <div class="panelTitle">Theme</div>
+
+                  <div class="pRow"><label for="tBg">App background</label><input id="tBg" type="color" value="#ffffff"></div>
+                  <div class="pRow"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2a28"></div>
+                  <div class="pRow"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#6a665f"></div>
+                  <div class="pRow"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae"></div>
+
+                  <div class="pDiv"></div>
+
+                  <div class="pRow"><label for="tCard">Card background</label><input id="tCard" type="color" value="#ffffff"></div>
+                  <div class="pRow"><label for="tCardA">Card opacity</label><input id="tCardA" type="range" min="40" max="100" value="80"></div>
+
+                  <div class="pDiv"></div>
+
+                  <div class="pRow"><label for="tStroke">Borders</label><input id="tStroke" type="color" value="#e9e4dd"></div>
+                  <div class="pRow"><label for="tSoft">Soft panels</label><input id="tSoft" type="color" value="#f3efe9"></div>
+                  <div class="pRow"><label for="tItemBg">List item bg</label><input id="tItemBg" type="color" value="#ffffff"></div>
+                  <div class="pRow"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff"></div>
+
+                  <div class="pDiv"></div>
+
+                  <div class="pRow"><label for="tRadius">Roundness</label><input id="tRadius" type="range" min="10" max="28" value="18"></div>
+                  <div class="pRow"><label for="tShadow">Shadow strength</label><input id="tShadow" type="range" min="0" max="30" value="6"></div>
+
+                  <div class="pDiv"></div>
+
+                  <button class="miniBtn" id="themeReset" type="button">Reset theme</button>
+                </div>
+              </div>
+
+              <!-- BACKGROUND -->
+              <div class="popWrap" id="bgWrap">
+                <button class="iconBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                  <span class="dot" id="bgDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+                  <div class="panelTitle">Background</div>
+
+                  <div class="pRow">
+                    <label for="bgColor">Tint</label>
+                    <input id="bgColor" type="color" value="#efe7e1" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="bgStrength">Strength</label>
+                    <input id="bgStrength" type="range" min="0" max="70" value="30" />
+                  </div>
+
+                  <div class="pDiv"></div>
+
+                  <div class="pRow" style="align-items:flex-start;">
+                    <label for="bgImage">Image</label>
+                    <input id="bgImage" class="pFile" type="file" accept="image/*" />
+                  </div>
+
+                  <div class="pRow">
+                    <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
+                  </div>
+
+                  <div class="pDiv"></div>
+
+                  <button class="miniBtn" id="bgReset" type="button">Reset background</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <input id="subName" placeholder="Name (e.g., Spotify)">
+            <input id="subCost" type="number" step="0.01" placeholder="Monthly cost">
+            <input id="subRenew" type="number" min="1" max="31" placeholder="Renew date (1–31)">
+
+            <label class="tiny">
+              Currency
+              <select id="currency">
+                <option value="AUTO">Auto (from locale)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="NGN">NGN (₦)</option>
+                <option value="CAD">CAD ($)</option>
+                <option value="AUD">AUD ($)</option>
+                <option value="JPY">JPY (¥)</option>
+                <option value="ZAR">ZAR (R)</option>
+              </select>
+            </label>
+
+            <button id="subAdd">Add</button>
+            <button class="danger" id="resetBtn" type="button">Reset</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="num" id="kTotal">—</div>
+              <div class="lab">Total monthly cost</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kCount">—</div>
+              <div class="lab">Subscriptions</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kSoon">—</div>
+              <div class="lab">Next renewal</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="list" id="subsList"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================
+   Small utils
+========================= */
+(function(){
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function clamp(n,min,max){
+    n = Number(n);
+    if(!Number.isFinite(n)) return min;
+    return Math.max(min, Math.min(max, n));
+  }
+  function normHex(hex, fallback){
+    const s = String(hex||"").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+  }
+
+  window.__subsUtils = { hexToRgba, clamp, normHex };
+})();
+
+/* =========================
+   Popovers (theme + bg)
+========================= */
+(function(){
+  const $ = (id)=>document.getElementById(id);
+
+  const themeBtn = $("themeBtn");
+  const themePanel = $("themePanel");
+  const bgBtn = $("bgBtn");
+  const bgPanel = $("bgPanel");
+
+  function closeAll(except){
+    [themePanel, bgPanel].forEach(p=>{
+      if(!p) return;
+      if(p !== except) p.classList.remove("open");
+    });
+  }
+
+  themeBtn?.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const open = !themePanel.classList.contains("open");
+    closeAll(open ? themePanel : null);
+    themePanel.classList.toggle("open", open);
+  });
+
+  bgBtn?.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const open = !bgPanel.classList.contains("open");
+    closeAll(open ? bgPanel : null);
+    bgPanel.classList.toggle("open", open);
+  });
+
+  document.addEventListener("click",(e)=>{
+    const inside =
+      e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
+      e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+    if(!inside) closeAll(null);
+  });
+})();
+
+/* =========================
+   Background (your existing logic + reset)
+========================= */
+(function(){
+  const BG_KEY = "subscriptions_bg_v1";
+  const { hexToRgba, clamp, normHex } = window.__subsUtils;
+
+  function loadBg(){
+    try{ return JSON.parse(localStorage.getItem(BG_KEY) || "null"); }catch{ return null; }
+  }
+  function saveBg(bg){
+    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+  }
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  const boardTintEl = document.getElementById("boardTint");
+  const bgColor = document.getElementById("bgColor");
+  const bgStrength = document.getElementById("bgStrength");
+  const bgImage = document.getElementById("bgImage");
+  const bgRemove = document.getElementById("bgRemove");
+  const bgReset = document.getElementById("bgReset");
+  const bgDot = document.getElementById("bgDot");
+
+  if(!bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+
+  const DEFAULT_BG = { tint:"#efe7e1", strength:30, imageDataUrl:null };
+  const bgState = Object.assign({}, DEFAULT_BG, loadBg() || {});
+
+  function applyBg(){
+    const tint = normHex(bgState.tint, DEFAULT_BG.tint);
+    const strength = clamp(bgState.strength, 0, 70) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
+
+    boardTintEl.style.background = hexToRgba(tint, strength);
+
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+    }
+  }
+
+  bgColor.value = bgState.tint;
+  bgStrength.value = String(bgState.strength);
+  applyBg();
+
+  bgColor.addEventListener("input", () => {
+    bgState.tint = bgColor.value;
+    applyBg();
+    saveBg(bgState);
+  });
+
+  bgStrength.addEventListener("input", () => {
+    bgState.strength = Number(bgStrength.value);
+    applyBg();
+    saveBg(bgState);
+  });
+
+  bgImage.addEventListener("change", async () => {
+    const file = bgImage.files && bgImage.files[0];
+    if(!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    bgState.imageDataUrl = dataUrl;
+    applyBg();
+    saveBg(bgState);
+  });
+
+  bgRemove.addEventListener("click", () => {
+    bgState.imageDataUrl = null;
+    bgImage.value = "";
+    applyBg();
+    saveBg(bgState);
+  });
+
+  bgReset?.addEventListener("click", () => {
+    localStorage.removeItem(BG_KEY);
+    bgState.tint = DEFAULT_BG.tint;
+    bgState.strength = DEFAULT_BG.strength;
+    bgState.imageDataUrl = DEFAULT_BG.imageDataUrl;
+    bgColor.value = DEFAULT_BG.tint;
+    bgStrength.value = String(DEFAULT_BG.strength);
+    bgImage.value = "";
+    applyBg();
+  });
+})();
+
+/* =========================
+   Theme (NEW)
+========================= */
+(function(){
+  const THEME_KEY = "subscriptions_theme_v1";
+  const { hexToRgba, clamp, normHex } = window.__subsUtils;
+  const $ = (id)=>document.getElementById(id);
+
+  const DEFAULT_THEME = {
+    bg:"#ffffff",
+    ink:"#2b2a28",
+    muted:"#6a665f",
+    accent:"#cbb8ae",
+
+    stroke:"#e9e4dd",
+    soft:"#f3efe9",
+    itemBg:"#ffffff",
+    inputBg:"#ffffff",
+
+    card:"#ffffff",
+    cardA: 0.80,
+
+    radius:18,
+    shadow:6
+  };
+
+  function loadTheme(){
+    try{ return JSON.parse(localStorage.getItem(THEME_KEY) || "null"); }catch{ return null; }
+  }
+  function saveTheme(t){
+    try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+  }
+
+  function applyTheme(t){
+    const x = Object.assign({}, DEFAULT_THEME, t || {});
+    const r = document.documentElement.style;
+
+    r.setProperty("--bg", normHex(x.bg, DEFAULT_THEME.bg));
+    r.setProperty("--ink", normHex(x.ink, DEFAULT_THEME.ink));
+    r.setProperty("--muted", normHex(x.muted, DEFAULT_THEME.muted));
+    r.setProperty("--accent", normHex(x.accent, DEFAULT_THEME.accent));
+
+    r.setProperty("--stroke", normHex(x.stroke, DEFAULT_THEME.stroke));
+    r.setProperty("--soft", normHex(x.soft, DEFAULT_THEME.soft));
+    r.setProperty("--item-bg", normHex(x.itemBg, DEFAULT_THEME.itemBg));
+    r.setProperty("--input-bg", normHex(x.inputBg, DEFAULT_THEME.inputBg));
+
+    const cardHex = normHex(x.card, DEFAULT_THEME.card);
+    const cardA = clamp(x.cardA, 0.40, 1.00);
+    r.setProperty("--card", hexToRgba(cardHex, cardA));
+
+    r.setProperty("--r", String(clamp(x.radius, 10, 28)) + "px");
+
+    const sh = clamp(x.shadow, 0, 30) / 100; // 0..0.30
+    r.setProperty("--shadow", `0 10px 30px rgba(30,20,10,${(0.02 + sh).toFixed(3)})`);
+
+    const dot = $("themeDot");
+    if(dot){
+      dot.style.background = normHex(x.accent, DEFAULT_THEME.accent);
+      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(normHex(x.accent, DEFAULT_THEME.accent), 0.25)}`;
+    }
+  }
+
+  function syncInputs(t){
+    const x = Object.assign({}, DEFAULT_THEME, t || {});
+    $("tBg").value = normHex(x.bg, DEFAULT_THEME.bg);
+    $("tInk").value = normHex(x.ink, DEFAULT_THEME.ink);
+    $("tMuted").value = normHex(x.muted, DEFAULT_THEME.muted);
+    $("tAccent").value = normHex(x.accent, DEFAULT_THEME.accent);
+
+    $("tCard").value = normHex(x.card, DEFAULT_THEME.card);
+    $("tCardA").value = String(Math.round(clamp(x.cardA,0.40,1.00)*100));
+
+    $("tStroke").value = normHex(x.stroke, DEFAULT_THEME.stroke);
+    $("tSoft").value = normHex(x.soft, DEFAULT_THEME.soft);
+    $("tItemBg").value = normHex(x.itemBg, DEFAULT_THEME.itemBg);
+    $("tInputBg").value = normHex(x.inputBg, DEFAULT_THEME.inputBg);
+
+    $("tRadius").value = String(clamp(x.radius,10,28));
+    $("tShadow").value = String(clamp(x.shadow,0,30));
+  }
+
+  function readInputs(){
+    return {
+      bg: $("tBg").value,
+      ink: $("tInk").value,
+      muted: $("tMuted").value,
+      accent: $("tAccent").value,
+
+      card: $("tCard").value,
+      cardA: clamp(Number($("tCardA").value)/100, 0.40, 1.00),
+
+      stroke: $("tStroke").value,
+      soft: $("tSoft").value,
+      itemBg: $("tItemBg").value,
+      inputBg: $("tInputBg").value,
+
+      radius: clamp(Number($("tRadius").value), 10, 28),
+      shadow: clamp(Number($("tShadow").value), 0, 30),
+    };
+  }
+
+  const saved = loadTheme() || DEFAULT_THEME;
+  applyTheme(saved);
+  syncInputs(saved);
+
+  const ids = ["tBg","tInk","tMuted","tAccent","tCard","tCardA","tStroke","tSoft","tItemBg","tInputBg","tRadius","tShadow"];
+  ids.forEach(id=>{
+    const el = $(id);
+    el?.addEventListener("input", ()=>{
+      const t = readInputs();
+      applyTheme(t);
+      saveTheme(t);
+    });
+  });
+
+  $("themeReset")?.addEventListener("click", ()=>{
+    localStorage.removeItem(THEME_KEY);
+    applyTheme(DEFAULT_THEME);
+    syncInputs(DEFAULT_THEME);
+    saveTheme(DEFAULT_THEME);
+  });
+})();
+
+/* =========================
+   Your subscriptions tracker logic (unchanged)
+========================= */
+(function(){
+  const KEY = "subscriptions_tracker_v1";
+  const CUR_KEY = "subscriptions_currency_pref_v1";
+  const $ = (id)=>document.getElementById(id);
+
+  const REGION_TO_CURRENCY = {
+    GB:"GBP", US:"USD", CA:"CAD", AU:"AUD", NZ:"NZD",
+    IE:"EUR", FR:"EUR", DE:"EUR", ES:"EUR", IT:"EUR", NL:"EUR", PT:"EUR",
+    BE:"EUR", AT:"EUR", FI:"EUR", GR:"EUR", CY:"EUR", MT:"EUR",
+    SK:"EUR", SI:"EUR", EE:"EUR", LV:"EUR", LT:"EUR", LU:"EUR",
+    JP:"JPY", CN:"CNY", IN:"INR", NG:"NGN", ZA:"ZAR", KE:"KES",
+    GH:"GHS", BR:"BRL", MX:"MXN", CH:"CHF", SE:"SEK", NO:"NOK",
+    DK:"DKK", PL:"PLN", CZ:"CZK", HU:"HUF", RO:"RON", TR:"TRY"
+  };
+
+  function getRegionFromLocale(locale){
+    try{
+      if (typeof Intl !== "undefined" && Intl.Locale){
+        const loc = new Intl.Locale(locale);
+        if (loc.region) return loc.region.toUpperCase();
+      }
+    }catch(e){}
+    const norm = String(locale || "").replace("_","-");
+    const parts = norm.split("-");
+    return (parts[1] || "").toUpperCase();
+  }
+
+  function autoCurrency(){
+    const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || "";
+    const region = getRegionFromLocale(locale);
+    return REGION_TO_CURRENCY[region] || "";
+  }
+
+  function money(n){
+    const v = Number(n||0);
+    if(!isFinite(v)) return "0";
+    const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || undefined;
+    const pref = localStorage.getItem(CUR_KEY) || "AUTO";
+    const cur = (pref === "AUTO") ? autoCurrency() : pref;
+
+    try{
+      if(cur){
+        return new Intl.NumberFormat(locale, { style:"currency", currency: cur }).format(v);
+      }
+      return new Intl.NumberFormat(locale, { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v);
+    }catch(e){
+      return v.toFixed(2);
+    }
+  }
+
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function ordinal(n){
+    const s = ["th","st","nd","rd"];
+    const v = n % 100;
+    return n + (s[(v-20)%10] || s[v] || s[0]);
+  }
+
+  function defaultState(){
+    return { subs: [] };
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      return raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState();
+    }catch(e){
+      return defaultState();
+    }
+  }
+
+  let state = load();
+
+  function save(){
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function daysUntilRenew(renewDay){
+    const now = new Date();
+    const d = now.getDate();
+    let diff = renewDay - d;
+    if(diff < 0) diff += 31;
+    return diff;
+  }
+
+  function sortByNextRenew(subs){
+    return [...subs].sort((a,b)=> daysUntilRenew(a.renewDay) - daysUntilRenew(b.renewDay));
+  }
+
+  function renderKPIs(sorted){
+    const total = sorted.reduce((a,s)=>a + Number(s.cost||0), 0);
+    $("kTotal").textContent = money(total);
+    $("kCount").textContent = String(sorted.length);
+
+    if(sorted.length === 0){
+      $("kSoon").textContent = "—";
+      return;
+    }
+    const next = sorted[0];
+    const inDays = daysUntilRenew(next.renewDay);
+    const soonTxt = inDays === 0 ? "Today" : inDays === 1 ? "Tomorrow" : `In ${inDays} days`;
+    $("kSoon").textContent = `${next.name} · ${soonTxt}`;
+  }
+
+  function renderList(sorted){
+    const root = $("subsList");
+    root.innerHTML = "";
+
+    if(sorted.length === 0){
+      root.innerHTML = `<div class="tiny">No subscriptions added yet.</div>`;
+      return;
+    }
+
+    for(const s of sorted){
+      const inDays = daysUntilRenew(s.renewDay);
+      const soon = inDays === 0 ? "renews today" : inDays === 1 ? "renews tomorrow" : `renews in ${inDays} days`;
+      const el = document.createElement("div");
+      el.className = "item";
+      el.innerHTML = `
+        <div class="meta">
+          <b>${s.name} · ${money(s.cost)}/mo</b>
+          <span>Renews ${ordinal(s.renewDay)} · ${soon}</span>
+        </div>
+        <div class="right">
+          <span class="tag ${s.worthIt ? "" : "off"}" data-toggle="${s.id}">
+            ${s.worthIt ? "Still worth it" : "Not sure"}
+          </span>
+          <button class="smallbtn" data-del="${s.id}" title="Remove" type="button">✕</button>
+        </div>
+      `;
+      root.appendChild(el);
+    }
+
+    root.querySelectorAll("[data-toggle]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-toggle");
+        const sub = state.subs.find(x=>x.id===id);
+        if(!sub) return;
+        sub.worthIt = !sub.worthIt;
+        save();
+        renderAll();
+      });
+    });
+
+    root.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-del");
+        state.subs = state.subs.filter(x=>x.id!==id);
+        save();
+        renderAll();
+      });
+    });
+  }
+
+  function renderAll(){
+    const sorted = sortByNextRenew(state.subs);
+    renderKPIs(sorted);
+    renderList(sorted);
+  }
+
+  function init(){
+    const savedCur = localStorage.getItem(CUR_KEY) || "AUTO";
+    $("currency").value = savedCur;
+    $("currency").addEventListener("change", ()=>{
+      localStorage.setItem(CUR_KEY, $("currency").value);
+      renderAll();
+    });
+
+    $("subAdd").addEventListener("click", ()=>{
+      const name = $("subName").value.trim();
+      const cost = Number($("subCost").value);
+      const renewDay = Number($("subRenew").value);
+
+      if(!name) return alert("Name is required.");
+      if(!isFinite(cost) || cost <= 0) return alert("Enter a valid monthly cost.");
+      if(!Number.isFinite(renewDay) || renewDay < 1 || renewDay > 31) return alert("Renew date must be 1–31.");
+
+      state.subs.unshift({ id: uid(), name, cost, renewDay, worthIt: true });
+      save();
+
+      $("subName").value = "";
+      $("subCost").value = "";
+      $("subRenew").value = "";
+
+      renderAll();
+    });
+
+    $("resetBtn").addEventListener("click", ()=>{
+      localStorage.removeItem(KEY);
+      state = defaultState();
+      save();
+      renderAll();
+    });
+
+    renderAll();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

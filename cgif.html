@@ -6,469 +6,479 @@
   <title>Notion GIF Player Widget</title>
 
   <style>
-    /* Pastel default palette */
+    /* Pastel defaults (you can change everything in Customize) */
     :root{
-      --bg:#fbf7ff;          /* lavender milk */
-      --panel:#ffffff;       /* soft white */
-      --text:#2b2b35;        /* charcoal */
-      --muted:#6a6a80;       /* muted ink */
-      --accent:#b8a7ff;      /* pastel purple */
-      --btn:#f3f0ff;         /* lilac tint */
-      --btnText:#2b2b35;
-      --border:rgba(184,167,255,.42);
-      --shadow: 0 14px 40px rgba(43,43,53,.12);
-      --radius:16px;
+      --page:#fbfaf6;
+      --card:#ffffff;
+      --bar:#6bb7b7;          /* teal pastel like screenshot */
+      --barText:#ffffff;
+      --text:#2b2b35;
+      --muted:rgba(255,255,255,.85);
+      --iconBg:rgba(255,255,255,.20);
+      --iconBd:rgba(255,255,255,.55);
+      --progressTrack:rgba(255,255,255,.42);
+      --progressFill:#ffffff;
+
+      --radius:22px;
+      --shadow: 0 18px 60px rgba(30, 40, 45, .12);
+      --stroke: rgba(0,0,0,.06);
     }
 
-    html,body{ height:100%; }
+    html, body { height: 100%; }
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background:
-        radial-gradient(900px 500px at 18% 12%, rgba(184,167,255,.35), transparent 60%),
-        radial-gradient(900px 500px at 85% 18%, rgba(169,231,255,.35), transparent 58%),
-        radial-gradient(900px 500px at 55% 95%, rgba(255,203,224,.28), transparent 60%),
-        var(--bg);
-      color:var(--text);
       display:flex;
-      align-items:flex-start;
       justify-content:center;
+      align-items:flex-start;
       padding:18px;
       box-sizing:border-box;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: var(--page);
+      color: var(--text);
     }
 
-    /* Small widget (~1/3 page feel) */
-    .wrap{ width:min(420px, 92vw); }
+    /* Small-ish embed friendly */
+    .wrap{
+      width: min(860px, 92vw); /* will shrink nicely inside Notion columns */
+    }
 
-    .widget{
-      background: linear-gradient(180deg, rgba(255,255,255,.70), rgba(255,255,255,.45)), var(--panel);
-      border: 1px solid var(--border);
+    .player{
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
-      backdrop-filter: blur(8px);
+      border: 1px solid var(--stroke);
+      background: var(--card);
     }
 
-    .top{
-      display:flex;
-      gap:12px;
-      padding:12px;
-      align-items:center;
-      border-bottom:1px solid var(--border);
-    }
-
-    .art{
-      width: 104px;
-      height: 72px;
-      border-radius: 12px;
-      overflow:hidden;
+    /* Top media area (rounded like screenshot) */
+    .media{
       position:relative;
-      flex: 0 0 auto;
-      background: rgba(184,167,255,.10);
-      border:1px solid var(--border);
+      background: #f2f2f2;
+      aspect-ratio: 16 / 9;
+      width:100%;
+      overflow:hidden;
     }
-    .art img, .art canvas{
+    .media img, .media canvas{
       width:100%;
       height:100%;
       object-fit:cover;
       display:block;
     }
-    .art canvas{ display:none; }
+    .media canvas{ display:none; }
 
-    .meta{ min-width:0; flex:1; }
-    .title{
-      font-size:13px;
-      font-weight:700;
+    /* timestamp overlay bottom-left */
+    .stamp{
+      position:absolute;
+      left:16px;
+      bottom:14px;
+      color: rgba(255,255,255,.92);
+      font-size: 14px;
+      font-weight: 650;
+      text-shadow: 0 2px 10px rgba(0,0,0,.35);
       letter-spacing:.2px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      user-select:none;
+      line-height:1.2;
+      background: rgba(0,0,0,.14);
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(6px);
     }
-    .sub{
-      margin-top:4px;
-      font-size:12px;
-      color:var(--muted);
+
+    /* Bottom bar */
+    .bar{
+      background: var(--bar);
+      color: var(--barText);
+      padding: 14px 16px;
       display:flex;
+      align-items:center;
+      gap: 14px;
+    }
+
+    .left{
+      display:flex;
+      align-items:center;
       gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.55);
-      font-size:11px;
-      color:var(--muted);
-    }
-    .dot{
-      width:6px;height:6px;border-radius:50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 3px rgba(184,167,255,.25);
+      min-width: 0;
+      flex: 1 1 auto;
     }
 
     .controls{
-      padding:10px 12px 12px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .row{
       display:flex;
       gap:10px;
       align-items:center;
-      justify-content:space-between;
+      flex: 0 0 auto;
     }
 
-    .btns{ display:flex; gap:8px; align-items:center; }
-
-    button{
-      appearance:none;
-      border:1px solid var(--border);
-      background: var(--btn);
-      color: var(--btnText);
-      border-radius: 12px;
-      padding:10px 12px;
-      font-size:12px;
-      cursor:pointer;
-      transition: transform .06s ease, filter .2s ease;
-      line-height:1;
+    .btn{
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 2px solid var(--iconBd);
+      background: var(--iconBg);
+      color: var(--barText);
       display:inline-flex;
       align-items:center;
-      gap:8px;
-      user-select:none;
-    }
-    button:hover{ filter: brightness(0.98); }
-    button:active{ transform: translateY(1px); }
-
-    button.primary{
-      background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35)), var(--accent);
-      border-color: rgba(184,167,255,.65);
-      color: #2b2b35;
-      font-weight:800;
-    }
-    button.icon{
-      width:40px;
       justify-content:center;
-      padding:10px 0;
-    }
-
-    .bar{
-      width:100%;
-      height:10px;
-      border-radius:999px;
-      background: rgba(184,167,255,.14);
-      border:1px solid var(--border);
-      overflow:hidden;
-    }
-    .bar > div{
-      height:100%;
-      width:0%;
-      background: var(--accent);
-      border-radius:999px;
-      transition: width .15s linear;
-    }
-
-    .toggle{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.55);
-      font-size:11px;
-      color:var(--muted);
       cursor:pointer;
       user-select:none;
+      transition: transform .06s ease, filter .15s ease;
     }
-    .switch{
-      width:34px;
-      height:18px;
-      border-radius:999px;
-      background: rgba(184,167,255,.20);
-      border:1px solid var(--border);
-      position:relative;
-      flex:0 0 auto;
-    }
-    .knob{
-      width:14px;height:14px;border-radius:50%;
-      background: rgba(255,255,255,.95);
-      position:absolute; top:50%; left:2px;
-      transform: translateY(-50%);
-      transition: left .15s ease, background .15s ease;
-    }
-    .toggle[data-on="true"] .switch{
-      background: rgba(184,167,255,.34);
-      border-color: rgba(184,167,255,.65);
-    }
-    .toggle[data-on="true"] .knob{ left:18px; background: var(--accent); }
+    .btn:hover{ filter: brightness(1.02); }
+    .btn:active{ transform: translateY(1px); }
 
-    details{
-      border-top:1px solid var(--border);
-      padding: 10px 12px 12px;
-      background: rgba(255,255,255,.45);
+    .btn svg{ width:18px; height:18px; fill: currentColor; }
+
+    .track{
+      min-width: 0;
+      flex: 1 1 auto;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .trackTitle{
+      font-size: 15px;
+      font-weight: 650;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity:.96;
+    }
+
+    /* Progress slider (right side like screenshot) */
+    .right{
+      flex: 0 0 auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .slider{
+      width: 280px;
+      max-width: 34vw;
+      height: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--progressTrack);
+      border-radius: 999px;
+      outline:none;
+      cursor:pointer;
+    }
+    .slider::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      appearance:none;
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      background: var(--progressFill);
+      border: 2px solid rgba(0,0,0,.06);
+      box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    }
+    .slider::-moz-range-thumb{
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      background: var(--progressFill);
+      border: 2px solid rgba(0,0,0,.06);
+      box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    }
+
+    /* Customize panel */
+    details.customize{
+      border-top: 1px solid rgba(0,0,0,.06);
+      background: rgba(0,0,0,.02);
+      padding: 10px 14px 14px;
     }
     summary{
       cursor:pointer;
       user-select:none;
       list-style:none;
-      font-size:12px;
-      color: var(--muted);
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:10px;
+      gap:12px;
+      color: rgba(0,0,0,.65);
+      font-weight: 650;
+      font-size: 13px;
     }
     summary::-webkit-details-marker{ display:none; }
 
-    .panel{ margin-top:10px; display:grid; gap:10px; }
-    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    .field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
-    label{ font-size:11px; color: var(--muted); }
+    .panel{
+      margin-top: 12px;
+      display:grid;
+      gap: 12px;
+    }
 
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 720px){
+      .grid{ grid-template-columns: 1fr 1fr; }
+      .slider{ width: 180px; }
+    }
+    @media (max-width: 420px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
+    label{
+      font-size: 12px;
+      color: rgba(0,0,0,.6);
+      font-weight: 650;
+    }
     input[type="color"]{
-      width:100%;
-      height:36px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.65);
-      padding:4px;
-      box-sizing:border-box;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.10);
+      background: #fff;
+      padding: 4px;
       cursor:pointer;
     }
-
     input[type="text"], textarea, input[type="number"]{
-      width:100%;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.75);
-      color: var(--text);
-      padding:10px 10px;
-      font-size:12px;
-      box-sizing:border-box;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.10);
+      background: #fff;
+      padding: 10px 10px;
+      font-size: 13px;
       outline:none;
+      width:100%;
+      box-sizing:border-box;
     }
-    textarea{ resize:vertical; min-height:92px; }
+    textarea{ min-height: 92px; resize: vertical; }
 
+    .rowBtns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .miniBtn{
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.12);
+      background: #fff;
+      padding: 10px 12px;
+      cursor:pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
     .hint{
-      font-size:11px;
-      color: var(--muted);
-      line-height:1.35;
+      font-size: 12px;
+      color: rgba(0,0,0,.55);
+      line-height: 1.35;
     }
 
-    .footerNote{
-      padding: 10px 12px 14px;
-      font-size:11px;
-      color: var(--muted);
-      border-top: 1px solid var(--border);
-      background: rgba(255,255,255,.35);
+    .statusLine{
+      font-size: 12px;
+      color: rgba(0,0,0,.55);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.05);
+      border: 1px solid rgba(0,0,0,.06);
+      font-weight: 650;
     }
 
-    .tiny{ font-size:10px; opacity:.92; }
-
-    @media (max-width: 360px){
-      .art{ width: 92px; height: 64px; }
-      button{ padding:9px 10px; }
-    }
+    .hidden { display:none !important; }
   </style>
 </head>
 
 <body>
   <div class="wrap">
-    <div class="widget" id="widget">
-      <div class="top">
-        <div class="art" id="art">
-          <img id="gifImg" alt="GIF" />
-          <canvas id="freezeCanvas"></canvas>
-        </div>
-        <div class="meta">
-          <div class="title" id="gifTitle">GIF Player</div>
-          <div class="sub">
-            <span class="pill"><span class="dot"></span><span id="statusText">Paused</span></span>
-            <span class="pill"><span id="countText">0 / 0</span></span>
-          </div>
+    <div class="player" id="player">
+      <div class="media">
+        <img id="gifImg" alt="GIF" />
+        <canvas id="freezeCanvas"></canvas>
+
+        <div class="stamp" id="stamp">
+          <div id="stampDate">Wednesday, 4 February 2026</div>
+          <div id="stampTime">06:59</div>
         </div>
       </div>
 
-      <div class="controls">
-        <div class="row">
-          <div class="btns">
-            <button class="icon" id="prevBtn" title="Previous">⏮</button>
-            <button class="primary icon" id="playBtn" title="Play/Pause">▶</button>
-            <button class="icon" id="nextBtn" title="Next">⏭</button>
-          </div>
-          <div class="btns">
-            <button id="shuffleBtn" class="toggle" type="button" data-on="true" title="Shuffle">
-              <span>Shuffle</span>
-              <span class="switch"><span class="knob"></span></span>
+      <div class="bar">
+        <div class="left">
+          <div class="controls">
+            <button class="btn" id="shuffleBtn" title="Shuffle">
+              <!-- shuffle icon -->
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17 3h4v4h-2V6.41l-4.29 4.3-1.42-1.42L17.59 5H17V3zM3 7h4.59l3 3-1.42 1.42L6.76 9H3V7zm0 10h3.76l2.41-2.41 1.42 1.42-3 2.99H3v-2zm18-2v4h-4v-2h.59l-4.88-4.88 1.42-1.42L18.59 17H19v-2h2z"/>
+              </svg>
+            </button>
+
+            <button class="btn" id="prevBtn" title="Previous">
+              <!-- prev -->
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6h2v12H6V6zm3.5 6 10 6V6l-10 6z"/>
+              </svg>
+            </button>
+
+            <button class="btn" id="playBtn" title="Play/Pause">
+              <!-- play (will toggle) -->
+              <svg id="playIcon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <svg id="pauseIcon" class="hidden" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"/>
+              </svg>
+            </button>
+
+            <button class="btn" id="nextBtn" title="Next">
+              <!-- next -->
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M16 6h2v12h-2V6zM5 18l10-6L5 6v12z"/>
+              </svg>
             </button>
           </div>
+
+          <div class="track">
+            <div class="trackTitle" id="trackTitle">It started Raining…</div>
+          </div>
         </div>
 
-        <div class="row" style="gap:12px;">
-          <div style="flex:1;">
-            <div class="bar" aria-label="progress bar"><div id="barFill"></div></div>
-          </div>
-          <div class="pill tiny" style="white-space:nowrap;">
-            <span id="intervalText">10s</span>
-          </div>
+        <div class="right">
+          <input id="progress" class="slider" type="range" min="0" max="1000" value="0" />
         </div>
       </div>
 
-      <details id="settings">
+      <details class="customize">
         <summary>
           <span>Customize</span>
-          <span class="tiny">pastels • gifs • timing</span>
+          <span class="hint" style="margin:0;">colors • gifs • timing</span>
         </summary>
 
         <div class="panel">
+          <div class="statusLine">
+            <span class="badge" id="countBadge">1 / 1</span>
+            <span class="badge" id="modeBadge">Paused</span>
+            <span class="badge" id="pauseSupportBadge">Pause: best effort</span>
+          </div>
+
           <div class="grid">
             <div class="field">
-              <label>Background</label>
-              <input type="color" id="cBg" value="#fbf7ff" />
+              <label>Page background</label>
+              <input type="color" id="cPage" value="#fbfaf6" />
             </div>
             <div class="field">
-              <label>Panel</label>
-              <input type="color" id="cPanel" value="#ffffff" />
+              <label>Card background</label>
+              <input type="color" id="cCard" value="#ffffff" />
             </div>
             <div class="field">
-              <label>Text</label>
-              <input type="color" id="cText" value="#2b2b35" />
+              <label>Bar color</label>
+              <input type="color" id="cBar" value="#6bb7b7" />
             </div>
             <div class="field">
-              <label>Accent</label>
-              <input type="color" id="cAccent" value="#b8a7ff" />
+              <label>Bar text</label>
+              <input type="color" id="cBarText" value="#ffffff" />
             </div>
             <div class="field">
-              <label>Buttons</label>
-              <input type="color" id="cBtn" value="#f3f0ff" />
+              <label>Progress track</label>
+              <input type="color" id="cProgTrack" value="#d7f0f0" />
             </div>
             <div class="field">
-              <label>Border</label>
-              <input type="color" id="cBorder" value="#b8a7ff" />
+              <label>Progress thumb</label>
+              <input type="color" id="cProgFill" value="#ffffff" />
             </div>
           </div>
 
           <div class="grid">
             <div class="field">
               <label>Auto-advance (seconds)</label>
-              <input type="number" id="intervalSec" min="2" max="120" step="1" value="10" />
-              <div class="hint">When playing, it switches GIFs on this timer.</div>
+              <input type="number" id="intervalSec" min="2" max="300" step="1" value="12" />
+              <div class="hint">When playing, it switches to the next GIF on this timer.</div>
             </div>
 
-            <div class="field">
+            <div class="field" style="grid-column: span 2;">
               <label>Add a GIF URL</label>
               <input type="text" id="gifUrlInput" placeholder="https://.../my.gif" />
-              <div class="row" style="justify-content:flex-start; gap:8px; margin-top:6px;">
-                <button id="addGifBtn" type="button">Add</button>
-                <button id="removeCurrentBtn" type="button">Remove current</button>
+              <div class="rowBtns" style="margin-top:8px;">
+                <button class="miniBtn" id="addGifBtn" type="button">Add</button>
+                <button class="miniBtn" id="removeCurrentBtn" type="button">Remove current</button>
+                <button class="miniBtn" id="resetBtn" type="button">Reset to single default</button>
+              </div>
+              <div class="hint">
+                If a GIF host blocks cross-origin fetching, the GIF will still show, but “pause” may not freeze the current frame.
               </div>
             </div>
           </div>
 
           <div class="field">
-            <label>GIF list (one URL/path per line)</label>
+            <label>GIF list (one URL per line)</label>
             <textarea id="gifListBox" spellcheck="false"></textarea>
-            <div class="row" style="justify-content:flex-start; gap:8px;">
-              <button id="applyListBtn" type="button">Apply list</button>
-              <button id="resetBtn" type="button">Reset defaults</button>
-            </div>
-            <div class="hint">
-              Defaults expect your GIFs inside <span class="tiny">./gifs/</span>.
-              Filenames are <em>case-sensitive</em> on GitHub Pages.
+            <div class="rowBtns">
+              <button class="miniBtn" id="applyListBtn" type="button">Apply list</button>
             </div>
           </div>
         </div>
       </details>
-
-      <div class="footerNote">
-        <div class="hint">
-          <strong>Pause note:</strong> browsers can’t truly pause a GIF frame-perfectly.
-          This widget “pauses” by freezing the current frame to a canvas; resuming may restart the GIF.
-          <br />
-          <span class="tiny">Each embed is self-contained. Settings & GIF lists save per-user in their own browser storage.</span>
-        </div>
-      </div>
     </div>
   </div>
 
   <script>
     /**
-     * Fixes included:
-     * - Default GIF paths now match the likely filenames you uploaded (with spaces), and are URL-encoded safely.
-     * - Pastel default palette.
-     * - More robust image loading (cache-bust on resume, helpful fallback).
+     * Notion GIF Player Widget (single HTML)
+     * - Layout inspired by your screenshot: big media + bottom player bar + progress.
+     * - Default GIF: the one you provided.
+     * - Per-user & per-embed persistence: localStorage scoped to this page path.
+     * - Pause: "best effort" — we try to freeze the current frame by drawing to canvas.
+     *   For cross-origin GIFs, we fetch->blob->objectURL to make the canvas drawable.
      */
 
-    // ---------- DEFAULT GIFS ----------
-    // Put these GIF files inside a folder named "gifs" next to this HTML file.
-    // IMPORTANT: These filenames include spaces; they must match EXACTLY on GitHub Pages.
     const DEFAULT_GIFS = [
-      { title: "Cat drawing", url: "./gifs/cat%20drawing%20GIF%20by%20hoppip.gif" },
-      { title: "The Cat Returns", url: "./gifs/the%20cat%20returns%20GIF%20by%20Maudit.gif" },
-      { title: "Animation cat", url: "./gifs/animation%20cat%20GIF%20by%20hoppip.gif" },
-      { title: "Matcha whisk", url: "./gifs/GIF%20by%20furze%20chan.gif" },
-      { title: "Pouring tea", url: "./gifs/when%20marnie%20was%20there%20japan%20GIF.gif" },
-      { title: "Window scene", url: "./gifs/gif.gif" }
+      {
+        title: "It started Raining…",
+        url: "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGgzaXVjaXR6YmxiZ280M3l3ZTlrdTE4bWxtMHF4cGgyeHg5MzFsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Dsvz9D6FBdmk8/giphy.gif"
+      }
     ];
 
-    // ---------- HELPERS ----------
-    const $ = (sel) => document.querySelector(sel);
+    const $ = (s) => document.querySelector(s);
     const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-    // Scope storage to THIS page path so different widgets/pages don't collide
-    const STORAGE_KEY = "gif_player_widget_v2:" + location.pathname;
+    // Make embeds independent by scoping storage to the page path
+    const STORAGE_KEY = "notion_gif_player_v3:" + location.pathname;
 
     function loadState(){
       try{
         const raw = localStorage.getItem(STORAGE_KEY);
-        if(!raw) return null;
-        return JSON.parse(raw);
+        return raw ? JSON.parse(raw) : null;
       }catch(_){ return null; }
     }
-    function saveState(state){
+    function saveState(){
       try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){}
     }
 
-    function hexToRgba(hex, a){
-      const h = (hex || "").replace("#","").trim();
-      if(h.length !== 6) return "rgba(184,167,255,.42)";
-      const r = parseInt(h.slice(0,2),16);
-      const g = parseInt(h.slice(2,4),16);
-      const b = parseInt(h.slice(4,6),16);
-      return `rgba(${r},${g},${b},${a})`;
-    }
-
-    function cacheBust(url){
-      // Bust cache to force restart after resume / when switching
-      const u = String(url || "");
-      const sep = u.includes("?") ? "&" : "?";
-      return u + sep + "v=" + Date.now().toString(36);
-    }
-
-    // ---------- STATE ----------
+    // State
     const state = {
       gifs: DEFAULT_GIFS.slice(),
       index: 0,
       playing: false,
-      shuffle: true,
-      intervalSec: 10,
+      shuffle: false,
+      intervalSec: 12,
       colors: {
-        bg: "#fbf7ff",
-        panel: "#ffffff",
-        text: "#2b2b35",
-        accent: "#b8a7ff",
-        btn: "#f3f0ff",
-        border: "#b8a7ff"
+        page: "#fbfaf6",
+        card: "#ffffff",
+        bar:  "#6bb7b7",
+        barText: "#ffffff",
+        progTrack: "#d7f0f0",
+        progFill: "#ffffff"
       }
     };
 
-    // Merge persisted state (per user, per browser)
+    // Restore
     const persisted = loadState();
     if(persisted){
       if(Array.isArray(persisted.gifs) && persisted.gifs.length){
@@ -478,197 +488,119 @@
           return null;
         }).filter(Boolean);
       }
-      if(Number.isInteger(persisted.index)) state.index = clamp(persisted.index, 0, Math.max(0, state.gifs.length-1));
+      if(Number.isInteger(persisted.index)) state.index = clamp(persisted.index, 0, Math.max(0, state.gifs.length - 1));
       if(typeof persisted.playing === "boolean") state.playing = persisted.playing;
       if(typeof persisted.shuffle === "boolean") state.shuffle = persisted.shuffle;
-      if(Number.isFinite(persisted.intervalSec)) state.intervalSec = clamp(persisted.intervalSec, 2, 120);
+      if(Number.isFinite(persisted.intervalSec)) state.intervalSec = clamp(persisted.intervalSec, 2, 300);
       if(persisted.colors && typeof persisted.colors === "object"){
         state.colors = { ...state.colors, ...persisted.colors };
       }
     }
 
-    // ---------- UI ----------
+    // UI
     const gifImg = $("#gifImg");
     const freezeCanvas = $("#freezeCanvas");
-    const gifTitle = $("#gifTitle");
-    const statusText = $("#statusText");
-    const countText = $("#countText");
-    const barFill = $("#barFill");
-    const intervalText = $("#intervalText");
+    const trackTitle = $("#trackTitle");
+    const progress = $("#progress");
 
+    const shuffleBtn = $("#shuffleBtn");
     const prevBtn = $("#prevBtn");
     const playBtn = $("#playBtn");
     const nextBtn = $("#nextBtn");
-    const shuffleBtn = $("#shuffleBtn");
+    const playIcon = $("#playIcon");
+    const pauseIcon = $("#pauseIcon");
 
-    const cBg = $("#cBg");
-    const cPanel = $("#cPanel");
-    const cText = $("#cText");
-    const cAccent = $("#cAccent");
-    const cBtn = $("#cBtn");
-    const cBorder = $("#cBorder");
+    const countBadge = $("#countBadge");
+    const modeBadge = $("#modeBadge");
+    const pauseSupportBadge = $("#pauseSupportBadge");
+
+    const cPage = $("#cPage");
+    const cCard = $("#cCard");
+    const cBar = $("#cBar");
+    const cBarText = $("#cBarText");
+    const cProgTrack = $("#cProgTrack");
+    const cProgFill = $("#cProgFill");
 
     const intervalSecInput = $("#intervalSec");
     const gifUrlInput = $("#gifUrlInput");
     const addGifBtn = $("#addGifBtn");
     const removeCurrentBtn = $("#removeCurrentBtn");
+    const resetBtn = $("#resetBtn");
     const gifListBox = $("#gifListBox");
     const applyListBtn = $("#applyListBtn");
-    const resetBtn = $("#resetBtn");
 
-    // ---------- RENDER ----------
+    // Keep object URLs so we can revoke them
+    const objectUrlCache = new Map(); // originalUrl -> objectUrl
+
     function applyColors(){
-      document.documentElement.style.setProperty("--bg", state.colors.bg);
-      document.documentElement.style.setProperty("--panel", state.colors.panel);
-      document.documentElement.style.setProperty("--text", state.colors.text);
-      document.documentElement.style.setProperty("--accent", state.colors.accent);
-      document.documentElement.style.setProperty("--btn", state.colors.btn);
-      document.documentElement.style.setProperty("--border", hexToRgba(state.colors.border, 0.42));
+      document.documentElement.style.setProperty("--page", state.colors.page);
+      document.documentElement.style.setProperty("--card", state.colors.card);
+      document.documentElement.style.setProperty("--bar", state.colors.bar);
+      document.documentElement.style.setProperty("--barText", state.colors.barText);
+      document.documentElement.style.setProperty("--progressTrack", state.colors.progTrack);
+      document.documentElement.style.setProperty("--progressFill", state.colors.progFill);
 
-      // sync pickers
-      cBg.value = state.colors.bg;
-      cPanel.value = state.colors.panel;
-      cText.value = state.colors.text;
-      cAccent.value = state.colors.accent;
-      cBtn.value = state.colors.btn;
-      cBorder.value = state.colors.border;
+      cPage.value = state.colors.page;
+      cCard.value = state.colors.card;
+      cBar.value = state.colors.bar;
+      cBarText.value = state.colors.barText;
+      cProgTrack.value = state.colors.progTrack;
+      cProgFill.value = state.colors.progFill;
     }
 
-    function setShuffleUI(){
-      shuffleBtn.dataset.on = String(!!state.shuffle);
-    }
+    // A better pause strategy:
+    // Try fetch->blob to allow drawing to canvas (avoids tainted canvas from cross-origin).
+    // If fetch fails (CORS blocked), we still show the GIF normally, but pause freeze may not work.
+    async function resolveGifSrc(url){
+      const u = String(url || "").trim();
+      if(!u) return { src: "", pauseLikely: false };
 
-    function updateMeta(){
-      const total = state.gifs.length;
-      const idx = total ? state.index + 1 : 0;
-      countText.textContent = `${idx} / ${total}`;
-      intervalText.textContent = `${state.intervalSec}s`;
-      statusText.textContent = state.playing ? "Playing" : "Paused";
-      playBtn.textContent = state.playing ? "⏸" : "▶";
-    }
-
-    function setGif(index, { restart=false } = {}){
-      const total = state.gifs.length;
-      if(!total){
-        gifTitle.textContent = "No GIFs";
-        gifImg.removeAttribute("src");
-        freezeCanvas.style.display = "none";
-        gifImg.style.display = "block";
-        updateMeta();
-        saveState(state);
-        return;
+      if(objectUrlCache.has(u)){
+        return { src: objectUrlCache.get(u), pauseLikely: true };
       }
 
-      state.index = clamp(index, 0, total-1);
-      const current = state.gifs[state.index];
-      gifTitle.textContent = current.title || `GIF ${state.index+1}`;
-
-      // Always unfreeze when switching
-      unfreeze();
-
-      // Use cache-bust only when we want a hard restart (resume / switch while playing)
-      gifImg.src = restart ? cacheBust(current.url) : current.url;
-
-      // Update textarea view
-      gifListBox.value = state.gifs.map(g => g.url).join("\n");
-      updateMeta();
-      saveState(state);
-    }
-
-    function nextIndex(){
-      const total = state.gifs.length;
-      if(total <= 1) return state.index;
-
-      if(state.shuffle){
-        let n = state.index;
-        for(let tries=0; tries<12 && n === state.index; tries++){
-          n = Math.floor(Math.random() * total);
-        }
-        if(n === state.index) n = (state.index + 1) % total;
-        return n;
+      try{
+        const resp = await fetch(u, { mode: "cors", cache: "force-cache" });
+        if(!resp.ok) throw new Error("fetch failed: " + resp.status);
+        const blob = await resp.blob();
+        const objUrl = URL.createObjectURL(blob);
+        objectUrlCache.set(u, objUrl);
+        return { src: objUrl, pauseLikely: true };
+      }catch(_){
+        // Fallback to direct URL (still displays)
+        return { src: u, pauseLikely: false };
       }
-      return (state.index + 1) % total;
     }
 
-    function prevIndex(){
+    function updateBadges(pauseLikely){
       const total = state.gifs.length;
-      if(total <= 1) return state.index;
+      const idx = total ? (state.index + 1) : 0;
+      countBadge.textContent = `${idx} / ${total}`;
+      modeBadge.textContent = state.playing ? "Playing" : "Paused";
+      pauseSupportBadge.textContent = pauseLikely ? "Pause: freezes frame" : "Pause: best effort";
+    }
 
-      if(state.shuffle){
-        let n = state.index;
-        for(let tries=0; tries<12 && n === state.index; tries++){
-          n = Math.floor(Math.random() * total);
-        }
-        if(n === state.index) n = (state.index - 1 + total) % total;
-        return n;
+    function setPlayIcon(){
+      if(state.playing){
+        playIcon.classList.add("hidden");
+        pauseIcon.classList.remove("hidden");
+      }else{
+        pauseIcon.classList.add("hidden");
+        playIcon.classList.remove("hidden");
       }
-      return (state.index - 1 + total) % total;
     }
 
-    // ---------- TIMERS ----------
-    let tickTimer = null;
-    let progressTimer = null;
-    let progressStart = 0;
-
-    function stopTimers(){
-      if(tickTimer) clearInterval(tickTimer);
-      if(progressTimer) clearInterval(progressTimer);
-      tickTimer = null;
-      progressTimer = null;
-      barFill.style.width = "0%";
+    function unfreeze(){
+      freezeCanvas.style.display = "none";
+      gifImg.style.display = "block";
     }
 
-    function startTimers(){
-      stopTimers();
-      if(!state.playing) return;
-
-      const ms = state.intervalSec * 1000;
-      progressStart = Date.now();
-
-      tickTimer = setInterval(() => {
-        setGif(nextIndex(), { restart:true });
-        progressStart = Date.now();
-      }, ms);
-
-      progressTimer = setInterval(() => {
-        const elapsed = Date.now() - progressStart;
-        const pct = clamp((elapsed / ms) * 100, 0, 100);
-        barFill.style.width = pct.toFixed(2) + "%";
-      }, 80);
-    }
-
-    function play(){
-      state.playing = true;
-      updateMeta();
-      saveState(state);
-      unfreeze();
-      // Restart current gif so "resume" feels like resume
-      setGif(state.index, { restart:true });
-      startTimers();
-    }
-
-    function pause(){
-      state.playing = false;
-      updateMeta();
-      saveState(state);
-      stopTimers();
-      freeze();
-    }
-
-    function togglePlay(){
-      if(state.playing) pause();
-      else play();
-    }
-
-    // ---------- FREEZE FRAME ----------
     function freeze(){
-      if(!gifImg.src) return;
-
+      // Draw current frame to canvas when possible
       const w = gifImg.naturalWidth || 0;
       const h = gifImg.naturalHeight || 0;
-
-      // If not loaded yet, just show canvas placeholder
       if(!w || !h){
+        // If not loaded, just hide img (gives a "paused" feel)
         gifImg.style.display = "none";
         freezeCanvas.style.display = "block";
         return;
@@ -683,92 +615,216 @@
       const ctx = freezeCanvas.getContext("2d");
       try{
         ctx.drawImage(gifImg, 0, 0, cw, ch);
-      }catch(_){ /* ignore */ }
-
-      gifImg.style.display = "none";
-      freezeCanvas.style.display = "block";
+        gifImg.style.display = "none";
+        freezeCanvas.style.display = "block";
+      }catch(_){
+        // Canvas might be tainted if host blocks it — fallback:
+        gifImg.style.display = "none";
+        freezeCanvas.style.display = "block";
+      }
     }
 
-    function unfreeze(){
-      freezeCanvas.style.display = "none";
-      gifImg.style.display = "block";
+    function nextIndex(){
+      const total = state.gifs.length;
+      if(total <= 1) return state.index;
+
+      if(state.shuffle){
+        let n = state.index;
+        for(let tries=0; tries<12 && n === state.index; tries++){
+          n = Math.floor(Math.random() * total);
+        }
+        return (n === state.index) ? (state.index + 1) % total : n;
+      }
+      return (state.index + 1) % total;
     }
 
-    // ---------- GIF LIST MANAGEMENT ----------
+    function prevIndex(){
+      const total = state.gifs.length;
+      if(total <= 1) return state.index;
+
+      if(state.shuffle){
+        let n = state.index;
+        for(let tries=0; tries<12 && n === state.index; tries++){
+          n = Math.floor(Math.random() * total);
+        }
+        return (n === state.index) ? (state.index - 1 + total) % total : n;
+      }
+      return (state.index - 1 + total) % total;
+    }
+
+    let tickTimer = null;
+    let progTimer = null;
+    let progStart = 0;
+
+    function stopTimers(){
+      if(tickTimer) clearInterval(tickTimer);
+      if(progTimer) clearInterval(progTimer);
+      tickTimer = null;
+      progTimer = null;
+      progress.value = "0";
+    }
+
+    function startTimers(){
+      stopTimers();
+      if(!state.playing) return;
+
+      const ms = state.intervalSec * 1000;
+      progStart = Date.now();
+
+      tickTimer = setInterval(() => {
+        showGif(nextIndex(), { restart:true });
+        progStart = Date.now();
+      }, ms);
+
+      progTimer = setInterval(() => {
+        const elapsed = Date.now() - progStart;
+        const pct = clamp(elapsed / ms, 0, 1);
+        progress.value = String(Math.round(pct * 1000));
+      }, 80);
+    }
+
+    async function showGif(index, { restart=false } = {}){
+      const total = state.gifs.length;
+      if(!total){
+        trackTitle.textContent = "No GIFs";
+        gifImg.removeAttribute("src");
+        unfreeze();
+        updateBadges(false);
+        saveState();
+        return;
+      }
+
+      state.index = clamp(index, 0, total - 1);
+      const cur = state.gifs[state.index];
+      trackTitle.textContent = cur.title || "GIF Player";
+
+      unfreeze();
+
+      // Try to get a drawable src
+      const { src, pauseLikely } = await resolveGifSrc(cur.url);
+
+      // If restart requested (resume / next while playing), re-create src by cache-busting for direct URLs.
+      // For object URLs, restarting isn't necessary; setting src again is enough.
+      if(restart && !objectUrlCache.has(cur.url)){
+        const u = cur.url;
+        const sep = u.includes("?") ? "&" : "?";
+        gifImg.src = u + sep + "v=" + Date.now().toString(36);
+      }else{
+        gifImg.src = src;
+      }
+
+      gifListBox.value = state.gifs.map(g => g.url).join("\n");
+      intervalSecInput.value = String(state.intervalSec);
+
+      updateBadges(pauseLikely);
+      setPlayIcon();
+      saveState();
+    }
+
+    function play(){
+      state.playing = true;
+      setPlayIcon();
+      unfreeze();
+      showGif(state.index, { restart:true });
+      startTimers();
+      saveState();
+    }
+
+    function pause(){
+      state.playing = false;
+      setPlayIcon();
+      stopTimers();
+      freeze();
+      updateBadges(true); // display-only; actual support depends on src
+      saveState();
+    }
+
+    function togglePlay(){
+      state.playing ? pause() : play();
+    }
+
+    // Customize: GIF list management
     function addGif(url){
-      const cleaned = (url || "").trim();
+      const cleaned = String(url || "").trim();
       if(!cleaned) return;
       state.gifs.push({ title: `GIF ${state.gifs.length + 1}`, url: cleaned });
-      setGif(state.gifs.length - 1, { restart: state.playing });
-      saveState(state);
+      showGif(state.gifs.length - 1, { restart: state.playing });
+      saveState();
     }
 
     function removeCurrent(){
       if(state.gifs.length === 0) return;
       state.gifs.splice(state.index, 1);
-      const newIndex = clamp(state.index, 0, Math.max(0, state.gifs.length - 1));
-      setGif(newIndex, { restart: state.playing });
-      saveState(state);
+      state.index = clamp(state.index, 0, Math.max(0, state.gifs.length - 1));
+      showGif(state.index, { restart: state.playing });
+      saveState();
     }
 
-    function applyListFromTextarea(){
-      const lines = gifListBox.value
-        .split("\n")
-        .map(s => s.trim())
-        .filter(Boolean);
-
+    function applyList(){
+      const lines = gifListBox.value.split("\n").map(s => s.trim()).filter(Boolean);
       if(lines.length === 0){
         state.gifs = [];
         state.index = 0;
-        setGif(0);
-        saveState(state);
+        showGif(0);
+        saveState();
         return;
       }
-
       state.gifs = lines.map((u, i) => ({ title: `GIF ${i+1}`, url: u }));
       state.index = clamp(state.index, 0, state.gifs.length - 1);
-      setGif(state.index, { restart: state.playing });
-      saveState(state);
+      showGif(state.index, { restart: state.playing });
+      saveState();
     }
 
     function resetDefaults(){
       state.gifs = DEFAULT_GIFS.slice();
       state.index = 0;
-      setGif(0, { restart: state.playing });
-      saveState(state);
+      showGif(0, { restart: state.playing });
+      saveState();
     }
 
-    // ---------- EVENTS ----------
+    // Color wiring
+    function wireColor(input, key){
+      input.addEventListener("input", () => {
+        state.colors[key] = input.value;
+        applyColors();
+        saveState();
+      });
+    }
+
+    // Events
+    shuffleBtn.addEventListener("click", () => {
+      state.shuffle = !state.shuffle;
+      // subtle feedback: dim icon background slightly when off
+      shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
+      saveState();
+    });
+
     prevBtn.addEventListener("click", () => {
-      setGif(prevIndex(), { restart: state.playing });
-      if(state.playing){
-        progressStart = Date.now();
-        barFill.style.width = "0%";
-      }
+      showGif(prevIndex(), { restart: state.playing });
+      if(state.playing){ progStart = Date.now(); progress.value = "0"; }
     });
 
     nextBtn.addEventListener("click", () => {
-      setGif(nextIndex(), { restart: state.playing });
-      if(state.playing){
-        progressStart = Date.now();
-        barFill.style.width = "0%";
-      }
+      showGif(nextIndex(), { restart: state.playing });
+      if(state.playing){ progStart = Date.now(); progress.value = "0"; }
     });
 
     playBtn.addEventListener("click", togglePlay);
 
-    shuffleBtn.addEventListener("click", () => {
-      state.shuffle = !state.shuffle;
-      setShuffleUI();
-      saveState(state);
+    // Let the slider act like "scrub" through the timer window
+    progress.addEventListener("input", () => {
+      if(!state.playing) return;
+      // Set progressStart so the bar jumps to where user dragged
+      const pct = clamp(parseInt(progress.value, 10) / 1000, 0, 1);
+      const ms = state.intervalSec * 1000;
+      progStart = Date.now() - Math.round(pct * ms);
     });
 
     intervalSecInput.addEventListener("change", () => {
-      const v = clamp(parseInt(intervalSecInput.value || "10", 10), 2, 120);
+      const v = clamp(parseInt(intervalSecInput.value || "12", 10), 2, 300);
       state.intervalSec = v;
       intervalSecInput.value = String(v);
-      intervalText.textContent = `${v}s`;
-      saveState(state);
+      saveState();
       if(state.playing) startTimers();
     });
 
@@ -776,7 +832,6 @@
       addGif(gifUrlInput.value);
       gifUrlInput.value = "";
     });
-
     gifUrlInput.addEventListener("keydown", (e) => {
       if(e.key === "Enter"){
         e.preventDefault();
@@ -786,46 +841,46 @@
     });
 
     removeCurrentBtn.addEventListener("click", removeCurrent);
-    applyListBtn.addEventListener("click", applyListFromTextarea);
+    applyListBtn.addEventListener("click", applyList);
     resetBtn.addEventListener("click", resetDefaults);
 
-    function wireColorInput(inputEl, key){
-      inputEl.addEventListener("input", () => {
-        state.colors[key] = inputEl.value;
-        applyColors();
-        saveState(state);
-      });
+    wireColor(cPage, "page");
+    wireColor(cCard, "card");
+    wireColor(cBar, "bar");
+    wireColor(cBarText, "barText");
+    wireColor(cProgTrack, "progTrack");
+    wireColor(cProgFill, "progFill");
+
+    // Timestamp: use the viewer's local time (keeps the vibe of the screenshot)
+    function formatStamp(d){
+      const day = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+      const time = d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
+      $("#stampDate").textContent = day;
+      $("#stampTime").textContent = time;
     }
-    wireColorInput(cBg, "bg");
-    wireColorInput(cPanel, "panel");
-    wireColorInput(cText, "text");
-    wireColorInput(cAccent, "accent");
-    wireColorInput(cBtn, "btn");
-    wireColorInput(cBorder, "border");
+    formatStamp(new Date());
+    setInterval(() => formatStamp(new Date()), 30 * 1000);
 
-    // If a GIF fails, show the URL in the title to help debugging and (if playing) skip forward
-    gifImg.addEventListener("error", () => {
-      const cur = state.gifs[state.index];
-      gifTitle.textContent = "Missing GIF: " + (cur?.url || "");
-      if(state.playing && state.gifs.length > 1){
-        setTimeout(() => setGif(nextIndex(), { restart:true }), 700);
-      }
-    });
-
-    // ---------- INIT ----------
+    // Init
     function init(){
       applyColors();
-      setShuffleUI();
+      shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
       intervalSecInput.value = String(state.intervalSec);
       gifListBox.value = state.gifs.map(g => g.url).join("\n");
-      setGif(state.index, { restart:false });
-      updateMeta();
-
+      setPlayIcon();
+      showGif(state.index);
       if(state.playing) play();
       else pause();
     }
 
     init();
+
+    // Cleanup object URLs on unload
+    window.addEventListener("beforeunload", () => {
+      for(const obj of objectUrlCache.values()){
+        try{ URL.revokeObjectURL(obj); }catch(_){}
+      }
+    });
   </script>
 </body>
 </html>

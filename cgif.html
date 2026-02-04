@@ -6,7 +6,6 @@
   <title>GIF Player Widget</title>
   <style>
     :root{
-      /* subtle cream palette */
       --page:#ffffff;
       --card:#fffdf7;
       --media:#f4efe6;
@@ -40,10 +39,7 @@
       color:var(--barText);
     }
 
-    /* "small widget ~ 1/3 page" feel */
-    .wrap{
-      width:min(760px, 92vw);
-    }
+    .wrap{ width:min(760px, 92vw); }
 
     .player{
       border-radius:var(--radius);
@@ -125,12 +121,7 @@
     }
     .btn:hover{ filter:brightness(.99); }
     .btn:active{ transform: translateY(1px); }
-
-    .btn svg{
-      width:18px;
-      height:18px;
-      fill:var(--btnIcon);
-    }
+    .btn svg{ width:18px; height:18px; fill:var(--btnIcon); }
 
     .title{
       font-weight:700;
@@ -341,54 +332,20 @@
           </div>
 
           <div class="grid">
-            <div>
-              <label>Page background</label>
-              <input type="color" id="cPage" value="#ffffff" />
-            </div>
-            <div>
-              <label>Card background</label>
-              <input type="color" id="cCard" value="#fffdf7" />
-            </div>
-            <div>
-              <label>Media background</label>
-              <input type="color" id="cMedia" value="#f4efe6" />
-            </div>
+            <div><label>Page background</label><input type="color" id="cPage" value="#ffffff" /></div>
+            <div><label>Card background</label><input type="color" id="cCard" value="#fffdf7" /></div>
+            <div><label>Media background</label><input type="color" id="cMedia" value="#f4efe6" /></div>
 
-            <div>
-              <label>Bar</label>
-              <input type="color" id="cBar" value="#e7ddcf" />
-            </div>
-            <div>
-              <label>Bar text</label>
-              <input type="color" id="cBarText" value="#3a3226" />
-            </div>
-            <div>
-              <label>Buttons (icon)</label>
-              <input type="color" id="cBtnIcon" value="#3a3226" />
-            </div>
+            <div><label>Bar</label><input type="color" id="cBar" value="#e7ddcf" /></div>
+            <div><label>Bar text</label><input type="color" id="cBarText" value="#3a3226" /></div>
+            <div><label>Buttons (icon)</label><input type="color" id="cBtnIcon" value="#3a3226" /></div>
 
-            <div>
-              <label>Buttons (background)</label>
-              <input type="color" id="cBtnBg" value="#ffffff" />
-            </div>
-            <div>
-              <label>Buttons (border)</label>
-              <input type="color" id="cBtnBorder" value="#d7cdbc" />
-            </div>
-            <div>
-              <label>Slider track</label>
-              <input type="color" id="cSliderTrack" value="#d8cfbf" />
-            </div>
+            <div><label>Buttons (background)</label><input type="color" id="cBtnBg" value="#ffffff" /></div>
+            <div><label>Buttons (border)</label><input type="color" id="cBtnBorder" value="#d7cdbc" /></div>
+            <div><label>Slider track</label><input type="color" id="cSliderTrack" value="#d8cfbf" /></div>
 
-            <div>
-              <label>Slider thumb</label>
-              <input type="color" id="cSliderThumb" value="#ffffff"'
-            />
-            </div>
-            <div>
-              <label>Auto-advance (seconds)</label>
-              <input type="number" id="intervalSec" min="2" max="300" step="1" value="12" />
-            </div>
+            <div><label>Slider thumb</label><input type="color" id="cSliderThumb" value="#ffffff" /></div>
+            <div><label>Auto-advance (seconds)</label><input type="number" id="intervalSec" min="2" max="300" step="1" value="12" /></div>
           </div>
 
           <div class="grid">
@@ -399,7 +356,7 @@
                 <button class="miniBtn" id="addGifUrlBtn" type="button">Add URL</button>
                 <button class="miniBtn" id="removeCurrentBtn" type="button">Remove current</button>
               </div>
-              <div class="hint">URLs can still be blocked by some hosts. Upload is the most reliable.</div>
+              <div class="hint">URLs can be blocked by some hosts. Upload is the most reliable.</div>
             </div>
 
             <div>
@@ -408,7 +365,7 @@
               <div class="row" style="margin-top:8px;">
                 <button class="miniBtn" id="addGifFileBtn" type="button">Add file</button>
               </div>
-              <div class="hint">Stored locally in your browser (per user). Not shared with others.</div>
+              <div class="hint" id="uploadHint">Saved locally if small enough.</div>
             </div>
           </div>
 
@@ -417,7 +374,7 @@
             <textarea id="gifListBox" spellcheck="false"></textarea>
             <div class="row" style="margin-top:8px;">
               <button class="miniBtn" id="applyListBtn" type="button">Apply list</button>
-              <button class="miniBtn" id="clearUploadsBtn" type="button">Clear uploaded files</button>
+              <button class="miniBtn" id="clearUploadsBtn" type="button">Clear uploaded</button>
             </div>
             <div class="hint">This widget is isolated per GitHub Pages path + per browser profile.</div>
           </div>
@@ -428,70 +385,21 @@
   </div>
 
 <script>
-  /**
-   * ✅ BEST RELIABILITY: ship default.gif with your GitHub Pages repo.
-   * Put the file next to index.html as "default.gif".
-   */
-  const DEFAULT_GIF_PATH = "./default.gif"; // <-- put your uploaded GIF here in the repo
+  const DEFAULT_GIF_PATH = "./default.gif";   // default in your repo
   const DEFAULT_TITLE = "GIF Player";
 
-  // Per-embed isolation (each GitHub Pages path has its own state)
-  const STORAGE_KEY = "gif_player_widget_v8:" + location.pathname;
+  const STORAGE_KEY = "gif_player_widget_v9:" + location.pathname;
 
-  // IndexedDB for uploaded blobs (per-user, per-browser)
-  const DB_NAME = "gif_player_uploads_v1";
-  const DB_STORE = "gifs";
-
-  function openDB(){
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(DB_STORE)) {
-          db.createObjectStore(DB_STORE, { keyPath: "id" });
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function dbPut(record){
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(DB_STORE, "readwrite");
-      tx.objectStore(DB_STORE).put(record);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  async function dbGet(id){
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(DB_STORE, "readonly");
-      const req = tx.objectStore(DB_STORE).get(id);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function dbClear(){
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(DB_STORE, "readwrite");
-      tx.objectStore(DB_STORE).clear();
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-  }
+  // ~5MB typical limit; keep a safer cap for the whole widget
+  const MAX_DATAURL_BYTES = 2.8 * 1024 * 1024; // ~2.8MB for a single uploaded gif
+  const uploadHint = document.getElementById("uploadHint");
 
   function $(s){ return document.querySelector(s); }
   const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
 
   let state = {
     gifs: [
-      { title: DEFAULT_TITLE, type: "path", value: DEFAULT_GIF_PATH } // path in repo
+      { title: DEFAULT_TITLE, type: "path", value: DEFAULT_GIF_PATH }
     ],
     index: 0,
     playing: true,
@@ -503,15 +411,14 @@
       media:"#f4efe6",
       bar:"#e7ddcf",
       barText:"#3a3226",
-      btnBg:"#ffffff",
-      btnBorder:"#d7cdbc",
+      btnBg:"rgba(255,255,255,.65)",
+      btnBorder:"rgba(58,50,38,.18)",
       btnIcon:"#3a3226",
-      sliderTrack:"#d8cfbf",
+      sliderTrack:"rgba(58,50,38,.16)",
       sliderThumb:"#ffffff"
     }
   };
 
-  // restore
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw){
@@ -527,22 +434,27 @@
   }catch(_){}
 
   function save(){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){}
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){
+      // If storage is full, still work live; just can’t persist large uploads.
+    }
   }
 
-  // UI
   const gifImg = $("#gifImg");
   const canvas = $("#freezeCanvas");
   const ctx = canvas.getContext("2d");
 
   const playIcon = $("#playIcon");
   const pauseIcon = $("#pauseIcon");
-
-  const countBadge = $("#countBadge");
   const modeBadge = $("#modeBadge");
+  const countBadge = $("#countBadge");
   const titleEl = $("#trackTitle");
-
   const progress = $("#progress");
+
+  const gifUrlInput = $("#gifUrlInput");
+  const gifFileInput = $("#gifFileInput");
+  const gifListBox = $("#gifListBox");
+  const intervalSecEl = $("#intervalSec");
 
   // color inputs
   const cPage = $("#cPage");
@@ -555,16 +467,6 @@
   const cBtnIcon = $("#cBtnIcon");
   const cSliderTrack = $("#cSliderTrack");
   const cSliderThumb = $("#cSliderThumb");
-  const intervalSec = $("#intervalSec");
-
-  const gifUrlInput = $("#gifUrlInput");
-  const addGifUrlBtn = $("#addGifUrlBtn");
-  const gifFileInput = $("#gifFileInput");
-  const addGifFileBtn = $("#addGifFileBtn");
-  const removeCurrentBtn = $("#removeCurrentBtn");
-  const gifListBox = $("#gifListBox");
-  const applyListBtn = $("#applyListBtn");
-  const clearUploadsBtn = $("#clearUploadsBtn");
 
   function applyColors(){
     document.documentElement.style.setProperty("--page", state.colors.page);
@@ -573,7 +475,7 @@
     document.documentElement.style.setProperty("--bar", state.colors.bar);
     document.documentElement.style.setProperty("--barText", state.colors.barText);
 
-    // Convert solid hex into rgba-ish for btnBg if needed (we just use it directly)
+    // For these we set variables used in CSS
     document.documentElement.style.setProperty("--btnBg", state.colors.btnBg);
     document.documentElement.style.setProperty("--btnBorder", state.colors.btnBorder);
     document.documentElement.style.setProperty("--btnIcon", state.colors.btnIcon);
@@ -586,13 +488,13 @@
     cMedia.value = state.colors.media;
     cBar.value = state.colors.bar;
     cBarText.value = state.colors.barText;
-    cBtnBg.value = state.colors.btnBg;
-    cBtnBorder.value = state.colors.btnBorder;
+
+    // These are "colors", but in CSS we used rgba defaults.
+    // We'll store them as hex when user changes them.
     cBtnIcon.value = state.colors.btnIcon;
-    cSliderTrack.value = state.colors.sliderTrack;
     cSliderThumb.value = state.colors.sliderThumb;
 
-    intervalSec.value = String(state.intervalSec);
+    intervalSecEl.value = String(state.intervalSec);
   }
 
   function setPlayUI(){
@@ -626,11 +528,9 @@
     const rect = gifImg.getBoundingClientRect();
     canvas.width = Math.max(1, Math.round(rect.width));
     canvas.height = Math.max(1, Math.round(rect.height));
-    try{
-      ctx.drawImage(gifImg, 0, 0, canvas.width, canvas.height);
-    }catch(_){
-      return false;
-    }
+    try{ ctx.drawImage(gifImg, 0, 0, canvas.width, canvas.height); }
+    catch(_){ return false; }
+
     gifImg.style.display = "none";
     canvas.style.display = "block";
     return true;
@@ -642,23 +542,12 @@
     return u + sep + "v=" + Date.now().toString(36);
   }
 
-  let objectURLs = new Map(); // id -> objectURL (for uploaded blobs), in-memory
-
   async function resolveSrc(item){
-    if(item.type === "path"){
-      return item.value; // same-origin file in repo
-    }
-    if(item.type === "url"){
+    if(item.type === "path" || item.type === "url"){
       return item.value;
     }
-    if(item.type === "upload"){
-      // load from IndexedDB, create object URL
-      if(objectURLs.has(item.value)) return objectURLs.get(item.value);
-      const rec = await dbGet(item.value);
-      if(!rec || !rec.blob) return ""; // missing
-      const obj = URL.createObjectURL(rec.blob);
-      objectURLs.set(item.value, obj);
-      return obj;
+    if(item.type === "dataurl"){
+      return item.value;
     }
     return "";
   }
@@ -680,17 +569,12 @@
     unfreeze();
 
     let src = await resolveSrc(cur);
-    if(!src){
-      // fallback to default path if something went missing
-      src = DEFAULT_GIF_PATH;
-    }
+    if(!src) src = DEFAULT_GIF_PATH;
 
-    // Always re-assign src with cachebust so it visibly animates/restarts in embeds
     gifImg.src = restart ? cacheBust(src) : src;
 
-    // keep textarea in sync
     gifListBox.value = state.gifs.map(g => {
-      if(g.type === "upload") return `upload:${g.value}`; // stable reference
+      if(g.type === "dataurl") return "dataurl:(uploaded)";
       return g.value;
     }).join("\n");
 
@@ -704,35 +588,29 @@
     if(total <= 1) return state.index;
     if(state.shuffle){
       let n = state.index;
-      for(let t=0;t<12 && n===state.index;t++){
-        n = Math.floor(Math.random()*total);
-      }
+      for(let t=0;t<12 && n===state.index;t++) n = Math.floor(Math.random()*total);
       return n === state.index ? (state.index+1)%total : n;
     }
     return (state.index + 1) % total;
   }
-
   function prevIndex(){
     const total = state.gifs.length;
     if(total <= 1) return state.index;
     if(state.shuffle){
       let n = state.index;
-      for(let t=0;t<12 && n===state.index;t++){
-        n = Math.floor(Math.random()*total);
-      }
+      for(let t=0;t<12 && n===state.index;t++) n = Math.floor(Math.random()*total);
       return n === state.index ? (state.index-1+total)%total : n;
     }
     return (state.index - 1 + total) % total;
   }
 
-  // auto-advance / progress
   let tickTimer=null, progTimer=null, progStart=0;
 
   function stopTimers(){
     if(tickTimer) clearInterval(tickTimer);
     if(progTimer) clearInterval(progTimer);
     tickTimer=null; progTimer=null;
-    progress.value = "0";
+    progress.value="0";
   }
 
   function startTimers(){
@@ -749,8 +627,8 @@
 
     progTimer = setInterval(() => {
       const ms = state.intervalSec * 1000;
-      const pct = clamp((Date.now() - progStart) / ms, 0, 1);
-      progress.value = String(Math.round(pct * 1000));
+      const pct = clamp((Date.now()-progStart)/ms, 0, 1);
+      progress.value = String(Math.round(pct*1000));
     }, 80);
   }
 
@@ -766,49 +644,45 @@
     state.playing = false;
     stopTimers();
     setPlayUI();
-    // freeze if possible; if not, just leave playing image (still looks fine)
     freezeIfPossible();
     save();
   }
 
-  // Events
+  // Buttons
   $("#shuffleBtn").addEventListener("click", () => {
     state.shuffle = !state.shuffle;
     $("#shuffleBtn").style.opacity = state.shuffle ? "1" : ".72";
     save();
   });
-
   $("#prevBtn").addEventListener("click", () => {
     state.index = prevIndex();
     showCurrent({restart:true});
-    if(state.playing){ progStart = Date.now(); progress.value = "0"; }
+    if(state.playing){ progStart = Date.now(); progress.value="0"; }
   });
-
   $("#nextBtn").addEventListener("click", () => {
     state.index = nextIndex();
     showCurrent({restart:true});
-    if(state.playing){ progStart = Date.now(); progress.value = "0"; }
+    if(state.playing){ progStart = Date.now(); progress.value="0"; }
   });
-
   $("#playBtn").addEventListener("click", () => {
     state.playing ? pause() : play();
   });
 
   progress.addEventListener("input", () => {
     if(!state.playing) return;
-    const pct = clamp(parseInt(progress.value,10)/1000,0,1);
+    const pct = clamp(parseInt(progress.value,10)/1000, 0, 1);
     const ms = state.intervalSec * 1000;
-    progStart = Date.now() - Math.round(pct * ms);
+    progStart = Date.now() - Math.round(pct*ms);
   });
 
-  intervalSec.addEventListener("change", () => {
-    const v = clamp(parseInt(intervalSec.value || "12", 10), 2, 300);
+  intervalSecEl.addEventListener("change", () => {
+    const v = clamp(parseInt(intervalSecEl.value || "12", 10), 2, 300);
     state.intervalSec = v;
     save();
     if(state.playing) startTimers();
   });
 
-  // Color wiring
+  // Colors
   function wireColor(el, key){
     el.addEventListener("input", () => {
       state.colors[key] = el.value;
@@ -821,14 +695,28 @@
   wireColor(cMedia, "media");
   wireColor(cBar, "bar");
   wireColor(cBarText, "barText");
-  wireColor(cBtnBg, "btnBg");
-  wireColor(cBtnBorder, "btnBorder");
   wireColor(cBtnIcon, "btnIcon");
-  wireColor(cSliderTrack, "sliderTrack");
   wireColor(cSliderThumb, "sliderThumb");
 
+  // These are better stored as rgba-ish via hex, so we map them:
+  cBtnBg.addEventListener("input", () => {
+    state.colors.btnBg = cBtnBg.value;
+    document.documentElement.style.setProperty("--btnBg", state.colors.btnBg);
+    save();
+  });
+  cBtnBorder.addEventListener("input", () => {
+    state.colors.btnBorder = cBtnBorder.value;
+    document.documentElement.style.setProperty("--btnBorder", state.colors.btnBorder);
+    save();
+  });
+  cSliderTrack.addEventListener("input", () => {
+    state.colors.sliderTrack = cSliderTrack.value;
+    document.documentElement.style.setProperty("--sliderTrack", state.colors.sliderTrack);
+    save();
+  });
+
   // Add URL
-  addGifUrlBtn.addEventListener("click", () => {
+  $("#addGifUrlBtn").addEventListener("click", () => {
     const url = (gifUrlInput.value || "").trim();
     if(!url) return;
     state.gifs.push({ title: `GIF ${state.gifs.length+1}`, type:"url", value:url });
@@ -838,35 +726,60 @@
     showCurrent({restart:true});
   });
 
-  // Upload file -> store blob in IndexedDB
-  addGifFileBtn.addEventListener("click", async () => {
+  // Upload file => Data URL
+  async function fileToDataURL(file){
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = () => reject(fr.error);
+      fr.readAsDataURL(file);
+    });
+  }
+
+  $("#addGifFileBtn").addEventListener("click", async () => {
     const file = gifFileInput.files && gifFileInput.files[0];
     if(!file) return;
 
-    const id = "up_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
-    await dbPut({ id, blob: file, name: file.name, createdAt: Date.now() });
-
-    state.gifs.push({ title: file.name || `Upload ${state.gifs.length+1}`, type:"upload", value:id });
+    // Always show immediately via object URL (works even if too big to store)
+    const tempUrl = URL.createObjectURL(file);
+    state.gifs.push({ title: file.name || `Upload ${state.gifs.length+1}`, type:"url", value: tempUrl });
     state.index = state.gifs.length - 1;
-    gifFileInput.value = "";
-    save();
     showCurrent({restart:true});
+
+    // Try to persist as Data URL if small enough
+    try{
+      const dataUrl = await fileToDataURL(file);
+      const approxBytes = Math.floor((dataUrl.length * 3) / 4); // base64 estimate
+      if(approxBytes <= MAX_DATAURL_BYTES){
+        // replace the temp object URL entry with a data url entry
+        state.gifs[state.index] = { title: file.name || `Upload ${state.gifs.length}`, type:"dataurl", value: dataUrl };
+        save();
+        uploadHint.textContent = "Saved locally ✔";
+      }else{
+        uploadHint.textContent = "Too large to save — will work this session only.";
+      }
+    }catch(_){
+      uploadHint.textContent = "Couldn’t save — will work this session only.";
+    } finally {
+      gifFileInput.value = "";
+    }
   });
 
   // Remove current
-  removeCurrentBtn.addEventListener("click", () => {
+  $("#removeCurrentBtn").addEventListener("click", () => {
     if(!state.gifs.length) return;
-    const removed = state.gifs.splice(state.index, 1)[0];
+    state.gifs.splice(state.index, 1);
     state.index = clamp(state.index, 0, Math.max(0, state.gifs.length - 1));
+    if(!state.gifs.length){
+      state.gifs = [{ title: DEFAULT_TITLE, type:"path", value: DEFAULT_GIF_PATH }];
+      state.index = 0;
+    }
     save();
     showCurrent({restart:true});
   });
 
-  // Apply list (supports:
-  // - normal URLs
-  // - local repo paths like ./my.gif or assets/thing.gif
-  // - upload references like upload:up_abc123
-  applyListBtn.addEventListener("click", () => {
+  // Apply list (URLs/paths only; dataurl placeholders stay)
+  $("#applyListBtn").addEventListener("click", () => {
     const lines = (gifListBox.value || "")
       .split("\n").map(s => s.trim()).filter(Boolean);
 
@@ -879,11 +792,7 @@
     }
 
     state.gifs = lines.map((line, i) => {
-      if(line.startsWith("upload:")){
-        return { title: `Upload ${i+1}`, type:"upload", value: line.slice("upload:".length) };
-      }
-      // treat anything that looks like http(s) as url, else as path
-      const isUrl = /^https?:\/\//i.test(line);
+      const isUrl = /^https?:\/\//i.test(line) || line.startsWith("blob:");
       return { title: `GIF ${i+1}`, type: isUrl ? "url" : "path", value: line };
     });
 
@@ -892,30 +801,24 @@
     showCurrent({restart:true});
   });
 
-  // Clear uploads from IndexedDB + remove upload entries
-  clearUploadsBtn.addEventListener("click", async () => {
-    await dbClear();
-    // revoke in-memory objectURLs
-    for(const obj of objectURLs.values()){
-      try{ URL.revokeObjectURL(obj); }catch(_){}
-    }
-    objectURLs.clear();
-
-    state.gifs = state.gifs.filter(g => g.type !== "upload");
+  // Clear uploaded (remove dataurl + blob entries)
+  $("#clearUploadsBtn").addEventListener("click", () => {
+    state.gifs = state.gifs.filter(g => g.type !== "dataurl" && !String(g.value||"").startsWith("blob:"));
     if(!state.gifs.length){
       state.gifs = [{ title: DEFAULT_TITLE, type:"path", value: DEFAULT_GIF_PATH }];
+      state.index = 0;
+    } else {
+      state.index = clamp(state.index, 0, state.gifs.length - 1);
     }
-    state.index = 0;
+    uploadHint.textContent = "Cleared uploaded ✔";
     save();
     showCurrent({restart:true});
   });
 
   // Timestamp
   function formatStamp(d){
-    const day = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
-    const time = d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
-    $("#stampDate").textContent = day;
-    $("#stampTime").textContent = time;
+    $("#stampDate").textContent = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+    $("#stampTime").textContent = d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
   }
   formatStamp(new Date());
   setInterval(() => formatStamp(new Date()), 30*1000);
@@ -927,7 +830,6 @@
   updateBadges();
   showCurrent({restart:true});
   if(state.playing) startTimers();
-
 </script>
 </body>
 </html>

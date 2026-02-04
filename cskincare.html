@@ -16,25 +16,22 @@
       --border: rgba(var(--border-rgb), var(--border-a));
       --shadow: 0 12px 34px rgba(20, 20, 20, 0.08);
 
-      --surface-a: 0.78; /* pills */
+      --surface-a: 0.78;
       --panel-a: 0.92;
 
       --btn-a: 0.92;
       --btn-border-a: 0.10;
       --btn-ink: rgba(43,43,43,0.72);
 
-      --accent: #cbb8ae; /* selection ring + theme dot */
+      --accent: #cbb8ae;
 
-      /* overlay */
       --overlay-base: #ffffff;
       --overlay-a: 0.34;
 
-      /* Board background */
       --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
 
-      /* Day cards + blocks + inputs */
       --day-bg: #ffffff;
       --day-bg-a: 0.94;
 
@@ -44,42 +41,34 @@
       --input-bg: #ffffff;
       --input-bg-a: 0.96;
 
-      /* Header + step tile themeables */
-      --header-bg: #ffffff;      /* header strip color */
-      --step-bg: #ffffff;        /* step tile base color */
+      --header-bg: #ffffff;
+      --step-bg: #ffffff;
       --step-bg-rgb: 255,255,255;
-      --step-bg-a: 0.78;         /* step tile opacity */
+      --step-bg-a: 0.78;
 
-      /* Layout */
+      /* ✅ “fit-in-one-frame” responsive spacing */
       --board-radius: 26px;
       --radius: 22px;
 
-      --page-max: 1400px;
-      --gap: 18px;
-      --pad: 18px;
+      --page-max: 1600px;
 
-      /* ✅ KEY: roomy cards without horizontal scroll
-         This is the minimum width each day card is allowed to be.
-         If the screen is too narrow for 7 cards, they wrap to new rows (still one frame, no horizontal scrollbar). */
-      --card-min-w: 300px;
+      --gap: clamp(10px, 1.0vw, 18px);
+      --pad: clamp(10px, 1.1vw, 18px);
+
+      --h1: clamp(16px, 1.25vw, 20px);
+      --sub: clamp(12px, 1.0vw, 14px);
+
+      --label: clamp(10px, 0.85vw, 12px);
+      --text: clamp(12px, 0.95vw, 15px);
+
+      --input-pad: clamp(9px, 0.9vw, 12px) clamp(9px, 0.9vw, 12px);
+      --input-radius: 14px;
+
+      --header-pad: clamp(10px, 0.9vw, 14px) clamp(10px, 1.0vw, 16px);
+      --chip-pad: 8px 12px;
 
       --day-min-h: 520px;
 
-      --h1: 20px;
-      --sub: 14px;
-
-      --label: 12px;
-      --text: 15px;
-
-      --input-pad: 12px 12px;
-      --input-radius: 14px;
-
-      --header-pad: 14px 16px;
-      --chip-pad: 8px 12px;
-
-      --max-lines: 6;
-
-      /* Skincare toggle colors */
       --am-empty: #eae6e2;
       --am-filled: #cbb8ae;
       --pm-empty: #eae6e2;
@@ -91,7 +80,7 @@
     html, body{
       width: 100%;
       max-width: 100%;
-      overflow-x: hidden !important; /* ✅ no sideways */
+      overflow-x: hidden !important;
     }
 
     body{
@@ -103,8 +92,8 @@
 
     .wrap{
       max-width: var(--page-max);
-      margin: 26px auto;
-      padding: 18px;
+      margin: 22px auto;
+      padding: clamp(12px, 1.2vw, 18px);
     }
 
     .titlebar{
@@ -120,7 +109,7 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-width: 260px;
+      min-width: 240px;
     }
 
     h1{
@@ -196,7 +185,6 @@
       display: none;
       z-index: 50;
 
-      /* ✅ if long, scroll */
       max-height: min(70vh, 640px);
       overflow: auto;
     }
@@ -310,7 +298,7 @@
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: rgba(255,255,255,0.34); /* overridden by JS */
+      background: rgba(255,255,255,0.34);
     }
 
     .board-tint{
@@ -326,37 +314,16 @@
       backdrop-filter: blur(2px);
     }
 
-    /* ✅ REPLACED: no horizontal scrolling, no squishing.
-       We keep a roomy minimum card width, and wrap to new rows if needed. */
+    /* ✅ THE FIX:
+       7 columns ALWAYS, but allowed to shrink (minmax(0,1fr))
+       so the whole week fits the board with no horizontal scroll and no cut-off. */
     .grid{
       display: grid;
-      grid-template-columns: repeat(7, minmax(var(--card-min-w), 1fr));
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: var(--gap);
       padding: var(--pad);
-
-      /* no horizontal scroll bar */
-      overflow-x: hidden;
+      overflow: hidden; /* no scrollbar */
       max-width: 100%;
-
-      /* allow wrapping by letting grid overflow become multiple rows on smaller screens */
-      justify-content: start;
-    }
-
-    /* When the container can't fit 7 roomy cards, drop columns (still roomy, still no sideways scroll) */
-    @media (max-width: 1900px){
-      .grid{ grid-template-columns: repeat(4, minmax(var(--card-min-w), 1fr)); }
-    }
-    @media (max-width: 1400px){
-      .grid{ grid-template-columns: repeat(3, minmax(var(--card-min-w), 1fr)); }
-    }
-    @media (max-width: 1040px){
-      :root{ --card-min-w: 280px; }
-      .grid{ grid-template-columns: repeat(2, minmax(var(--card-min-w), 1fr)); }
-      .week-label{ min-width: 160px; }
-    }
-    @media (max-width: 640px){
-      :root{ --card-min-w: 0px; }
-      .grid{ grid-template-columns: 1fr; }
     }
 
     .day{
@@ -368,12 +335,12 @@
       display: flex;
       flex-direction: column;
       position: relative;
-      min-width: 0; /* prevents text causing overflow */
+      min-width: 0; /* critical for shrink */
       min-height: var(--day-min-h);
     }
 
     .day.selected{
-      outline: 4px solid rgba(0,0,0,0); /* set by JS */
+      outline: 4px solid rgba(0,0,0,0);
       outline-offset: 3px;
     }
 
@@ -396,19 +363,19 @@
     }
     .day-name{
       font-weight: 850;
-      font-size: 15px;
+      font-size: clamp(12px, 0.95vw, 15px);
       letter-spacing: 0.15px;
       white-space: nowrap;
     }
     .day-date{
-      font-size: 13px;
+      font-size: clamp(11px, 0.9vw, 13px);
       color: var(--muted);
       font-weight: 650;
       white-space: nowrap;
     }
 
     .today-chip{
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -421,10 +388,10 @@
     }
 
     .day-body{
-      padding: 16px 16px 18px;
+      padding: clamp(10px, 1.0vw, 16px);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: clamp(10px, 0.9vw, 14px);
       flex: 1;
       min-height: 0;
       min-width: 0;
@@ -432,7 +399,7 @@
 
     .block{
       border-radius: 18px;
-      padding: 14px;
+      padding: clamp(10px, 0.9vw, 14px);
       border: 1px dashed rgba(var(--border-rgb), 0.14);
       background: rgba(255,255,255, var(--block-bg-a));
       min-width: 0;
@@ -441,7 +408,7 @@
     .block .label{
       font-size: var(--label);
       color: var(--muted);
-      margin-bottom: 12px;
+      margin-bottom: clamp(8px, 0.8vw, 12px);
       font-weight: 800;
       letter-spacing: .03em;
       text-transform: uppercase;
@@ -452,7 +419,7 @@
     }
 
     .subpill{
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -462,25 +429,26 @@
       border-radius: 999px;
       color: rgba(43,43,43,0.70);
       user-select: none;
+      white-space: nowrap;
     }
 
     .routine{
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: clamp(8px, 0.75vw, 12px);
       min-width: 0;
     }
 
     .step{
       display: grid;
-      grid-template-columns: 28px 1fr;
+      grid-template-columns: 22px 1fr; /* slightly smaller */
       align-items: center;
-      gap: 12px;
+      gap: clamp(8px, 0.75vw, 12px);
       border-radius: 16px;
       border: 1px solid rgba(var(--border-rgb), 0.10);
       box-shadow: 0 10px 24px rgba(20,20,20,0.05);
       background: rgba(var(--step-bg-rgb), var(--step-bg-a));
-      padding: 12px 12px;
+      padding: clamp(9px, 0.8vw, 12px);
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
@@ -489,9 +457,9 @@
     .step:active{ transform: translateY(1px); }
 
     .tick{
-      width: 24px;
-      height: 24px;
-      border-radius: 10px;
+      width: 20px;
+      height: 20px;
+      border-radius: 9px;
       border: 1px solid rgba(var(--border-rgb), 0.12);
       background: var(--empty);
       box-shadow: 0 8px 18px rgba(20,20,20,0.05);
@@ -502,7 +470,7 @@
     }
 
     .step-text{
-      font-size: 14px;
+      font-size: clamp(11px, 0.9vw, 14px);
       color: rgba(43,43,43,0.90);
       font-weight: 750;
       line-height: 1.25;
@@ -522,15 +490,14 @@
       font-size: var(--text);
       line-height: 1.35;
       resize: vertical;
-      min-height: 84px;
-      max-height: 240px;
+      min-height: 76px;
+      max-height: 220px;
     }
     textarea:focus{
       border-color: rgba(var(--border-rgb), 0.18);
       box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
     }
 
-    /* Confetti canvas */
     #confetti{
       position: fixed;
       inset: 0;
@@ -541,18 +508,8 @@
       display: none;
     }
 
-    /* Routine editor */
-    .list{
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .line{
-      display: grid;
-      grid-template-columns: 1fr 44px;
-      gap: 10px;
-      align-items: stretch;
-    }
+    .list{ display: flex; flex-direction: column; gap: 10px; }
+    .line{ display: grid; grid-template-columns: 1fr 44px; gap: 10px; align-items: stretch; }
     .line input[type="text"]{
       width: 100%;
       border: 1px solid rgba(var(--border-rgb), 0.10);
@@ -1429,7 +1386,7 @@
       }
 
       selectDay(selectedDayIso);
-      /* ✅ IMPORTANT: removed scrollIntoView so the page doesn't jump or get shoved left in embeds */
+      /* stays put */
     }
 
     /* =========================

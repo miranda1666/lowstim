@@ -346,7 +346,6 @@
           </div>
 
           <div class="track">
-            <div class="trackTitle" id="trackTitle">It started Raining…</div>
           </div>
         </div>
 
@@ -358,14 +357,12 @@
       <details class="customize">
         <summary>
           <span>Customize</span>
-          <span class="hint" style="margin:0;">colors • gifs • timing</span>
         </summary>
 
         <div class="panel">
           <div class="statusLine">
             <span class="badge" id="countBadge">1 / 1</span>
             <span class="badge" id="modeBadge">Paused</span>
-            <span class="badge" id="pauseSupportBadge">Pause: best effort</span>
           </div>
 
           <div class="grid">
@@ -379,7 +376,7 @@
             </div>
             <div class="field">
               <label>Bar color</label>
-              <input type="color" id="cBar" value="#6bb7b7" />
+              <input type="color" id="cBar" value="#fff5f5" />
             </div>
             <div class="field">
               <label>Bar text</label>
@@ -399,7 +396,6 @@
             <div class="field">
               <label>Auto-advance (seconds)</label>
               <input type="number" id="intervalSec" min="2" max="300" step="1" value="12" />
-              <div class="hint">When playing, it switches to the next GIF on this timer.</div>
             </div>
 
             <div class="field" style="grid-column: span 2;">
@@ -411,7 +407,6 @@
                 <button class="miniBtn" id="resetBtn" type="button">Reset to single default</button>
               </div>
               <div class="hint">
-                If a GIF host blocks cross-origin fetching, the GIF will still show, but “pause” may not freeze the current frame.
               </div>
             </div>
           </div>
@@ -471,9 +466,9 @@
       colors: {
         page: "#fbfaf6",
         card: "#ffffff",
-        bar:  "#6bb7b7",
+        bar:  "#fff5f5",
         barText: "#ffffff",
-        progTrack: "#d7f0f0",
+        progTrack: "#e0d6d6",
         progFill: "#ffffff"
       }
     };

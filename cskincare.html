@@ -58,8 +58,10 @@
       --gap: 18px;
       --pad: 18px;
 
-      /* IMPORTANT: fit in one frame (no horizontal scroll) */
-      --card-min-w: 260px; /* lower so 7 columns can fit more often */
+      /* ✅ KEY: roomy cards without horizontal scroll
+         This is the minimum width each day card is allowed to be.
+         If the screen is too narrow for 7 cards, they wrap to new rows (still one frame, no horizontal scrollbar). */
+      --card-min-w: 300px;
 
       --day-min-h: 520px;
 
@@ -85,13 +87,13 @@
     }
 
     *{ box-sizing: border-box; }
+
     html, body{
       width: 100%;
       max-width: 100%;
-      overflow-x: hidden; /* no sideways */
-      height: auto;
-      min-height: 0;
+      overflow-x: hidden !important; /* ✅ no sideways */
     }
+
     body{
       margin: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
@@ -194,7 +196,7 @@
       display: none;
       z-index: 50;
 
-      /* If too long, scroll */
+      /* ✅ if long, scroll */
       max-height: min(70vh, 640px);
       overflow: auto;
     }
@@ -324,27 +326,37 @@
       backdrop-filter: blur(2px);
     }
 
-    /* ✅ FIT-IN-FRAME GRID (NO HORIZONTAL SCROLLBAR) */
+    /* ✅ REPLACED: no horizontal scrolling, no squishing.
+       We keep a roomy minimum card width, and wrap to new rows if needed. */
     .grid{
       display: grid;
+      grid-template-columns: repeat(7, minmax(var(--card-min-w), 1fr));
       gap: var(--gap);
       padding: var(--pad);
-      overflow-x: hidden; /* ensure no horizontal bar */
+
+      /* no horizontal scroll bar */
+      overflow-x: hidden;
       max-width: 100%;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-      align-items: stretch;
+
+      /* allow wrapping by letting grid overflow become multiple rows on smaller screens */
+      justify-content: start;
     }
 
-    /* On narrower screens, wrap into fewer columns (still no horizontal scroll) */
-    @media (max-width: 1200px){
-      .grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    /* When the container can't fit 7 roomy cards, drop columns (still roomy, still no sideways scroll) */
+    @media (max-width: 1900px){
+      .grid{ grid-template-columns: repeat(4, minmax(var(--card-min-w), 1fr)); }
     }
-    @media (max-width: 900px){
-      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (max-width: 1400px){
+      .grid{ grid-template-columns: repeat(3, minmax(var(--card-min-w), 1fr)); }
     }
-    @media (max-width: 620px){
+    @media (max-width: 1040px){
+      :root{ --card-min-w: 280px; }
+      .grid{ grid-template-columns: repeat(2, minmax(var(--card-min-w), 1fr)); }
+      .week-label{ min-width: 160px; }
+    }
+    @media (max-width: 640px){
+      :root{ --card-min-w: 0px; }
       .grid{ grid-template-columns: 1fr; }
-      .week-label{ min-width: 140px; }
     }
 
     .day{
@@ -355,9 +367,9 @@
       box-shadow: 0 10px 26px rgba(20,20,20,0.06);
       display: flex;
       flex-direction: column;
-      min-width: 0; /* important: prevents overflow */
-      min-height: var(--day-min-h);
       position: relative;
+      min-width: 0; /* prevents text causing overflow */
+      min-height: var(--day-min-h);
     }
 
     .day.selected{
@@ -1417,7 +1429,7 @@
       }
 
       selectDay(selectedDayIso);
-      // Removed scrollIntoView to avoid weird jumps in Notion embeds.
+      /* ✅ IMPORTANT: removed scrollIntoView so the page doesn't jump or get shoved left in embeds */
     }
 
     /* =========================

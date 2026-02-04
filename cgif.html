@@ -7,14 +7,13 @@
 
   <style>
     :root{
-      /* subtle creams */
-      --page:#ffffff;                 /* pure white */
-      --card:#fffdf7;                 /* warm cream */
+      --page:#ffffff;            /* pure white */
+      --card:#fffdf7;            /* warm cream */
       --stroke:rgba(80,60,20,.08);
       --shadow: 0 18px 60px rgba(40, 30, 10, .10);
 
-      --bar:#e7ddcf;                  /* cream bar */
-      --barText:#3a3226;              /* cocoa text */
+      --bar:#e7ddcf;             /* cream bar */
+      --barText:#3a3226;         /* cocoa text */
       --iconBg:rgba(255,255,255,.60);
       --iconBd:rgba(58,50,38,.18);
 
@@ -55,13 +54,24 @@
       width:100%;
       overflow:hidden;
     }
-    .media img, .media canvas{
+
+    /* renderer layers */
+    .layer{
+      position:absolute;
+      inset:0;
       width:100%;
       height:100%;
-      object-fit:cover;
-      display:block;
+      border:0;
+      display:none;
     }
-    .media canvas{ display:none; }
+
+    img.layer{
+      object-fit:cover;
+    }
+
+    iframe.layer{
+      background: #f3efe7;
+    }
 
     .stamp{
       position:absolute;
@@ -79,22 +89,6 @@
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,.18);
       backdrop-filter: blur(6px);
-    }
-
-    .errorToast{
-      position:absolute;
-      top:14px;
-      left:14px;
-      right:14px;
-      padding:10px 12px;
-      border-radius:14px;
-      background: rgba(255,255,255,.82);
-      border: 1px solid rgba(80,60,20,.12);
-      color: rgba(58,50,38,.88);
-      font-size: 12px;
-      font-weight: 650;
-      box-shadow: 0 10px 26px rgba(0,0,0,.10);
-      display:none;
     }
 
     .bar{
@@ -298,9 +292,9 @@
   <div class="wrap">
     <div class="player">
       <div class="media">
-        <div class="errorToast" id="errToast"></div>
-        <img id="gifImg" alt="GIF" />
-        <canvas id="freezeCanvas"></canvas>
+
+        <iframe id="giphyFrame" class="layer" title="GIF"></iframe>
+        <img id="gifImg" class="layer" alt="GIF" />
 
         <div class="stamp">
           <div id="stampDate"></div>
@@ -393,8 +387,8 @@
             </div>
 
             <div class="field" style="grid-column: span 2;">
-              <label>Add a GIF URL</label>
-              <input type="text" id="gifUrlInput" placeholder="https://.../my.gif" />
+              <label>Add a GIF URL (Giphy or direct .gif)</label>
+              <input type="text" id="gifUrlInput" placeholder="https://giphy.com/gifs/... or https://.../file.gif" />
               <div class="rowBtns" style="margin-top:8px;">
                 <button class="miniBtn" id="addGifBtn" type="button">Add</button>
                 <button class="miniBtn" id="removeCurrentBtn" type="button">Remove current</button>
@@ -415,51 +409,20 @@
   </div>
 
   <script>
-    // Use a reliable direct GIF endpoint as the default (this is the key fix).
-    // If any variant fails, we automatically try others.
-    const DEFAULT_GIF_ID = "Dsvz9D6FBdmk8";
+    // ✅ Default: your GIF
+    const DEFAULT_URL = "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGgzaXVjaXR6YmxiZ280M3l3ZTlrdTE4bWxtMHF4cGgyeHg5MzFsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Dsvz9D6FBdmk8/giphy.gif";
     const DEFAULT_TITLE = "It started Raining…";
 
-    function giphyCandidatesFromId(id){
-      const clean = String(id || "").trim();
-      return [
-        `https://i.giphy.com/${clean}.gif`,
-        `https://media.giphy.com/media/${clean}/giphy.gif`,
-        `https://media1.giphy.com/media/${clean}/giphy.gif`,
-        `https://media2.giphy.com/media/${clean}/giphy.gif`,
-        `https://media3.giphy.com/media/${clean}/giphy.gif`
-      ];
-    }
-
-    // If the user pastes a long Giphy URL, try to extract the ID and generate reliable candidates.
-    function extractGiphyId(url){
-      const u = String(url || "");
-      // matches /media/<ID>/giphy.gif OR /media/<ID>/... OR i.giphy.com/<ID>.gif
-      const m1 = u.match(/\/media\/([a-zA-Z0-9]+)\//);
-      if(m1 && m1[1]) return m1[1];
-      const m2 = u.match(/i\.giphy\.com\/([a-zA-Z0-9]+)\.gif/);
-      if(m2 && m2[1]) return m2[1];
-      // matches .../giphy.gif with trailing /<ID>/giphy.gif
-      const m3 = u.match(/\/([a-zA-Z0-9]+)\/giphy\.gif/);
-      if(m3 && m3[1]) return m3[1];
-      return null;
-    }
-
-    const DEFAULT_GIFS = [
-      { title: DEFAULT_TITLE, url: `https://i.giphy.com/${DEFAULT_GIF_ID}.gif` }
-    ];
+    const DEFAULT_GIFS = [{ title: DEFAULT_TITLE, url: DEFAULT_URL }];
 
     const $ = (s) => document.querySelector(s);
     const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-    const STORAGE_KEY = "notion_gif_player_v6:" + location.pathname;
 
-    function loadState(){
-      try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }
-      catch(_){ return null; }
-    }
-    function saveState(){
-      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){}
-    }
+    // per-embed isolation
+    const STORAGE_KEY = "notion_gif_player_v7:" + location.pathname;
+
+    function loadState(){ try{ const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : null; }catch(_){ return null; } }
+    function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){ } }
 
     const state = {
       gifs: DEFAULT_GIFS.slice(),
@@ -495,11 +458,10 @@
       }
     }
 
+    const giphyFrame = $("#giphyFrame");
     const gifImg = $("#gifImg");
-    const freezeCanvas = $("#freezeCanvas");
     const trackTitle = $("#trackTitle");
     const progress = $("#progress");
-    const errToast = $("#errToast");
 
     const shuffleBtn = $("#shuffleBtn");
     const prevBtn = $("#prevBtn");
@@ -558,73 +520,54 @@
       modeBadge.textContent = state.playing ? "Playing" : "Paused";
     }
 
-    function showError(msg){
-      errToast.textContent = msg;
-      errToast.style.display = "block";
-      clearTimeout(showError._t);
-      showError._t = setTimeout(() => { errToast.style.display = "none"; }, 5200);
-    }
-
-    function unfreeze(){
-      freezeCanvas.style.display = "none";
-      gifImg.style.display = "block";
-    }
-
-    function freezeIfDrawable(){
-      const w = gifImg.naturalWidth || 0;
-      const h = gifImg.naturalHeight || 0;
-      if(!w || !h) return false;
-
-      const rect = gifImg.getBoundingClientRect();
-      const cw = Math.max(1, Math.round(rect.width));
-      const ch = Math.max(1, Math.round(rect.height));
-      freezeCanvas.width = cw;
-      freezeCanvas.height = ch;
-
-      const ctx = freezeCanvas.getContext("2d");
-      try{
-        ctx.drawImage(gifImg, 0, 0, cw, ch);
-      }catch(_){
-        return false;
-      }
-
-      gifImg.style.display = "none";
-      freezeCanvas.style.display = "block";
-      return true;
-    }
-
-    function cacheBust(url){
+    // --- Giphy detection + embed URL ---
+    function extractGiphyId(url){
       const u = String(url || "");
-      const sep = u.includes("?") ? "&" : "?";
-      return u + sep + "v=" + Date.now().toString(36);
+
+      // /media/<ID>/...
+      const m1 = u.match(/\/media\/([a-zA-Z0-9]+)\//);
+      if(m1 && m1[1]) return m1[1];
+
+      // .../gifs/...-<ID>  (common giphy page urls)
+      const m2 = u.match(/-([a-zA-Z0-9]+)$/);
+      if(m2 && m2[1] && m2[1].length >= 6) return m2[1];
+
+      // i.giphy.com/<ID>.gif
+      const m3 = u.match(/i\.giphy\.com\/([a-zA-Z0-9]+)\.gif/);
+      if(m3 && m3[1]) return m3[1];
+
+      // .../<ID>/giphy.gif
+      const m4 = u.match(/\/([a-zA-Z0-9]+)\/giphy\.gif/);
+      if(m4 && m4[1]) return m4[1];
+
+      return null;
     }
 
-    function nextIndex(){
-      const total = state.gifs.length;
-      if(total <= 1) return state.index;
-      if(state.shuffle){
-        let n = state.index;
-        for(let tries=0; tries<12 && n === state.index; tries++){
-          n = Math.floor(Math.random() * total);
-        }
-        return (n === state.index) ? (state.index + 1) % total : n;
-      }
-      return (state.index + 1) % total;
+    function isGiphyUrl(url){
+      const u = String(url || "").toLowerCase();
+      return u.includes("giphy.com");
     }
 
-    function prevIndex(){
-      const total = state.gifs.length;
-      if(total <= 1) return state.index;
-      if(state.shuffle){
-        let n = state.index;
-        for(let tries=0; tries<12 && n === state.index; tries++){
-          n = Math.floor(Math.random() * total);
-        }
-        return (n === state.index) ? (state.index - 1 + total) % total : n;
-      }
-      return (state.index - 1 + total) % total;
+    function giphyEmbedSrcFromId(id){
+      // autoplay is on by default; we can "pause" by clearing src.
+      // Hide attribution UI inside the embed:
+      return `https://giphy.com/embed/${encodeURIComponent(id)}?hideSocial=true&hideFeedback=true&hideActions=true`;
     }
 
+    function showRenderer(which){
+      // which: "giphy" | "img"
+      giphyFrame.style.display = (which === "giphy") ? "block" : "none";
+      gifImg.style.display     = (which === "img") ? "block" : "none";
+    }
+
+    function stopRenderers(){
+      // stop iframe playback by clearing src
+      giphyFrame.removeAttribute("src");
+      gifImg.removeAttribute("src");
+      showRenderer("img");
+    }
+
+    // --- playback timers (auto-advance) ---
     let tickTimer = null;
     let progTimer = null;
     let progStart = 0;
@@ -656,39 +599,43 @@
       }, 80);
     }
 
-    // Core: load GIF with fallbacks. This is what fixes “GIF not showing”.
-    async function setImgWithFallbacks(candidates){
-      return new Promise((resolve) => {
-        let i = 0;
-
-        const tryNext = () => {
-          if(i >= candidates.length){
-            resolve({ ok:false, tried:candidates });
-            return;
-          }
-          const url = candidates[i++];
-          gifImg.onload = () => resolve({ ok:true, url });
-          gifImg.onerror = () => tryNext();
-          gifImg.src = url;
-        };
-
-        tryNext();
-      });
+    function nextIndex(){
+      const total = state.gifs.length;
+      if(total <= 1) return state.index;
+      if(state.shuffle){
+        let n = state.index;
+        for(let tries=0; tries<12 && n === state.index; tries++){
+          n = Math.floor(Math.random() * total);
+        }
+        return (n === state.index) ? (state.index + 1) % total : n;
+      }
+      return (state.index + 1) % total;
     }
 
-    function candidatesForUrl(url){
-      const id = extractGiphyId(url);
-      if(id) return giphyCandidatesFromId(id).map(u => cacheBust(u)); // bust cache so retries are real
-      // non-giphy or unknown: just try as-is + cachebust
-      return [cacheBust(url), url];
+    function prevIndex(){
+      const total = state.gifs.length;
+      if(total <= 1) return state.index;
+      if(state.shuffle){
+        let n = state.index;
+        for(let tries=0; tries<12 && n === state.index; tries++){
+          n = Math.floor(Math.random() * total);
+        }
+        return (n === state.index) ? (state.index - 1 + total) % total : n;
+      }
+      return (state.index - 1 + total) % total;
+    }
+
+    function cacheBust(url){
+      const u = String(url || "");
+      const sep = u.includes("?") ? "&" : "?";
+      return u + sep + "v=" + Date.now().toString(36);
     }
 
     async function showGif(index, { restart=false } = {}){
       const total = state.gifs.length;
       if(!total){
         trackTitle.textContent = "No GIFs";
-        gifImg.removeAttribute("src");
-        unfreeze();
+        stopRenderers();
         gifListBox.value = "";
         updateBadges();
         saveState();
@@ -699,15 +646,29 @@
       const cur = state.gifs[state.index];
 
       trackTitle.textContent = cur.title || DEFAULT_TITLE;
-      unfreeze();
 
-      const baseCandidates = candidatesForUrl(cur.url);
-      const candidates = restart ? baseCandidates : baseCandidates.map(u => u.replace(/([?&])v=[^&]+/, "$1v=init"));
+      // Prefer Giphy embed if it’s a giphy url (most reliable in embeds)
+      const gid = isGiphyUrl(cur.url) ? extractGiphyId(cur.url) : null;
 
-      const res = await setImgWithFallbacks(candidates);
+      stopRenderers();
 
-      if(!res.ok){
-        showError("Couldn’t load that GIF (host blocked it). Try a different direct .gif URL.");
+      if(gid){
+        showRenderer("giphy");
+        // restart by re-setting src (when playing)
+        if(state.playing){
+          giphyFrame.src = giphyEmbedSrcFromId(gid);
+        }else{
+          // paused: keep it stopped
+          giphyFrame.removeAttribute("src");
+        }
+      }else{
+        showRenderer("img");
+        // For direct GIFs, just load it (cache-bust on restart)
+        gifImg.onerror = () => {
+          // if direct image fails but it *was* a giphy link, user should paste giphy page link instead
+          // (no toast here to keep UI minimal)
+        };
+        gifImg.src = restart ? cacheBust(cur.url) : cur.url;
       }
 
       gifListBox.value = state.gifs.map(g => g.url).join("\n");
@@ -718,7 +679,6 @@
 
     function play(){
       state.playing = true;
-      unfreeze();
       setPlayIcon();
       startTimers();
       updateBadges();
@@ -732,9 +692,8 @@
       setPlayIcon();
       updateBadges();
       saveState();
-
-      // Freeze only if drawable; otherwise keep GIF visible (so it never looks broken).
-      freezeIfDrawable();
+      // Stop animation: clear iframe src if using giphy; for img we can’t truly pause, but we keep it shown.
+      showGif(state.index, { restart:false });
     }
 
     function togglePlay(){ state.playing ? pause() : play(); }
@@ -792,6 +751,7 @@
       });
     }
 
+    // Events
     shuffleBtn.addEventListener("click", () => {
       state.shuffle = !state.shuffle;
       shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
@@ -832,6 +792,7 @@
     wireColor(cProgTrack, "progTrack");
     wireColor(cProgFill, "progFill");
 
+    // Timestamp
     function formatStamp(d){
       const day = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
       const time = d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
@@ -841,6 +802,7 @@
     formatStamp(new Date());
     setInterval(() => formatStamp(new Date()), 30 * 1000);
 
+    // Init
     async function init(){
       applyColors();
       shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
@@ -849,13 +811,9 @@
       setPlayIcon();
       updateBadges();
 
-      // Always show something immediately:
       await showGif(state.index, { restart:true });
-
-      if(state.playing) startTimers();
-      else stopTimers();
+      if(state.playing) startTimers(); else stopTimers();
     }
-
     init();
   </script>
 </body>

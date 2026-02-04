@@ -4,28 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Notion GIF Player Widget</title>
+
   <style>
+    /* Pastel default palette */
     :root{
-      --bg:#0f1115;
-      --panel:#151a22;
-      --text:#e8eefc;
-      --muted:#a9b4cc;
-      --accent:#7c5cff;
-      --btn:#1d2431;
-      --btnText:#e8eefc;
-      --border:rgba(255,255,255,.12);
-      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --bg:#fbf7ff;          /* lavender milk */
+      --panel:#ffffff;       /* soft white */
+      --text:#2b2b35;        /* charcoal */
+      --muted:#6a6a80;       /* muted ink */
+      --accent:#b8a7ff;      /* pastel purple */
+      --btn:#f3f0ff;         /* lilac tint */
+      --btnText:#2b2b35;
+      --border:rgba(184,167,255,.42);
+      --shadow: 0 14px 40px rgba(43,43,53,.12);
       --radius:16px;
     }
 
-    /* Page */
     html,body{ height:100%; }
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background: radial-gradient(1000px 500px at 20% 10%, rgba(124,92,255,.18), transparent 60%),
-                  radial-gradient(800px 400px at 80% 30%, rgba(0,210,255,.10), transparent 55%),
-                  var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(184,167,255,.35), transparent 60%),
+        radial-gradient(900px 500px at 85% 18%, rgba(169,231,255,.35), transparent 58%),
+        radial-gradient(900px 500px at 55% 95%, rgba(255,203,224,.28), transparent 60%),
+        var(--bg);
       color:var(--text);
       display:flex;
       align-items:flex-start;
@@ -34,17 +37,16 @@
       box-sizing:border-box;
     }
 
-    /* Widget wrapper: small (~1/3 page feel) */
-    .wrap{
-      width: min(420px, 92vw);
-    }
+    /* Small widget (~1/3 page feel) */
+    .wrap{ width:min(420px, 92vw); }
 
     .widget{
-      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 65%), var(--panel);
+      background: linear-gradient(180deg, rgba(255,255,255,.70), rgba(255,255,255,.45)), var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
+      backdrop-filter: blur(8px);
     }
 
     .top{
@@ -62,7 +64,7 @@
       overflow:hidden;
       position:relative;
       flex: 0 0 auto;
-      background: rgba(255,255,255,.04);
+      background: rgba(184,167,255,.10);
       border:1px solid var(--border);
     }
     .art img, .art canvas{
@@ -73,13 +75,10 @@
     }
     .art canvas{ display:none; }
 
-    .meta{
-      min-width:0;
-      flex:1;
-    }
+    .meta{ min-width:0; flex:1; }
     .title{
       font-size:13px;
-      font-weight:650;
+      font-weight:700;
       letter-spacing:.2px;
       white-space:nowrap;
       overflow:hidden;
@@ -101,14 +100,14 @@
       padding:4px 8px;
       border-radius:999px;
       border:1px solid var(--border);
-      background: rgba(255,255,255,.03);
+      background: rgba(255,255,255,.55);
       font-size:11px;
       color:var(--muted);
     }
     .dot{
       width:6px;height:6px;border-radius:50%;
       background: var(--accent);
-      box-shadow: 0 0 0 3px rgba(124,92,255,.18);
+      box-shadow: 0 0 0 3px rgba(184,167,255,.25);
     }
 
     .controls{
@@ -125,11 +124,7 @@
       justify-content:space-between;
     }
 
-    .btns{
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
+    .btns{ display:flex; gap:8px; align-items:center; }
 
     button{
       appearance:none;
@@ -140,20 +135,21 @@
       padding:10px 12px;
       font-size:12px;
       cursor:pointer;
-      transition: transform .06s ease, background .2s ease, border-color .2s ease;
+      transition: transform .06s ease, filter .2s ease;
       line-height:1;
       display:inline-flex;
       align-items:center;
       gap:8px;
       user-select:none;
     }
+    button:hover{ filter: brightness(0.98); }
     button:active{ transform: translateY(1px); }
-    button:hover{ border-color: rgba(255,255,255,.18); }
+
     button.primary{
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02)), var(--accent);
-      border-color: rgba(255,255,255,.18);
-      color: #0b0d12;
-      font-weight:700;
+      background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35)), var(--accent);
+      border-color: rgba(184,167,255,.65);
+      color: #2b2b35;
+      font-weight:800;
     }
     button.icon{
       width:40px;
@@ -165,7 +161,7 @@
       width:100%;
       height:10px;
       border-radius:999px;
-      background: rgba(255,255,255,.06);
+      background: rgba(184,167,255,.14);
       border:1px solid var(--border);
       overflow:hidden;
     }
@@ -177,13 +173,6 @@
       transition: width .15s linear;
     }
 
-    .toggles{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
     .toggle{
       display:inline-flex;
       align-items:center;
@@ -191,7 +180,7 @@
       padding:6px 10px;
       border-radius:999px;
       border:1px solid var(--border);
-      background: rgba(255,255,255,.03);
+      background: rgba(255,255,255,.55);
       font-size:11px;
       color:var(--muted);
       cursor:pointer;
@@ -201,28 +190,28 @@
       width:34px;
       height:18px;
       border-radius:999px;
-      background: rgba(255,255,255,.10);
+      background: rgba(184,167,255,.20);
       border:1px solid var(--border);
       position:relative;
       flex:0 0 auto;
     }
     .knob{
       width:14px;height:14px;border-radius:50%;
-      background: rgba(255,255,255,.85);
+      background: rgba(255,255,255,.95);
       position:absolute; top:50%; left:2px;
       transform: translateY(-50%);
       transition: left .15s ease, background .15s ease;
     }
     .toggle[data-on="true"] .switch{
-      background: rgba(124,92,255,.25);
-      border-color: rgba(124,92,255,.45);
+      background: rgba(184,167,255,.34);
+      border-color: rgba(184,167,255,.65);
     }
     .toggle[data-on="true"] .knob{ left:18px; background: var(--accent); }
 
     details{
       border-top:1px solid var(--border);
       padding: 10px 12px 12px;
-      background: rgba(255,255,255,.02);
+      background: rgba(255,255,255,.45);
     }
     summary{
       cursor:pointer;
@@ -237,34 +226,17 @@
     }
     summary::-webkit-details-marker{ display:none; }
 
-    .panel{
-      margin-top:10px;
-      display:grid;
-      gap:10px;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      min-width:0;
-    }
-    label{
-      font-size:11px;
-      color: var(--muted);
-    }
+    .panel{ margin-top:10px; display:grid; gap:10px; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+    label{ font-size:11px; color: var(--muted); }
 
     input[type="color"]{
       width:100%;
       height:36px;
       border-radius:12px;
       border:1px solid var(--border);
-      background: rgba(255,255,255,.06);
+      background: rgba(255,255,255,.65);
       padding:4px;
       box-sizing:border-box;
       cursor:pointer;
@@ -274,7 +246,7 @@
       width:100%;
       border-radius:12px;
       border:1px solid var(--border);
-      background: rgba(0,0,0,.18);
+      background: rgba(255,255,255,.75);
       color: var(--text);
       padding:10px 10px;
       font-size:12px;
@@ -294,15 +266,11 @@
       font-size:11px;
       color: var(--muted);
       border-top: 1px solid var(--border);
-      background: rgba(255,255,255,.015);
+      background: rgba(255,255,255,.35);
     }
 
-    .tiny{
-      font-size:10px;
-      opacity:.9;
-    }
+    .tiny{ font-size:10px; opacity:.92; }
 
-    /* Very small embeds */
     @media (max-width: 360px){
       .art{ width: 92px; height: 64px; }
       button{ padding:9px 10px; }
@@ -319,6 +287,7 @@
           <canvas id="freezeCanvas"></canvas>
         </div>
         <div class="meta">
+          <div class="title" id="gifTitle">GIF Player</div>
           <div class="sub">
             <span class="pill"><span class="dot"></span><span id="statusText">Paused</span></span>
             <span class="pill"><span id="countText">0 / 0</span></span>
@@ -354,34 +323,34 @@
       <details id="settings">
         <summary>
           <span>Customize</span>
-          <span class="tiny">colors • gifs • timing</span>
+          <span class="tiny">pastels • gifs • timing</span>
         </summary>
 
         <div class="panel">
           <div class="grid">
             <div class="field">
               <label>Background</label>
-              <input type="color" id="cBg" value="#0f1115" />
+              <input type="color" id="cBg" value="#fbf7ff" />
             </div>
             <div class="field">
               <label>Panel</label>
-              <input type="color" id="cPanel" value="#151a22" />
+              <input type="color" id="cPanel" value="#ffffff" />
             </div>
             <div class="field">
               <label>Text</label>
-              <input type="color" id="cText" value="#e8eefc" />
+              <input type="color" id="cText" value="#2b2b35" />
             </div>
             <div class="field">
               <label>Accent</label>
-              <input type="color" id="cAccent" value="#7c5cff" />
+              <input type="color" id="cAccent" value="#b8a7ff" />
             </div>
             <div class="field">
               <label>Buttons</label>
-              <input type="color" id="cBtn" value="#1d2431" />
+              <input type="color" id="cBtn" value="#f3f0ff" />
             </div>
             <div class="field">
               <label>Border</label>
-              <input type="color" id="cBorder" value="#2b3446" />
+              <input type="color" id="cBorder" value="#b8a7ff" />
             </div>
           </div>
 
@@ -389,6 +358,7 @@
             <div class="field">
               <label>Auto-advance (seconds)</label>
               <input type="number" id="intervalSec" min="2" max="120" step="1" value="10" />
+              <div class="hint">When playing, it switches GIFs on this timer.</div>
             </div>
 
             <div class="field">
@@ -402,13 +372,15 @@
           </div>
 
           <div class="field">
-            <label>GIF list (one URL per line)</label>
+            <label>GIF list (one URL/path per line)</label>
             <textarea id="gifListBox" spellcheck="false"></textarea>
             <div class="row" style="justify-content:flex-start; gap:8px;">
               <button id="applyListBtn" type="button">Apply list</button>
               <button id="resetBtn" type="button">Reset defaults</button>
             </div>
             <div class="hint">
+              Defaults expect your GIFs inside <span class="tiny">./gifs/</span>.
+              Filenames are <em>case-sensitive</em> on GitHub Pages.
             </div>
           </div>
         </div>
@@ -416,7 +388,10 @@
 
       <div class="footerNote">
         <div class="hint">
+          <strong>Pause note:</strong> browsers can’t truly pause a GIF frame-perfectly.
+          This widget “pauses” by freezing the current frame to a canvas; resuming may restart the GIF.
           <br />
+          <span class="tiny">Each embed is self-contained. Settings & GIF lists save per-user in their own browser storage.</span>
         </div>
       </div>
     </div>
@@ -424,41 +399,30 @@
 
   <script>
     /**
-     * GIF Player Widget (single-file, GitHub Pages-friendly)
-     * - No external dependencies
-     * - Per-user persistence via localStorage (per origin + per user browser)
-     * - Shuffle, prev/next, play/pause (freeze-frame pause)
-     * - Fully customizable colors + editable gif list
+     * Fixes included:
+     * - Default GIF paths now match the likely filenames you uploaded (with spaces), and are URL-encoded safely.
+     * - Pastel default palette.
+     * - More robust image loading (cache-bust on resume, helpful fallback).
      */
 
-    // ========= DEFAULT GIFS =========
-    // Put these GIFs in the same folder as this HTML, or update these URLs to wherever you host them.
-    // Based on your provided images, these are named as safe relative paths.
-    // Recommended repo structure:
-    //   /index.html
-    //   /gifs/cat-drawing.gif
-    //   /gifs/the-cat-returns.gif
-    //   /gifs/animation-cat.gif
-    //   /gifs/furze-chan.gif
-    //   /gifs/when-marnie-was-there-japan.gif
-    //   /gifs/gif.gif
+    // ---------- DEFAULT GIFS ----------
+    // Put these GIF files inside a folder named "gifs" next to this HTML file.
+    // IMPORTANT: These filenames include spaces; they must match EXACTLY on GitHub Pages.
     const DEFAULT_GIFS = [
-      { title: "Cat drawing", url: "./gifs/cat-drawing.gif" },
-      { title: "The Cat Returns", url: "./gifs/the-cat-returns.gif" },
-      { title: "Animation cat", url: "./gifs/animation-cat.gif" },
-      { title: "Matcha whisk", url: "./gifs/furze-chan.gif" },
-      { title: "Pouring tea", url: "./gifs/when-marnie-was-there-japan.gif" },
+      { title: "Cat drawing", url: "./gifs/cat%20drawing%20GIF%20by%20hoppip.gif" },
+      { title: "The Cat Returns", url: "./gifs/the%20cat%20returns%20GIF%20by%20Maudit.gif" },
+      { title: "Animation cat", url: "./gifs/animation%20cat%20GIF%20by%20hoppip.gif" },
+      { title: "Matcha whisk", url: "./gifs/GIF%20by%20furze%20chan.gif" },
+      { title: "Pouring tea", url: "./gifs/when%20marnie%20was%20there%20japan%20GIF.gif" },
       { title: "Window scene", url: "./gifs/gif.gif" }
     ];
 
-    // ========= SIMPLE HELPERS =========
+    // ---------- HELPERS ----------
     const $ = (sel) => document.querySelector(sel);
     const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-    // Unique-ish storage key per embed page path.
-    // (Notion embeds are iframes; even multiple embeds won’t clash because each iframe has its own JS context.
-    // This key also scopes by pathname.)
-    const STORAGE_KEY = "gif_player_widget_v1:" + location.pathname;
+    // Scope storage to THIS page path so different widgets/pages don't collide
+    const STORAGE_KEY = "gif_player_widget_v2:" + location.pathname;
 
     function loadState(){
       try{
@@ -471,7 +435,23 @@
       try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){}
     }
 
-    // ========= STATE =========
+    function hexToRgba(hex, a){
+      const h = (hex || "").replace("#","").trim();
+      if(h.length !== 6) return "rgba(184,167,255,.42)";
+      const r = parseInt(h.slice(0,2),16);
+      const g = parseInt(h.slice(2,4),16);
+      const b = parseInt(h.slice(4,6),16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function cacheBust(url){
+      // Bust cache to force restart after resume / when switching
+      const u = String(url || "");
+      const sep = u.includes("?") ? "&" : "?";
+      return u + sep + "v=" + Date.now().toString(36);
+    }
+
+    // ---------- STATE ----------
     const state = {
       gifs: DEFAULT_GIFS.slice(),
       index: 0,
@@ -479,20 +459,19 @@
       shuffle: true,
       intervalSec: 10,
       colors: {
-        bg: "#0f1115",
-        panel: "#151a22",
-        text: "#e8eefc",
-        accent: "#7c5cff",
-        btn: "#1d2431",
-        border: "#2b3446"
+        bg: "#fbf7ff",
+        panel: "#ffffff",
+        text: "#2b2b35",
+        accent: "#b8a7ff",
+        btn: "#f3f0ff",
+        border: "#b8a7ff"
       }
     };
 
-    // Merge persisted state
+    // Merge persisted state (per user, per browser)
     const persisted = loadState();
     if(persisted){
       if(Array.isArray(persisted.gifs) && persisted.gifs.length){
-        // Normalize to objects {title,url} but allow plain url strings
         state.gifs = persisted.gifs.map((g, i) => {
           if(typeof g === "string") return { title: `GIF ${i+1}`, url: g };
           if(g && typeof g.url === "string") return { title: g.title || `GIF ${i+1}`, url: g.url };
@@ -508,7 +487,7 @@
       }
     }
 
-    // ========= UI ELEMENTS =========
+    // ---------- UI ----------
     const gifImg = $("#gifImg");
     const freezeCanvas = $("#freezeCanvas");
     const gifTitle = $("#gifTitle");
@@ -537,33 +516,22 @@
     const applyListBtn = $("#applyListBtn");
     const resetBtn = $("#resetBtn");
 
-    // ========= RENDER / APPLY =========
+    // ---------- RENDER ----------
     function applyColors(){
       document.documentElement.style.setProperty("--bg", state.colors.bg);
       document.documentElement.style.setProperty("--panel", state.colors.panel);
       document.documentElement.style.setProperty("--text", state.colors.text);
       document.documentElement.style.setProperty("--accent", state.colors.accent);
       document.documentElement.style.setProperty("--btn", state.colors.btn);
-      // Border can be solid hex; convert to subtle rgba feel by using it directly:
-      document.documentElement.style.setProperty("--border", hexToRgba(state.colors.border, 0.35));
+      document.documentElement.style.setProperty("--border", hexToRgba(state.colors.border, 0.42));
 
-      // Sync inputs
+      // sync pickers
       cBg.value = state.colors.bg;
       cPanel.value = state.colors.panel;
       cText.value = state.colors.text;
       cAccent.value = state.colors.accent;
       cBtn.value = state.colors.btn;
       cBorder.value = state.colors.border;
-    }
-
-    function hexToRgba(hex, a){
-      // Accept #RRGGBB
-      const h = (hex || "").replace("#","").trim();
-      if(h.length !== 6) return "rgba(255,255,255,.12)";
-      const r = parseInt(h.slice(0,2),16);
-      const g = parseInt(h.slice(2,4),16);
-      const b = parseInt(h.slice(4,6),16);
-      return `rgba(${r},${g},${b},${a})`;
     }
 
     function setShuffleUI(){
@@ -579,7 +547,7 @@
       playBtn.textContent = state.playing ? "⏸" : "▶";
     }
 
-    function setGif(index, { keepFreeze=false } = {}){
+    function setGif(index, { restart=false } = {}){
       const total = state.gifs.length;
       if(!total){
         gifTitle.textContent = "No GIFs";
@@ -595,15 +563,13 @@
       const current = state.gifs[state.index];
       gifTitle.textContent = current.title || `GIF ${state.index+1}`;
 
-      // If we're currently frozen, switching should unfreeze and show the new gif.
-      if(!keepFreeze){
-        unfreeze();
-      }
+      // Always unfreeze when switching
+      unfreeze();
 
-      // Set src (cache-bust when playing to reliably restart on resume)
-      gifImg.src = current.url;
+      // Use cache-bust only when we want a hard restart (resume / switch while playing)
+      gifImg.src = restart ? cacheBust(current.url) : current.url;
 
-      // Update textarea list view
+      // Update textarea view
       gifListBox.value = state.gifs.map(g => g.url).join("\n");
       updateMeta();
       saveState(state);
@@ -614,14 +580,11 @@
       if(total <= 1) return state.index;
 
       if(state.shuffle){
-        // pick a random index different from current
         let n = state.index;
-        for(let tries=0; tries<10 && n === state.index; tries++){
+        for(let tries=0; tries<12 && n === state.index; tries++){
           n = Math.floor(Math.random() * total);
         }
-        if(n === state.index){
-          n = (state.index + 1) % total;
-        }
+        if(n === state.index) n = (state.index + 1) % total;
         return n;
       }
       return (state.index + 1) % total;
@@ -630,44 +593,22 @@
     function prevIndex(){
       const total = state.gifs.length;
       if(total <= 1) return state.index;
+
       if(state.shuffle){
         let n = state.index;
-        for(let tries=0; tries<10 && n === state.index; tries++){
+        for(let tries=0; tries<12 && n === state.index; tries++){
           n = Math.floor(Math.random() * total);
         }
-        if(n === state.index){
-          n = (state.index - 1 + total) % total;
-        }
+        if(n === state.index) n = (state.index - 1 + total) % total;
         return n;
       }
       return (state.index - 1 + total) % total;
     }
 
-    // ========= PLAYBACK / TIMER =========
+    // ---------- TIMERS ----------
     let tickTimer = null;
     let progressTimer = null;
     let progressStart = 0;
-
-    function startTimers(){
-      stopTimers();
-      if(!state.playing) return;
-
-      const ms = state.intervalSec * 1000;
-      progressStart = Date.now();
-
-      // Advance GIF
-      tickTimer = setInterval(() => {
-        setGif(nextIndex());
-        progressStart = Date.now();
-      }, ms);
-
-      // Progress bar
-      progressTimer = setInterval(() => {
-        const elapsed = Date.now() - progressStart;
-        const pct = clamp((elapsed / ms) * 100, 0, 100);
-        barFill.style.width = pct.toFixed(2) + "%";
-      }, 80);
-    }
 
     function stopTimers(){
       if(tickTimer) clearInterval(tickTimer);
@@ -677,11 +618,32 @@
       barFill.style.width = "0%";
     }
 
+    function startTimers(){
+      stopTimers();
+      if(!state.playing) return;
+
+      const ms = state.intervalSec * 1000;
+      progressStart = Date.now();
+
+      tickTimer = setInterval(() => {
+        setGif(nextIndex(), { restart:true });
+        progressStart = Date.now();
+      }, ms);
+
+      progressTimer = setInterval(() => {
+        const elapsed = Date.now() - progressStart;
+        const pct = clamp((elapsed / ms) * 100, 0, 100);
+        barFill.style.width = pct.toFixed(2) + "%";
+      }, 80);
+    }
+
     function play(){
       state.playing = true;
       updateMeta();
       saveState(state);
-      unfreeze(); // ensure gif visible
+      unfreeze();
+      // Restart current gif so "resume" feels like resume
+      setGif(state.index, { restart:true });
       startTimers();
     }
 
@@ -690,7 +652,7 @@
       updateMeta();
       saveState(state);
       stopTimers();
-      freeze(); // "pause" by freezing frame
+      freeze();
     }
 
     function togglePlay(){
@@ -698,16 +660,15 @@
       else play();
     }
 
-    // ========= “PAUSE” GIF (FREEZE FRAME) =========
-    // True GIF pausing isn’t supported by browsers. This freezes the current frame by drawing to canvas.
+    // ---------- FREEZE FRAME ----------
     function freeze(){
       if(!gifImg.src) return;
 
-      // If image not yet loaded, just stop timers and keep as-is
       const w = gifImg.naturalWidth || 0;
       const h = gifImg.naturalHeight || 0;
+
+      // If not loaded yet, just show canvas placeholder
       if(!w || !h){
-        // best effort: hide animation by toggling display (may stop it)
         gifImg.style.display = "none";
         freezeCanvas.style.display = "block";
         return;
@@ -721,15 +682,11 @@
 
       const ctx = freezeCanvas.getContext("2d");
       try{
-        // Draw the *current* rendered frame scaled to canvas
         ctx.drawImage(gifImg, 0, 0, cw, ch);
-        gifImg.style.display = "none";
-        freezeCanvas.style.display = "block";
-      }catch(_){
-        // If draw fails, fall back to just hiding (some edge cases)
-        gifImg.style.display = "none";
-        freezeCanvas.style.display = "block";
-      }
+      }catch(_){ /* ignore */ }
+
+      gifImg.style.display = "none";
+      freezeCanvas.style.display = "block";
     }
 
     function unfreeze(){
@@ -737,13 +694,12 @@
       gifImg.style.display = "block";
     }
 
-    // ========= GIF LIST MANAGEMENT =========
+    // ---------- GIF LIST MANAGEMENT ----------
     function addGif(url){
       const cleaned = (url || "").trim();
       if(!cleaned) return;
-
       state.gifs.push({ title: `GIF ${state.gifs.length + 1}`, url: cleaned });
-      setGif(state.gifs.length - 1);
+      setGif(state.gifs.length - 1, { restart: state.playing });
       saveState(state);
     }
 
@@ -751,7 +707,7 @@
       if(state.gifs.length === 0) return;
       state.gifs.splice(state.index, 1);
       const newIndex = clamp(state.index, 0, Math.max(0, state.gifs.length - 1));
-      setGif(newIndex);
+      setGif(newIndex, { restart: state.playing });
       saveState(state);
     }
 
@@ -771,20 +727,20 @@
 
       state.gifs = lines.map((u, i) => ({ title: `GIF ${i+1}`, url: u }));
       state.index = clamp(state.index, 0, state.gifs.length - 1);
-      setGif(state.index);
+      setGif(state.index, { restart: state.playing });
       saveState(state);
     }
 
     function resetDefaults(){
       state.gifs = DEFAULT_GIFS.slice();
       state.index = 0;
-      setGif(0);
+      setGif(0, { restart: state.playing });
       saveState(state);
     }
 
-    // ========= EVENTS =========
+    // ---------- EVENTS ----------
     prevBtn.addEventListener("click", () => {
-      setGif(prevIndex());
+      setGif(prevIndex(), { restart: state.playing });
       if(state.playing){
         progressStart = Date.now();
         barFill.style.width = "0%";
@@ -792,7 +748,7 @@
     });
 
     nextBtn.addEventListener("click", () => {
-      setGif(nextIndex());
+      setGif(nextIndex(), { restart: state.playing });
       if(state.playing){
         progressStart = Date.now();
         barFill.style.width = "0%";
@@ -813,7 +769,7 @@
       intervalSecInput.value = String(v);
       intervalText.textContent = `${v}s`;
       saveState(state);
-      if(state.playing) startTimers(); // restart timers with new interval
+      if(state.playing) startTimers();
     });
 
     addGifBtn.addEventListener("click", () => {
@@ -833,7 +789,6 @@
     applyListBtn.addEventListener("click", applyListFromTextarea);
     resetBtn.addEventListener("click", resetDefaults);
 
-    // Colors
     function wireColorInput(inputEl, key){
       inputEl.addEventListener("input", () => {
         state.colors[key] = inputEl.value;
@@ -848,29 +803,26 @@
     wireColorInput(cBtn, "btn");
     wireColorInput(cBorder, "border");
 
-    // If GIF fails to load, show title and auto-skip on play
+    // If a GIF fails, show the URL in the title to help debugging and (if playing) skip forward
     gifImg.addEventListener("error", () => {
-      gifTitle.textContent = "Failed to load GIF";
+      const cur = state.gifs[state.index];
+      gifTitle.textContent = "Missing GIF: " + (cur?.url || "");
       if(state.playing && state.gifs.length > 1){
-        setTimeout(() => setGif(nextIndex()), 600);
+        setTimeout(() => setGif(nextIndex(), { restart:true }), 700);
       }
     });
 
-    // ========= INIT =========
+    // ---------- INIT ----------
     function init(){
       applyColors();
       setShuffleUI();
       intervalSecInput.value = String(state.intervalSec);
       gifListBox.value = state.gifs.map(g => g.url).join("\n");
-      setGif(state.index, { keepFreeze:false });
+      setGif(state.index, { restart:false });
       updateMeta();
 
-      // Start playing if user previously left it playing
-      if(state.playing){
-        play();
-      }else{
-        pause(); // will freeze once loaded; harmless if not loaded
-      }
+      if(state.playing) play();
+      else pause();
     }
 
     init();

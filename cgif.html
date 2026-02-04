@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notion GIF Player Widget</title>
+
+  <style>
+    /* Subtle cream palette (default) */
+    :root{
+      --page:#ffffff;              /* pure white as requested */
+      --card:#fffdf7;              /* warm cream */
+      --stroke:rgba(80,60,20,.08);
+      --shadow: 0 18px 60px rgba(40, 30, 10, .10);
+
+      --bar:#e7ddcf;               /* cream bar */
+      --barText:#3a3226;           /* cocoa text */
+      --iconBg:rgba(255,255,255,.55);
+      --iconBd:rgba(58,50,38,.18);
+
+      --trackText:#3a3226;
+      --muted:#6a5f4f;
+
+      --progressTrack:rgba(58,50,38,.16);
+      --progressFill:#ffffff;
+
+      --radius:22px;
+    }
+
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      padding:18px;
+      box-sizing:border-box;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: var(--page);
+      color: var(--trackText);
+    }
+
+    /* Embed friendly size */
+    .wrap{
+      width: min(860px, 92vw);
+    }
+
+    .player{
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      border: 1px solid var(--stroke);
+      background: var(--card);
+    }
+
+    .media{
+      position:relative;
+      background: #f3efe7;
+      aspect-ratio: 16 / 9;
+      width:100%;
+      overflow:hidden;
+    }
+    .media img, .media canvas{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .media canvas{ display:none; }
+
+    .stamp{
+      position:absolute;
+      left:16px;
+      bottom:14px;
+      color: rgba(255,255,255,.92);
+      font-size: 14px;
+      font-weight: 650;
+      text-shadow: 0 2px 10px rgba(0,0,0,.35);
+      letter-spacing:.2px;
+      user-select:none;
+      line-height:1.2;
+      background: rgba(0,0,0,.14);
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(6px);
+    }
+
+    .bar{
+      background: var(--bar);
+      color: var(--barText);
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      gap: 14px;
+    }
+
+    .left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex: 0 0 auto;
+    }
+
+    .btn{
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1.5px solid var(--iconBd);
+      background: var(--iconBg);
+      color: var(--barText);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .06s ease, filter .15s ease;
+    }
+    .btn:hover{ filter: brightness(0.99); }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn svg{ width:18px; height:18px; fill: currentColor; }
+
+    .track{
+      min-width: 0;
+      flex: 1 1 auto;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .trackTitle{
+      font-size: 15px;
+      font-weight: 650;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--trackText);
+      opacity:.96;
+    }
+
+    .right{
+      flex: 0 0 auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .slider{
+      width: 280px;
+      max-width: 34vw;
+      height: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--progressTrack);
+      border-radius: 999px;
+      outline:none;
+      cursor:pointer;
+    }
+    .slider::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      appearance:none;
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      background: var(--progressFill);
+      border: 1px solid rgba(58,50,38,.12);
+      box-shadow: 0 4px 14px rgba(0,0,0,.10);
+    }
+    .slider::-moz-range-thumb{
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      background: var(--progressFill);
+      border: 1px solid rgba(58,50,38,.12);
+      box-shadow: 0 4px 14px rgba(0,0,0,.10);
+    }
+
+    details.customize{
+      border-top: 1px solid rgba(80,60,20,.08);
+      background: rgba(80,60,20,.02);
+      padding: 10px 14px 14px;
+    }
+    summary{
+      cursor:pointer;
+      user-select:none;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      color: rgba(58,50,38,.75);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    summary::-webkit-details-marker{ display:none; }
+
+    .panel{
+      margin-top: 12px;
+      display:grid;
+      gap: 12px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 720px){
+      .grid{ grid-template-columns: 1fr 1fr; }
+      .slider{ width: 180px; }
+    }
+    @media (max-width: 420px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
+    label{
+      font-size: 12px;
+      color: rgba(58,50,38,.70);
+      font-weight: 700;
+    }
+    input[type="color"]{
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(58,50,38,.14);
+      background: #fff;
+      padding: 4px;
+      cursor:pointer;
+    }
+    input[type="text"], textarea, input[type="number"]{
+      border-radius: 12px;
+      border: 1px solid rgba(58,50,38,.14);
+      background: #fff;
+      padding: 10px 10px;
+      font-size: 13px;
+      outline:none;
+      width:100%;
+      box-sizing:border-box;
+      color: rgba(58,50,38,.92);
+    }
+    textarea{ min-height: 92px; resize: vertical; }
+
+    .rowBtns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .miniBtn{
+      border-radius: 12px;
+      border: 1px solid rgba(58,50,38,.16);
+      background: #fff;
+      padding: 10px 12px;
+      cursor:pointer;
+      font-weight: 800;
+      font-size: 13px;
+      color: rgba(58,50,38,.92);
+    }
+    .miniBtn:active{ transform: translateY(1px); }
+
+    .hint{
+      font-size: 12px;
+      color: rgba(58,50,38,.62);
+      line-height: 1.35;
+    }
+
+    .statusLine{
+      font-size: 12px;
+      color: rgba(58,50,38,.60);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(58,50,38,.06);
+      border: 1px solid rgba(58,50,38,.08);
+      font-weight: 700;
+    }
+
+    .hidden { display:none !important; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="player" id="player">
+      <div class="media">
+        <img id="gifImg" alt="GIF" />
+        <canvas id="freezeCanvas"></canvas>
+
+        <div class="stamp" id="stamp">
+          <div id="stampDate"></div>
+          <div id="stampTime"></div>
+        </div>
+      </div>
+
+      <div class="bar">
+        <div class="left">
+          <div class="controls">
+            <button class="btn" id="shuffleBtn" title="Shuffle">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17 3h4v4h-2V6.41l-4.29 4.3-1.42-1.42L17.59 5H17V3zM3 7h4.59l3 3-1.42 1.42L6.76 9H3V7zm0 10h3.76l2.41-2.41 1.42 1.42-3 2.99H3v-2zm18-2v4h-4v-2h.59l-4.88-4.88 1.42-1.42L18.59 17H19v-2h2z"/>
+              </svg>
+            </button>
+
+            <button class="btn" id="prevBtn" title="Previous">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6h2v12H6V6zm3.5 6 10 6V6l-10 6z"/>
+              </svg>
+            </button>
+
+            <button class="btn" id="playBtn" title="Play/Pause">
+              <svg id="playIcon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <svg id="pauseIcon" class="hidden" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"/>
+              </svg>
+            </button>
+
+            <button class="btn" id="nextBtn" title="Next">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M16 6h2v12h-2V6zM5 18l10-6L5 6v12z"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="track">
+          </div>
+        </div>
+
+        <div class="right">
+          <input id="progress" class="slider" type="range" min="0" max="1000" value="0" />
+        </div>
+      </div>
+
+      <details class="customize">
+        <summary>
+          <span>Customize</span>
+        </summary>
+
+        <div class="panel">
+          <div class="statusLine">
+            <span class="badge" id="countBadge">1 / 1</span>
+            <span class="badge" id="modeBadge">Paused</span>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label>Page background</label>
+              <input type="color" id="cPage" value="#ffffff" />
+            </div>
+            <div class="field">
+              <label>Card background</label>
+              <input type="color" id="cCard" value="#fffdf7" />
+            </div>
+            <div class="field">
+              <label>Bar color</label>
+              <input type="color" id="cBar" value="#e7ddcf" />
+            </div>
+            <div class="field">
+              <label>Bar text</label>
+              <input type="color" id="cBarText" value="#3a3226" />
+            </div>
+            <div class="field">
+              <label>Progress track</label>
+              <input type="color" id="cProgTrack" value="#d8cfbf" />
+            </div>
+            <div class="field">
+              <label>Progress thumb</label>
+              <input type="color" id="cProgFill" value="#ffffff" />
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label>Auto-advance (seconds)</label>
+              <input type="number" id="intervalSec" min="2" max="300" step="1" value="12" />
+            </div>
+
+            <div class="field" style="grid-column: span 2;">
+              <label>Add a GIF URL</label>
+              <input type="text" id="gifUrlInput" placeholder="https://.../my.gif" />
+              <div class="rowBtns" style="margin-top:8px;">
+                <button class="miniBtn" id="addGifBtn" type="button">Add</button>
+                <button class="miniBtn" id="removeCurrentBtn" type="button">Remove current</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>GIF list (one URL per line)</label>
+            <textarea id="gifListBox" spellcheck="false"></textarea>
+            <div class="rowBtns">
+              <button class="miniBtn" id="applyListBtn" type="button">Apply list</button>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Fixes you requested:
+     * - All subtle cream colors; page background is pure white (#ffffff).
+     * - Removed "reset to single default" button and removed pause-support text.
+     * - Fixed Add GIF URL (now reliably updates list + persists).
+     * - Fixed Apply List (rebuilds state, resets index safely, refreshes UI immediately).
+     */
+
+    const DEFAULT_GIFS = [
+      {
+        title: "It started Raining…",
+        url: "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGgzaXVjaXR6YmxiZ280M3l3ZTlrdTE4bWxtMHF4cGgyeHg5MzFsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Dsvz9D6FBdmk8/giphy.gif"
+      }
+    ];
+
+    const $ = (s) => document.querySelector(s);
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+    // Per-embed scoping: each GitHub Pages URL path gets its own storage bucket
+    const STORAGE_KEY = "notion_gif_player_v4:" + location.pathname;
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      }catch(_){ return null; }
+    }
+    function saveState(){
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){}
+    }
+
+    // State
+    const state = {
+      gifs: DEFAULT_GIFS.slice(),
+      index: 0,
+      playing: false,
+      shuffle: false,
+      intervalSec: 12,
+      colors: {
+        page: "#ffffff",
+        card: "#fffdf7",
+        bar:  "#e7ddcf",
+        barText: "#3a3226",
+        progTrack: "#d8cfbf",
+        progFill: "#ffffff"
+      }
+    };
+
+    // Restore
+    const persisted = loadState();
+    if(persisted){
+      if(Array.isArray(persisted.gifs) && persisted.gifs.length){
+        state.gifs = persisted.gifs.map((g, i) => {
+          if(typeof g === "string") return { title: `GIF ${i+1}`, url: g };
+          if(g && typeof g.url === "string") return { title: g.title || `GIF ${i+1}`, url: g.url };
+          return null;
+        }).filter(Boolean);
+      }
+      if(Number.isInteger(persisted.index)) state.index = clamp(persisted.index, 0, Math.max(0, state.gifs.length - 1));
+      if(typeof persisted.playing === "boolean") state.playing = persisted.playing;
+      if(typeof persisted.shuffle === "boolean") state.shuffle = persisted.shuffle;
+      if(Number.isFinite(persisted.intervalSec)) state.intervalSec = clamp(persisted.intervalSec, 2, 300);
+      if(persisted.colors && typeof persisted.colors === "object"){
+        state.colors = { ...state.colors, ...persisted.colors };
+      }
+    }
+
+    // UI
+    const gifImg = $("#gifImg");
+    const freezeCanvas = $("#freezeCanvas");
+    const trackTitle = $("#trackTitle");
+    const progress = $("#progress");
+
+    const shuffleBtn = $("#shuffleBtn");
+    const prevBtn = $("#prevBtn");
+    const playBtn = $("#playBtn");
+    const nextBtn = $("#nextBtn");
+    const playIcon = $("#playIcon");
+    const pauseIcon = $("#pauseIcon");
+
+    const countBadge = $("#countBadge");
+    const modeBadge = $("#modeBadge");
+
+    const cPage = $("#cPage");
+    const cCard = $("#cCard");
+    const cBar = $("#cBar");
+    const cBarText = $("#cBarText");
+    const cProgTrack = $("#cProgTrack");
+    const cProgFill = $("#cProgFill");
+
+    const intervalSecInput = $("#intervalSec");
+    const gifUrlInput = $("#gifUrlInput");
+    const addGifBtn = $("#addGifBtn");
+    const removeCurrentBtn = $("#removeCurrentBtn");
+    const gifListBox = $("#gifListBox");
+    const applyListBtn = $("#applyListBtn");
+
+    // Object URL cache for reliable "freeze frame" on some hosts (best effort)
+    const objectUrlCache = new Map(); // originalUrl -> objectUrl
+
+    function applyColors(){
+      document.documentElement.style.setProperty("--page", state.colors.page);
+      document.documentElement.style.setProperty("--card", state.colors.card);
+      document.documentElement.style.setProperty("--bar", state.colors.bar);
+      document.documentElement.style.setProperty("--barText", state.colors.barText);
+      document.documentElement.style.setProperty("--progressTrack", state.colors.progTrack);
+      document.documentElement.style.setProperty("--progressFill", state.colors.progFill);
+
+      cPage.value = state.colors.page;
+      cCard.value = state.colors.card;
+      cBar.value = state.colors.bar;
+      cBarText.value = state.colors.barText;
+      cProgTrack.value = state.colors.progTrack;
+      cProgFill.value = state.colors.progFill;
+    }
+
+    function setPlayIcon(){
+      if(state.playing){
+        playIcon.classList.add("hidden");
+        pauseIcon.classList.remove("hidden");
+      }else{
+        pauseIcon.classList.add("hidden");
+        playIcon.classList.remove("hidden");
+      }
+    }
+
+    function updateBadges(){
+      const total = state.gifs.length;
+      const idx = total ? (state.index + 1) : 0;
+      countBadge.textContent = `${idx} / ${total}`;
+      modeBadge.textContent = state.playing ? "Playing" : "Paused";
+    }
+
+    // Try to make GIF drawable (so freeze works) by fetching to a blob when possible.
+    // If the host blocks CORS, we still show the GIF, but canvas draw may fail (we just hide image when paused).
+    async function resolveGifSrc(url){
+      const u = String(url || "").trim();
+      if(!u) return { src: "" };
+
+      if(objectUrlCache.has(u)) return { src: objectUrlCache.get(u) };
+
+      try{
+        const resp = await fetch(u, { mode: "cors", cache: "force-cache" });
+        if(!resp.ok) throw new Error("fetch failed");
+        const blob = await resp.blob();
+        const obj = URL.createObjectURL(blob);
+        objectUrlCache.set(u, obj);
+        return { src: obj };
+      }catch(_){
+        return { src: u };
+      }
+    }
+
+    function unfreeze(){
+      freezeCanvas.style.display = "none";
+      gifImg.style.display = "block";
+    }
+
+    function freeze(){
+      const w = gifImg.naturalWidth || 0;
+      const h = gifImg.naturalHeight || 0;
+
+      if(!w || !h){
+        gifImg.style.display = "none";
+        freezeCanvas.style.display = "block";
+        return;
+      }
+
+      const rect = gifImg.getBoundingClientRect();
+      const cw = Math.max(1, Math.round(rect.width));
+      const ch = Math.max(1, Math.round(rect.height));
+      freezeCanvas.width = cw;
+      freezeCanvas.height = ch;
+
+      const ctx = freezeCanvas.getContext("2d");
+      try{
+        ctx.drawImage(gifImg, 0, 0, cw, ch);
+      }catch(_){
+        // if draw fails (tainted), still "pause" by hiding image
+      }
+      gifImg.style.display = "none";
+      freezeCanvas.style.display = "block";
+    }
+
+    function cacheBust(url){
+      const u = String(url || "");
+      const sep = u.includes("?") ? "&" : "?";
+      return u + sep + "v=" + Date.now().toString(36);
+    }
+
+    function nextIndex(){
+      const total = state.gifs.length;
+      if(total <= 1) return state.index;
+
+      if(state.shuffle){
+        let n = state.index;
+        for(let tries=0; tries<12 && n === state.index; tries++){
+          n = Math.floor(Math.random() * total);
+        }
+        return (n === state.index) ? (state.index + 1) % total : n;
+      }
+      return (state.index + 1) % total;
+    }
+
+    function prevIndex(){
+      const total = state.gifs.length;
+      if(total <= 1) return state.index;
+
+      if(state.shuffle){
+        let n = state.index;
+        for(let tries=0; tries<12 && n === state.index; tries++){
+          n = Math.floor(Math.random() * total);
+        }
+        return (n === state.index) ? (state.index - 1 + total) % total : n;
+      }
+      return (state.index - 1 + total) % total;
+    }
+
+    let tickTimer = null;
+    let progTimer = null;
+    let progStart = 0;
+
+    function stopTimers(){
+      if(tickTimer) clearInterval(tickTimer);
+      if(progTimer) clearInterval(progTimer);
+      tickTimer = null;
+      progTimer = null;
+      progress.value = "0";
+    }
+
+    function startTimers(){
+      stopTimers();
+      if(!state.playing) return;
+
+      const ms = state.intervalSec * 1000;
+      progStart = Date.now();
+
+      tickTimer = setInterval(() => {
+        showGif(nextIndex(), { restart:true });
+        progStart = Date.now();
+      }, ms);
+
+      progTimer = setInterval(() => {
+        const elapsed = Date.now() - progStart;
+        const pct = clamp(elapsed / ms, 0, 1);
+        progress.value = String(Math.round(pct * 1000));
+      }, 80);
+    }
+
+    async function showGif(index, { restart=false } = {}){
+      const total = state.gifs.length;
+
+      if(!total){
+        trackTitle.textContent = "No GIFs";
+        gifImg.removeAttribute("src");
+        unfreeze();
+        updateBadges();
+        gifListBox.value = "";
+        saveState();
+        return;
+      }
+
+      state.index = clamp(index, 0, total - 1);
+      const cur = state.gifs[state.index];
+
+      trackTitle.textContent = cur.title || "GIF Player";
+      unfreeze();
+
+      const { src } = await resolveGifSrc(cur.url);
+
+      // Restart if requested: for direct URLs, cache-bust; for object URLs, re-assigning is enough.
+      if(restart && !objectUrlCache.has(cur.url)){
+        gifImg.src = cacheBust(cur.url);
+      }else{
+        gifImg.src = src;
+      }
+
+      // ✅ Ensure the textarea always reflects the current list (fix for "Apply list doesn't update")
+      gifListBox.value = state.gifs.map(g => g.url).join("\n");
+
+      updateBadges();
+      setPlayIcon();
+      saveState();
+    }
+
+    function play(){
+      state.playing = true;
+      setPlayIcon();
+      unfreeze();
+      showGif(state.index, { restart:true });
+      startTimers();
+      updateBadges();
+      saveState();
+    }
+
+    function pause(){
+      state.playing = false;
+      setPlayIcon();
+      stopTimers();
+      freeze();
+      updateBadges();
+      saveState();
+    }
+
+    function togglePlay(){
+      state.playing ? pause() : play();
+    }
+
+    // ---- Add/Remove/Apply List (fixed) ----
+    function normalizeUrlsFromTextarea(text){
+      return text
+        .split("\n")
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    function addGif(url){
+      const cleaned = String(url || "").trim();
+      if(!cleaned) return;
+
+      // ✅ Add, update textarea immediately, switch to it
+      state.gifs.push({ title: `GIF ${state.gifs.length + 1}`, url: cleaned });
+      state.index = state.gifs.length - 1;
+
+      gifListBox.value = state.gifs.map(g => g.url).join("\n"); // keep in sync
+      gifUrlInput.value = "";
+
+      showGif(state.index, { restart: state.playing });
+      saveState();
+    }
+
+    function removeCurrent(){
+      if(state.gifs.length === 0) return;
+
+      state.gifs.splice(state.index, 1);
+      state.index = clamp(state.index, 0, Math.max(0, state.gifs.length - 1));
+
+      gifListBox.value = state.gifs.map(g => g.url).join("\n"); // keep in sync
+      showGif(state.index, { restart: state.playing });
+      saveState();
+    }
+
+    function applyList(){
+      const lines = normalizeUrlsFromTextarea(gifListBox.value);
+
+      // If empty, just revert to default single GIF to avoid a "blank" widget in Notion
+      if(lines.length === 0){
+        state.gifs = DEFAULT_GIFS.slice();
+        state.index = 0;
+      }else{
+        state.gifs = lines.map((u, i) => ({ title: `GIF ${i+1}`, url: u }));
+        state.index = clamp(state.index, 0, state.gifs.length - 1);
+      }
+
+      // ✅ Force UI sync immediately
+      gifListBox.value = state.gifs.map(g => g.url).join("\n");
+      showGif(state.index, { restart: state.playing });
+      updateBadges();
+      saveState();
+    }
+
+    // ---- Colors ----
+    function wireColor(input, key){
+      input.addEventListener("input", () => {
+        state.colors[key] = input.value;
+        applyColors();
+        saveState();
+      });
+    }
+
+    // Events
+    shuffleBtn.addEventListener("click", () => {
+      state.shuffle = !state.shuffle;
+      shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
+      saveState();
+    });
+
+    prevBtn.addEventListener("click", () => {
+      showGif(prevIndex(), { restart: state.playing });
+      if(state.playing){ progStart = Date.now(); progress.value = "0"; }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      showGif(nextIndex(), { restart: state.playing });
+      if(state.playing){ progStart = Date.now(); progress.value = "0"; }
+    });
+
+    playBtn.addEventListener("click", togglePlay);
+
+    progress.addEventListener("input", () => {
+      if(!state.playing) return;
+      const pct = clamp(parseInt(progress.value, 10) / 1000, 0, 1);
+      const ms = state.intervalSec * 1000;
+      progStart = Date.now() - Math.round(pct * ms);
+    });
+
+    intervalSecInput.addEventListener("change", () => {
+      const v = clamp(parseInt(intervalSecInput.value || "12", 10), 2, 300);
+      state.intervalSec = v;
+      intervalSecInput.value = String(v);
+      saveState();
+      if(state.playing) startTimers();
+    });
+
+    addGifBtn.addEventListener("click", () => addGif(gifUrlInput.value));
+    gifUrlInput.addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){
+        e.preventDefault();
+        addGif(gifUrlInput.value);
+      }
+    });
+
+    removeCurrentBtn.addEventListener("click", removeCurrent);
+    applyListBtn.addEventListener("click", applyList);
+
+    wireColor(cPage, "page");
+    wireColor(cCard, "card");
+    wireColor(cBar, "bar");
+    wireColor(cBarText, "barText");
+    wireColor(cProgTrack, "progTrack");
+    wireColor(cProgFill, "progFill");
+
+    // Timestamp: viewer local time (like screenshot vibe)
+    function formatStamp(d){
+      const day = d.toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+      const time = d.toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" });
+      $("#stampDate").textContent = day;
+      $("#stampTime").textContent = time;
+    }
+    formatStamp(new Date());
+    setInterval(() => formatStamp(new Date()), 30 * 1000);
+
+    // Init
+    function init(){
+      applyColors();
+      shuffleBtn.style.opacity = state.shuffle ? "1" : ".72";
+      intervalSecInput.value = String(state.intervalSec);
+
+      // Ensure textarea shows current persisted list on load
+      gifListBox.value = state.gifs.map(g => g.url).join("\n");
+
+      setPlayIcon();
+      showGif(state.index);
+      if(state.playing) play();
+      else pause();
+    }
+    init();
+
+    // Cleanup object URLs
+    window.addEventListener("beforeunload", () => {
+      for(const obj of objectUrlCache.values()){
+        try{ URL.revokeObjectURL(obj); }catch(_){}
+      }
+    });
+  </script>
+</body>
+</html>

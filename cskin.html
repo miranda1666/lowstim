@@ -96,6 +96,10 @@
       color: var(--ink);
       background: var(--app-bg);
     }
+    
+    html, body{
+  overflow-x: hidden !important;
+}
 
     .wrap{
       max-width: var(--page-max);
@@ -292,6 +296,8 @@
       overflow: hidden;
       position: relative;
       background: none;
+      max-width: 100%;
+  overflow-x: hidden;
     }
 
     .board::before{
@@ -341,12 +347,12 @@
   padding: var(--pad);
 
   overflow-x: auto;
-  overflow-y: hidden;           /* NEW */
+  overflow-y: hidden;      /* ADD */
+  max-width: 100%;         /* ADD */
+
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-
-  max-width: 100%;              /* NEW */
 }
 
     .day{

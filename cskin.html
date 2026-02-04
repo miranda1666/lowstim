@@ -203,7 +203,8 @@
       z-index: 50;
 
       /* nothing cut off */
-      max-height: calc(100vh - 120px);
+height: auto;
+min-height: 0;
       overflow: auto;
     }
     .panel.open{ display: block; }
@@ -361,7 +362,15 @@
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: 0 10px 26px rgba(20,20,20,0.06);
-      min-height: var(--day-min-h);
+html, body{
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.wrap, .board{
+  height: auto !important;
+  min-height: 0 !important;
+}
       display: flex;
       flex-direction: column;
       scroll-snap-align: start;
@@ -603,6 +612,16 @@
       -webkit-tap-highlight-color: transparent;
     }
     .addRowBtn:active{ transform: translateY(1px); }
+    
+    html, body{
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.wrap, .board{
+  height: auto !important;
+  min-height: 0 !important;
+}
   </style>
 </head>
 

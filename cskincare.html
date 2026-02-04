@@ -1,0 +1,1615 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Skincare Tracker (AM + PM)</title>
+  <style>
+    :root{
+      --app-bg: #ffffff;
+
+      --ink: #2b2b2b;
+      --muted: #7a7a7a;
+
+      --border-rgb: 30,30,30;
+      --border-a: 0.10;
+      --border: rgba(var(--border-rgb), var(--border-a));
+      --shadow: 0 12px 34px rgba(20, 20, 20, 0.08);
+
+      --surface-a: 0.78; /* pills */
+      --panel-a: 0.92;
+
+      --btn-a: 0.92;
+      --btn-border-a: 0.10;
+      --btn-ink: rgba(43,43,43,0.72);
+
+      --accent: #cbb8ae; /* selection ring + theme dot */
+
+      /* overlay */
+      --overlay-base: #ffffff;
+      --overlay-a: 0.34;
+
+      /* Board background */
+      --board-tint: #efe7e1;
+      --board-tint-a: 0.30;
+      --board-image: none;
+
+      /* Day cards + blocks + inputs */
+      --day-bg: #ffffff;
+      --day-bg-a: 0.94;
+
+      --block-bg: #ffffff;
+      --block-bg-a: 0.72;
+
+      --input-bg: #ffffff;
+      --input-bg-a: 0.96;
+
+      /* Header + step tile themeables */
+      --header-bg: #ffffff;      /* header strip color */
+      --step-bg: #ffffff;        /* step tile base color */
+      --step-bg-rgb: 255,255,255;
+      --step-bg-a: 0.78;         /* step tile opacity */
+
+      /* Layout */
+      --board-radius: 26px;
+      --radius: 22px;
+
+      --page-max: 1400px;
+      --gap: 18px;
+      --pad: 18px;
+
+      /* IMPORTANT: fit in one frame (no horizontal scroll) */
+      --card-min-w: 260px; /* lower so 7 columns can fit more often */
+
+      --day-min-h: 520px;
+
+      --h1: 20px;
+      --sub: 14px;
+
+      --label: 12px;
+      --text: 15px;
+
+      --input-pad: 12px 12px;
+      --input-radius: 14px;
+
+      --header-pad: 14px 16px;
+      --chip-pad: 8px 12px;
+
+      --max-lines: 6;
+
+      /* Skincare toggle colors */
+      --am-empty: #eae6e2;
+      --am-filled: #cbb8ae;
+      --pm-empty: #eae6e2;
+      --pm-filled: #c9d7dd;
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden; /* no sideways */
+      height: auto;
+      min-height: 0;
+    }
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--ink);
+      background: var(--app-bg);
+    }
+
+    .wrap{
+      max-width: var(--page-max);
+      margin: 26px auto;
+      padding: 18px;
+    }
+
+    .titlebar{
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .title{
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 260px;
+    }
+
+    h1{
+      margin: 0;
+      font-size: var(--h1);
+      font-weight: 750;
+      letter-spacing: 0.2px;
+    }
+
+    .controls{
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .icon-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255, var(--surface-a));
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: var(--chip-pad);
+      box-shadow: 0 8px 22px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+
+    .bg-btn, .nav-btn, .theme-btn, .settings-btn{
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
+      background: rgba(255,255,255, var(--btn-a));
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--btn-ink);
+      font-weight: 900;
+      line-height: 1;
+    }
+    .bg-btn:active, .nav-btn:active, .theme-btn:active, .settings-btn:active{ transform: translateY(1px); }
+
+    .bg-dot, .theme-dot{
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), 0.14);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 7px rgba(239,231,225,0.30);
+    }
+    .theme-dot{
+      background: var(--accent);
+      box-shadow: 0 0 0 7px rgba(203,184,174,0.22);
+    }
+
+    .popover{ position: relative; }
+
+    .panel{
+      position: absolute;
+      top: 48px;
+      right: 0;
+      width: 390px;
+      max-width: min(390px, calc(100vw - 40px));
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255, var(--panel-a));
+      box-shadow: 0 22px 50px rgba(20,20,20,0.12);
+      backdrop-filter: blur(2px);
+      padding: 14px;
+      display: none;
+      z-index: 50;
+
+      /* If too long, scroll */
+      max-height: min(70vh, 640px);
+      overflow: auto;
+    }
+    .panel.open{ display: block; }
+
+    .panelTitle{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.70);
+    }
+
+    .row{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 0;
+    }
+    .row label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="color"]{
+      width: 36px;
+      height: 28px;
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"]{ width: 170px; }
+
+    .file{
+      width: 100%;
+      font-size: 12px;
+      color: rgba(43,43,43,0.75);
+    }
+
+    .mini-btn{
+      width: 100%;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.92);
+      border-radius: 14px;
+      padding: 11px 12px;
+      cursor: pointer;
+      font-weight: 750;
+      color: rgba(43,43,43,0.86);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+
+    .divider{
+      height: 1px;
+      background: rgba(var(--border-rgb), 0.08);
+      margin: 10px 0;
+    }
+
+    .week-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: var(--chip-pad);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255, var(--surface-a));
+      box-shadow: 0 8px 22px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+
+    .week-label{
+      font-size: 13px;
+      color: rgba(43,43,43,0.80);
+      min-width: 190px;
+      text-align: center;
+      user-select: none;
+      font-weight: 650;
+      letter-spacing: 0.1px;
+    }
+
+    /* Board */
+    .board{
+      border: 1px solid var(--border);
+      border-radius: var(--board-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      background: none;
+      max-width: 100%;
+    }
+
+    .board::before{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(1.02) contrast(1.03);
+      transform: scale(1.02);
+    }
+
+    .board::after{
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: rgba(255,255,255,0.34); /* overridden by JS */
+    }
+
+    .board-tint{
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+
+    .board-content{
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(2px);
+    }
+
+    /* ✅ FIT-IN-FRAME GRID (NO HORIZONTAL SCROLLBAR) */
+    .grid{
+      display: grid;
+      gap: var(--gap);
+      padding: var(--pad);
+      overflow-x: hidden; /* ensure no horizontal bar */
+      max-width: 100%;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      align-items: stretch;
+    }
+
+    /* On narrower screens, wrap into fewer columns (still no horizontal scroll) */
+    @media (max-width: 1200px){
+      .grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 620px){
+      .grid{ grid-template-columns: 1fr; }
+      .week-label{ min-width: 140px; }
+    }
+
+    .day{
+      background: rgba(255,255,255, var(--day-bg-a));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 10px 26px rgba(20,20,20,0.06);
+      display: flex;
+      flex-direction: column;
+      min-width: 0; /* important: prevents overflow */
+      min-height: var(--day-min-h);
+      position: relative;
+    }
+
+    .day.selected{
+      outline: 4px solid rgba(0,0,0,0); /* set by JS */
+      outline-offset: 3px;
+    }
+
+    .day-header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--header-pad);
+      border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+      background: var(--header-bg);
+      min-width: 0;
+    }
+
+    .day-title{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+    .day-name{
+      font-weight: 850;
+      font-size: 15px;
+      letter-spacing: 0.15px;
+      white-space: nowrap;
+    }
+    .day-date{
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .today-chip{
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.70);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.70);
+      padding: 3px 8px;
+      border-radius: 999px;
+      user-select: none;
+    }
+
+    .day-body{
+      padding: 16px 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .block{
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px dashed rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255, var(--block-bg-a));
+      min-width: 0;
+    }
+
+    .block .label{
+      font-size: var(--label);
+      color: var(--muted);
+      margin-bottom: 12px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .subpill{
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.70);
+      padding: 4px 10px;
+      border-radius: 999px;
+      color: rgba(43,43,43,0.70);
+      user-select: none;
+    }
+
+    .routine{
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .step{
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      align-items: center;
+      gap: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      box-shadow: 0 10px 24px rgba(20,20,20,0.05);
+      background: rgba(var(--step-bg-rgb), var(--step-bg-a));
+      padding: 12px 12px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      min-width: 0;
+    }
+    .step:active{ transform: translateY(1px); }
+
+    .tick{
+      width: 24px;
+      height: 24px;
+      border-radius: 10px;
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      background: var(--empty);
+      box-shadow: 0 8px 18px rgba(20,20,20,0.05);
+    }
+    .step.done .tick{
+      background: var(--filled);
+      filter: saturate(1.03) contrast(1.02);
+    }
+
+    .step-text{
+      font-size: 14px;
+      color: rgba(43,43,43,0.90);
+      font-weight: 750;
+      line-height: 1.25;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      min-width: 0;
+    }
+
+    textarea{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: var(--input-radius);
+      padding: var(--input-pad);
+      outline: none;
+      background: rgba(255,255,255, var(--input-bg-a));
+      color: var(--ink);
+      font-size: var(--text);
+      line-height: 1.35;
+      resize: vertical;
+      min-height: 84px;
+      max-height: 240px;
+    }
+    textarea:focus{
+      border-color: rgba(var(--border-rgb), 0.18);
+      box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
+    }
+
+    /* Confetti canvas */
+    #confetti{
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      display: none;
+    }
+
+    /* Routine editor */
+    .list{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .line{
+      display: grid;
+      grid-template-columns: 1fr 44px;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .line input[type="text"]{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: 14px;
+      padding: 12px 12px;
+      outline: none;
+      background: rgba(255,255,255, var(--input-bg-a));
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .line input[type="text"]:focus{
+      border-color: rgba(var(--border-rgb), 0.18);
+      box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
+    }
+    .xbtn{
+      width: 44px;
+      border-radius: 14px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.78);
+      cursor: pointer;
+      font-weight: 900;
+      color: rgba(43,43,43,0.76);
+      -webkit-tap-highlight-color: transparent;
+      font-size: 18px;
+    }
+    .xbtn:active{ transform: translateY(1px); }
+    .addRowBtn{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.90);
+      border-radius: 14px;
+      padding: 11px 12px;
+      cursor: pointer;
+      font-weight: 850;
+      color: rgba(43,43,43,0.86);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .addRowBtn:active{ transform: translateY(1px); }
+  </style>
+</head>
+
+<body>
+  <canvas id="confetti"></canvas>
+
+  <div class="wrap">
+    <div class="titlebar">
+      <div class="title">
+        <h1>Skincare Tracker</h1>
+      </div>
+
+      <div class="controls">
+        <div class="week-pill" aria-label="Week navigation">
+          <button class="nav-btn" id="prevWeek" type="button" aria-label="Previous week" title="Previous week">‹</button>
+          <div class="week-label" id="weekLabel">Week</div>
+          <button class="nav-btn" id="nextWeek" type="button" aria-label="Next week" title="Next week">›</button>
+        </div>
+
+        <!-- ROUTINE SETTINGS -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="settings-btn" id="routineBtn" type="button" aria-label="Routine settings" title="Routine settings">≡</button>
+          </div>
+
+          <div class="panel" id="routinePanel" role="dialog" aria-label="Routine settings">
+            <div class="panelTitle">Routine & Colors</div>
+
+            <div class="row"><label for="amEmpty">AM empty</label><input id="amEmpty" type="color" value="#eae6e2" /></div>
+            <div class="row"><label for="amFilled">AM filled</label><input id="amFilled" type="color" value="#cbb8ae" /></div>
+            <div class="divider"></div>
+            <div class="row"><label for="pmEmpty">PM empty</label><input id="pmEmpty" type="color" value="#eae6e2" /></div>
+            <div class="row"><label for="pmFilled">PM filled</label><input id="pmFilled" type="color" value="#c9d7dd" /></div>
+
+            <div class="divider"></div>
+
+            <div class="panelTitle" style="margin-top:6px;">AM steps</div>
+            <div class="list" id="amList"></div>
+            <button class="addRowBtn" id="addAmStep" type="button">+ Add AM step</button>
+
+            <div class="divider"></div>
+
+            <div class="panelTitle">PM steps</div>
+            <div class="list" id="pmList"></div>
+            <button class="addRowBtn" id="addPmStep" type="button">+ Add PM step</button>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="resetRoutine" type="button">Reset routine to default</button>
+          </div>
+        </div>
+
+        <!-- THEME -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="theme-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <div class="panelTitle">Theme</div>
+
+            <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
+            <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
+            <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e" /></div>
+            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tSurfaceA">Pills opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="78" /></div>
+            <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="92" /></div>
+            <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tOverlayBase">Overlay color</label><input id="tOverlayBase" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="34" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tDayBg">Day card bg</label><input id="tDayBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDayBgA">Day card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="94" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBlockBg">Block bg</label><input id="tBlockBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tBlockBgA">Block opacity</label><input id="tBlockBgA" type="range" min="55" max="100" value="72" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInputBgA">Input opacity</label><input id="tInputBgA" type="range" min="60" max="100" value="96" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tHeaderBg">Header bg</label><input id="tHeaderBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tStepBg">Step tile bg</label><input id="tStepBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tStepBgA">Step opacity</label><input id="tStepBgA" type="range" min="40" max="100" value="78" /></div>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+          </div>
+        </div>
+
+        <!-- BACKGROUND -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <span class="bg-dot" id="bgDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <div class="panelTitle">Background</div>
+
+            <div class="row">
+              <label for="bgColor">Tint</label>
+              <input id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="row">
+              <label for="bgStrength">Tint strength</label>
+              <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input id="bgImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="row">
+              <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="bgReset" type="button">Reset background</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="board-tint" id="boardTint"></div>
+      <div class="board-content">
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORE_KEY   = "skincare_tracker_store_v3";
+    const THEME_KEY   = "skincare_tracker_theme_v3";
+    const BG_KEY      = "skincare_tracker_bg_v3";
+    const ROUTINE_KEY = "skincare_tracker_routine_v3";
+
+    const $  = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    function clamp(n, min, max){
+      const x = Number(n);
+      if(!Number.isFinite(x)) return min;
+      return Math.max(min, Math.min(max, x));
+    }
+    function normHex(hex, fallback){
+      const s = String(hex || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+    }
+    function hexToRgbTuple(hex){
+      const h = normHex(hex, "#ffffff").slice(1);
+      const r = parseInt(h.slice(0,2), 16);
+      const g = parseInt(h.slice(2,4), 16);
+      const b = parseInt(h.slice(4,6), 16);
+      return `${r},${g},${b}`;
+    }
+    function hexToRgba(hex, a){
+      const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function toISODate(d){
+      const x = new Date(d);
+      x.setHours(0,0,0,0);
+      return x.toISOString().slice(0,10);
+    }
+    function mondayOfWeek(date){
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      d.setDate(d.getDate() + diff);
+      d.setHours(0,0,0,0);
+      return d;
+    }
+    function addDays(d, n){
+      const x = new Date(d);
+      x.setDate(x.getDate() + n);
+      return x;
+    }
+    function formatShortDate(d){
+      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+    function prettyWeekLabel(weekId){
+      const mon = new Date(weekId + "T00:00:00");
+      const sun = addDays(mon, 6);
+      const opts = { month: "short", day: "numeric" };
+      return `${mon.toLocaleDateString(undefined, opts)} – ${sun.toLocaleDateString(undefined, opts)}`;
+    }
+
+    /* =========================
+       Theme
+    ========================= */
+    const DEFAULT_THEME = {
+      appBg: "#ffffff",
+      ink: "#2b2b2b",
+      muted: "#7a7a7a",
+      accent: "#cbb8ae",
+
+      borderColor: "#1e1e1e",
+      borderA: 0.10,
+
+      surfaceA: 0.78,
+      panelA: 0.92,
+
+      btnA: 0.92,
+      btnBorderA: 0.10,
+
+      overlayBase: "#ffffff",
+      overlayA: 0.34,
+
+      dayBg: "#ffffff",
+      dayBgA: 0.94,
+
+      blockBg: "#ffffff",
+      blockBgA: 0.72,
+
+      inputBg: "#ffffff",
+      inputBgA: 0.96,
+
+      headerBg: "#ffffff",
+      stepBg: "#ffffff",
+      stepBgA: 0.78
+    };
+
+    function themeLoad(){
+      try{ return JSON.parse(localStorage.getItem(THEME_KEY) || "null"); }
+      catch{ return null; }
+    }
+    function themeSave(t){
+      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+    }
+
+    function setSelectionRingFromAccent(accentHex){
+      const accent = normHex(accentHex, DEFAULT_THEME.accent);
+      let st = document.getElementById("accentRingStyle");
+      if(!st){
+        st = document.createElement("style");
+        st.id = "accentRingStyle";
+        document.head.appendChild(st);
+      }
+      st.textContent = `
+        .day.selected{
+          outline-color: ${hexToRgba(accent, 0.62)} !important;
+          box-shadow: 0 0 0 1px ${hexToRgba(accent, 0.22)} inset;
+        }
+      `;
+    }
+
+    function themeApply(t){
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
+      const r = document.documentElement.style;
+
+      r.setProperty("--app-bg", normHex(theme.appBg, DEFAULT_THEME.appBg));
+      r.setProperty("--ink", normHex(theme.ink, DEFAULT_THEME.ink));
+      r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
+      r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
+
+      r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
+      r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
+
+      r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
+      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
+
+      r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
+      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
+
+      const dot = $("#themeDot");
+      if(dot){
+        const accent = normHex(theme.accent, DEFAULT_THEME.accent);
+        dot.style.background = accent;
+        dot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
+      }
+      setSelectionRingFromAccent(theme.accent);
+
+      const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
+      const overlayA = clamp(theme.overlayA, 0.00, 0.70);
+      const css = hexToRgba(overlayBase, overlayA);
+
+      let st = document.getElementById("overlayStyle");
+      if(!st){
+        st = document.createElement("style");
+        st.id = "overlayStyle";
+        document.head.appendChild(st);
+      }
+      st.textContent = `.board::after{ background: ${css} !important; }`;
+
+      const headerBg = normHex(theme.headerBg, "#ffffff");
+      r.setProperty("--header-bg", headerBg);
+
+      const stepBg = normHex(theme.stepBg, "#ffffff");
+      r.setProperty("--step-bg", stepBg);
+      r.setProperty("--step-bg-rgb", hexToRgbTuple(stepBg));
+      r.setProperty("--step-bg-a", String(clamp(theme.stepBgA, 0.40, 1.00)));
+
+      let st2 = document.getElementById("surfaceStyle");
+      if(!st2){
+        st2 = document.createElement("style");
+        st2.id = "surfaceStyle";
+        document.head.appendChild(st2);
+      }
+      st2.textContent = `
+        .day{ background: ${hexToRgba(normHex(theme.dayBg, "#ffffff"), clamp(theme.dayBgA,0.70,1.00))} !important; }
+        .block{ background: ${hexToRgba(normHex(theme.blockBg, "#ffffff"), clamp(theme.blockBgA,0.55,1.00))} !important; }
+        textarea, .line input[type="text"]{ background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important; }
+      `;
+    }
+
+    function themeSyncInputs(t){
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
+      const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
+
+      set("tAppBg", theme.appBg);
+      set("tInk", theme.ink);
+      set("tMuted", theme.muted);
+      set("tAccent", theme.accent);
+
+      set("tBorderColor", theme.borderColor);
+      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+
+      set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
+      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+
+      set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
+      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+
+      set("tOverlayBase", theme.overlayBase);
+      set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
+
+      set("tDayBg", theme.dayBg);
+      set("tDayBgA", Math.round(clamp(theme.dayBgA, 0.70, 1.00) * 100));
+
+      set("tBlockBg", theme.blockBg);
+      set("tBlockBgA", Math.round(clamp(theme.blockBgA, 0.55, 1.00) * 100));
+
+      set("tInputBg", theme.inputBg);
+      set("tInputBgA", Math.round(clamp(theme.inputBgA, 0.60, 1.00) * 100));
+
+      set("tHeaderBg", theme.headerBg);
+      set("tStepBg", theme.stepBg);
+      set("tStepBgA", Math.round(clamp(theme.stepBgA, 0.40, 1.00) * 100));
+    }
+
+    function themeReadFromInputs(){
+      const g = (id)=>document.getElementById(id);
+      return {
+        appBg: g("tAppBg")?.value,
+        ink: g("tInk")?.value,
+        muted: g("tMuted")?.value,
+        accent: g("tAccent")?.value,
+
+        borderColor: g("tBorderColor")?.value,
+        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
+
+        surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
+        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
+
+        btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
+        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
+
+        overlayBase: g("tOverlayBase")?.value,
+        overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
+
+        dayBg: g("tDayBg")?.value,
+        dayBgA: clamp(Number(g("tDayBgA")?.value)/100, 0.70, 1.00),
+
+        blockBg: g("tBlockBg")?.value,
+        blockBgA: clamp(Number(g("tBlockBgA")?.value)/100, 0.55, 1.00),
+
+        inputBg: g("tInputBg")?.value,
+        inputBgA: clamp(Number(g("tInputBgA")?.value)/100, 0.60, 1.00),
+
+        headerBg: g("tHeaderBg")?.value,
+        stepBg: g("tStepBg")?.value,
+        stepBgA: clamp(Number(g("tStepBgA")?.value)/100, 0.40, 1.00),
+      };
+    }
+
+    function initTheme(){
+      const saved = themeLoad() || DEFAULT_THEME;
+      themeApply(saved);
+      themeSyncInputs(saved);
+
+      const ids = [
+        "tAppBg","tInk","tMuted","tAccent",
+        "tBorderColor","tBorderA",
+        "tSurfaceA","tPanelA",
+        "tBtnA","tBtnBorderA",
+        "tOverlayBase","tOverlayA",
+        "tDayBg","tDayBgA",
+        "tBlockBg","tBlockBgA",
+        "tInputBg","tInputBgA",
+        "tHeaderBg","tStepBg","tStepBgA"
+      ];
+
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener("input", () => {
+          const t = themeReadFromInputs();
+          themeApply(t);
+          themeSave(t);
+        });
+      });
+
+      $("#themeReset").addEventListener("click", () => {
+        localStorage.removeItem(THEME_KEY);
+        themeApply(DEFAULT_THEME);
+        themeSyncInputs(DEFAULT_THEME);
+      });
+    }
+
+    /* =========================
+       Background
+    ========================= */
+    const DEFAULT_BG = { tint: "#efe7e1", strength: 30, imageDataUrl: null };
+
+    function bgLoad(){
+      try{ return JSON.parse(localStorage.getItem(BG_KEY) || "null"); }
+      catch{ return null; }
+    }
+    function bgSave(bg){
+      try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+    }
+
+    function setBoardImage(dataUrlOrNull){
+      document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    }
+
+    function applyBoardTint(colorHex, strengthPct){
+      const tint = normHex(colorHex, DEFAULT_BG.tint);
+      const strength = clamp(Number(strengthPct)/100, 0, 0.70);
+
+      document.documentElement.style.setProperty("--board-tint", tint);
+      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+      const bgDot = $("#bgDot");
+      if(bgDot){
+        bgDot.style.background = tint;
+        bgDot.style.boxShadow = `0 0 0 7px ${hexToRgba(tint, Math.min(0.30, strength + 0.10))}`;
+      }
+      $("#boardTint").style.background = hexToRgba(tint, strength);
+    }
+
+    function applyBackground(bg){
+      const x = Object.assign({}, DEFAULT_BG, bg || {});
+      $("#bgColor").value = x.tint;
+      $("#bgStrength").value = String(x.strength);
+      applyBoardTint(x.tint, x.strength);
+      setBoardImage(x.imageDataUrl);
+    }
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    function initBackground(){
+      const saved = bgLoad() || DEFAULT_BG;
+      applyBackground(saved);
+
+      $("#bgColor").addEventListener("input", () => {
+        applyBoardTint($("#bgColor").value, $("#bgStrength").value);
+        const cur = bgLoad() || DEFAULT_BG;
+        cur.tint = $("#bgColor").value;
+        bgSave(cur);
+      });
+
+      $("#bgStrength").addEventListener("input", () => {
+        applyBoardTint($("#bgColor").value, $("#bgStrength").value);
+        const cur = bgLoad() || DEFAULT_BG;
+        cur.strength = Number($("#bgStrength").value);
+        bgSave(cur);
+      });
+
+      $("#bgImage").addEventListener("change", async () => {
+        const file = $("#bgImage").files && $("#bgImage").files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataUrl(file);
+        setBoardImage(dataUrl);
+        const cur = bgLoad() || DEFAULT_BG;
+        cur.imageDataUrl = dataUrl;
+        bgSave(cur);
+      });
+
+      $("#removeImage").addEventListener("click", () => {
+        setBoardImage(null);
+        $("#bgImage").value = "";
+        const cur = bgLoad() || DEFAULT_BG;
+        cur.imageDataUrl = null;
+        bgSave(cur);
+      });
+
+      $("#bgReset").addEventListener("click", () => {
+        localStorage.removeItem(BG_KEY);
+        applyBackground(DEFAULT_BG);
+      });
+    }
+
+    /* =========================
+       Routine + colors
+    ========================= */
+    const DEFAULT_ROUTINE = {
+      colors: {
+        amEmpty: "#eae6e2",
+        amFilled: "#cbb8ae",
+        pmEmpty: "#eae6e2",
+        pmFilled: "#c9d7dd"
+      },
+      am: ["Cleanser","Hydrating toner / mist","Vitamin C / antioxidant","Moisturizer","SPF"],
+      pm: ["Makeup remover / oil cleanse","Cleanser","Treatment (retinoid / acids)","Moisturizer","Lip balm"]
+    };
+
+    function routineLoad(){
+      try{ return JSON.parse(localStorage.getItem(ROUTINE_KEY) || "null"); }
+      catch{ return null; }
+    }
+    function routineSave(r){
+      try{ localStorage.setItem(ROUTINE_KEY, JSON.stringify(r)); }catch{}
+    }
+
+    let routine = routineLoad() || structuredClone(DEFAULT_ROUTINE);
+
+    function getRoutine(){
+      if(!routine) routine = structuredClone(DEFAULT_ROUTINE);
+      if(!Array.isArray(routine.am)) routine.am = structuredClone(DEFAULT_ROUTINE.am);
+      if(!Array.isArray(routine.pm)) routine.pm = structuredClone(DEFAULT_ROUTINE.pm);
+      if(!routine.colors) routine.colors = structuredClone(DEFAULT_ROUTINE.colors);
+      return routine;
+    }
+
+    function routineApplyColors(colors){
+      const c = Object.assign({}, DEFAULT_ROUTINE.colors, colors || {});
+      document.documentElement.style.setProperty("--am-empty", normHex(c.amEmpty, DEFAULT_ROUTINE.colors.amEmpty));
+      document.documentElement.style.setProperty("--am-filled", normHex(c.amFilled, DEFAULT_ROUTINE.colors.amFilled));
+      document.documentElement.style.setProperty("--pm-empty", normHex(c.pmEmpty, DEFAULT_ROUTINE.colors.pmEmpty));
+      document.documentElement.style.setProperty("--pm-filled", normHex(c.pmFilled, DEFAULT_ROUTINE.colors.pmFilled));
+
+      $("#amEmpty").value = normHex(c.amEmpty, DEFAULT_ROUTINE.colors.amEmpty);
+      $("#amFilled").value = normHex(c.amFilled, DEFAULT_ROUTINE.colors.amFilled);
+      $("#pmEmpty").value = normHex(c.pmEmpty, DEFAULT_ROUTINE.colors.pmEmpty);
+      $("#pmFilled").value = normHex(c.pmFilled, DEFAULT_ROUTINE.colors.pmFilled);
+    }
+
+    function escapeAttr(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+    function escapeText(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function renderRoutineEditor(){
+      const r = getRoutine();
+      const amList = $("#amList");
+      const pmList = $("#pmList");
+      amList.innerHTML = "";
+      pmList.innerHTML = "";
+
+      const makeRow = (text, onText, onDel) => {
+        const row = document.createElement("div");
+        row.className = "line";
+        row.innerHTML = `
+          <input type="text" value="${escapeAttr(text)}" />
+          <button class="xbtn" type="button" aria-label="Remove">×</button>
+        `;
+        const input = row.querySelector("input");
+        const del = row.querySelector("button");
+        input.addEventListener("input", () => onText(input.value));
+        del.addEventListener("click", () => onDel());
+        return row;
+      };
+
+      r.am.forEach((t, idx) => {
+        amList.appendChild(makeRow(t,
+          (v) => { r.am[idx] = v; routineSave(r); rebuildWeek(activeWeekId); },
+          () => { r.am.splice(idx, 1); routineSave(r); renderRoutineEditor(); rebuildWeek(activeWeekId); }
+        ));
+      });
+
+      r.pm.forEach((t, idx) => {
+        pmList.appendChild(makeRow(t,
+          (v) => { r.pm[idx] = v; routineSave(r); rebuildWeek(activeWeekId); },
+          () => { r.pm.splice(idx, 1); routineSave(r); renderRoutineEditor(); rebuildWeek(activeWeekId); }
+        ));
+      });
+    }
+
+    function initRoutine(){
+      const r = getRoutine();
+      routineSave(r);
+      routineApplyColors(r.colors);
+      renderRoutineEditor();
+
+      const applyColorChange = () => {
+        const rr = getRoutine();
+        rr.colors = {
+          amEmpty: $("#amEmpty").value,
+          amFilled: $("#amFilled").value,
+          pmEmpty: $("#pmEmpty").value,
+          pmFilled: $("#pmFilled").value
+        };
+        routineSave(rr);
+        routineApplyColors(rr.colors);
+        rebuildWeek(activeWeekId);
+      };
+
+      ["amEmpty","amFilled","pmEmpty","pmFilled"].forEach(id => {
+        document.getElementById(id).addEventListener("input", applyColorChange);
+      });
+
+      $("#addAmStep").addEventListener("click", () => {
+        const rr = getRoutine();
+        rr.am.push("New AM step");
+        routineSave(rr);
+        renderRoutineEditor();
+        rebuildWeek(activeWeekId);
+      });
+
+      $("#addPmStep").addEventListener("click", () => {
+        const rr = getRoutine();
+        rr.pm.push("New PM step");
+        routineSave(rr);
+        renderRoutineEditor();
+        rebuildWeek(activeWeekId);
+      });
+
+      $("#resetRoutine").addEventListener("click", () => {
+        localStorage.removeItem(ROUTINE_KEY);
+        routine = structuredClone(DEFAULT_ROUTINE);
+        routineSave(getRoutine());
+        routineApplyColors(getRoutine().colors);
+        renderRoutineEditor();
+        rebuildWeek(activeWeekId);
+      });
+    }
+
+    /* =========================
+       Store (per ISO day)
+    ========================= */
+    function loadStore(){
+      try{
+        const raw = localStorage.getItem(STORE_KEY);
+        return raw ? JSON.parse(raw) : { days: {} };
+      }catch{
+        return { days: {} };
+      }
+    }
+    function saveStore(s){
+      localStorage.setItem(STORE_KEY, JSON.stringify(s));
+    }
+
+    let store = loadStore();
+
+    function ensureDay(iso){
+      const r = getRoutine();
+      if(!store.days[iso]){
+        store.days[iso] = {
+          am: new Array(r.am.length).fill(false),
+          pm: new Array(r.pm.length).fill(false),
+          note: ""
+        };
+      }else{
+        const d = store.days[iso];
+        if(!Array.isArray(d.am)) d.am = [];
+        if(!Array.isArray(d.pm)) d.pm = [];
+        while(d.am.length < r.am.length) d.am.push(false);
+        while(d.pm.length < r.pm.length) d.pm.push(false);
+        d.am = d.am.slice(0, r.am.length);
+        d.pm = d.pm.slice(0, r.pm.length);
+        if(typeof d.note !== "string") d.note = "";
+      }
+      return store.days[iso];
+    }
+
+    function dayCompletion(iso){
+      const r = getRoutine();
+      const d = ensureDay(iso);
+      const amDone = r.am.length ? d.am.every(Boolean) : true;
+      const pmDone = r.pm.length ? d.pm.every(Boolean) : true;
+      return { amDone, pmDone, allDone: amDone && pmDone };
+    }
+
+    /* =========================
+       Week UI
+    ========================= */
+    const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const grid = $("#grid");
+
+    let selectedDayIso = toISODate(new Date());
+    let activeWeekId = toISODate(mondayOfWeek(new Date()));
+
+    function selectDay(iso){
+      selectedDayIso = iso;
+      $$(".day").forEach(d => d.classList.toggle("selected", d.dataset.iso === iso));
+    }
+
+    function rebuildWeek(weekId){
+      activeWeekId = weekId;
+      $("#weekLabel").textContent = prettyWeekLabel(weekId);
+
+      const monday = new Date(weekId + "T00:00:00");
+      grid.innerHTML = "";
+
+      const r = getRoutine();
+      const amEmpty = getComputedStyle(document.documentElement).getPropertyValue("--am-empty").trim() || "#eae6e2";
+      const amFilled = getComputedStyle(document.documentElement).getPropertyValue("--am-filled").trim() || "#cbb8ae";
+      const pmEmpty = getComputedStyle(document.documentElement).getPropertyValue("--pm-empty").trim() || "#eae6e2";
+      const pmFilled = getComputedStyle(document.documentElement).getPropertyValue("--pm-filled").trim() || "#c9d7dd";
+
+      for(let i=0;i<7;i++){
+        const date = addDays(monday, i);
+        const iso = toISODate(date);
+        const dayData = ensureDay(iso);
+        const isToday = iso === toISODate(new Date());
+        const { amDone, pmDone } = dayCompletion(iso);
+
+        const day = document.createElement("section");
+        day.className = "day";
+        day.dataset.iso = iso;
+
+        day.innerHTML = `
+          <div class="day-header">
+            <div class="day-title">
+              <div class="day-name">${dayNames[i]}</div>
+              ${isToday ? `<span class="today-chip">Today</span>` : ``}
+              <div class="day-date">${formatShortDate(date)}</div>
+            </div>
+          </div>
+
+          <div class="day-body">
+            <div class="block" data-part="am">
+              <div class="label">
+                <span>AM</span>
+                <span class="subpill">${amDone ? "done" : "in progress"}</span>
+              </div>
+              <div class="routine" data-routine="am"></div>
+            </div>
+
+            <div class="block" data-part="pm">
+              <div class="label">
+                <span>PM</span>
+                <span class="subpill">${pmDone ? "done" : "in progress"}</span>
+              </div>
+              <div class="routine" data-routine="pm"></div>
+            </div>
+
+            <div class="block">
+              <div class="label">Notes</div>
+              <textarea class="note" placeholder="">${escapeText(dayData.note)}</textarea>
+            </div>
+          </div>
+        `;
+
+        const amWrap = day.querySelector('[data-routine="am"]');
+        const pmWrap = day.querySelector('[data-routine="pm"]');
+
+        r.am.forEach((label, idx) => {
+          const step = document.createElement("div");
+          step.className = "step" + (dayData.am[idx] ? " done" : "");
+          step.dataset.slot = "am";
+          step.dataset.idx = String(idx);
+          step.style.setProperty("--empty", amEmpty);
+          step.style.setProperty("--filled", amFilled);
+          step.innerHTML = `
+            <div class="tick" aria-hidden="true"></div>
+            <div class="step-text">${escapeHtml(label)}</div>
+          `;
+          amWrap.appendChild(step);
+        });
+
+        r.pm.forEach((label, idx) => {
+          const step = document.createElement("div");
+          step.className = "step" + (dayData.pm[idx] ? " done" : "");
+          step.dataset.slot = "pm";
+          step.dataset.idx = String(idx);
+          step.style.setProperty("--empty", pmEmpty);
+          step.style.setProperty("--filled", pmFilled);
+          step.innerHTML = `
+            <div class="tick" aria-hidden="true"></div>
+            <div class="step-text">${escapeHtml(label)}</div>
+          `;
+          pmWrap.appendChild(step);
+        });
+
+        grid.appendChild(day);
+      }
+
+      selectDay(selectedDayIso);
+      // Removed scrollIntoView to avoid weird jumps in Notion embeds.
+    }
+
+    /* =========================
+       Interactions
+    ========================= */
+    grid.addEventListener("click", (e) => {
+      const dayEl = e.target.closest(".day");
+      if(!dayEl) return;
+      const iso = dayEl.dataset.iso;
+
+      if(!e.target.closest("textarea")) selectDay(iso);
+
+      const step = e.target.closest(".step");
+      if(step){
+        const slot = step.dataset.slot;
+        const idx = Number(step.dataset.idx);
+        if((slot !== "am" && slot !== "pm") || !Number.isFinite(idx)) return;
+
+        const d = ensureDay(iso);
+        const arr = slot === "am" ? d.am : d.pm;
+        arr[idx] = !arr[idx];
+        saveStore(store);
+
+        step.classList.toggle("done", arr[idx]);
+
+        const { amDone, pmDone, allDone } = dayCompletion(iso);
+        dayEl.querySelector('[data-part="am"] .subpill').textContent = amDone ? "done" : "in progress";
+        dayEl.querySelector('[data-part="pm"] .subpill').textContent = pmDone ? "done" : "in progress";
+        if(allDone) confettiBurst();
+      }
+    });
+
+    grid.addEventListener("input", (e) => {
+      const note = e.target.closest("textarea.note");
+      if(!note) return;
+      const dayEl = note.closest(".day");
+      if(!dayEl) return;
+      const iso = dayEl.dataset.iso;
+      const d = ensureDay(iso);
+      d.note = note.value ?? "";
+      saveStore(store);
+    });
+
+    /* =========================
+       Week nav
+    ========================= */
+    $("#prevWeek").addEventListener("click", () => {
+      const mon = new Date(activeWeekId + "T00:00:00");
+      rebuildWeek(toISODate(addDays(mon, -7)));
+    });
+    $("#nextWeek").addEventListener("click", () => {
+      const mon = new Date(activeWeekId + "T00:00:00");
+      rebuildWeek(toISODate(addDays(mon, 7)));
+    });
+
+    /* =========================
+       Popovers
+    ========================= */
+    function closePanels(exceptId){
+      ["themePanel","bgPanel","routinePanel"].forEach(id => {
+        if(id !== exceptId) document.getElementById(id).classList.remove("open");
+      });
+    }
+
+    function initPopovers(){
+      $("#themeBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const p = $("#themePanel");
+        const open = !p.classList.contains("open");
+        closePanels(open ? "themePanel" : null);
+        p.classList.toggle("open", open);
+      });
+
+      $("#bgBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const p = $("#bgPanel");
+        const open = !p.classList.contains("open");
+        closePanels(open ? "bgPanel" : null);
+        p.classList.toggle("open", open);
+      });
+
+      $("#routineBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const p = $("#routinePanel");
+        const open = !p.classList.contains("open");
+        closePanels(open ? "routinePanel" : null);
+        p.classList.toggle("open", open);
+      });
+
+      document.addEventListener("click", (e) => {
+        const insideAny =
+          e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
+          e.target.closest("#bgPanel") || e.target.closest("#bgBtn") ||
+          e.target.closest("#routinePanel") || e.target.closest("#routineBtn");
+        if(!insideAny) closePanels(null);
+      });
+    }
+
+    /* =========================
+       Confetti
+    ========================= */
+    const confettiCanvas = document.getElementById("confetti");
+    const ctx = confettiCanvas.getContext("2d");
+    let confettiLock = false;
+
+    function resizeConfetti(){
+      confettiCanvas.width = Math.floor(window.innerWidth * devicePixelRatio);
+      confettiCanvas.height = Math.floor(window.innerHeight * devicePixelRatio);
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    window.addEventListener("resize", resizeConfetti);
+
+    function confettiBurst(){
+      if(confettiLock) return;
+      confettiLock = true;
+      resizeConfetti();
+      confettiCanvas.style.display = "block";
+
+      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#cbb8ae";
+      const palette = [accent, "#e3d4d2", "#cdd5d0", "#c9d7dd", "#d1cde2", "#d9c6bd", "#d6d0c8"]
+        .map(c => normHex(c, "#cbb8ae"));
+
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const particles = [];
+      const N = 140;
+
+      for(let i=0;i<N;i++){
+        particles.push({
+          x: W * 0.5 + (Math.random()-0.5)*40,
+          y: H * 0.18 + (Math.random()-0.5)*20,
+          vx: (Math.random()-0.5) * 10,
+          vy: (Math.random()*-8) - 4,
+          g: 0.18 + Math.random()*0.18,
+          r: 3 + Math.random()*4,
+          a: 1,
+          rot: Math.random()*Math.PI,
+          vr: (Math.random()-0.5) * 0.25,
+          color: palette[(Math.random()*palette.length)|0],
+        });
+      }
+
+      const start = performance.now();
+      const duration = 1100;
+
+      function tick(now){
+        const t = now - start;
+        ctx.clearRect(0,0,W,H);
+
+        particles.forEach(p => {
+          p.vy += p.g;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vr;
+          const life = 1 - (t / duration);
+          p.a = Math.max(0, life);
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.globalAlpha = p.a;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.r, -p.r, p.r*2.2, p.r*1.4);
+          ctx.restore();
+        });
+
+        if(t < duration){
+          requestAnimationFrame(tick);
+        }else{
+          ctx.clearRect(0,0,W,H);
+          confettiCanvas.style.display = "none";
+          confettiLock = false;
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    /* =========================
+       Boot
+    ========================= */
+    function boot(){
+      initPopovers();
+      initTheme();
+      initBackground();
+      initRoutine();
+
+      store = loadStore();
+      activeWeekId = toISODate(mondayOfWeek(new Date()));
+      selectedDayIso = toISODate(new Date());
+      rebuildWeek(activeWeekId);
+    }
+    boot();
+  </script>
+</body>
+</html>

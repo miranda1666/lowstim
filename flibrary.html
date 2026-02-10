@@ -1,0 +1,1698 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Library Widget</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <style>
+    :root{
+      /* Base theme tokens */
+      --bg:#ffffff;
+      --card: rgba(255,255,255,0.84);
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      /* Board background controls */
+      --board-tint:#efe7e1;
+      --board-tint-a:0.12;
+      --board-image:none;
+
+      /* override-friendly “whites” + panel bg */
+      --panel-bg: rgba(255,255,255,0.88);
+      --field-bg: #ffffff;
+
+      /* theme dot color */
+      --theme-dot: var(--ink);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background:var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{ max-width:1100px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
+
+    /* Board */
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.01);
+      z-index:0;
+      pointer-events:none;
+      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.35), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.22), transparent 62%),
+        rgba(255,255,255,0.22);
+      background-blend-mode: screen;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+      background: rgba(0,0,0,0);
+    }
+    .boardContent{ position:relative; z-index:2; }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button, input, select{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background:var(--field-bg);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button{ cursor:pointer; user-select:none; }
+    button.soft{ background:var(--soft); }
+    button.primary{ background: rgba(239,231,225,0.92); }
+    button.danger{ border-color:#efc2c2; }
+    button:active{ transform:translateY(1px); }
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke);
+      background:var(--field-bg);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .tiny{ font-size:12px; color:var(--muted); }
+
+    /* Background settings */
+    .bgWrap{ position:relative; margin-left:auto; display:flex; gap:10px; align-items:center; }
+    .bgBtn, .themeBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    }
+    .bgDot, .themeDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+    .themeDot{
+      background: var(--theme-dot);
+      box-shadow: 0 0 0 6px rgba(233,228,221,0.35);
+    }
+
+    .bgPanel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 310px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: var(--panel-bg);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+
+      /* ✅ ensure nothing gets cut off */
+      max-height: calc(100vh - 140px);
+      overflow:auto;
+    }
+    .bgPanel.open{ display:block; }
+    .bgTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .bgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .bgRow label{ font-size:12px; color:var(--muted); }
+    .bgRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .bgRow input[type="range"]{ width: 150px; }
+    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgMiniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.97);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    }
+    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    /* Presets UI */
+    .presetName{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.97);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+    }
+    .presetArea{
+      width:100%;
+      min-height: 92px;
+      resize: vertical;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.97);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      line-height:1.35;
+    }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Library / shelves */
+    .shelfBar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .shelves{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:10px;
+    }
+    .shelf{
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background: rgba(255,255,255,0.92);
+      overflow:hidden;
+    }
+    .shelfHead{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      background: rgba(243,239,233,0.75);
+      border-bottom:1px solid var(--stroke);
+    }
+    .shelfName{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      min-width:0;
+      flex:1;
+    }
+    .shelfName input{
+      border-radius:10px;
+      padding:8px 10px;
+      width:100%;
+      min-width:180px;
+      background:var(--field-bg);
+    }
+    .shelfActions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .books{
+      display:flex;
+      gap:12px;
+      padding:12px;
+      overflow:auto;
+      scroll-snap-type:x mandatory;
+    }
+
+    .book{
+      width:120px;
+      flex:0 0 auto;
+      scroll-snap-align:start;
+      cursor:pointer;
+      user-select:none;
+    }
+    .cover{
+      width:120px;
+      height:160px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background: var(--field-bg);
+      box-shadow: 0 10px 18px rgba(30,20,10,.08);
+      overflow:hidden;
+      position:relative;
+      display:grid;
+      place-items:center;
+    }
+    .cover img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .cover .fallback{
+      padding:10px;
+      text-align:left;
+      width:100%;
+      height:100%;
+      background: linear-gradient(135deg, rgba(239,231,225,0.9), rgba(255,255,255,1));
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .fallback .ftitle{
+      font-weight:800;
+      font-size:12px;
+      line-height:1.25;
+      color: rgba(43,42,40,0.9);
+      overflow:hidden;
+      display:-webkit-box;
+      -webkit-line-clamp:4;
+      -webkit-box-orient:vertical;
+    }
+    .fallback .fmeta{
+      font-size:10px;
+      color: rgba(106,102,95,0.95);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .bookLabel{
+      margin-top:8px;
+      font-size:12px;
+      color: rgba(43,42,40,0.9);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .bookMiniRow{
+      display:flex;
+      gap:6px;
+      margin-top:6px;
+    }
+    .miniBtn{
+      padding:6px 8px;
+      border-radius:10px;
+      font-size:11px;
+      border:1px solid var(--stroke);
+      background: rgba(243,239,233,0.9);
+    }
+    .miniBtn.danger{ border-color:#efc2c2; }
+
+    /* Modal reader */
+    .modal{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,0.35);
+      display:none;
+      z-index:200;
+      padding:20px;
+    }
+    .modal.open{ display:flex; }
+    .modalCard{
+      margin:auto;
+      width:min(1100px, 96vw);
+      height:min(740px, 92vh);
+      background: rgba(255,255,255,0.96);
+      border:1px solid var(--stroke);
+      border-radius:18px;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.22);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+    .modalTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--stroke);
+      background: rgba(243,239,233,0.75);
+    }
+    .modalTitle{
+      font-weight:800;
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width: 70%;
+    }
+    .modalBody{
+      flex:1;
+      background:var(--field-bg);
+    }
+    .modalBody iframe,
+    .modalBody embed{
+      width:100%;
+      height:100%;
+      border:0;
+      display:block;
+    }
+
+    /* Upload panel */
+    .uploadGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      width:100%;
+    }
+    .uploadGrid .col{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:240px;
+      flex:1;
+    }
+    .uploadGrid label{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .uploadGrid input[type="text"]{ width:100%; }
+    .uploadGrid input[type="file"]{ width:100%; }
+
+    @media (max-width: 820px){
+      .uploadGrid{ grid-template-columns: 1fr; }
+      .book{ width:110px; }
+      .cover{ width:110px; height:150px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1></h1>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Library board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+          <div class="title">
+            <div>
+              <h2>My shelves</h2>
+            </div>
+
+            <div class="bgWrap" id="bgWrap">
+              <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+              </button>
+
+              <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
+                <div class="bgTitle">Background</div>
+
+                <div class="bgRow">
+                  <label for="bgColor">Tint</label>
+                  <input id="bgColor" type="color" value="#efe7e1" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgStrength">Strength</label>
+                  <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow" style="align-items:flex-start;">
+                  <label for="bgImage">Image</label>
+                  <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+                </div>
+
+                <div class="bgRow">
+                  <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
+                <button id="bgReset" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset background</button>
+              </div>
+
+              <div class="bgPanel" id="themePanel" role="dialog" aria-label="Theme settings">
+                <div class="bgTitle">Theme</div>
+
+                <div class="bgRow">
+                  <label for="tPageBg">Page bg</label>
+                  <input id="tPageBg" type="color" value="#ffffff" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tText">Text</label>
+                  <input id="tText" type="color" value="#2b2a28" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tMuted">Muted</label>
+                  <input id="tMuted" type="color" value="#6a665f" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow">
+                  <label for="tStroke">Borders</label>
+                  <input id="tStroke" type="color" value="#e9e4dd" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tCard">Card</label>
+                  <input id="tCard" type="color" value="#ffffff" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tSoft">Buttons</label>
+                  <input id="tSoft" type="color" value="#f3efe9" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
+                <button id="resetTheme" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgTitle" style="margin-top:0;">Presets</div>
+
+                <div class="bgRow" style="flex-direction:column; align-items:stretch; gap:10px;">
+                  <input id="presetName" class="presetName" placeholder="Preset name" />
+                  <button id="presetSave" class="bgMiniBtn" type="button">Save current as preset</button>
+                </div>
+
+                <div class="bgRow">
+                  <label for="presetSelect">Choose</label>
+                  <select id="presetSelect" style="width:160px;"></select>
+                </div>
+
+                <button id="presetApply" class="bgMiniBtn" type="button">Apply preset</button>
+                <button id="presetDelete" class="bgMiniBtn" type="button" style="margin-top:8px;">Delete preset</button>
+
+                <div class="bgDiv"></div>
+
+                <button id="presetCopy" class="bgMiniBtn" type="button">Copy preset JSON</button>
+
+                <div class="bgRow" style="flex-direction:column; align-items:stretch; gap:10px;">
+                  <textarea id="presetImport" class="presetArea" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+                  <button id="presetImportBtn" class="bgMiniBtn" type="button">Import presets</button>
+                  <div class="status" id="presetStatus" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Upload + shelf controls -->
+          <div class="shelfBar">
+            <div class="uploadGrid" aria-label="Upload a book">
+              <div class="col">
+                <label for="fileInput">Book file (PDF recommended)</label>
+                <input id="fileInput" type="file" accept="application/pdf,image/*,text/plain,application/epub+zip" />
+              </div>
+
+              <div class="col">
+                <label for="coverInput">Optional cover image</label>
+                <input id="coverInput" type="file" accept="image/*" />
+              </div>
+
+              <div class="col">
+                <label for="bookTitle">Title (optional)</label>
+                <input id="bookTitle" type="text" placeholder="e.g., Deep Work" />
+              </div>
+
+              <div class="col">
+                <label for="shelfSelect">Add to shelf</label>
+                <div class="row" style="gap:8px;">
+                  <select id="shelfSelect" style="min-width:220px;"></select>
+                  <button id="addBook" class="primary" type="button">Add book</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="row" style="justify-content:flex-end; width:100%;">
+              <button id="addShelf" class="soft" type="button">Add shelf</button>
+              <button id="resetAll" class="danger" type="button">Reset library</button>
+            </div>
+          </div>
+
+          <!-- internal reset confirm -->
+          <div id="resetConfirm" class="confirm" style="display:none; margin-top:10px; border:1px solid var(--stroke); border-radius:14px; padding:12px; background:var(--field-bg);">
+            <div class="confirmTop" style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px;">
+              <p class="confirmTitle" style="margin:0; font-weight:750; font-size:13px; line-height:1.25;">Reset entire library?</p>
+              <span class="tiny">This removes shelves + books (and stored files).</span>
+            </div>
+            <div class="row">
+              <button id="resetYes" class="danger" type="button">Yes, reset</button>
+              <button id="resetNo" class="soft" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="shelves" id="shelves"></div>
+
+          <div class="divider"></div>
+          <div class="tiny">
+            Note: Books are stored in your browser (IndexedDB). If you clear site data, the library resets.
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reader modal -->
+  <div class="modal" id="readerModal" role="dialog" aria-label="Book reader">
+    <div class="modalCard">
+      <div class="modalTop">
+        <div class="modalTitle" id="readerTitle">—</div>
+        <div class="row" style="gap:8px;">
+          <button id="readerClose" class="soft" type="button">Close</button>
+        </div>
+      </div>
+      <div class="modalBody" id="readerBody"></div>
+    </div>
+  </div>
+
+<script>
+/* PDF.js worker */
+(function initPdfJsWorker(){
+  try{
+    if (window.pdfjsLib){
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+  }catch(e){}
+})();
+
+/* =========================
+   Safe storage + widget instance id
+========================= */
+(function(){
+  const mem = Object.create(null);
+  function canUseLocalStorage(){
+    try{
+      const k = "__t__" + Math.random().toString(16).slice(2);
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{ return false; }
+  }
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+    catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{ if(hasLS) localStorage.setItem(key, value); else mem[key] = String(value); }
+    catch{ mem[key] = String(value); }
+  }
+  function storageRemove(key){
+    try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+    catch{ delete mem[key]; }
+  }
+
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function getWidgetId(){
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = (sp.get("wid") || "").trim();
+      if(wid) return wid;
+    }catch{}
+    try{
+      const cached = sessionStorage.getItem("library_widget_wid");
+      if(cached) return cached;
+    }catch{}
+    const fresh = uid();
+    try{ sessionStorage.setItem("library_widget_wid", fresh); }catch{}
+    return fresh;
+  }
+
+  window.__LW__ = { wid: getWidgetId(), get: storageGet, set: storageSet, remove: storageRemove };
+})();
+
+const WID = window.__LW__?.wid || "default";
+
+/* Keys (instance-safe) */
+const META_KEY_BASE = "library_widget_meta_v1";
+const THEME_KEY_BASE = "library_widget_theme_v2";
+const BG_KEY_BASE = "library_widget_bg_v2";
+const PRESETS_KEY_BASE = "library_widget_presets_v2";
+
+const META_KEY = META_KEY_BASE + "__" + WID;
+const THEME_KEY = THEME_KEY_BASE + "__" + WID;
+const BG_KEY = BG_KEY_BASE + "__" + WID;
+const PRESETS_KEY = PRESETS_KEY_BASE + "__" + WID;
+
+const $ = (id)=>document.getElementById(id);
+
+function clamp(n, min, max){
+  const x = Number(n);
+  if(!Number.isFinite(x)) return min;
+  return Math.max(min, Math.min(max, x));
+}
+function normHex(hex, fallback){
+  const s = String(hex || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+}
+function hexToRgbTuple(hex){
+  const h = normHex(hex, "#ffffff").slice(1);
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  return `${r},${g},${b}`;
+}
+function hexToRgba(hex, a){
+  const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function loadJSON(key){
+  try{
+    const raw = window.__LW__.get(key);
+    return raw ? JSON.parse(raw) : null;
+  }catch{ return null; }
+}
+function saveJSON(key, val){
+  try{ window.__LW__.set(key, JSON.stringify(val)); }catch{}
+}
+function setStatus(msg){
+  const el = $("presetStatus");
+  if(el) el.textContent = msg || "";
+}
+async function copyText(text){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch{}
+  try{
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return !!ok;
+  }catch{ return false; }
+}
+function fileToDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+/* =========================
+   Theme: draft + apply + presets
+========================= */
+const DEFAULT_THEME = {
+  pageBg: "#ffffff",
+  ink: "#2b2a28",
+  muted: "#6a665f",
+  stroke: "#e9e4dd",
+  cardBase: "#ffffff",
+  soft: "#f3efe9"
+};
+
+function themeLoad(){ return loadJSON(THEME_KEY); }
+function themeSave(t){ saveJSON(THEME_KEY, t); }
+
+function themeApplyToCSS(t){
+  const x = Object.assign({}, DEFAULT_THEME, t || {});
+  const pageBg = normHex(x.pageBg, DEFAULT_THEME.pageBg);
+  const ink = normHex(x.ink, DEFAULT_THEME.ink);
+  const muted = normHex(x.muted, DEFAULT_THEME.muted);
+  const stroke = normHex(x.stroke, DEFAULT_THEME.stroke);
+  const cardBase = normHex(x.cardBase, DEFAULT_THEME.cardBase);
+  const soft = normHex(x.soft, DEFAULT_THEME.soft);
+
+  document.documentElement.style.setProperty("--bg", pageBg);
+  document.documentElement.style.setProperty("--ink", ink);
+  document.documentElement.style.setProperty("--muted", muted);
+  document.documentElement.style.setProperty("--soft", soft);
+
+  document.documentElement.style.setProperty("--stroke", hexToRgba(stroke, 0.95));
+  document.documentElement.style.setProperty("--card", hexToRgba(cardBase, 0.84));
+
+  document.documentElement.style.setProperty("--panel-bg", hexToRgba(cardBase, 0.88));
+  document.documentElement.style.setProperty("--field-bg", "#ffffff");
+
+  document.documentElement.style.setProperty("--theme-dot", ink);
+
+  const dot = $("themeDot");
+  if(dot){
+    dot.style.background = ink;
+    dot.style.boxShadow = `0 0 0 6px ${hexToRgba(stroke, 0.35)}`;
+    dot.style.borderColor = hexToRgba(stroke, 0.95);
+  }
+}
+
+function themeSyncInputs(t){
+  const x = Object.assign({}, DEFAULT_THEME, t || {});
+  if($("tPageBg")) $("tPageBg").value = normHex(x.pageBg, DEFAULT_THEME.pageBg);
+  if($("tText"))   $("tText").value   = normHex(x.ink, DEFAULT_THEME.ink);
+  if($("tMuted"))  $("tMuted").value  = normHex(x.muted, DEFAULT_THEME.muted);
+  if($("tStroke")) $("tStroke").value = normHex(x.stroke, DEFAULT_THEME.stroke);
+  if($("tCard"))   $("tCard").value   = normHex(x.cardBase, DEFAULT_THEME.cardBase);
+  if($("tSoft"))   $("tSoft").value   = normHex(x.soft, DEFAULT_THEME.soft);
+}
+
+function themeReadFromInputs(){
+  return {
+    pageBg: $("tPageBg")?.value,
+    ink: $("tText")?.value,
+    muted: $("tMuted")?.value,
+    stroke: $("tStroke")?.value,
+    cardBase: $("tCard")?.value,
+    soft: $("tSoft")?.value,
+  };
+}
+
+/* Presets store */
+function loadPresets(){
+  const list = loadJSON(PRESETS_KEY);
+  return Array.isArray(list) ? list : [];
+}
+function savePresets(list){ saveJSON(PRESETS_KEY, list); }
+function refreshPresetSelect(){
+  const sel = $("presetSelect");
+  if(!sel) return;
+  const list = loadPresets();
+  const current = sel.value;
+  sel.innerHTML = `<option value="">—</option>`;
+  for(const p of list){
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name || "Untitled";
+    sel.appendChild(opt);
+  }
+  if(current) sel.value = current;
+}
+
+let themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+
+function initThemeUI(){
+  const themeBtn = $("themeBtn");
+  const themePanel = $("themePanel");
+  const bgPanel = $("bgPanel");
+
+  const resetTheme = $("resetTheme");
+  const themeApply = $("themeApply");
+
+  if(!themeBtn || !themePanel || !resetTheme || !themeApply) return;
+
+  themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+  themeSyncInputs(themeDraft);
+  themeApplyToCSS(themeDraft);
+
+  const ids = ["tPageBg","tText","tMuted","tStroke","tCard","tSoft"];
+  ids.forEach(id => {
+    const el = $(id);
+    if(!el) return;
+    el.addEventListener("input", () => {
+      themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+      themeApplyToCSS(themeDraft);  // preview only
+      setStatus("");
+    });
+  });
+
+  themeApply.addEventListener("click", () => {
+    themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+    themeSave(themeDraft);
+    setStatus("Theme applied.");
+  });
+
+  resetTheme.addEventListener("click", () => {
+    window.__LW__.remove(THEME_KEY);
+    themeDraft = Object.assign({}, DEFAULT_THEME);
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+    setStatus("Theme reset.");
+  });
+
+  themeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    themePanel.classList.toggle("open");
+    if(bgPanel) bgPanel.classList.remove("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(!themePanel.classList.contains("open")) return;
+    const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+    if(!inside) themePanel.classList.remove("open");
+  });
+}
+
+/* =========================
+   Background: draft + apply
+========================= */
+const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageDataUrl:null };
+
+function bgLoad(){ return loadJSON(BG_KEY); }
+function bgSave(bg){ saveJSON(BG_KEY, bg); }
+
+let bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+
+function bgApplyToCSS(bg){
+  const x = Object.assign({}, DEFAULT_BG, bg || {});
+  const tint = normHex(x.tint, DEFAULT_BG.tint);
+  const strength = clamp(Number(x.strength), 0, 70) / 100;
+
+  document.documentElement.style.setProperty("--board-tint", tint);
+  document.documentElement.style.setProperty("--board-tint-a", String(strength));
+  document.documentElement.style.setProperty("--board-image", x.imageDataUrl ? `url("${x.imageDataUrl}")` : "none");
+
+  const boardTintEl = $("boardTint");
+  if(boardTintEl) boardTintEl.style.background = hexToRgba(tint, strength);
+
+  const bgDot = $("bgDot");
+  if(bgDot){
+    bgDot.style.background = tint;
+    bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+  }
+}
+
+function bgSyncInputs(bg){
+  const x = Object.assign({}, DEFAULT_BG, bg || {});
+  if($("bgColor")) $("bgColor").value = normHex(x.tint, DEFAULT_BG.tint);
+  if($("bgStrength")) $("bgStrength").value = String(clamp(x.strength, 0, 70));
+}
+
+function initBackgroundUI(){
+  const bgBtn = $("bgBtn");
+  const bgPanel = $("bgPanel");
+  const bgColor = $("bgColor");
+  const bgStrength = $("bgStrength");
+  const bgImage = $("bgImage");
+  const bgRemove = $("bgRemove");
+  const bgApply = $("bgApply");
+  const bgReset = $("bgReset");
+  const themePanel = $("themePanel");
+
+  if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !bgApply || !bgReset) return;
+
+  bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+  bgSyncInputs(bgDraft);
+  bgApplyToCSS(bgDraft);
+
+  bgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    bgPanel.classList.toggle("open");
+    if(themePanel) themePanel.classList.remove("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(!bgPanel.classList.contains("open")) return;
+    const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+    if(!inside) bgPanel.classList.remove("open");
+  });
+
+  bgColor.addEventListener("input", () => {
+    bgDraft.tint = bgColor.value;
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  });
+
+  bgStrength.addEventListener("input", () => {
+    bgDraft.strength = Number(bgStrength.value);
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  });
+
+  bgImage.addEventListener("change", async () => {
+    const file = bgImage.files && bgImage.files[0];
+    if(!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    bgDraft.imageDataUrl = dataUrl;
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  });
+
+  bgRemove.addEventListener("click", () => {
+    bgDraft.imageDataUrl = null;
+    bgImage.value = "";
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  });
+
+  bgApply.addEventListener("click", () => {
+    bgDraft.tint = bgColor.value;
+    bgDraft.strength = Number(bgStrength.value);
+    bgSave(bgDraft);
+    setStatus("Background applied.");
+  });
+
+  bgReset.addEventListener("click", () => {
+    window.__LW__.remove(BG_KEY);
+    bgDraft = Object.assign({}, DEFAULT_BG);
+    bgSyncInputs(bgDraft);
+    bgApplyToCSS(bgDraft);
+    setStatus("Background reset.");
+  });
+}
+
+/* =========================
+   Presets UI wiring
+========================= */
+function initPresetsUI(){
+  const presetName = $("presetName");
+  const presetSaveBtn = $("presetSave");
+  const presetSelect = $("presetSelect");
+  const presetApplyBtn = $("presetApply");
+  const presetDeleteBtn = $("presetDelete");
+  const presetCopyBtn = $("presetCopy");
+  const presetImport = $("presetImport");
+  const presetImportBtn = $("presetImportBtn");
+
+  if(!presetName || !presetSaveBtn || !presetSelect || !presetApplyBtn || !presetDeleteBtn || !presetCopyBtn || !presetImport || !presetImportBtn) return;
+
+  refreshPresetSelect();
+
+  presetSaveBtn.addEventListener("click", () => {
+    const name = (presetName.value || "").trim();
+    if(!name){ setStatus("Type a preset name first."); return; }
+
+    themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+    bgDraft.tint = $("bgColor")?.value || bgDraft.tint;
+    bgDraft.strength = Number($("bgStrength")?.value ?? bgDraft.strength);
+
+    const list = loadPresets();
+    const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bgDraft } };
+    list.unshift(entry);
+    savePresets(list);
+
+    presetName.value = "";
+    refreshPresetSelect();
+    presetSelect.value = entry.id;
+    setStatus("Preset saved.");
+  });
+
+  presetApplyBtn.addEventListener("click", () => {
+    const id = presetSelect.value;
+    if(!id){ setStatus("Choose a preset first."); return; }
+
+    const list = loadPresets();
+    const p = list.find(x => x.id === id);
+    if(!p){ setStatus("Preset not found."); return; }
+
+    themeDraft = Object.assign({}, DEFAULT_THEME, p.theme || {});
+    bgDraft = Object.assign({}, DEFAULT_BG, p.bg || {});
+
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+    bgSyncInputs(bgDraft);
+    bgApplyToCSS(bgDraft);
+
+    themeSave(themeDraft);
+    bgSave(bgDraft);
+
+    setStatus("Preset applied.");
+  });
+
+  presetDeleteBtn.addEventListener("click", () => {
+    const id = presetSelect.value;
+    if(!id){ setStatus("Choose a preset first."); return; }
+
+    let list = loadPresets();
+    const before = list.length;
+    list = list.filter(x => x.id !== id);
+    if(list.length === before){ setStatus("Preset not found."); return; }
+
+    savePresets(list);
+    refreshPresetSelect();
+    presetSelect.value = "";
+    setStatus("Preset deleted.");
+  });
+
+  presetCopyBtn.addEventListener("click", async () => {
+    const list = loadPresets();
+    const payload = JSON.stringify(list, null, 2);
+    const ok = await copyText(payload);
+    if(ok){
+      setStatus("Preset JSON copied.");
+    }else{
+      presetImport.value = payload;
+      presetImport.focus();
+      presetImport.select();
+      setStatus("Could not copy automatically — JSON placed in the box to copy manually.");
+    }
+  });
+
+  presetImportBtn.addEventListener("click", () => {
+    const raw = (presetImport.value || "").trim();
+    if(!raw){ setStatus("Paste preset JSON first."); return; }
+
+    try{
+      const parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed)){
+        setStatus("That JSON doesn’t look like a preset list.");
+        return;
+      }
+
+      const cleaned = parsed
+        .filter(Boolean)
+        .map(p => ({
+          id: String(p.id || uid()),
+          name: String(p.name || "Imported"),
+          theme: { ...DEFAULT_THEME, ...(p.theme || {}) },
+          bg: { ...DEFAULT_BG, ...(p.bg || {}) },
+        }));
+
+      savePresets(cleaned);
+      refreshPresetSelect();
+      setStatus("Presets imported.");
+    }catch{
+      setStatus("Invalid JSON.");
+    }
+  });
+}
+
+/* Boot upgraded UI */
+(function bootUI(){
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", () => {
+      initThemeUI();
+      initBackgroundUI();
+      initPresetsUI();
+    });
+  }else{
+    initThemeUI();
+    initBackgroundUI();
+    initPresetsUI();
+  }
+})();
+
+/* =========================
+   App (your original logic, minimally adjusted for META_KEY)
+========================= */
+(function(){
+  function safeName(name){
+    return String(name || "").trim() || "Untitled";
+  }
+  function extFromName(name){
+    const n = String(name || "");
+    const m = n.match(/\.([a-z0-9]+)$/i);
+    return m ? m[1].toLowerCase() : "";
+  }
+  function mimeLabel(mime, name){
+    if (mime === "application/pdf") return "PDF";
+    if (mime && mime.startsWith("image/")) return "Image";
+    if (mime === "text/plain") return "Text";
+    const ext = extFromName(name);
+    return ext ? ext.toUpperCase() : (mime || "File");
+  }
+
+  /* IndexedDB (store blobs) */
+  const DB_NAME = "library_widget_v1";
+  const DB_STORE = "books";
+
+  function idbOpen(){
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(DB_STORE)){
+          db.createObjectStore(DB_STORE, { keyPath: "id" });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function idbPut(record){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readwrite");
+      tx.objectStore(DB_STORE).put(record);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function idbGet(id){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readonly");
+      const req = tx.objectStore(DB_STORE).get(id);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function idbDelete(id){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readwrite");
+      tx.objectStore(DB_STORE).delete(id);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function idbClear(){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readwrite");
+      tx.objectStore(DB_STORE).clear();
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  function defaultState(){
+    const s1 = uid(), s2 = uid();
+    return {
+      shelves: [
+        { id: s1, name: "To Read" },
+        { id: s2, name: "Finished" }
+      ],
+      books: []
+    };
+  }
+
+  function loadState(){
+    try{
+      const raw = window.__LW__.get(META_KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw) || {};
+      const base = defaultState();
+      base.shelves = Array.isArray(parsed.shelves) ? parsed.shelves : base.shelves;
+      base.books = Array.isArray(parsed.books) ? parsed.books : [];
+      if(!base.shelves.length) base.shelves = defaultState().shelves;
+      return base;
+    }catch{
+      return defaultState();
+    }
+  }
+
+  let state = loadState();
+
+  function saveState(){
+    try{ window.__LW__.set(META_KEY, JSON.stringify(state)); }catch{}
+  }
+
+  /* Cover generation (PDF first page) */
+  async function pdfFirstPageCover(blob){
+    if(!window.pdfjsLib) return null;
+    try{
+      const ab = await blob.arrayBuffer();
+      const doc = await pdfjsLib.getDocument({ data: ab }).promise;
+      const page = await doc.getPage(1);
+      const viewport = page.getViewport({ scale: 1.2 });
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      const out = document.createElement("canvas");
+      const w = 300, h = 400;
+      out.width = w; out.height = h;
+      const octx = out.getContext("2d");
+
+      octx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, w, h);
+      return out.toDataURL("image/jpeg", 0.86);
+    }catch(e){
+      return null;
+    }
+  }
+
+  /* Object URL cache */
+  const objectUrlById = new Map();
+
+  async function ensureObjectUrl(bookId){
+    if(objectUrlById.has(bookId)) return objectUrlById.get(bookId);
+    const rec = await idbGet(bookId);
+    if(!rec || !rec.blob) return null;
+    const url = URL.createObjectURL(rec.blob);
+    objectUrlById.set(bookId, url);
+    return url;
+  }
+
+  function revokeAllObjectUrls(){
+    for(const url of objectUrlById.values()){
+      try{ URL.revokeObjectURL(url); }catch{}
+    }
+    objectUrlById.clear();
+  }
+
+  /* UI rendering */
+  function renderShelfSelect(){
+    const sel = $("shelfSelect");
+    sel.innerHTML = "";
+    for(const s of state.shelves){
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.name || "Shelf";
+      sel.appendChild(opt);
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function renderShelves(){
+    const root = $("shelves");
+    root.innerHTML = "";
+
+    for(const shelf of state.shelves){
+      const wrap = document.createElement("div");
+      wrap.className = "shelf";
+      wrap.dataset.shelfId = shelf.id;
+
+      const head = document.createElement("div");
+      head.className = "shelfHead";
+
+      const nameWrap = document.createElement("div");
+      nameWrap.className = "shelfName";
+
+      const nameInput = document.createElement("input");
+      nameInput.value = shelf.name || "";
+      nameInput.placeholder = "Shelf name";
+      nameInput.addEventListener("change", () => {
+        shelf.name = nameInput.value.trim() || "Shelf";
+        saveState();
+        renderShelfSelect();
+      });
+
+      const count = document.createElement("span");
+      count.className = "pill";
+      const n = state.books.filter(b => b.shelfId === shelf.id).length;
+      count.innerHTML = `<span class="tiny">${n} book${n===1?"":"s"}</span>`;
+
+      nameWrap.appendChild(nameInput);
+      nameWrap.appendChild(count);
+
+      const actions = document.createElement("div");
+      actions.className = "shelfActions";
+
+      const delShelf = document.createElement("button");
+      delShelf.className = "soft";
+      delShelf.type = "button";
+      delShelf.textContent = "Remove shelf";
+      delShelf.addEventListener("click", async () => {
+        if(state.shelves.length <= 1) return alert("You need at least one shelf.");
+        const target = state.shelves.find(x => x.id !== shelf.id);
+        for(const b of state.books){
+          if(b.shelfId === shelf.id) b.shelfId = target.id;
+        }
+        state.shelves = state.shelves.filter(x => x.id !== shelf.id);
+        saveState();
+        renderAll();
+      });
+
+      actions.appendChild(delShelf);
+
+      head.appendChild(nameWrap);
+      head.appendChild(actions);
+
+      const booksRow = document.createElement("div");
+      booksRow.className = "books";
+
+      const books = state.books
+        .filter(b => b.shelfId === shelf.id)
+        .sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+
+      if(!books.length){
+        const empty = document.createElement("div");
+        empty.className = "tiny";
+        empty.style.padding = "6px 4px";
+        empty.textContent = "No books on this shelf yet.";
+        booksRow.appendChild(empty);
+      }else{
+        for(const book of books){
+          const card = document.createElement("div");
+          card.className = "book";
+          card.dataset.bookId = book.id;
+
+          const cover = document.createElement("div");
+          cover.className = "cover";
+
+          if(book.coverDataUrl){
+            const img = document.createElement("img");
+            img.alt = "Cover";
+            img.src = book.coverDataUrl;
+            cover.appendChild(img);
+          }else{
+            const fb = document.createElement("div");
+            fb.className = "fallback";
+            fb.innerHTML = `
+              <div class="ftitle">${escapeHtml(book.title || book.fileName || "Untitled")}</div>
+              <div class="fmeta">${escapeHtml(mimeLabel(book.mime, book.fileName))}</div>
+            `;
+            cover.appendChild(fb);
+          }
+
+          cover.addEventListener("click", () => openReader(book.id));
+
+          const label = document.createElement("div");
+          label.className = "bookLabel";
+          label.textContent = book.title || book.fileName || "Untitled";
+
+          const mini = document.createElement("div");
+          mini.className = "bookMiniRow";
+
+          const coverBtn = document.createElement("button");
+          coverBtn.className = "miniBtn";
+          coverBtn.type = "button";
+          coverBtn.textContent = "Cover";
+          coverBtn.addEventListener("click", () => promptCoverChange(book.id));
+
+          const moveBtn = document.createElement("button");
+          moveBtn.className = "miniBtn";
+          moveBtn.type = "button";
+          moveBtn.textContent = "Move";
+          moveBtn.addEventListener("click", () => promptMove(book.id));
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "miniBtn danger";
+          delBtn.type = "button";
+          delBtn.textContent = "✕";
+          delBtn.title = "Remove book";
+          delBtn.addEventListener("click", async () => {
+            await removeBook(book.id);
+          });
+
+          mini.appendChild(coverBtn);
+          mini.appendChild(moveBtn);
+          mini.appendChild(delBtn);
+
+          card.appendChild(cover);
+          card.appendChild(label);
+          card.appendChild(mini);
+
+          booksRow.appendChild(card);
+        }
+      }
+
+      wrap.appendChild(head);
+      wrap.appendChild(booksRow);
+      root.appendChild(wrap);
+    }
+  }
+
+  function renderAll(){
+    renderShelfSelect();
+    renderShelves();
+    saveState();
+  }
+
+  /* Reader modal */
+  async function openReader(bookId){
+    const book = state.books.find(b => b.id === bookId);
+    if(!book) return;
+
+    const url = await ensureObjectUrl(bookId);
+    if(!url) return alert("File not found. Try re-uploading.");
+
+    $("readerTitle").textContent = book.title || book.fileName || "Untitled";
+
+    const body = $("readerBody");
+    body.innerHTML = "";
+
+    const iframe = document.createElement("iframe");
+    iframe.src = url;
+    iframe.setAttribute("title", "Reader");
+    iframe.setAttribute("loading", "lazy");
+    body.appendChild(iframe);
+
+    $("readerModal").classList.add("open");
+  }
+
+  function closeReader(){
+    $("readerModal").classList.remove("open");
+    $("readerBody").innerHTML = "";
+  }
+
+  /* Book operations */
+  async function addBook(){
+    const file = $("fileInput").files && $("fileInput").files[0];
+    if(!file) return alert("Choose a file first.");
+
+    const shelfId = $("shelfSelect").value;
+
+    const rawTitle = ($("bookTitle").value || "").trim();
+    const title = rawTitle ? rawTitle : safeName(file.name);
+
+    const bookId = uid();
+    const mime = file.type || "application/octet-stream";
+    const fileName = file.name || "file";
+
+    let coverDataUrl = null;
+
+    const coverFile = $("coverInput").files && $("coverInput").files[0];
+    if(coverFile){
+      try{ coverDataUrl = await fileToDataUrl(coverFile); }catch{}
+    }else if(mime === "application/pdf"){
+      coverDataUrl = await pdfFirstPageCover(file);
+    }else if(mime.startsWith("image/")){
+      try{ coverDataUrl = await fileToDataUrl(file); }catch{}
+    }
+
+    await idbPut({ id: bookId, blob: file, mime, fileName });
+
+    state.books.unshift({
+      id: bookId,
+      shelfId,
+      title,
+      fileName,
+      mime,
+      coverDataUrl,
+      createdAt: Date.now()
+    });
+
+    $("fileInput").value = "";
+    $("coverInput").value = "";
+    $("bookTitle").value = "";
+
+    renderAll();
+  }
+
+  async function removeBook(bookId){
+    const book = state.books.find(b => b.id === bookId);
+    if(!book) return;
+
+    await idbDelete(bookId);
+    state.books = state.books.filter(b => b.id !== bookId);
+
+    const url = objectUrlById.get(bookId);
+    if(url){
+      try{ URL.revokeObjectURL(url); }catch{}
+      objectUrlById.delete(bookId);
+    }
+
+    renderAll();
+  }
+
+  async function promptCoverChange(bookId){
+    const book = state.books.find(b => b.id === bookId);
+    if(!book) return;
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.style.display = "none";
+
+    input.addEventListener("change", async () => {
+      const f = input.files && input.files[0];
+      if(!f) return;
+      try{
+        book.coverDataUrl = await fileToDataUrl(f);
+        saveState();
+        renderAll();
+      }catch{
+        alert("Couldn’t read that image.");
+      }
+    });
+
+    document.body.appendChild(input);
+    input.click();
+    setTimeout(()=> input.remove(), 0);
+  }
+
+  function promptMove(bookId){
+    const book = state.books.find(b => b.id === bookId);
+    if(!book) return;
+
+    const targetName = prompt(
+      "Move to which shelf?\n\nType the shelf name exactly:\n" + state.shelves.map(s=>s.name).join("\n"),
+      state.shelves.find(s=>s.id===book.shelfId)?.name || ""
+    );
+    if(!targetName) return;
+
+    const target = state.shelves.find(s => (s.name || "").trim().toLowerCase() === targetName.trim().toLowerCase());
+    if(!target) return alert("Shelf not found. Please type the shelf name exactly.");
+
+    book.shelfId = target.id;
+    saveState();
+    renderAll();
+  }
+
+  /* Shelves ops + reset */
+  function addShelf(){
+    state.shelves.push({ id: uid(), name: `Shelf ${state.shelves.length + 1}` });
+    saveState();
+    renderAll();
+    $("shelfSelect").value = state.shelves[state.shelves.length - 1].id;
+  }
+
+  function showReset(){
+    $("resetConfirm").style.display = "block";
+    const bgPanel = $("bgPanel");
+    const themePanel = $("themePanel");
+    if(bgPanel) bgPanel.classList.remove("open");
+    if(themePanel) themePanel.classList.remove("open");
+  }
+  function hideReset(){
+    $("resetConfirm").style.display = "none";
+  }
+
+  async function doReset(){
+    window.__LW__.remove(META_KEY);
+    state = defaultState();
+    saveState();
+    revokeAllObjectUrls();
+    await idbClear();
+    hideReset();
+    renderAll();
+  }
+
+  function init(){
+    const required = [
+      "fileInput","coverInput","bookTitle","shelfSelect","addBook",
+      "addShelf","resetAll","resetConfirm","resetYes","resetNo",
+      "shelves","readerModal","readerTitle","readerBody","readerClose"
+    ];
+    for(const id of required){ if(!$(id)) return; }
+
+    $("addBook").addEventListener("click", addBook);
+    $("addShelf").addEventListener("click", addShelf);
+
+    $("resetAll").addEventListener("click", () => {
+      $("resetConfirm").style.display === "block" ? hideReset() : showReset();
+    });
+    $("resetNo").addEventListener("click", hideReset);
+    $("resetYes").addEventListener("click", doReset);
+
+    $("readerClose").addEventListener("click", closeReader);
+    $("readerModal").addEventListener("click", (e) => {
+      if(e.target && e.target.id === "readerModal") closeReader();
+    });
+
+    renderAll();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

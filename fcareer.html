@@ -1,0 +1,1263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Career Goals</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card: rgba(255,255,255,0.84);
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      --board-tint:#efe7e1;
+      --board-tint-a:0.12;
+      --board-image:none;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background:var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{ max-width:980px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
+
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.01);
+      z-index:0;
+      pointer-events:none;
+      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+      background: rgba(0,0,0,0);
+    }
+    .boardContent{ position:relative; z-index:2; }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button, input, select, textarea{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background:#fff;
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    textarea{ width:100%; min-height:90px; resize:vertical; }
+    button{ cursor:pointer; user-select:none; }
+    button.soft{ background:var(--soft); }
+    button.primary{ background: rgba(239,231,225,0.9); }
+    button:active{ transform:translateY(1px); }
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
+    .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
+    .kpi .box{
+      flex:1; min-width:200px;
+      background:var(--soft);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .num{ font-weight:750; font-size:16px; }
+    .kpi .lab{ font-size:12px; color:var(--muted); }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .tiny{ font-size:12px; color:var(--muted); }
+
+    .list{ display:flex; flex-direction:column; gap:8px; }
+    .item{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:#fff;
+    }
+    .meta{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .meta b{ font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .meta span{ font-size:12px; color:var(--muted); }
+    .right{ display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+    .tag{
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:var(--soft);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .smallbtn{ padding:8px 10px; border-radius:12px; }
+    .danger{ border-color:#efc2c2; }
+
+    /* Panels */
+    .ctrls{ display:flex; gap:8px; align-items:center; margin-left:auto; }
+
+    .bgWrap{ position:relative; }
+    .bgBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    }
+
+    /* background dot */
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+
+    /* theme dot (same size) */
+    .themeDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--ink);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+
+    .bgPanel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 290px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+
+      /* scrollable panels */
+      max-height: 70vh;
+      overflow:auto;
+    }
+    .bgPanel.open{ display:block; }
+    .bgTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .bgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .bgRow label{ font-size:12px; color:var(--muted); }
+    .bgRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .bgRow input[type="range"]{ width: 150px; }
+    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgMiniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.97);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    }
+    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    .themePanel{ right: 42px; }
+
+    .confirm{
+      margin-top:10px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+    }
+    .confirmTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .confirmTitle{
+      margin:0;
+      font-weight:750;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    /* Presets UI */
+    .presetName{ width:100%; }
+    .presetArea{
+      width:100%;
+      min-height:84px;
+      font-size:12px;
+      line-height:1.35;
+    }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top:6px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1></h1>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Career goals board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+
+          <div class="title">
+            <div>
+              <h2 style="margin:0;">Goals</h2>
+            </div>
+
+            <div class="ctrls">
+              <!-- THEME -->
+              <div class="bgWrap" id="themeWrap">
+                <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                  <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="bgPanel themePanel" id="themePanel" role="dialog" aria-label="Theme settings">
+                  <div class="bgTitle">Theme</div>
+
+                  <div class="bgRow">
+                    <label for="tBg">Page bg</label>
+                    <input id="tBg" type="color" value="#ffffff" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="tCard">Card</label>
+                    <input id="tCard" type="color" value="#ffffff" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="tStroke">Borders</label>
+                    <input id="tStroke" type="color" value="#e9e4dd" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="tInk">Text</label>
+                    <input id="tInk" type="color" value="#2b2a28" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="tMuted">Muted</label>
+                    <input id="tMuted" type="color" value="#6a665f" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="tSoft">Secondary</label>
+                    <input id="tSoft" type="color" value="#f3efe9" />
+                  </div>
+
+                  <div class="bgDiv"></div>
+
+                  <div class="bgRow" style="justify-content:space-between;">
+                    <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
+                  </div>
+
+                  <div class="bgRow" style="justify-content:space-between;">
+                    <button id="themeReset" class="bgMiniBtn" type="button">Reset theme</button>
+                  </div>
+
+                  <div class="bgDiv"></div>
+
+                  <div class="bgTitle" style="margin-top:2px;">Presets</div>
+
+                  <div class="bgRow" style="align-items:flex-start; flex-direction:column; gap:8px;">
+                    <input id="presetName" class="presetName" placeholder="Preset name" />
+                    <button id="presetSave" class="bgMiniBtn" type="button">Save current as preset</button>
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="presetSelect">Choose</label>
+                    <select id="presetSelect" style="width:170px;">
+                      <option value="">—</option>
+                    </select>
+                  </div>
+
+                  <div class="bgRow" style="gap:8px;">
+                    <button id="presetApply" class="bgMiniBtn" type="button">Apply preset</button>
+                  </div>
+
+                  <div class="bgRow" style="gap:8px;">
+                    <button id="presetDelete" class="bgMiniBtn" type="button">Delete preset</button>
+                  </div>
+
+                  <div class="bgDiv"></div>
+
+                  <div class="bgRow" style="gap:8px;">
+                    <button id="presetCopy" class="bgMiniBtn" type="button">Copy preset JSON</button>
+                  </div>
+
+                  <div class="bgRow" style="align-items:flex-start; flex-direction:column; gap:8px;">
+                    <textarea id="presetImport" class="presetArea" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+                    <button id="presetImportBtn" class="bgMiniBtn" type="button">Import presets</button>
+                    <div class="status" id="presetStatus" aria-live="polite"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- BACKGROUND -->
+              <div class="bgWrap" id="bgWrap">
+                <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                  <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
+                  <div class="bgTitle">Background</div>
+
+                  <div class="bgRow">
+                    <label for="bgColor">Tint</label>
+                    <input id="bgColor" type="color" value="#efe7e1" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="bgStrength">Strength</label>
+                    <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                  </div>
+
+                  <div class="bgDiv"></div>
+
+                  <div class="bgRow" style="align-items:flex-start;">
+                    <label for="bgImage">Image</label>
+                    <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+                  </div>
+
+                  <div class="bgRow">
+                    <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+                  </div>
+
+                  <div class="bgDiv"></div>
+
+                  <div class="bgRow">
+                    <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" aria-label="Add goal">
+            <input id="goalTitle" style="flex:1; min-width:220px;" placeholder="Goal title (e.g., Get promoted)…" />
+            <span class="pill">
+              Priority
+              <select id="goalPriority">
+                <option value="low">Low</option>
+                <option value="mid" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </span>
+            <input id="goalDeadline" type="date" title="Optional deadline" />
+            <button id="addGoal" class="primary" type="button">Add</button>
+            <button id="clearDone" class="soft" type="button">Clear achieved</button>
+          </div>
+
+          <div style="height:10px;"></div>
+
+          <textarea id="goalNext" placeholder="Notes..."></textarea>
+
+          <div class="divider"></div>
+
+          <div class="row" style="justify-content:space-between; align-items:center;">
+            <button id="resetAll" class="danger" type="button">Reset</button>
+          </div>
+
+          <div id="resetConfirm" class="confirm" style="display:none;">
+            <div class="confirmTop">
+              <p class="confirmTitle">Reset all career goals?</p>
+              <span class="tiny">This can’t be undone.</span>
+            </div>
+            <div class="row">
+              <button id="resetYes" class="danger" type="button">Yes, reset</button>
+              <button id="resetNo" class="soft" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kpi" aria-label="Summary">
+            <div class="box">
+              <div class="num" id="kTotal">—</div>
+              <div class="lab">Total goals</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kActive">—</div>
+              <div class="lab">Active</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kDone">—</div>
+              <div class="lab">Achieved</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" style="justify-content:space-between; align-items:flex-end;">
+            <div class="tiny">Goals</div>
+            <span class="pill">
+              View
+              <select id="viewFilter">
+                <option value="all" selected>All</option>
+                <option value="active">Active</option>
+                <option value="done">Achieved</option>
+              </select>
+            </span>
+          </div>
+
+          <div style="height:10px;"></div>
+          <div class="list" id="goalList"></div>
+
+          <div class="divider"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* --------------------------
+   Safe storage + instance id
+--------------------------- */
+(function(){
+  // Expose a tiny shared helper on window to reuse across modules
+  const mem = Object.create(null);
+
+  function canUseLocalStorage(){
+    try{
+      const k = "__t__" + Math.random().toString(16).slice(2);
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{ return false; }
+  }
+
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{
+      if(hasLS) return localStorage.getItem(key);
+      return mem[key] ?? null;
+    }catch{
+      return mem[key] ?? null;
+    }
+  }
+  function storageSet(key, value){
+    try{
+      if(hasLS) localStorage.setItem(key, value);
+      else mem[key] = String(value);
+    }catch{
+      mem[key] = String(value);
+    }
+  }
+  function storageRemove(key){
+    try{
+      if(hasLS) localStorage.removeItem(key);
+      else delete mem[key];
+    }catch{
+      delete mem[key];
+    }
+  }
+
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+
+  function getWidgetId(){
+    // 1) explicit wid param
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = (sp.get("wid") || "").trim();
+      if(wid) return wid;
+    }catch{}
+
+    // 2) cached per-tab
+    try{
+      const cached = sessionStorage.getItem("career_goals_wid");
+      if(cached) return cached;
+    }catch{}
+
+    // 3) generate and cache
+    const fresh = uid();
+    try{ sessionStorage.setItem("career_goals_wid", fresh); }catch{}
+    return fresh;
+  }
+
+  window.__CG__ = {
+    wid: getWidgetId(),
+    get: storageGet,
+    set: storageSet,
+    remove: storageRemove
+  };
+})();
+
+
+/* --------------------------
+   Theme + presets module
+   - draft changes only persist on Apply
+--------------------------- */
+(function(){
+  const WID = window.__CG__?.wid || "default";
+  const THEME_KEY = "career_goals_theme_v1__" + WID;
+  const BG_KEY = "career_goals_bg_v1__" + WID;
+  const PRESETS_KEY = "career_goals_presets_v1__" + WID;
+
+  function hexToRgb(hex){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "000000", 16);
+    return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+  }
+  function rgbaFromHex(hex, a){
+    const {r,g,b} = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function hexToRgba(hex, a){
+    const {r,g,b} = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function defaultTheme(){
+    return {
+      bg:"#ffffff",
+      card:"#ffffff",
+      stroke:"#e9e4dd",
+      ink:"#2b2a28",
+      muted:"#6a665f",
+      soft:"#f3efe9"
+    };
+  }
+
+  function defaultBg(){
+    return { tint:"#efe7e1", strength:12, imageDataUrl:null };
+  }
+
+  function loadJSON(key){
+    try{
+      const raw = window.__CG__.get(key);
+      if(!raw) return null;
+      return JSON.parse(raw) || null;
+    }catch{ return null; }
+  }
+  function saveJSON(key, val){
+    try{ window.__CG__.set(key, JSON.stringify(val)); }catch{}
+  }
+
+  function getCardAlpha(){
+    const current = getComputedStyle(document.documentElement).getPropertyValue("--card").trim();
+    const m = current.match(/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*([0-9.]+)\s*\)/i);
+    if(m){
+      const a = Number(m[1]);
+      if(isFinite(a)) return Math.max(0, Math.min(1, a));
+    }
+    return 0.84;
+  }
+
+  function applyTheme(t){
+    const base = defaultTheme();
+    const theme = Object.assign(base, t || {});
+    document.documentElement.style.setProperty("--bg", theme.bg);
+    document.documentElement.style.setProperty("--stroke", theme.stroke);
+    document.documentElement.style.setProperty("--ink", theme.ink);
+    document.documentElement.style.setProperty("--muted", theme.muted);
+    document.documentElement.style.setProperty("--soft", theme.soft);
+
+    const a = getCardAlpha();
+    document.documentElement.style.setProperty("--card", rgbaFromHex(theme.card, a));
+
+    const dot = document.getElementById("themeDot");
+    if(dot){
+      dot.style.background = theme.ink;
+      dot.style.boxShadow = `0 0 0 6px ${rgbaFromHex(theme.ink, 0.14)}`;
+    }
+  }
+
+  function applyBg(bgState){
+    const boardTintEl = document.getElementById("boardTint");
+    const bgDot = document.getElementById("bgDot");
+    if(!boardTintEl) return;
+
+    const tint = bgState.tint || "#efe7e1";
+    const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
+
+    boardTintEl.style.background = hexToRgba(tint, strength);
+
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+    }
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function init(){
+    const themeBtn = document.getElementById("themeBtn");
+    const themePanel = document.getElementById("themePanel");
+    const tBg = document.getElementById("tBg");
+    const tCard = document.getElementById("tCard");
+    const tStroke = document.getElementById("tStroke");
+    const tInk = document.getElementById("tInk");
+    const tMuted = document.getElementById("tMuted");
+    const tSoft = document.getElementById("tSoft");
+    const themeReset = document.getElementById("themeReset");
+    const themeApply = document.getElementById("themeApply");
+
+    const bgBtn = document.getElementById("bgBtn");
+    const bgPanel = document.getElementById("bgPanel");
+    const bgColor = document.getElementById("bgColor");
+    const bgStrength = document.getElementById("bgStrength");
+    const bgImage = document.getElementById("bgImage");
+    const bgRemove = document.getElementById("bgRemove");
+    const bgApply = document.getElementById("bgApply");
+
+    const presetName = document.getElementById("presetName");
+    const presetSave = document.getElementById("presetSave");
+    const presetSelect = document.getElementById("presetSelect");
+    const presetApply = document.getElementById("presetApply");
+    const presetDelete = document.getElementById("presetDelete");
+    const presetCopy = document.getElementById("presetCopy");
+    const presetImport = document.getElementById("presetImport");
+    const presetImportBtn = document.getElementById("presetImportBtn");
+    const presetStatus = document.getElementById("presetStatus");
+
+    if(!themeBtn || !themePanel || !tBg || !tCard || !tStroke || !tInk || !tMuted || !tSoft || !themeReset || !themeApply) return;
+    if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !bgApply) return;
+
+    const savedTheme = loadJSON(THEME_KEY) || defaultTheme();
+    const savedBg = loadJSON(BG_KEY) || defaultBg();
+    applyTheme(savedTheme);
+    applyBg(savedBg);
+
+    // Draft state (changes preview instantly, but persist only on Apply)
+    let themeDraft = Object.assign({}, savedTheme);
+    let bgDraft = Object.assign({}, savedBg);
+
+    // Populate inputs from draft
+    function syncThemeInputsFromDraft(){
+      tBg.value = themeDraft.bg;
+      tCard.value = themeDraft.card;
+      tStroke.value = themeDraft.stroke;
+      tInk.value = themeDraft.ink;
+      tMuted.value = themeDraft.muted;
+      tSoft.value = themeDraft.soft;
+    }
+    function syncBgInputsFromDraft(){
+      bgColor.value = bgDraft.tint;
+      bgStrength.value = String(bgDraft.strength);
+      // file input can't be set for security; leave as-is
+    }
+
+    syncThemeInputsFromDraft();
+    syncBgInputsFromDraft();
+
+    function setStatus(msg){
+      if(!presetStatus) return;
+      presetStatus.textContent = msg || "";
+    }
+
+    // Panels toggle
+    themeBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      bgPanel.classList.remove("open");
+      themePanel.classList.toggle("open");
+    });
+    bgBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      themePanel.classList.remove("open");
+      bgPanel.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      const themeOpen = themePanel.classList.contains("open");
+      const bgOpen = bgPanel.classList.contains("open");
+      if(!themeOpen && !bgOpen) return;
+
+      const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+
+      if(bgOpen && !insideBg) bgPanel.classList.remove("open");
+      if(themeOpen && !insideTheme) themePanel.classList.remove("open");
+    });
+
+    // Draft updates (preview only)
+    function updateThemeDraftFromInputs(){
+      themeDraft = {
+        bg: tBg.value,
+        card: tCard.value,
+        stroke: tStroke.value,
+        ink: tInk.value,
+        muted: tMuted.value,
+        soft: tSoft.value
+      };
+      applyTheme(themeDraft);
+      setStatus("");
+    }
+    [tBg,tCard,tStroke,tInk,tMuted,tSoft].forEach(inp=>{
+      inp.addEventListener("input", updateThemeDraftFromInputs);
+    });
+
+    function updateBgDraftFromInputs(){
+      bgDraft.tint = bgColor.value;
+      bgDraft.strength = Number(bgStrength.value);
+      applyBg(bgDraft);
+      setStatus("");
+    }
+    bgColor.addEventListener("input", updateBgDraftFromInputs);
+    bgStrength.addEventListener("input", updateBgDraftFromInputs);
+
+    bgImage.addEventListener("change", async () => {
+      const file = bgImage.files && bgImage.files[0];
+      if(!file) return;
+      try{
+        const dataUrl = await fileToDataUrl(file);
+        bgDraft.imageDataUrl = dataUrl;
+        applyBg(bgDraft);
+        setStatus("");
+      }catch{}
+    });
+
+    bgRemove.addEventListener("click", () => {
+      bgDraft.imageDataUrl = null;
+      bgImage.value = "";
+      applyBg(bgDraft);
+      setStatus("");
+    });
+
+    // Apply buttons (persist)
+    themeApply.addEventListener("click", ()=>{
+      saveJSON(THEME_KEY, themeDraft);
+      setStatus("Theme applied.");
+    });
+
+    bgApply.addEventListener("click", ()=>{
+      saveJSON(BG_KEY, bgDraft);
+      setStatus("Background applied.");
+    });
+
+    themeReset.addEventListener("click", ()=>{
+      window.__CG__.remove(THEME_KEY);
+      const def = defaultTheme();
+      themeDraft = Object.assign({}, def);
+      syncThemeInputsFromDraft();
+      applyTheme(themeDraft);
+      saveJSON(THEME_KEY, themeDraft);
+      setStatus("Theme reset.");
+    });
+
+    // Presets
+    function loadPresets(){
+      const list = loadJSON(PRESETS_KEY);
+      return Array.isArray(list) ? list : [];
+    }
+    function savePresets(list){
+      saveJSON(PRESETS_KEY, list);
+    }
+    function refreshPresetSelect(){
+      if(!presetSelect) return;
+      const list = loadPresets();
+      const current = presetSelect.value;
+      presetSelect.innerHTML = `<option value="">—</option>`;
+      for(const p of list){
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || "Untitled";
+        presetSelect.appendChild(opt);
+      }
+      // try restore
+      if(current) presetSelect.value = current;
+    }
+    function currentAppearance(){
+      return { theme: Object.assign({}, themeDraft), bg: Object.assign({}, bgDraft) };
+    }
+    function uid(){
+      return Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+
+    refreshPresetSelect();
+
+    if(presetSave && presetName){
+      presetSave.addEventListener("click", ()=>{
+        const name = (presetName.value || "").trim();
+        if(!name){
+          setStatus("Type a preset name first.");
+          return;
+        }
+        const list = loadPresets();
+        const entry = {
+          id: uid(),
+          name,
+          theme: Object.assign({}, themeDraft),
+          bg: Object.assign({}, bgDraft)
+        };
+        list.unshift(entry);
+        savePresets(list);
+        presetName.value = "";
+        refreshPresetSelect();
+        presetSelect.value = entry.id;
+        setStatus("Preset saved.");
+      });
+    }
+
+    if(presetApply && presetSelect){
+      presetApply.addEventListener("click", ()=>{
+        const id = presetSelect.value;
+        if(!id){
+          setStatus("Choose a preset first.");
+          return;
+        }
+        const list = loadPresets();
+        const p = list.find(x => x.id === id);
+        if(!p){
+          setStatus("Preset not found.");
+          return;
+        }
+
+        // Apply to draft (preview), then persist (Apply)
+        themeDraft = Object.assign(defaultTheme(), p.theme || {});
+        bgDraft = Object.assign(defaultBg(), p.bg || {});
+        syncThemeInputsFromDraft();
+        syncBgInputsFromDraft();
+        applyTheme(themeDraft);
+        applyBg(bgDraft);
+
+        saveJSON(THEME_KEY, themeDraft);
+        saveJSON(BG_KEY, bgDraft);
+
+        setStatus("Preset applied.");
+      });
+    }
+
+    if(presetDelete && presetSelect){
+      presetDelete.addEventListener("click", ()=>{
+        const id = presetSelect.value;
+        if(!id){
+          setStatus("Choose a preset first.");
+          return;
+        }
+        let list = loadPresets();
+        const before = list.length;
+        list = list.filter(x => x.id !== id);
+        if(list.length === before){
+          setStatus("Preset not found.");
+          return;
+        }
+        savePresets(list);
+        refreshPresetSelect();
+        presetSelect.value = "";
+        setStatus("Preset deleted.");
+      });
+    }
+
+    async function copyText(text){
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      }catch{}
+      // fallback
+      try{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return !!ok;
+      }catch{
+        return false;
+      }
+    }
+
+    if(presetCopy){
+      presetCopy.addEventListener("click", async ()=>{
+        const list = loadPresets();
+        const payload = JSON.stringify(list, null, 2);
+        const ok = await copyText(payload);
+        setStatus(ok ? "Preset JSON copied." : "Could not copy. You can manually select & copy from the import box.");
+        if(!ok && presetImport){
+          presetImport.value = payload;
+          presetImport.focus();
+          presetImport.select();
+        }
+      });
+    }
+
+    if(presetImportBtn && presetImport){
+      presetImportBtn.addEventListener("click", ()=>{
+        const raw = (presetImport.value || "").trim();
+        if(!raw){
+          setStatus("Paste preset JSON first.");
+          return;
+        }
+        try{
+          const parsed = JSON.parse(raw);
+          if(!Array.isArray(parsed)){
+            setStatus("That JSON doesn’t look like a preset list.");
+            return;
+          }
+          // normalize
+          const cleaned = parsed
+            .filter(Boolean)
+            .map((p)=>({
+              id: String(p.id || uid()),
+              name: String(p.name || "Imported"),
+              theme: Object.assign(defaultTheme(), p.theme || {}),
+              bg: Object.assign(defaultBg(), p.bg || {})
+            }));
+          savePresets(cleaned);
+          refreshPresetSelect();
+          setStatus("Presets imported.");
+        }catch{
+          setStatus("Invalid JSON.");
+        }
+      });
+    }
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+
+
+/* --------------------------
+   Career goals module
+--------------------------- */
+(function(){
+  const WID = window.__CG__?.wid || "default";
+  const KEY = "career_goals_v1__" + WID;
+  const $ = (id)=>document.getElementById(id);
+
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function defaultState(){
+    return { goals: [], ui: { view:"all" } };
+  }
+
+  function load(){
+    try{
+      const raw = window.__CG__.get(KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw) || {};
+      const base = defaultState();
+      base.goals = Array.isArray(parsed.goals) ? parsed.goals : [];
+      base.ui.view = parsed?.ui?.view || "all";
+      return base;
+    }catch{
+      return defaultState();
+    }
+  }
+
+  let state = load();
+
+  function save(){
+    try{ window.__CG__.set(KEY, JSON.stringify(state)); }catch{}
+  }
+
+  function priorityLabel(p){
+    if(p === "high") return "High";
+    if(p === "low") return "Low";
+    return "Medium";
+  }
+
+  function filtered(){
+    let list = [...state.goals];
+    if(state.ui.view === "active") list = list.filter(g => !g.done);
+    if(state.ui.view === "done") list = list.filter(g => g.done);
+
+    const order = { high: 0, mid: 1, low: 2 };
+    list.sort((a,b) => {
+      if(a.done !== b.done) return a.done ? 1 : -1;
+      if((order[a.priority] ?? 9) !== (order[b.priority] ?? 9)) return (order[a.priority] ?? 9) - (order[b.priority] ?? 9);
+      const ad = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      const bd = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      if(ad !== bd) return ad - bd;
+      return (b.createdAt||0) - (a.createdAt||0);
+    });
+
+    return list;
+  }
+
+  function renderKPIs(){
+    const total = state.goals.length;
+    const done = state.goals.filter(g => g.done).length;
+    const active = total - done;
+
+    $("kTotal").textContent = String(total);
+    $("kActive").textContent = String(active);
+    $("kDone").textContent = String(done);
+  }
+
+  function renderList(){
+    const root = $("goalList");
+    const list = filtered();
+    root.innerHTML = "";
+
+    if(list.length === 0){
+      root.innerHTML = `<div class="tiny">No goals yet. Add one above.</div>`;
+      return;
+    }
+
+    for(const g of list){
+      const el = document.createElement("div");
+      el.className = "item";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const b = document.createElement("b");
+      b.textContent = g.title || "(Untitled)";
+      if(g.done){
+        b.style.textDecoration = "line-through";
+        b.style.opacity = "0.72";
+      }
+
+      const deadlineTxt = g.deadline ? ` · due ${g.deadline}` : "";
+      const nextTxt = (g.nextAction || "").trim() ? `, notes: ${g.nextAction}` : "";
+      const s = document.createElement("span");
+      s.textContent = `${priorityLabel(g.priority)} priority${deadlineTxt}${nextTxt}`;
+
+      meta.appendChild(b);
+      meta.appendChild(s);
+
+      const right = document.createElement("div");
+      right.className = "right";
+
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = priorityLabel(g.priority);
+
+      const doneBtn = document.createElement("button");
+      doneBtn.type = "button";
+      doneBtn.className = "smallbtn";
+      doneBtn.textContent = g.done ? "Undo" : "Done";
+      doneBtn.addEventListener("click", () => {
+        g.done = !g.done;
+        save();
+        renderAll();
+      });
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "smallbtn soft";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", () => {
+        $("goalTitle").value = g.title || "";
+        $("goalPriority").value = g.priority || "mid";
+        $("goalDeadline").value = g.deadline || "";
+        $("goalNext").value = g.nextAction || "";
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "smallbtn danger";
+      delBtn.textContent = "✕";
+      delBtn.title = "Remove";
+      delBtn.addEventListener("click", () => {
+        state.goals = state.goals.filter(x => x.id !== g.id);
+        save();
+        renderAll();
+      });
+
+      right.appendChild(tag);
+      right.appendChild(doneBtn);
+      right.appendChild(editBtn);
+      right.appendChild(delBtn);
+
+      el.appendChild(meta);
+      el.appendChild(right);
+      root.appendChild(el);
+    }
+  }
+
+  function renderAll(){
+    $("viewFilter").value = state.ui.view;
+    renderKPIs();
+    renderList();
+    save();
+  }
+
+  function addGoal(){
+    const title = ($("goalTitle").value || "").trim();
+    const nextAction = ($("goalNext").value || "").trim();
+    if(!title) return;
+
+    const priority = $("goalPriority").value || "mid";
+    const deadline = $("goalDeadline").value || "";
+
+    state.goals.unshift({
+      id: uid(),
+      title,
+      priority,
+      deadline,
+      nextAction,
+      done:false,
+      createdAt: Date.now()
+    });
+
+    $("goalTitle").value = "";
+    $("goalDeadline").value = "";
+    $("goalNext").value = "";
+    $("goalTitle").focus();
+    renderAll();
+  }
+
+  function init(){
+    const required = ["goalTitle","goalPriority","goalDeadline","goalNext","addGoal","clearDone","resetAll","resetConfirm","resetYes","resetNo","kTotal","kActive","kDone","viewFilter","goalList"];
+    for(const id of required){ if(!$(id)) return; }
+
+    const resetConfirm = $("resetConfirm");
+    const resetYes = $("resetYes");
+    const resetNo = $("resetNo");
+
+    function hideReset(){ resetConfirm.style.display = "none"; }
+    function showReset(){
+      resetConfirm.style.display = "block";
+      const bgPanel = document.getElementById("bgPanel");
+      if(bgPanel) bgPanel.classList.remove("open");
+      const themePanel = document.getElementById("themePanel");
+      if(themePanel) themePanel.classList.remove("open");
+    }
+
+    $("addGoal").addEventListener("click", addGoal);
+    $("goalTitle").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); addGoal(); } });
+
+    $("viewFilter").addEventListener("change", ()=>{ state.ui.view = $("viewFilter").value; renderAll(); });
+
+    $("clearDone").addEventListener("click", ()=> {
+      state.goals = state.goals.filter(g => !g.done);
+      save();
+      renderAll();
+    });
+
+    $("resetAll").addEventListener("click", ()=> {
+      resetConfirm.style.display === "block" ? hideReset() : showReset();
+    });
+
+    resetNo.addEventListener("click", hideReset);
+    resetYes.addEventListener("click", ()=> {
+      window.__CG__.remove(KEY);
+      state = defaultState();
+      save();
+      hideReset();
+      renderAll();
+    });
+
+    renderAll();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

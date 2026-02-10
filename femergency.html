@@ -731,37 +731,51 @@ function escapeHtml(s){
   syncBgInputs();
 
   // Draft change handlers (do NOT apply to CSS; do NOT save)
-  function wireDraft(el, onChange){
-    el.addEventListener("input", ()=>{
-      onChange();
-      setStatus("");
-    });
-  }
-
-  wireDraft(els.tPageBg, ()=>{ themeDraft.pageBg = els.tPageBg.value; });
-  wireDraft(els.tText,   ()=>{ themeDraft.ink    = els.tText.value; });
-  wireDraft(els.tMuted,  ()=>{ themeDraft.muted  = els.tMuted.value; });
-  wireDraft(els.tStroke, ()=>{ themeDraft.stroke = els.tStroke.value; });
-  wireDraft(els.tCard,   ()=>{ themeDraft.cardBase = els.tCard.value; });
-  wireDraft(els.tSoft,   ()=>{ themeDraft.soft   = els.tSoft.value; });
-
-  wireDraft(els.bgColor, ()=>{ bgDraft.tint = els.bgColor.value; });
-  wireDraft(els.bgStrength, ()=>{ bgDraft.strength = Number(els.bgStrength.value); });
-
-  // Draft bg image (still draft until Apply)
-  els.bgImage.addEventListener("change", async ()=>{
-    const file = els.bgImage.files && els.bgImage.files[0];
-    if(!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    bgDraft.imageDataUrl = dataUrl;
+// Draft change handlers: PREVIEW immediately, but DO NOT persist until Apply
+function wireThemePreview(el, onChange){
+  el.addEventListener("input", ()=>{
+    onChange();
+    applyThemeToCSS({ ...DEFAULT_THEME, ...themeDraft }); // preview
     setStatus("");
   });
+}
 
-  els.bgRemove.addEventListener("click", ()=>{
-    bgDraft.imageDataUrl = null;
-    els.bgImage.value = "";
+function wireBgPreview(el, onChange){
+  el.addEventListener("input", ()=>{
+    onChange();
+    applyBgToCSS({ ...DEFAULT_BG, ...bgDraft }); // preview
     setStatus("");
   });
+}
+
+// Theme live preview
+wireThemePreview(els.tPageBg, ()=>{ themeDraft.pageBg = els.tPageBg.value; });
+wireThemePreview(els.tText,   ()=>{ themeDraft.ink    = els.tText.value; });
+wireThemePreview(els.tMuted,  ()=>{ themeDraft.muted  = els.tMuted.value; });
+wireThemePreview(els.tStroke, ()=>{ themeDraft.stroke = els.tStroke.value; });
+wireThemePreview(els.tCard,   ()=>{ themeDraft.cardBase = els.tCard.value; });
+wireThemePreview(els.tSoft,   ()=>{ themeDraft.soft   = els.tSoft.value; });
+
+// Background live preview
+wireBgPreview(els.bgColor, ()=>{ bgDraft.tint = els.bgColor.value; });
+wireBgPreview(els.bgStrength, ()=>{ bgDraft.strength = Number(els.bgStrength.value); });
+
+// Background image preview (still NOT persisted until Apply)
+els.bgImage.addEventListener("change", async ()=>{
+  const file = els.bgImage.files && els.bgImage.files[0];
+  if(!file) return;
+  const dataUrl = await fileToDataUrl(file);
+  bgDraft.imageDataUrl = dataUrl;
+  applyBgToCSS({ ...DEFAULT_BG, ...bgDraft }); // preview
+  setStatus("");
+});
+
+els.bgRemove.addEventListener("click", ()=>{
+  bgDraft.imageDataUrl = null;
+  els.bgImage.value = "";
+  applyBgToCSS({ ...DEFAULT_BG, ...bgDraft }); // preview
+  setStatus("");
+});
 
   // Apply buttons (this is when it actually changes + persists)
   els.themeApply.addEventListener("click", ()=>{

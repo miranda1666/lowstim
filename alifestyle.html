@@ -1,0 +1,1354 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lifestyle Goals</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card: rgba(255,255,255,0.84);
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      /* Board background controls */
+      --board-tint:#efe7e1;
+      --board-tint-a:0.12;
+      --board-image:none;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background:var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{ max-width:980px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
+
+    /* Board */
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.01);
+      z-index:0;
+      pointer-events:none;
+      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+      background: rgba(0,0,0,0);
+    }
+    .boardContent{ position:relative; z-index:2; }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button, input, select, textarea{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background:#fff;
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    textarea{ width:100%; min-height:90px; resize:vertical; }
+    button{ cursor:pointer; user-select:none; }
+    button.soft{ background:var(--soft); }
+    button.primary{ background: rgba(239,231,225,0.9); }
+    button:active{ transform:translateY(1px); }
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
+    .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
+    .kpi .box{
+      flex:1; min-width:200px;
+      background:var(--soft);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .num{ font-weight:750; font-size:16px; }
+    .kpi .lab{ font-size:12px; color:var(--muted); }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .tiny{ font-size:12px; color:var(--muted); }
+
+    .list{ display:flex; flex-direction:column; gap:8px; }
+    .item{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:#fff;
+    }
+    .meta{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .meta b{ font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .meta span{ font-size:12px; color:var(--muted); }
+    .right{ display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+    .tag{
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:var(--soft);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .smallbtn{ padding:8px 10px; border-radius:12px; }
+    .danger{ border-color:#efc2c2; }
+
+    /* Background settings */
+    .bgWrap{ position:relative; margin-left:auto; display:flex; gap:8px; align-items:center; }
+    .bgBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    }
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+    .bgPanel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 290px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+    }
+    .bgPanel.open{ display:block; }
+    .bgTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .bgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .bgRow label{ font-size:12px; color:var(--muted); }
+    .bgRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .bgRow input[type="range"]{ width: 150px; }
+    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgMiniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.97);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    }
+    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    /* Theme settings (same UI pattern) */
+    .themePanel{ right: 42px; }
+    .themeSwatch{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--ink);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+
+    /* Internal reset confirm */
+    .confirm{
+      margin-top:10px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+    }
+    .confirmTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .confirmTitle{
+      margin:0;
+      font-weight:750;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    /* Mini status bar */
+    .statusbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin: 0 0 12px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .statusleft{ display:flex; flex-direction:column; gap:4px; }
+    .statusline{ font-size:12px; color: var(--muted); }
+    .statusline b{ color: var(--ink); }
+    .statusright{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .pillcode{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      user-select:all;
+    }
+
+    @media (max-width: 720px){
+      .kpi .box{ min-width:160px; }
+      .themePanel{ right: 0; }
+      .bgPanel{ width: 92vw; max-width: 340px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="statusbar" id="statusbar">
+      <div class="statusleft">
+        <div class="statusline">Widget instance: <span class="pillcode" id="widPill">—</span></div>
+      </div>
+      <div class="statusright">
+        <button class="soft" id="copyUrlBtn" type="button">Copy URL (with wid)</button>
+      </div>
+    </div>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Lifestyle goals board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+
+          <div class="title">
+            <div>
+              <h2 style="margin:0;">Goals</h2>
+            </div>
+
+            <div class="bgWrap" id="bgWrap">
+              <!-- Theme button -->
+              <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                <span class="themeSwatch" id="themeSwatch" aria-hidden="true"></span>
+              </button>
+
+              <div class="bgPanel themePanel" id="themePanel" role="dialog" aria-label="Theme settings">
+                <div class="bgTitle">Theme</div>
+
+                <div class="bgRow">
+                  <label for="tBg">Page bg</label>
+                  <input id="tBg" type="color" value="#ffffff" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tCard">Card tint</label>
+                  <input id="tCard" type="color" value="#ffffff" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tStroke">Borders</label>
+                  <input id="tStroke" type="color" value="#e9e4dd" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tInk">Text</label>
+                  <input id="tInk" type="color" value="#2b2a28" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tMuted">Muted</label>
+                  <input id="tMuted" type="color" value="#6a665f" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tSoft">Secondary</label>
+                  <input id="tSoft" type="color" value="#f3efe9" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="row" style="justify-content:space-between;">
+                  <button id="themeSave" class="bgMiniBtn" type="button">Save theme</button>
+                </div>
+                <div class="row" style="justify-content:space-between; margin-top:8px;">
+                  <button id="themeRevert" class="bgMiniBtn soft" type="button">Revert (discard draft)</button>
+                </div>
+                <div class="row" style="justify-content:space-between; margin-top:8px;">
+                  <button id="themeReset" class="bgMiniBtn" type="button">Reset theme</button>
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgTitle" style="margin-top:0;">Presets</div>
+
+                <div class="bgRow" style="align-items:flex-start;">
+                  <label for="presetName">Name</label>
+                  <input id="presetName" style="width:160px;" placeholder="e.g. Warm Linen" />
+                </div>
+
+                <div class="row" style="gap:8px;">
+                  <button id="presetSave" class="bgMiniBtn" type="button">Save preset</button>
+                </div>
+
+                <div class="bgRow" style="align-items:flex-start;">
+                  <label for="presetPick">Apply</label>
+                  <select id="presetPick" style="width:160px;">
+                    <option value="" selected>—</option>
+                  </select>
+                </div>
+
+                <div class="row" style="gap:8px;">
+                  <button id="presetApply" class="bgMiniBtn" type="button">Apply preset</button>
+                </div>
+
+                <div class="row" style="gap:8px; margin-top:8px;">
+                  <button id="presetCopy" class="bgMiniBtn soft" type="button">Copy preset JSON</button>
+                </div>
+
+                <div class="bgRow" style="align-items:flex-start;">
+                  <label for="presetImport">Import</label>
+                  <textarea id="presetImport" style="width:160px; min-height:72px;" placeholder='Paste JSON here'></textarea>
+                </div>
+
+                <div class="row" style="gap:8px;">
+                  <button id="presetImportBtn" class="bgMiniBtn" type="button">Import preset</button>
+                </div>
+
+              </div>
+
+              <!-- Background button -->
+              <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
+                <div class="bgTitle">Background</div>
+
+                <div class="bgRow">
+                  <label for="bgColor">Tint</label>
+                  <input id="bgColor" type="color" value="#efe7e1" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgStrength">Strength</label>
+                  <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow" style="align-items:flex-start;">
+                  <label for="bgImage">Image</label>
+                  <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+                </div>
+
+                <div class="row" style="gap:8px; margin-top:6px;">
+                  <button id="bgSave" class="bgMiniBtn" type="button">Save background</button>
+                </div>
+                <div class="row" style="gap:8px; margin-top:8px;">
+                  <button id="bgRevert" class="bgMiniBtn soft" type="button">Revert (discard draft)</button>
+                </div>
+                <div class="row" style="gap:8px; margin-top:8px;">
+                  <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Add / Edit goal -->
+          <div class="row" aria-label="Add goal">
+            <input id="goalTitle" style="flex:1; min-width:220px;" placeholder="Goal title (e.g., Walk 3x/week)…" />
+            <span class="pill">
+              Category
+              <select id="goalCategory">
+                <option value="health" selected>Health</option>
+                <option value="home">Home</option>
+                <option value="relationships">Relationships</option>
+                <option value="learning">Learning</option>
+                <option value="fun">Fun</option>
+                <option value="other">Other</option>
+              </select>
+            </span>
+            <span class="pill">
+              Cadence
+              <select id="goalCadence">
+                <option value="daily">Daily</option>
+                <option value="weekly" selected>Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="one-off">One-off</option>
+              </select>
+            </span>
+
+            <button id="addGoal" class="primary" type="button">Add</button>
+            <button id="saveEdit" class="primary" type="button" style="display:none;">Save edit</button>
+            <button id="cancelEdit" class="soft" type="button" style="display:none;">Cancel</button>
+
+            <button id="clearDone" class="soft" type="button">Clear done</button>
+          </div>
+
+          <div style="height:10px;"></div>
+          <textarea id="goalNext" placeholder="Notes..."></textarea>
+
+          <div class="divider"></div>
+
+          <!-- Internal reset confirmation -->
+          <div class="row" style="justify-content:space-between; align-items:center;">
+            <button id="resetAll" class="danger" type="button">Reset</button>
+          </div>
+
+          <div id="resetConfirm" class="confirm" style="display:none;">
+            <div class="confirmTop">
+              <p class="confirmTitle">Reset all lifestyle goals?</p>
+              <span class="tiny">This can’t be undone.</span>
+            </div>
+            <div class="row">
+              <button id="resetYes" class="danger" type="button">Yes, reset</button>
+              <button id="resetNo" class="soft" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- KPIs -->
+          <div class="kpi" aria-label="Summary">
+            <div class="box">
+              <div class="num" id="kTotal">—</div>
+              <div class="lab">Total</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kActive">—</div>
+              <div class="lab">Active</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kDone">—</div>
+              <div class="lab">Done</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Filter -->
+          <div class="row" style="justify-content:space-between; align-items:flex-end;">
+            <div class="tiny">Goals</div>
+            <span class="pill">
+              View
+              <select id="viewFilter">
+                <option value="all" selected>All</option>
+                <option value="active">Active</option>
+                <option value="done">Done</option>
+              </select>
+            </span>
+          </div>
+
+          <div style="height:10px;"></div>
+          <div class="list" id="goalList"></div>
+
+          <div class="divider"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------------------
+   Storage: IndexedDB-first, fallback localStorage
+   + Per-widget instance namespace (?wid=...)
+---------------------------------------- */
+(function(){
+  const DB_NAME = "notion_widgets_db_v1";
+  const STORE = "kv";
+
+  function getWid(){
+    const u = new URL(window.location.href);
+    const wid = (u.searchParams.get("wid") || "").trim();
+    if(wid) return wid;
+    // If missing, generate a stable-ish one for this browser so it doesn't collide.
+    // You can still override by adding ?wid=... in Notion embed URL.
+    const k = "widget_wid_fallback_v1";
+    try{
+      const existing = localStorage.getItem(k);
+      if(existing) return existing;
+      const gen = "wid_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+      localStorage.setItem(k, gen);
+      return gen;
+    }catch{
+      return "wid_" + Date.now().toString(16);
+    }
+  }
+
+  const WID = getWid();
+  window.__WID__ = WID;
+
+  function setWidUI(){
+    const pill = document.getElementById("widPill");
+    if(pill) pill.textContent = WID;
+
+    const copyBtn = document.getElementById("copyUrlBtn");
+    if(copyBtn){
+      copyBtn.addEventListener("click", async () => {
+        try{
+          const u = new URL(window.location.href);
+          u.searchParams.set("wid", WID);
+          await navigator.clipboard.writeText(String(u.toString()));
+          copyBtn.textContent = "Copied!";
+          setTimeout(()=>copyBtn.textContent="Copy URL (with wid)", 900);
+        }catch{
+          alert("Couldn’t copy automatically. You can manually add ?wid=" + WID + " to the URL.");
+        }
+      });
+    }
+  }
+
+  function openDb(){
+    return new Promise((resolve, reject) => {
+      if(!("indexedDB" in window)) return resolve(null);
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  }
+
+  async function idbGet(key){
+    const db = await openDb();
+    if(!db) return null;
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE, "readonly");
+      const st = tx.objectStore(STORE);
+      const req = st.get(key);
+      req.onsuccess = () => resolve(req.result ?? null);
+      req.onerror = () => resolve(null);
+    });
+  }
+
+  async function idbSet(key, value){
+    const db = await openDb();
+    if(!db) return false;
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+      const st = tx.objectStore(STORE);
+      st.put(value, key);
+    });
+  }
+
+  async function idbDel(key){
+    const db = await openDb();
+    if(!db) return false;
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+      tx.objectStore(STORE).delete(key);
+    });
+  }
+
+  function lsGet(key){
+    try{ return localStorage.getItem(key); }catch{ return null; }
+  }
+  function lsSet(key, val){
+    try{ localStorage.setItem(key, val); return true; }catch{ return false; }
+  }
+  function lsDel(key){
+    try{ localStorage.removeItem(key); return true; }catch{ return false; }
+  }
+
+  // Public wrapper (JSON)
+  window.WidgetStorage = {
+    wid: WID,
+    key(ns, name){ return `wg:${ns}:${WID}:${name}`; },
+    async getJSON(k){
+      // try idb, then localStorage
+      const raw = await idbGet(k);
+      if(typeof raw === "string"){
+        try{ return JSON.parse(raw); }catch{ return null; }
+      }
+      const raw2 = lsGet(k);
+      if(typeof raw2 === "string"){
+        try{ return JSON.parse(raw2); }catch{ return null; }
+      }
+      return null;
+    },
+    async setJSON(k, obj){
+      const raw = JSON.stringify(obj);
+      const ok = await idbSet(k, raw);
+      if(ok) return true;
+      return lsSet(k, raw);
+    },
+    async del(k){
+      const ok = await idbDel(k);
+      if(ok) return true;
+      return lsDel(k);
+    }
+  };
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", setWidUI);
+  }else{
+    setWidUI();
+  }
+})();
+
+
+/* --------------------------
+   Theme settings (draft + save + presets)
+--------------------------- */
+(function(){
+  const NS = "lifestyle_goals";
+  const THEME_KEY = () => WidgetStorage.key(NS, "theme_v2");
+  const PRESETS_KEY = () => WidgetStorage.key(NS, "theme_presets_v1");
+
+  function clamp01(n){ n = Number(n); return isFinite(n) ? Math.max(0, Math.min(1, n)) : 0; }
+
+  function hexToRgb(hex){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "000000", 16);
+    return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+  }
+
+  function applyCardAlpha(hex, alpha){
+    const {r,g,b} = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  function defaultTheme(){
+    return {
+      bg:"#ffffff",
+      card:"#ffffff",
+      stroke:"#e9e4dd",
+      ink:"#2b2a28",
+      muted:"#6a665f",
+      soft:"#f3efe9"
+    };
+  }
+
+  function applyTheme(t){
+    const base = defaultTheme();
+    const theme = Object.assign(base, t || {});
+
+    document.documentElement.style.setProperty("--bg", theme.bg);
+    document.documentElement.style.setProperty("--stroke", theme.stroke);
+    document.documentElement.style.setProperty("--ink", theme.ink);
+    document.documentElement.style.setProperty("--muted", theme.muted);
+    document.documentElement.style.setProperty("--soft", theme.soft);
+
+    // preserve existing --card alpha if present
+    const currentCardCss = getComputedStyle(document.documentElement).getPropertyValue("--card").trim();
+    let alpha = 0.84;
+    const m = currentCardCss.match(/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*([0-9.]+)\s*\)/i);
+    if(m) alpha = clamp01(m[1]);
+
+    document.documentElement.style.setProperty("--card", applyCardAlpha(theme.card, alpha));
+
+    const sw = document.getElementById("themeSwatch");
+    if(sw) sw.style.background = theme.ink;
+  }
+
+  async function loadSavedTheme(){
+    return (await WidgetStorage.getJSON(THEME_KEY())) || null;
+  }
+  async function saveTheme(theme){
+    await WidgetStorage.setJSON(THEME_KEY(), theme);
+  }
+
+  async function loadPresets(){
+    const p = await WidgetStorage.getJSON(PRESETS_KEY());
+    return (p && typeof p === "object") ? p : {};
+  }
+  async function savePresets(p){
+    await WidgetStorage.setJSON(PRESETS_KEY(), p);
+  }
+
+  function readUI(){
+    return {
+      bg: document.getElementById("tBg").value,
+      card: document.getElementById("tCard").value,
+      stroke: document.getElementById("tStroke").value,
+      ink: document.getElementById("tInk").value,
+      muted: document.getElementById("tMuted").value,
+      soft: document.getElementById("tSoft").value
+    };
+  }
+
+  function writeUI(theme){
+    document.getElementById("tBg").value = theme.bg;
+    document.getElementById("tCard").value = theme.card;
+    document.getElementById("tStroke").value = theme.stroke;
+    document.getElementById("tInk").value = theme.ink;
+    document.getElementById("tMuted").value = theme.muted;
+    document.getElementById("tSoft").value = theme.soft;
+  }
+
+  async function initThemeUI(){
+    const themeBtn = document.getElementById("themeBtn");
+    const themePanel = document.getElementById("themePanel");
+
+    const ids = ["tBg","tCard","tStroke","tInk","tMuted","tSoft","themeSave","themeRevert","themeReset","presetName","presetPick","presetSave","presetApply","presetCopy","presetImport","presetImportBtn"];
+    for(const id of ids){ if(!document.getElementById(id)) return; }
+    if(!themeBtn || !themePanel) return;
+
+    // load saved, apply saved (not drafts)
+    const saved = (await loadSavedTheme()) || defaultTheme();
+    let savedTheme = Object.assign(defaultTheme(), saved);
+    let draftTheme = Object.assign({}, savedTheme);
+
+    // Apply saved on boot
+    applyTheme(savedTheme);
+    writeUI(draftTheme);
+
+    function closeOtherPanels(){
+      const bgPanel = document.getElementById("bgPanel");
+      if(bgPanel) bgPanel.classList.remove("open");
+    }
+
+    themeBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      closeOtherPanels();
+      themePanel.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e)=>{
+      if(!themePanel.classList.contains("open")) return;
+      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+      if(!inside) themePanel.classList.remove("open");
+    });
+
+    // Draft-only preview on input
+    ["tBg","tCard","tStroke","tInk","tMuted","tSoft"].forEach(id=>{
+      document.getElementById(id).addEventListener("input", ()=>{
+        draftTheme = readUI();
+        applyTheme(draftTheme); // preview only
+      });
+    });
+
+    // Save commits draft
+    document.getElementById("themeSave").addEventListener("click", async ()=>{
+      draftTheme = readUI();
+      savedTheme = Object.assign(defaultTheme(), draftTheme);
+      await saveTheme(savedTheme);
+      applyTheme(savedTheme);
+      // keep UI as-is
+    });
+
+    // Revert discards draft (restore saved)
+    document.getElementById("themeRevert").addEventListener("click", ()=>{
+      draftTheme = Object.assign({}, savedTheme);
+      writeUI(draftTheme);
+      applyTheme(savedTheme);
+    });
+
+    // Reset sets defaults AND saves (explicit user action)
+    document.getElementById("themeReset").addEventListener("click", async ()=>{
+      const def = defaultTheme();
+      savedTheme = Object.assign({}, def);
+      draftTheme = Object.assign({}, def);
+      writeUI(draftTheme);
+      applyTheme(savedTheme);
+      await saveTheme(savedTheme);
+    });
+
+    // Presets
+    const presetPick = document.getElementById("presetPick");
+    const presetName = document.getElementById("presetName");
+
+    async function refreshPresetPick(){
+      const presets = await loadPresets();
+      const names = Object.keys(presets).sort((a,b)=>a.localeCompare(b));
+      presetPick.innerHTML = `<option value="" selected>—</option>` + names.map(n=>`<option value="${encodeURIComponent(n)}">${n}</option>`).join("");
+    }
+
+    await refreshPresetPick();
+
+    document.getElementById("presetSave").addEventListener("click", async ()=>{
+      const name = (presetName.value || "").trim();
+      if(!name) return;
+      const presets = await loadPresets();
+      presets[name] = Object.assign(defaultTheme(), readUI());
+      await savePresets(presets);
+      presetName.value = "";
+      await refreshPresetPick();
+    });
+
+    document.getElementById("presetApply").addEventListener("click", async ()=>{
+      const v = presetPick.value || "";
+      if(!v) return;
+      const name = decodeURIComponent(v);
+      const presets = await loadPresets();
+      const p = presets[name];
+      if(!p) return;
+
+      // apply to draft (preview). user still must click "Save theme" to commit.
+      draftTheme = Object.assign(defaultTheme(), p);
+      writeUI(draftTheme);
+      applyTheme(draftTheme);
+    });
+
+    document.getElementById("presetCopy").addEventListener("click", async ()=>{
+      // Copy current draft as JSON (easy to paste into other widget)
+      const json = JSON.stringify(Object.assign(defaultTheme(), readUI()));
+      try{
+        await navigator.clipboard.writeText(json);
+        document.getElementById("presetCopy").textContent = "Copied!";
+        setTimeout(()=>document.getElementById("presetCopy").textContent="Copy preset JSON", 900);
+      }catch{
+        alert("Couldn’t copy automatically. Here is the JSON:\n\n" + json);
+      }
+    });
+
+    document.getElementById("presetImportBtn").addEventListener("click", async ()=>{
+      const raw = (document.getElementById("presetImport").value || "").trim();
+      if(!raw) return;
+      let obj = null;
+      try{ obj = JSON.parse(raw); }catch{ obj = null; }
+      if(!obj || typeof obj !== "object"){ alert("Invalid JSON."); return; }
+
+      const name = prompt("Name this preset:");
+      if(!name) return;
+
+      const presets = await loadPresets();
+      presets[name.trim()] = Object.assign(defaultTheme(), obj);
+      await savePresets(presets);
+      document.getElementById("presetImport").value = "";
+      await refreshPresetPick();
+    });
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", initThemeUI);
+  }else{
+    initThemeUI();
+  }
+})();
+
+
+/* --------------------------
+   Background settings (draft + save)
+--------------------------- */
+(function(){
+  const NS = "lifestyle_goals";
+  const BG_KEY = () => WidgetStorage.key(NS, "bg_v2");
+
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function loadSavedBg(){
+    return (await WidgetStorage.getJSON(BG_KEY())) || null;
+  }
+  async function saveBg(bg){
+    await WidgetStorage.setJSON(BG_KEY(), bg);
+  }
+
+  function applyBg(bgState){
+    const boardTintEl = document.getElementById("boardTint");
+    const bgDot = document.getElementById("bgDot");
+    if(!boardTintEl) return;
+
+    const tint = bgState.tint || "#efe7e1";
+    const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
+
+    boardTintEl.style.background = hexToRgba(tint, strength);
+
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+    }
+  }
+
+  async function init(){
+    const ids = ["bgBtn","bgPanel","bgColor","bgStrength","bgImage","bgSave","bgRevert","bgRemove","boardTint","bgDot"];
+    for(const id of ids){ if(!document.getElementById(id)) return; }
+
+    const bgBtn = document.getElementById("bgBtn");
+    const bgPanel = document.getElementById("bgPanel");
+    const bgColor = document.getElementById("bgColor");
+    const bgStrength = document.getElementById("bgStrength");
+    const bgImage = document.getElementById("bgImage");
+
+    let savedBg = (await loadSavedBg()) || { tint:"#efe7e1", strength:12, imageDataUrl:null };
+    let draftBg = Object.assign({}, savedBg);
+
+    // Apply saved on boot
+    applyBg(savedBg);
+
+    // Fill draft UI
+    bgColor.value = draftBg.tint;
+    bgStrength.value = String(draftBg.strength);
+
+    bgBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const themePanel = document.getElementById("themePanel");
+      if(themePanel) themePanel.classList.remove("open");
+      bgPanel.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      const openTheme = document.getElementById("themePanel")?.classList.contains("open");
+      if(!bgPanel.classList.contains("open") && !openTheme) return;
+
+      const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+
+      if(bgPanel.classList.contains("open") && !insideBg) bgPanel.classList.remove("open");
+      if(document.getElementById("themePanel")?.classList.contains("open") && !insideTheme){
+        document.getElementById("themePanel").classList.remove("open");
+      }
+    });
+
+    // Draft preview only
+    bgColor.addEventListener("input", () => {
+      draftBg.tint = bgColor.value;
+      applyBg(draftBg);
+    });
+
+    bgStrength.addEventListener("input", () => {
+      draftBg.strength = Number(bgStrength.value);
+      applyBg(draftBg);
+    });
+
+    bgImage.addEventListener("change", async () => {
+      const file = bgImage.files && bgImage.files[0];
+      if(!file) return;
+      const dataUrl = await fileToDataUrl(file);
+      draftBg.imageDataUrl = dataUrl;
+      applyBg(draftBg);
+      // not saved until Save background
+    });
+
+    document.getElementById("bgSave").addEventListener("click", async () => {
+      // commit draft
+      savedBg = Object.assign({}, draftBg);
+      await saveBg(savedBg);
+      applyBg(savedBg);
+    });
+
+    document.getElementById("bgRevert").addEventListener("click", () => {
+      // discard draft -> back to saved
+      draftBg = Object.assign({}, savedBg);
+      bgColor.value = draftBg.tint;
+      bgStrength.value = String(draftBg.strength);
+      bgImage.value = "";
+      applyBg(savedBg);
+    });
+
+    // Remove image is an explicit user action; it updates draft preview only.
+    document.getElementById("bgRemove").addEventListener("click", () => {
+      draftBg.imageDataUrl = null;
+      bgImage.value = "";
+      applyBg(draftBg);
+    });
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+
+
+/* --------------------------
+   Lifestyle goals module (per-widget storage key)
+--------------------------- */
+(function(){
+  const NS = "lifestyle_goals";
+  const KEY = () => WidgetStorage.key(NS, "data_v2");
+
+  const $ = (id)=>document.getElementById(id);
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function defaultState(){
+    return {
+      goals: [], // {id,title,category,cadence,nextStep,done,createdAt}
+      ui: { view:"all" }
+    };
+  }
+
+  async function load(){
+    const parsed = await WidgetStorage.getJSON(KEY());
+    if(!parsed) return defaultState();
+    const base = defaultState();
+    base.goals = Array.isArray(parsed.goals) ? parsed.goals : [];
+    base.ui.view = parsed?.ui?.view || "all";
+    return base;
+  }
+
+  async function save(state){
+    await WidgetStorage.setJSON(KEY(), state);
+  }
+
+  function catLabel(c){
+    const map = { health:"Health", home:"Home", relationships:"Relationships", learning:"Learning", fun:"Fun", other:"Other" };
+    return map[c] || "Other";
+  }
+  function cadenceLabel(c){
+    const map = { daily:"Daily", weekly:"Weekly", monthly:"Monthly", "one-off":"One-off" };
+    return map[c] || "Weekly";
+  }
+
+  function filtered(state){
+    let list = [...state.goals];
+    if(state.ui.view === "active") list = list.filter(g => !g.done);
+    if(state.ui.view === "done") list = list.filter(g => g.done);
+
+    const cadenceOrder = { daily:0, weekly:1, monthly:2, "one-off":3 };
+    list.sort((a,b) => {
+      if(a.done !== b.done) return a.done ? 1 : -1;
+      if((cadenceOrder[a.cadence] ?? 9) !== (cadenceOrder[b.cadence] ?? 9)) return (cadenceOrder[a.cadence] ?? 9) - (cadenceOrder[b.cadence] ?? 9);
+      return (b.createdAt||0) - (a.createdAt||0);
+    });
+    return list;
+  }
+
+  function renderKPIs(state){
+    const total = state.goals.length;
+    const done = state.goals.filter(g => g.done).length;
+    const active = total - done;
+
+    $("kTotal").textContent = String(total);
+    $("kActive").textContent = String(active);
+    $("kDone").textContent = String(done);
+  }
+
+  function renderList(state, handlers){
+    const root = $("goalList");
+    const list = filtered(state);
+    root.innerHTML = "";
+
+    if(list.length === 0){
+      root.innerHTML = `<div class="tiny">No goals yet. Add one above.</div>`;
+      return;
+    }
+
+    for(const g of list){
+      const el = document.createElement("div");
+      el.className = "item";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const b = document.createElement("b");
+      b.textContent = g.title || "(Untitled)";
+      if(g.done){
+        b.style.textDecoration = "line-through";
+        b.style.opacity = "0.72";
+      }
+
+      const nextTxt = (g.nextStep || "").trim() ? ` next: ${g.nextStep}` : "";
+      const s = document.createElement("span");
+      s.textContent = `${catLabel(g.category)} · ${cadenceLabel(g.cadence)}${nextTxt}`;
+
+      meta.appendChild(b);
+      meta.appendChild(s);
+
+      const right = document.createElement("div");
+      right.className = "right";
+
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = catLabel(g.category);
+
+      const doneBtn = document.createElement("button");
+      doneBtn.type = "button";
+      doneBtn.className = "smallbtn";
+      doneBtn.textContent = g.done ? "Undo" : "Done";
+      doneBtn.addEventListener("click", ()=>handlers.toggleDone(g.id));
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "smallbtn soft";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", ()=>handlers.startEdit(g.id));
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "smallbtn danger";
+      delBtn.textContent = "✕";
+      delBtn.title = "Remove";
+      delBtn.addEventListener("click", ()=>handlers.remove(g.id));
+
+      right.appendChild(tag);
+      right.appendChild(doneBtn);
+      right.appendChild(editBtn);
+      right.appendChild(delBtn);
+
+      el.appendChild(meta);
+      el.appendChild(right);
+      root.appendChild(el);
+    }
+  }
+
+  function setEditMode(on){
+    $("addGoal").style.display = on ? "none" : "inline-block";
+    $("saveEdit").style.display = on ? "inline-block" : "none";
+    $("cancelEdit").style.display = on ? "inline-block" : "none";
+  }
+
+  async function init(){
+    const required = ["goalTitle","goalCategory","goalCadence","goalNext","addGoal","saveEdit","cancelEdit","clearDone","resetAll","resetConfirm","resetYes","resetNo","kTotal","kActive","kDone","viewFilter","goalList"];
+    for(const id of required){ if(!$(id)) return; }
+
+    let state = await load();
+    let editingId = null;
+
+    async function renderAll(){
+      $("viewFilter").value = state.ui.view;
+      renderKPIs(state);
+      renderList(state, handlers);
+      await save(state);
+    }
+
+    function readComposer(){
+      return {
+        title: ($("goalTitle").value || "").trim(),
+        category: $("goalCategory").value || "health",
+        cadence: $("goalCadence").value || "weekly",
+        nextStep: ($("goalNext").value || "").trim()
+      };
+    }
+
+    function clearComposer(){
+      $("goalTitle").value = "";
+      $("goalNext").value = "";
+      $("goalCategory").value = "health";
+      $("goalCadence").value = "weekly";
+      $("goalTitle").focus();
+    }
+
+    async function addGoal(){
+      const c = readComposer();
+      if(!c.title) return;
+
+      state.goals.unshift({
+        id: uid(),
+        title: c.title,
+        category: c.category,
+        cadence: c.cadence,
+        nextStep: c.nextStep,
+        done:false,
+        createdAt: Date.now()
+      });
+
+      clearComposer();
+      await renderAll();
+    }
+
+    const resetConfirm = $("resetConfirm");
+    function hideReset(){ resetConfirm.style.display = "none"; }
+    function showReset(){
+      resetConfirm.style.display = "block";
+      document.getElementById("bgPanel")?.classList.remove("open");
+      document.getElementById("themePanel")?.classList.remove("open");
+    }
+
+    const handlers = {
+      toggleDone: async (id)=>{
+        const g = state.goals.find(x=>x.id===id);
+        if(!g) return;
+        g.done = !g.done;
+        await renderAll();
+      },
+      remove: async (id)=>{
+        state.goals = state.goals.filter(x=>x.id!==id);
+        if(editingId === id){
+          editingId = null;
+          setEditMode(false);
+          clearComposer();
+        }
+        await renderAll();
+      },
+      startEdit: (id)=>{
+        const g = state.goals.find(x=>x.id===id);
+        if(!g) return;
+        editingId = id;
+        $("goalTitle").value = g.title || "";
+        $("goalCategory").value = g.category || "health";
+        $("goalCadence").value = g.cadence || "weekly";
+        $("goalNext").value = g.nextStep || "";
+        setEditMode(true);
+      }
+    };
+
+    $("addGoal").addEventListener("click", addGoal);
+    $("goalTitle").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); addGoal(); } });
+
+    $("saveEdit").addEventListener("click", async ()=>{
+      if(!editingId) return;
+      const g = state.goals.find(x=>x.id===editingId);
+      if(!g) return;
+      const c = readComposer();
+      if(!c.title) return;
+
+      g.title = c.title;
+      g.category = c.category;
+      g.cadence = c.cadence;
+      g.nextStep = c.nextStep;
+
+      editingId = null;
+      setEditMode(false);
+      clearComposer();
+      await renderAll();
+    });
+
+    $("cancelEdit").addEventListener("click", ()=>{
+      editingId = null;
+      setEditMode(false);
+      clearComposer();
+    });
+
+    $("viewFilter").addEventListener("change", async ()=>{
+      state.ui.view = $("viewFilter").value;
+      await renderAll();
+    });
+
+    $("clearDone").addEventListener("click", async ()=> {
+      // explicit user action
+      state.goals = state.goals.filter(g => !g.done);
+      await renderAll();
+    });
+
+    $("resetAll").addEventListener("click", ()=> {
+      resetConfirm.style.display === "block" ? hideReset() : showReset();
+    });
+
+    $("resetNo").addEventListener("click", hideReset);
+    $("resetYes").addEventListener("click", async ()=> {
+      // explicit user action
+      await WidgetStorage.del(KEY());
+      state = defaultState();
+      editingId = null;
+      setEditMode(false);
+      clearComposer();
+      hideReset();
+      await renderAll();
+    });
+
+    await renderAll();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

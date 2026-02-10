@@ -1,0 +1,2225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Not Today Parking Lot + Gratitude Pebbles</title>
+  <style>
+    :root{
+      /* ===== Global base ===== */
+      --app-bg: #ffffff;
+
+      --ink: #2b2b2b;
+      --muted: #7a7a7a;
+
+      --border-rgb: 30,30,30;
+      --border-a: 0.10;
+      --border: rgba(var(--border-rgb), var(--border-a));
+      --shadow: 0 12px 34px rgba(20, 20, 20, 0.08);
+
+      --surface-a: 0.78; /* pills */
+      --panel-a: 0.92;
+
+      --btn-a: 0.92;
+      --btn-border-a: 0.10;
+
+      --accent: #cbb8ae;
+
+      /* overlay */
+      --overlay-base: #ffffff;
+      --overlay-a: 0.34;
+
+      /* Board background */
+      --board-tint: #efe7e1;
+      --board-tint-a: 0.30;
+      --board-image: none;
+
+      /* ===== Per-half theme variables (FULL COVERAGE) ===== */
+      /* LEFT (Parking lot) */
+      --left-card-bg: #ffffff;
+      --left-card-a: 0.94;
+      --left-header-bg: #ffffff;
+      --left-header-a: 0.92;
+      --left-block-bg: #ffffff;
+      --left-block-a: 0.78;
+      --left-item-bg: #ffffff;
+      --left-item-a: 0.82;
+      --left-input-bg: #ffffff;
+      --left-input-a: 0.96;
+
+      /* RIGHT (Pebbles) */
+      --right-card-bg: #ffffff;
+      --right-card-a: 0.94;
+      --right-header-bg: #ffffff;
+      --right-header-a: 0.92;
+      --right-block-bg: #ffffff;
+      --right-block-a: 0.78;
+      --right-stage-bg: #ffffff;
+      --right-stage-a: 0.76;
+      --right-tower-bg: #ffffff;
+      --right-tower-a: 0.45;
+      --right-input-bg: #ffffff;
+      --right-input-a: 0.96;
+
+      /* Pebbles (right) */
+      --pebble-outline-a: 0.14;
+
+      /* Layout */
+      --page-max: 1400px;
+      --board-radius: 26px;
+      --radius: 22px;
+      --gap: 18px;
+      --pad: 18px;
+
+      --h1: 20px;
+      --sub: 14px;
+
+      --chip-pad: 8px 12px;
+      --header-pad: 14px 16px;
+
+      --input-radius: 14px;
+      --input-pad: 12px 12px;
+
+      --col-min: 380px;
+    }
+
+    *{ box-sizing: border-box; }
+
+    html, body{
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--ink);
+      background: var(--app-bg);
+    }
+
+    .wrap{
+      max-width: var(--page-max);
+      margin: 26px auto;
+      padding: 18px;
+    }
+
+    /* ===== Top bar ===== */
+    .titlebar{
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .title{
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 260px;
+    }
+    h1{
+      margin: 0;
+      font-size: var(--h1);
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .subtitle{
+      font-size: var(--sub);
+      color: var(--muted);
+      line-height: 1.35;
+      max-width: 72ch;
+    }
+
+    .controls{
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .icon-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255, var(--surface-a));
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: var(--chip-pad);
+      box-shadow: 0 8px 22px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+
+    .btn{
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
+      background: rgba(255,255,255, var(--btn-a));
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      -webkit-tap-highlight-color: transparent;
+      color: rgba(43,43,43,0.72);
+      font-weight: 900;
+      line-height: 1;
+      user-select: none;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .dot{
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), 0.14);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 7px rgba(239,231,225,0.30);
+    }
+    .theme-dot{
+      background: var(--accent);
+      box-shadow: 0 0 0 7px rgba(203,184,174,0.22);
+    }
+
+    .popover{ position: relative; }
+
+    .panel{
+      position: absolute;
+      top: 48px;
+      right: 0;
+      width: 460px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255, var(--panel-a));
+      box-shadow: 0 22px 50px rgba(20,20,20,0.12);
+      backdrop-filter: blur(2px);
+      padding: 14px;
+      display: none;
+      z-index: 50;
+
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
+      -webkit-overflow-scrolling: touch;
+    }
+    .panel.open{ display: block; }
+
+    .panelTitle{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.70);
+    }
+
+    .subPanelTitle{
+      margin: 14px 0 8px 0;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.62);
+    }
+
+    .row{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 0;
+    }
+    .row label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="color"]{
+      width: 36px;
+      height: 28px;
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"]{ width: 210px; }
+
+    .mini-btn{
+      width: 100%;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.92);
+      border-radius: 14px;
+      padding: 11px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      color: rgba(43,43,43,0.86);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+
+    .divider{
+      height: 1px;
+      background: rgba(var(--border-rgb), 0.08);
+      margin: 10px 0;
+    }
+
+    .file{
+      width: 100%;
+      font-size: 12px;
+      color: rgba(43,43,43,0.75);
+    }
+
+    /* Presets UI */
+    .presetName{
+      width:100%;
+      border:1px solid rgba(var(--border-rgb), 0.12);
+      background: rgba(255,255,255,0.95);
+      border-radius:14px;
+      padding:11px 12px;
+      font-size:12px;
+      color: var(--ink);
+      outline: none;
+    }
+    .presetArea{
+      width:100%;
+      min-height: 92px;
+      resize: vertical;
+      border:1px solid rgba(var(--border-rgb), 0.12);
+      background: rgba(255,255,255,0.95);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:12px;
+      line-height:1.35;
+      color: var(--ink);
+      outline: none;
+    }
+    .presetSelect{
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      background: rgba(255,255,255,0.90);
+      padding: 0 10px;
+      color: var(--ink);
+      width: 210px;
+      outline: none;
+    }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ===== Date / Month nav pills ===== */
+    .nav-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: var(--chip-pad);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255, var(--surface-a));
+      box-shadow: 0 8px 22px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+      user-select: none;
+    }
+    .nav-label{
+      font-size: 13px;
+      color: rgba(43,43,43,0.80);
+      min-width: 190px;
+      text-align: center;
+      font-weight: 650;
+      letter-spacing: 0.1px;
+      white-space: nowrap;
+    }
+
+    /* ===== Board ===== */
+    .board{
+      border: 1px solid var(--border);
+      border-radius: var(--board-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      background: none;
+      max-width: 100%;
+    }
+
+    .board::before{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(1.02) contrast(1.03);
+      transform: scale(1.02);
+    }
+    .board::after{
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: rgba(255,255,255,0.34); /* overridden by JS */
+    }
+    .board-tint{
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+    .board-content{
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(2px);
+      padding: var(--pad);
+    }
+
+    /* ===== Two-column layout ===== */
+    .two{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .two{ grid-template-columns: 1fr; }
+    }
+
+    .col{
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 26px rgba(20,20,20,0.06);
+      overflow: hidden;
+      min-width: min(100%, var(--col-min));
+      display: flex;
+      flex-direction: column;
+      min-height: 640px;
+    }
+
+    /* per-half card backgrounds */
+    #leftCol{ background: rgba(255,255,255, var(--left-card-a)); }
+    #rightCol{ background: rgba(255,255,255, var(--right-card-a)); }
+
+    .col-header{
+      padding: var(--header-pad);
+      border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #leftCol .col-header{ background: rgba(255,255,255, var(--left-header-a)); }
+    #rightCol .col-header{ background: rgba(255,255,255, var(--right-header-a)); }
+
+    .col-title{
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 240px;
+    }
+    .col-title strong{
+      font-size: 15px;
+      letter-spacing: 0.1px;
+    }
+    .col-title span{
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+
+    .col-body{
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .block{
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px dashed rgba(var(--border-rgb), 0.14);
+    }
+    #leftCol .block{ background: rgba(255,255,255, var(--left-block-a)); }
+    #rightCol .block{ background: rgba(255,255,255, var(--right-block-a)); }
+
+    .block .label{
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="text"], select{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: var(--input-radius);
+      padding: var(--input-pad);
+      outline: none;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.3;
+      background: rgba(255,255,255,0.96);
+    }
+    #leftCol input[type="text"], #leftCol select{ background: rgba(255,255,255, var(--left-input-a)); }
+    #rightCol input[type="text"], #rightCol select{ background: rgba(255,255,255, var(--right-input-a)); }
+
+    input[type="text"]:focus, select:focus{
+      border-color: rgba(var(--border-rgb), 0.18);
+      box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
+    }
+
+    /* ===== Parking lot items ===== */
+    .park-form{
+      display: grid;
+      grid-template-columns: 1fr 140px 110px;
+      gap: 10px;
+      align-items: center;
+    }
+    @media (max-width: 520px){
+      .park-form{ grid-template-columns: 1fr; }
+    }
+
+    .park-list{
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: auto;
+      padding-right: 4px;
+      max-height: 380px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .park-item{
+      display: grid;
+      grid-template-columns: 86px 1fr 34px;
+      gap: 12px;
+      align-items: center;
+      border-radius: 18px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      box-shadow: 0 10px 24px rgba(20,20,20,0.05);
+      padding: 12px;
+    }
+    #leftCol .park-item{ background: rgba(255,255,255, var(--left-item-a)); }
+
+    .park-text{
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .park-text .t{
+      font-weight: 800;
+      font-size: 14px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+    .park-text .meta{
+      font-size: 12px;
+      color: rgba(43,43,43,0.62);
+    }
+
+    .x{
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.74);
+      cursor: pointer;
+      font-weight: 900;
+      color: rgba(43,43,43,0.70);
+      display: grid;
+      place-items: center;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .x:active{ transform: translateY(1px); }
+
+    .car{
+      width: 86px;
+      height: 50px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+    .car svg{
+      width: 86px;
+      height: 50px;
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,0.08));
+    }
+
+    /* ===== Pebble area ===== */
+    .pebble-form{
+      display: grid;
+      grid-template-columns: 1fr 150px 120px;
+      gap: 10px;
+      align-items: center;
+    }
+    @media (max-width: 520px){
+      .pebble-form{ grid-template-columns: 1fr; }
+    }
+
+    .month-stage{
+      border-radius: 18px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      box-shadow: 0 10px 24px rgba(20,20,20,0.05);
+      padding: 14px;
+      overflow: auto;
+      min-height: 420px;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #rightCol .month-stage{ background: rgba(255,255,255, var(--right-stage-a)); }
+
+    .towers{
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      padding: 10px 6px 4px;
+      min-width: 740px;
+    }
+
+    .tower{
+      flex: 0 0 86px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 8px 6px;
+      border-radius: 16px;
+      border: 1px dashed rgba(var(--border-rgb), 0.14);
+      position: relative;
+      background: rgba(255,255,255, var(--right-tower-a));
+    }
+
+    .tower .daycap{
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.60);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.62);
+      padding: 4px 8px;
+      border-radius: 999px;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .stack{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-height: 210px;
+      justify-content: flex-end;
+      width: 100%;
+    }
+
+    .pebble{
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), var(--pebble-outline-a));
+      background: var(--pebble);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 12px 22px rgba(20,20,20,0.08);
+      position: relative;
+    }
+    .pebble:active{ transform: translateY(1px); }
+    .pebble::after{
+      content: "";
+      position: absolute;
+      inset: 10% 14%;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.22);
+      transform: rotate(-12deg);
+      pointer-events: none;
+    }
+
+    .hint{
+      font-size: 13px;
+      color: rgba(43,43,43,0.68);
+      line-height: 1.35;
+    }
+
+    .pillRow{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pill{
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.70);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.70);
+      padding: 4px 10px;
+      border-radius: 999px;
+      user-select: none;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.75);
+    }
+
+    .footer-note{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 0 2px 4px;
+    }
+
+    /* ===== Modal ===== */
+    .modal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      z-index: 9999;
+      background: rgba(0,0,0,0.25);
+      backdrop-filter: blur(2px);
+    }
+    .modal.open{ display: flex; }
+
+    .modalCard{
+      width: min(720px, 100%);
+      border-radius: 22px;
+      border: 1px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.94);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.20);
+      overflow: hidden;
+    }
+    .modalHead{
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .modalHead strong{
+      font-size: 14px;
+      letter-spacing: .02em;
+    }
+    .modalBody{
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .modalBody .small{
+      font-size: 12px;
+      color: rgba(43,43,43,0.64);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="titlebar">
+      <div class="title">
+        <div class="subtitle">
+        </div>
+      </div>
+
+      <div class="controls">
+        <!-- Day navigation -->
+        <div class="nav-pill" aria-label="Day navigation">
+          <button class="btn" id="prevDay" type="button" aria-label="Previous day" title="Previous day">‹</button>
+          <div class="nav-label" id="dayLabel">Day</div>
+          <button class="btn" id="nextDay" type="button" aria-label="Next day" title="Next day">›</button>
+        </div>
+
+        <!-- Month navigation -->
+        <div class="nav-pill" aria-label="Month navigation">
+          <button class="btn" id="prevMonth" type="button" aria-label="Previous month" title="Previous month">‹</button>
+          <div class="nav-label" id="monthLabel">Month</div>
+          <button class="btn" id="nextMonth" type="button" aria-label="Next month" title="Next month">›</button>
+        </div>
+
+        <!-- THEME -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <span class="dot theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <!-- Global -->
+            <div class="subPanelTitle">Global</div>
+            <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
+            <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
+            <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e" /></div>
+            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tSurfaceA">Pills opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="78" /></div>
+            <div class="row"><label for="tPanelA">Panels opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="92" /></div>
+            <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tOverlayBase">Overlay color</label><input id="tOverlayBase" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="34" /></div>
+
+            <!-- Left -->
+            <div class="divider"></div>
+            <div class="subPanelTitle">Left (Parking Lot)</div>
+            <div class="row"><label for="tLeftCardBg">Card bg</label><input id="tLeftCardBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftCardA">Card opacity</label><input id="tLeftCardA" type="range" min="70" max="100" value="94" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tLeftHeaderBg">Header bg</label><input id="tLeftHeaderBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftHeaderA">Header opacity</label><input id="tLeftHeaderA" type="range" min="70" max="100" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tLeftBlockBg">Blocks bg</label><input id="tLeftBlockBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftBlockA">Blocks opacity</label><input id="tLeftBlockA" type="range" min="45" max="100" value="78" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tLeftItemBg">Items bg</label><input id="tLeftItemBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftItemA">Items opacity</label><input id="tLeftItemA" type="range" min="45" max="100" value="82" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tLeftInputBg">Inputs bg</label><input id="tLeftInputBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tLeftInputA">Inputs opacity</label><input id="tLeftInputA" type="range" min="60" max="100" value="96" /></div>
+
+            <!-- Right -->
+            <div class="divider"></div>
+            <div class="subPanelTitle">Right (Pebbles)</div>
+            <div class="row"><label for="tRightCardBg">Card bg</label><input id="tRightCardBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightCardA">Card opacity</label><input id="tRightCardA" type="range" min="70" max="100" value="94" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightHeaderBg">Header bg</label><input id="tRightHeaderBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightHeaderA">Header opacity</label><input id="tRightHeaderA" type="range" min="70" max="100" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightBlockBg">Blocks bg</label><input id="tRightBlockBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightBlockA">Blocks opacity</label><input id="tRightBlockA" type="range" min="45" max="100" value="78" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightStageBg">Stage bg</label><input id="tRightStageBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightStageA">Stage opacity</label><input id="tRightStageA" type="range" min="45" max="100" value="76" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightTowerBg">Tower bg</label><input id="tRightTowerBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightTowerA">Tower opacity</label><input id="tRightTowerA" type="range" min="20" max="100" value="45" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tRightInputBg">Inputs bg</label><input id="tRightInputBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tRightInputA">Inputs opacity</label><input id="tRightInputA" type="range" min="60" max="100" value="96" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tPebbleOutlineA">Pebble outline</label><input id="tPebbleOutlineA" type="range" min="5" max="30" value="14" /></div>
+
+            <div class="divider"></div>
+
+            <!-- Apply / Reset (no persistence unless Apply/Reset) -->
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="themeReset" type="button" style="margin-top:10px;">Reset theme</button>
+
+            <div class="divider"></div>
+
+            <!-- Presets (GLOBAL JSON that works across widgets) -->
+            <div class="subPanelTitle" style="margin-top:0;">Presets (works across widgets)</div>
+
+            <div class="row" style="flex-direction:column; align-items:stretch; gap:10px;">
+              <input class="presetName" id="presetName" placeholder="Preset name" />
+              <button class="mini-btn" id="presetSave" type="button">Save current as preset</button>
+            </div>
+
+            <div class="row">
+              <label for="presetSelect">Choose</label>
+              <select class="presetSelect" id="presetSelect"></select>
+            </div>
+
+            <button class="mini-btn" id="presetApply" type="button">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button" style="margin-top:10px;">Delete preset</button>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="presetCopy" type="button">Copy preset JSON</button>
+
+            <div class="row" style="flex-direction:column; align-items:stretch; gap:10px;">
+              <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+              <button class="mini-btn" id="presetImportBtn" type="button">Import presets</button>
+              <div class="status" id="presetStatus" aria-live="polite"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- BACKGROUND -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <span class="dot" id="bgDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <div class="panelTitle">Background</div>
+
+            <div class="row">
+              <label for="bgColor">Tint</label>
+              <input id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="row">
+              <label for="bgStrength">Tint strength</label>
+              <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input id="bgImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="row">
+              <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:10px;">Reset background</button>
+
+            <div class="status" id="bgStatus" aria-live="polite" style="margin-top:10px;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="board-tint" id="boardTint"></div>
+
+      <div class="board-content">
+        <div class="two">
+          <!-- LEFT -->
+          <section class="col" id="leftCol" aria-label="Not today parking lot" tabindex="-1">
+            <div class="col-header">
+              <div class="col-title">
+                <strong>Not Today Parking Lot</strong>
+                <span>Didn't complete it today? Park it here!</span>
+              </div>
+              <div class="pillRow">
+                <span class="pill" id="parkCountPill">0 parked</span>
+              </div>
+            </div>
+
+            <div class="col-body">
+              <div class="block">
+                <div class="label">Add a task</div>
+                <div class="park-form">
+                  <input id="parkText" type="text" placeholder="" />
+                  <input id="parkColor" type="color" value="#e0565b" title="Car color" />
+                  <button class="mini-btn" id="addPark" type="button">Park it</button>
+                </div>
+                <div class="hint" style="margin-top:10px;">
+                </div>
+              </div>
+
+              <div class="block" style="min-height: 250px;">
+                <div class="label">Parking Lot <span class="pill" id="parkDatePill">—</span></div>
+                <div class="park-list" id="parkList"></div>
+              </div>
+
+              <div class="footer-note">
+              </div>
+            </div>
+          </section>
+
+          <!-- RIGHT -->
+          <section class="col" id="rightCol" aria-label="Daily gratitude pebbles" tabindex="-1">
+            <div class="col-header">
+              <div class="col-title">
+                <strong>Daily Gratitude Pebbles</strong>
+                <span>What's one thing you're grateful for today?</span>
+              </div>
+              <div class="pillRow">
+                <span class="pill" id="pebbleCountPill">0 pebbles</span>
+              </div>
+            </div>
+
+            <div class="col-body">
+              <div class="block">
+                <div class="label">Add a pebble</div>
+                <div class="pebble-form">
+                  <input id="gratText" type="text" placeholder="" />
+                  <select id="gratSize" title="Pebble size">
+                    <option value="sm">Small</option>
+                    <option value="md" selected>Medium</option>
+                    <option value="lg">Large</option>
+                    <option value="rand">Random</option>
+                  </select>
+                  <button class="mini-btn" id="addPebble" type="button">Add pebble</button>
+                </div>
+                <div class="hint" style="margin-top:10px;">
+                </div>
+              </div>
+
+              <div class="block">
+                <div class="label">This month's pebbles<span class="pill" id="monthPill">—</span></div>
+                <div class="month-stage" id="monthStage">
+                  <div class="towers" id="towers"></div>
+                </div>
+              </div>
+
+              <div class="footer-note">
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="footer-note" style="padding: 12px 4px 4px;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pebble modal -->
+  <div class="modal" id="modal">
+    <div class="modalCard">
+      <div class="modalHead">
+        <strong id="modalTitle">Pebble</strong>
+        <button class="x" id="modalClose" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="modalBody">
+        <div class="pillRow">
+          <span class="pill" id="modalDate">—</span>
+          <span class="pill" id="modalSize">—</span>
+        </div>
+        <div id="modalText" style="font-weight:800; line-height:1.35; overflow-wrap:anywhere;"></div>
+        <div class="divider"></div>
+        <button class="mini-btn" id="deletePebble" type="button">Delete this pebble</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+      Safe storage + widget instance id (per-embed keys)
+      - Pass a stable id in your Notion embed URL like:
+        https://YOURNAME.github.io/page.html?wid=parking_gratitude_01
+      - If wid is omitted, we still generate a session one.
+    ========================================================= */
+    (function(){
+      const mem = Object.create(null);
+      function canUseLocalStorage(){
+        try{
+          const k="__t__"+Math.random().toString(16).slice(2);
+          localStorage.setItem(k,"1"); localStorage.removeItem(k);
+          return true;
+        }catch{ return false; }
+      }
+      const hasLS = canUseLocalStorage();
+      function storageGet(key){
+        try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+        catch{ return mem[key] ?? null; }
+      }
+      function storageSet(key, value){
+        try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+        catch{ mem[key]=String(value); }
+      }
+      function storageRemove(key){
+        try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+        catch{ delete mem[key]; }
+      }
+      function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+      function getWidgetId(){
+        try{
+          const sp = new URLSearchParams(location.search);
+          const wid = (sp.get("wid") || "").trim();
+          if(wid) return wid;
+        }catch{}
+        try{
+          const cached = sessionStorage.getItem("nt_parking_gratitude_wid");
+          if(cached) return cached;
+        }catch{}
+        const fresh = uid();
+        try{ sessionStorage.setItem("nt_parking_gratitude_wid", fresh); }catch{}
+        return fresh;
+      }
+      window.__NT__ = { wid: getWidgetId(), get: storageGet, set: storageSet, remove: storageRemove };
+    })();
+
+    const WID = window.__NT__?.wid || "default";
+
+    /* =========================
+       Storage keys (per widget instance)
+    ========================= */
+    const STORE_KEY_BASE = "not_today_parkinglot_gratitude_v2";
+    const THEME_KEY_BASE = "not_today_parkinglot_gratitude_theme_v2";
+    const BG_KEY_BASE    = "not_today_parkinglot_gratitude_bg_v2";
+
+    const STORE_KEY = STORE_KEY_BASE + "__" + WID;
+    const THEME_KEY = THEME_KEY_BASE + "__" + WID;
+    const BG_KEY    = BG_KEY_BASE + "__" + WID;
+
+    /* Global presets key (shared across ALL your widgets on this device/browser) */
+    const PRESETS_KEY = "widget_presets_v2";
+
+    const $  = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    function clamp(n, min, max){
+      const x = Number(n);
+      if(!Number.isFinite(x)) return min;
+      return Math.max(min, Math.min(max, x));
+    }
+
+    function normHex(hex, fallback){
+      const s = String(hex || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+    }
+
+    function hexToRgbTuple(hex){
+      const h = normHex(hex, "#ffffff").slice(1);
+      const r = parseInt(h.slice(0,2), 16);
+      const g = parseInt(h.slice(2,4), 16);
+      const b = parseInt(h.slice(4,6), 16);
+      return `${r},${g},${b}`;
+    }
+
+    function hexToRgba(hex, a){
+      const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function toISODate(d){
+      const x = new Date(d);
+      x.setHours(0,0,0,0);
+      return x.toISOString().slice(0,10);
+    }
+    function parseISO(iso){ return new Date(iso + "T00:00:00"); }
+    function addDays(iso, n){
+      const d = parseISO(iso);
+      d.setDate(d.getDate() + n);
+      return toISODate(d);
+    }
+    function monthId(iso){ return iso.slice(0,7); } // YYYY-MM
+    function prettyDayLabel(iso){
+      const d = parseISO(iso);
+      return d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
+    }
+    function prettyMonthLabel(ym){
+      const d = new Date(ym + "-01T00:00:00");
+      return d.toLocaleDateString(undefined, { month:"long", year:"numeric" });
+    }
+    function daysInMonth(ym){
+      const [y,m] = ym.split("-").map(Number);
+      return new Date(y, m, 0).getDate();
+    }
+    function uid(){ return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function loadJSON(key){
+      try{
+        const raw = window.__NT__.get(key);
+        return raw ? JSON.parse(raw) : null;
+      }catch{ return null; }
+    }
+    function saveJSON(key, val){
+      try{ window.__NT__.set(key, JSON.stringify(val)); }catch{}
+    }
+    function removeKey(key){
+      try{ window.__NT__.remove(key); }catch{}
+    }
+
+    async function copyText(text){
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      }catch{}
+      try{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return !!ok;
+      }catch{ return false; }
+    }
+
+    /* =========================
+       Store (per widget instance)
+    ========================= */
+    function loadStore(){
+      try{
+        const raw = window.__NT__.get(STORE_KEY);
+        return raw ? JSON.parse(raw) : { parkingByDay: {}, pebblesByDay: {} };
+      }catch{
+        return { parkingByDay: {}, pebblesByDay: {} };
+      }
+    }
+    function saveStore(s){
+      saveJSON(STORE_KEY, s);
+    }
+    let store = loadStore();
+    function ensureDay(iso){
+      if(!store.parkingByDay[iso]) store.parkingByDay[iso] = [];
+      if(!store.pebblesByDay[iso]) store.pebblesByDay[iso] = [];
+    }
+
+    /* =========================
+       Theme (draft + apply)
+       - Preview on input
+       - Persist ONLY on Apply/Reset/Preset apply
+    ========================= */
+    const DEFAULT_THEME = {
+      /* Global */
+      appBg: "#ffffff",
+      ink: "#2b2b2b",
+      muted: "#7a7a7a",
+      accent: "#cbb8ae",
+      borderColor: "#1e1e1e",
+      borderA: 0.10,
+      surfaceA: 0.78,
+      panelA: 0.92,
+      btnA: 0.92,
+      btnBorderA: 0.10,
+      overlayBase: "#ffffff",
+      overlayA: 0.34,
+
+      /* Left */
+      leftCardBg: "#ffffff",
+      leftCardA: 0.94,
+      leftHeaderBg: "#ffffff",
+      leftHeaderA: 0.92,
+      leftBlockBg: "#ffffff",
+      leftBlockA: 0.78,
+      leftItemBg: "#ffffff",
+      leftItemA: 0.82,
+      leftInputBg: "#ffffff",
+      leftInputA: 0.96,
+
+      /* Right */
+      rightCardBg: "#ffffff",
+      rightCardA: 0.94,
+      rightHeaderBg: "#ffffff",
+      rightHeaderA: 0.92,
+      rightBlockBg: "#ffffff",
+      rightBlockA: 0.78,
+      rightStageBg: "#ffffff",
+      rightStageA: 0.76,
+      rightTowerBg: "#ffffff",
+      rightTowerA: 0.45,
+      rightInputBg: "#ffffff",
+      rightInputA: 0.96,
+
+      /* Pebble */
+      pebbleOutlineA: 0.14
+    };
+
+    function themeLoad(){
+      return loadJSON(THEME_KEY);
+    }
+    function themeSave(t){
+      saveJSON(THEME_KEY, t);
+    }
+
+    function setAccentStyles(accentHex){
+      const accent = normHex(accentHex, DEFAULT_THEME.accent);
+      let st = document.getElementById("accentStyle");
+      if(!st){
+        st = document.createElement("style");
+        st.id = "accentStyle";
+        document.head.appendChild(st);
+      }
+      st.textContent = `
+        .col:focus-within{
+          box-shadow: 0 0 0 4px ${hexToRgba(accent, 0.35)}, 0 10px 26px rgba(20,20,20,0.06);
+        }
+        input[type="text"]:focus, select:focus{
+          box-shadow: 0 0 0 5px ${hexToRgba(accent, 0.18)};
+        }
+      `;
+    }
+
+    function themeApply(t){
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
+      const r = document.documentElement.style;
+
+      /* Global */
+      r.setProperty("--app-bg", normHex(theme.appBg, DEFAULT_THEME.appBg));
+      r.setProperty("--ink", normHex(theme.ink, DEFAULT_THEME.ink));
+      r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
+      r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
+
+      r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
+      r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
+      r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
+      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
+      r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
+      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
+
+      r.setProperty("--overlay-base", normHex(theme.overlayBase, DEFAULT_THEME.overlayBase));
+      r.setProperty("--overlay-a", String(clamp(theme.overlayA, 0.00, 0.70)));
+
+      /* Left variables */
+      r.setProperty("--left-card-a", String(clamp(theme.leftCardA, 0.70, 1.00)));
+      r.setProperty("--left-header-a", String(clamp(theme.leftHeaderA, 0.70, 1.00)));
+      r.setProperty("--left-block-a", String(clamp(theme.leftBlockA, 0.45, 1.00)));
+      r.setProperty("--left-item-a", String(clamp(theme.leftItemA, 0.45, 1.00)));
+      r.setProperty("--left-input-a", String(clamp(theme.leftInputA, 0.60, 1.00)));
+
+      /* Right variables */
+      r.setProperty("--right-card-a", String(clamp(theme.rightCardA, 0.70, 1.00)));
+      r.setProperty("--right-header-a", String(clamp(theme.rightHeaderA, 0.70, 1.00)));
+      r.setProperty("--right-block-a", String(clamp(theme.rightBlockA, 0.45, 1.00)));
+      r.setProperty("--right-stage-a", String(clamp(theme.rightStageA, 0.45, 1.00)));
+      r.setProperty("--right-tower-a", String(clamp(theme.rightTowerA, 0.20, 1.00)));
+      r.setProperty("--right-input-a", String(clamp(theme.rightInputA, 0.60, 1.00)));
+
+      /* Pebble */
+      r.setProperty("--pebble-outline-a", String(clamp(theme.pebbleOutlineA, 0.05, 0.30)));
+
+      /* Update dots */
+      const themeDot = $("#themeDot");
+      if(themeDot){
+        const accent = normHex(theme.accent, DEFAULT_THEME.accent);
+        themeDot.style.background = accent;
+        themeDot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
+      }
+      setAccentStyles(theme.accent);
+
+      /* Overlay actually applies */
+      let overlayStyle = document.getElementById("overlayStyle");
+      if(!overlayStyle){
+        overlayStyle = document.createElement("style");
+        overlayStyle.id = "overlayStyle";
+        document.head.appendChild(overlayStyle);
+      }
+      const ov = hexToRgba(normHex(theme.overlayBase, "#ffffff"), clamp(theme.overlayA, 0, 0.70));
+      overlayStyle.textContent = `.board::after{ background: ${ov} !important; }`;
+
+      /* Per-half color application for all areas */
+      let halfStyle = document.getElementById("halfThemeStyle");
+      if(!halfStyle){
+        halfStyle = document.createElement("style");
+        halfStyle.id = "halfThemeStyle";
+        document.head.appendChild(halfStyle);
+      }
+
+      const leftCard   = hexToRgba(normHex(theme.leftCardBg, "#ffffff"), clamp(theme.leftCardA, 0.70, 1.00));
+      const leftHead   = hexToRgba(normHex(theme.leftHeaderBg, "#ffffff"), clamp(theme.leftHeaderA, 0.70, 1.00));
+      const leftBlock  = hexToRgba(normHex(theme.leftBlockBg, "#ffffff"), clamp(theme.leftBlockA, 0.45, 1.00));
+      const leftItem   = hexToRgba(normHex(theme.leftItemBg, "#ffffff"), clamp(theme.leftItemA, 0.45, 1.00));
+      const leftInput  = hexToRgba(normHex(theme.leftInputBg, "#ffffff"), clamp(theme.leftInputA, 0.60, 1.00));
+
+      const rightCard  = hexToRgba(normHex(theme.rightCardBg, "#ffffff"), clamp(theme.rightCardA, 0.70, 1.00));
+      const rightHead  = hexToRgba(normHex(theme.rightHeaderBg, "#ffffff"), clamp(theme.rightHeaderA, 0.70, 1.00));
+      const rightBlock = hexToRgba(normHex(theme.rightBlockBg, "#ffffff"), clamp(theme.rightBlockA, 0.45, 1.00));
+      const rightStage = hexToRgba(normHex(theme.rightStageBg, "#ffffff"), clamp(theme.rightStageA, 0.45, 1.00));
+      const rightTower = hexToRgba(normHex(theme.rightTowerBg, "#ffffff"), clamp(theme.rightTowerA, 0.20, 1.00));
+      const rightInput = hexToRgba(normHex(theme.rightInputBg, "#ffffff"), clamp(theme.rightInputA, 0.60, 1.00));
+
+      halfStyle.textContent = `
+        /* Left */
+        #leftCol{ background: ${leftCard} !important; }
+        #leftCol .col-header{ background: ${leftHead} !important; }
+        #leftCol .block{ background: ${leftBlock} !important; }
+        #leftCol .park-item{ background: ${leftItem} !important; }
+        #leftCol input[type="text"]{ background: ${leftInput} !important; }
+
+        /* Right */
+        #rightCol{ background: ${rightCard} !important; }
+        #rightCol .col-header{ background: ${rightHead} !important; }
+        #rightCol .block{ background: ${rightBlock} !important; }
+        #rightCol .month-stage{ background: ${rightStage} !important; }
+        #rightCol .tower{ background: ${rightTower} !important; }
+        #rightCol input[type="text"], #rightCol select{ background: ${rightInput} !important; }
+      `;
+    }
+
+    function themeSyncInputs(t){
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
+      const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
+
+      /* Global */
+      set("tAppBg", theme.appBg);
+      set("tInk", theme.ink);
+      set("tMuted", theme.muted);
+      set("tAccent", theme.accent);
+      set("tBorderColor", theme.borderColor);
+      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+      set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
+      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+      set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
+      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+      set("tOverlayBase", theme.overlayBase);
+      set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
+
+      /* Left */
+      set("tLeftCardBg", theme.leftCardBg);
+      set("tLeftCardA", Math.round(clamp(theme.leftCardA, 0.70, 1.00) * 100));
+      set("tLeftHeaderBg", theme.leftHeaderBg);
+      set("tLeftHeaderA", Math.round(clamp(theme.leftHeaderA, 0.70, 1.00) * 100));
+      set("tLeftBlockBg", theme.leftBlockBg);
+      set("tLeftBlockA", Math.round(clamp(theme.leftBlockA, 0.45, 1.00) * 100));
+      set("tLeftItemBg", theme.leftItemBg);
+      set("tLeftItemA", Math.round(clamp(theme.leftItemA, 0.45, 1.00) * 100));
+      set("tLeftInputBg", theme.leftInputBg);
+      set("tLeftInputA", Math.round(clamp(theme.leftInputA, 0.60, 1.00) * 100));
+
+      /* Right */
+      set("tRightCardBg", theme.rightCardBg);
+      set("tRightCardA", Math.round(clamp(theme.rightCardA, 0.70, 1.00) * 100));
+      set("tRightHeaderBg", theme.rightHeaderBg);
+      set("tRightHeaderA", Math.round(clamp(theme.rightHeaderA, 0.70, 1.00) * 100));
+      set("tRightBlockBg", theme.rightBlockBg);
+      set("tRightBlockA", Math.round(clamp(theme.rightBlockA, 0.45, 1.00) * 100));
+      set("tRightStageBg", theme.rightStageBg);
+      set("tRightStageA", Math.round(clamp(theme.rightStageA, 0.45, 1.00) * 100));
+      set("tRightTowerBg", theme.rightTowerBg);
+      set("tRightTowerA", Math.round(clamp(theme.rightTowerA, 0.20, 1.00) * 100));
+      set("tRightInputBg", theme.rightInputBg);
+      set("tRightInputA", Math.round(clamp(theme.rightInputA, 0.60, 1.00) * 100));
+
+      /* Pebble */
+      set("tPebbleOutlineA", Math.round(clamp(theme.pebbleOutlineA, 0.05, 0.30) * 100));
+    }
+
+    function themeReadFromInputs(){
+      const g = (id)=>document.getElementById(id);
+      return {
+        /* Global */
+        appBg: g("tAppBg")?.value,
+        ink: g("tInk")?.value,
+        muted: g("tMuted")?.value,
+        accent: g("tAccent")?.value,
+        borderColor: g("tBorderColor")?.value,
+        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
+        surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
+        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
+        btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
+        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
+        overlayBase: g("tOverlayBase")?.value,
+        overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
+
+        /* Left */
+        leftCardBg: g("tLeftCardBg")?.value,
+        leftCardA: clamp(Number(g("tLeftCardA")?.value)/100, 0.70, 1.00),
+        leftHeaderBg: g("tLeftHeaderBg")?.value,
+        leftHeaderA: clamp(Number(g("tLeftHeaderA")?.value)/100, 0.70, 1.00),
+        leftBlockBg: g("tLeftBlockBg")?.value,
+        leftBlockA: clamp(Number(g("tLeftBlockA")?.value)/100, 0.45, 1.00),
+        leftItemBg: g("tLeftItemBg")?.value,
+        leftItemA: clamp(Number(g("tLeftItemA")?.value)/100, 0.45, 1.00),
+        leftInputBg: g("tLeftInputBg")?.value,
+        leftInputA: clamp(Number(g("tLeftInputA")?.value)/100, 0.60, 1.00),
+
+        /* Right */
+        rightCardBg: g("tRightCardBg")?.value,
+        rightCardA: clamp(Number(g("tRightCardA")?.value)/100, 0.70, 1.00),
+        rightHeaderBg: g("tRightHeaderBg")?.value,
+        rightHeaderA: clamp(Number(g("tRightHeaderA")?.value)/100, 0.70, 1.00),
+        rightBlockBg: g("tRightBlockBg")?.value,
+        rightBlockA: clamp(Number(g("tRightBlockA")?.value)/100, 0.45, 1.00),
+        rightStageBg: g("tRightStageBg")?.value,
+        rightStageA: clamp(Number(g("tRightStageA")?.value)/100, 0.45, 1.00),
+        rightTowerBg: g("tRightTowerBg")?.value,
+        rightTowerA: clamp(Number(g("tRightTowerA")?.value)/100, 0.20, 1.00),
+        rightInputBg: g("tRightInputBg")?.value,
+        rightInputA: clamp(Number(g("tRightInputA")?.value)/100, 0.60, 1.00),
+
+        /* Pebble */
+        pebbleOutlineA: clamp(Number(g("tPebbleOutlineA")?.value)/100, 0.05, 0.30),
+      };
+    }
+
+    /* =========================
+       Background (draft + apply)
+       - Preview on input
+       - Persist ONLY on Apply/Reset/Preset apply
+    ========================= */
+    const DEFAULT_BG = { tint: "#efe7e1", strength: 30, imageDataUrl: null };
+
+    function bgLoad(){
+      return loadJSON(BG_KEY);
+    }
+    function bgSave(bg){
+      saveJSON(BG_KEY, bg);
+    }
+
+    function setBoardImage(dataUrlOrNull){
+      document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    }
+
+    function applyBoardTint(colorHex, strengthPct){
+      const tint = normHex(colorHex, DEFAULT_BG.tint);
+      const strength = clamp(Number(strengthPct)/100, 0, 0.70);
+
+      document.documentElement.style.setProperty("--board-tint", tint);
+      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+      const bgDot = $("#bgDot");
+      if(bgDot){
+        bgDot.style.background = tint;
+        bgDot.style.boxShadow = `0 0 0 7px ${hexToRgba(tint, Math.min(0.30, strength + 0.10))}`;
+      }
+      $("#boardTint").style.background = hexToRgba(tint, strength);
+    }
+
+    function bgApplyToCSS(bg){
+      const x = Object.assign({}, DEFAULT_BG, bg || {});
+      applyBoardTint(x.tint, x.strength);
+      setBoardImage(x.imageDataUrl);
+    }
+
+    function bgSyncInputs(bg){
+      const x = Object.assign({}, DEFAULT_BG, bg || {});
+      $("#bgColor").value = x.tint;
+      $("#bgStrength").value = String(x.strength);
+      // file input cannot be set programmatically; leave it
+    }
+
+    function bgReadInputs(currentDraft){
+      const out = Object.assign({}, currentDraft || DEFAULT_BG);
+      out.tint = $("#bgColor").value;
+      out.strength = Number($("#bgStrength").value);
+      return out;
+    }
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    /* =========================
+       Presets (GLOBAL, cross-widget)
+       - Stored under PRESETS_KEY
+       - [{id,name, theme:{...}, bg:{...}}]
+    ========================= */
+    function status(msg){
+      const el = $("#presetStatus");
+      if(el) el.textContent = msg || "";
+    }
+    function bgStatus(msg){
+      const el = $("#bgStatus");
+      if(el) el.textContent = msg || "";
+    }
+    function loadPresets(){
+      const list = loadJSON(PRESETS_KEY);
+      return Array.isArray(list) ? list : [];
+    }
+    function savePresets(list){
+      saveJSON(PRESETS_KEY, list);
+    }
+    function refreshPresetSelect(){
+      const sel = $("#presetSelect");
+      if(!sel) return;
+      const list = loadPresets();
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">—</option>`;
+      for(const p of list){
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || "Untitled";
+        sel.appendChild(opt);
+      }
+      if(cur) sel.value = cur;
+    }
+    function sanitizePresetList(parsed){
+      if(!Array.isArray(parsed)) return null;
+      return parsed.filter(Boolean).map(p => ({
+        id: String(p.id || uid()),
+        name: String(p.name || "Imported"),
+        theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
+        bg: (p.bg && typeof p.bg === "object") ? p.bg : {}
+      }));
+    }
+
+    function applyPresetToThisWidget(p){
+      const th = p.theme || {};
+      const bg = p.bg || {};
+
+      // accept either this widget's keys OR generic keys from other widgets (best-effort)
+      const themeDraftNext = Object.assign({}, DEFAULT_THEME, th);
+      const bgDraftNext = Object.assign({}, DEFAULT_BG, bg);
+
+      themeDraft = themeDraftNext;
+      themeSyncInputs(themeDraft);
+      themeApply(themeDraft);
+      themeSave(themeDraft);
+
+      bgDraft = bgDraftNext;
+      bgSyncInputs(bgDraft);
+      bgApplyToCSS(bgDraft);
+      bgSave(bgDraft);
+
+      status("Preset applied.");
+      bgStatus("Preset background applied.");
+    }
+
+    /* =========================
+       Panel open/close (close siblings)
+    ========================= */
+    function initPanelToggles(){
+      const themeBtn = $("#themeBtn");
+      const themePanel = $("#themePanel");
+      const bgBtn = $("#bgBtn");
+      const bgPanel = $("#bgPanel");
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        bgPanel.classList.remove("open");
+      });
+
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+        themePanel.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        const inTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+        const inBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+        if(!inTheme) themePanel.classList.remove("open");
+        if(!inBg) bgPanel.classList.remove("open");
+      });
+
+      window.addEventListener("scroll", ()=> {
+        themePanel.classList.remove("open");
+        bgPanel.classList.remove("open");
+      }, { passive: true });
+    }
+
+    /* =========================
+       Theme UI init
+    ========================= */
+    let themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+    function initThemeUI(){
+      const themeApplyBtn = $("#themeApply");
+      const themeResetBtn = $("#themeReset");
+
+      // Preview changes, but do NOT persist
+      const ids = [
+        "tAppBg","tInk","tMuted","tAccent",
+        "tBorderColor","tBorderA","tSurfaceA","tPanelA",
+        "tBtnA","tBtnBorderA",
+        "tOverlayBase","tOverlayA",
+        "tLeftCardBg","tLeftCardA","tLeftHeaderBg","tLeftHeaderA",
+        "tLeftBlockBg","tLeftBlockA","tLeftItemBg","tLeftItemA",
+        "tLeftInputBg","tLeftInputA",
+        "tRightCardBg","tRightCardA","tRightHeaderBg","tRightHeaderA",
+        "tRightBlockBg","tRightBlockA","tRightStageBg","tRightStageA",
+        "tRightTowerBg","tRightTowerA","tRightInputBg","tRightInputA",
+        "tPebbleOutlineA"
+      ];
+
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener("input", () => {
+          themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+          themeApply(themeDraft);
+          status("");
+        });
+      });
+
+      themeApplyBtn.addEventListener("click", () => {
+        themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+        themeSave(themeDraft);
+        status("Theme applied.");
+      });
+
+      themeResetBtn.addEventListener("click", () => {
+        removeKey(THEME_KEY);
+        themeDraft = Object.assign({}, DEFAULT_THEME);
+        themeSyncInputs(themeDraft);
+        themeApply(themeDraft);
+        themeSave(themeDraft);
+        status("Theme reset.");
+      });
+
+      // Initial
+      themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+      themeSyncInputs(themeDraft);
+      themeApply(themeDraft);
+
+      // Presets controls
+      refreshPresetSelect();
+
+      $("#presetSave").addEventListener("click", () => {
+        const name = ($("#presetName").value || "").trim();
+        if(!name){ status("Type a preset name first."); return; }
+
+        // capture current visual draft (not necessarily applied to storage yet)
+        themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+        const bgCurDraft = Object.assign({}, bgDraft, bgReadInputs(bgDraft));
+
+        const list = loadPresets();
+        const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bgCurDraft } };
+        list.unshift(entry);
+        savePresets(list);
+
+        $("#presetName").value = "";
+        refreshPresetSelect();
+        $("#presetSelect").value = entry.id;
+        status("Preset saved.");
+      });
+
+      $("#presetApply").addEventListener("click", () => {
+        const id = $("#presetSelect").value;
+        if(!id){ status("Choose a preset first."); return; }
+        const p = loadPresets().find(x => x.id === id);
+        if(!p){ status("Preset not found."); return; }
+        applyPresetToThisWidget(p);
+      });
+
+      $("#presetDelete").addEventListener("click", () => {
+        const sel = $("#presetSelect");
+        const id = sel.value;
+        if(!id){ status("Choose a preset first."); return; }
+        let list = loadPresets();
+        const before = list.length;
+        list = list.filter(x => x.id !== id);
+        if(list.length === before){ status("Preset not found."); return; }
+        savePresets(list);
+        refreshPresetSelect();
+        sel.value = "";
+        status("Preset deleted.");
+      });
+
+      $("#presetCopy").addEventListener("click", async () => {
+        const payload = JSON.stringify(loadPresets(), null, 2);
+        const ok = await copyText(payload);
+        if(ok) status("Preset JSON copied.");
+        else{
+          $("#presetImport").value = payload;
+          $("#presetImport").focus();
+          $("#presetImport").select();
+          status("Could not copy automatically — JSON placed in the box to copy manually.");
+        }
+      });
+
+      $("#presetImportBtn").addEventListener("click", () => {
+        const raw = ($("#presetImport").value || "").trim();
+        if(!raw){ status("Paste preset JSON first."); return; }
+        try{
+          const parsed = JSON.parse(raw);
+          const cleaned = sanitizePresetList(parsed);
+          if(!cleaned){ status("That JSON doesn’t look like a preset list."); return; }
+          savePresets(cleaned);
+          refreshPresetSelect();
+          status("Presets imported.");
+        }catch{
+          status("Invalid JSON.");
+        }
+      });
+    }
+
+    /* =========================
+       Background UI init
+    ========================= */
+    let bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+    function initBgUI(){
+      // Preview on input
+      $("#bgColor").addEventListener("input", () => {
+        bgDraft.tint = $("#bgColor").value;
+        bgDraft = bgReadInputs(bgDraft);
+        bgApplyToCSS(bgDraft);
+        bgStatus("");
+        status("");
+      });
+
+      $("#bgStrength").addEventListener("input", () => {
+        bgDraft.strength = Number($("#bgStrength").value);
+        bgDraft = bgReadInputs(bgDraft);
+        bgApplyToCSS(bgDraft);
+        bgStatus("");
+        status("");
+      });
+
+      $("#bgImage").addEventListener("change", async () => {
+        const file = $("#bgImage").files && $("#bgImage").files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataUrl(file);
+        bgDraft.imageDataUrl = dataUrl;
+        bgApplyToCSS(bgDraft);
+        bgStatus("");
+        status("");
+      });
+
+      $("#removeImage").addEventListener("click", () => {
+        $("#bgImage").value = "";
+        bgDraft.imageDataUrl = null;
+        bgApplyToCSS(bgDraft);
+        bgStatus("");
+        status("");
+      });
+
+      $("#bgApply").addEventListener("click", () => {
+        bgDraft = bgReadInputs(bgDraft);
+        bgSave(bgDraft);
+        bgStatus("Background applied.");
+      });
+
+      $("#bgReset").addEventListener("click", () => {
+        removeKey(BG_KEY);
+        bgDraft = Object.assign({}, DEFAULT_BG);
+        bgSyncInputs(bgDraft);
+        bgApplyToCSS(bgDraft);
+        bgSave(bgDraft);
+        bgStatus("Background reset.");
+      });
+
+      // Initial
+      bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+      bgSyncInputs(bgDraft);
+      bgApplyToCSS(bgDraft);
+    }
+
+    /* =========================
+       Cute retro car SVGs
+    ========================= */
+    function carSvg(color, styleId=0){
+      const fill = normHex(color, "#e0565b");
+      const styles = [
+        (c)=>`
+          <svg viewBox="0 0 240 140" aria-hidden="true">
+            <path d="M44 92c3-20 12-43 26-52 18-12 62-16 86-14 20 2 32 8 42 20 10 12 17 33 20 46 2 8 3 20-10 22H52c-12-2-10-14-8-22z" fill="${c}"/>
+            <path d="M78 44c14-11 54-14 78-12 16 2 24 7 30 16H72c1-2 3-3 6-4z" fill="rgba(255,255,255,0.20)"/>
+            <rect x="78" y="52" rx="14" ry="14" width="56" height="30" fill="rgba(140,170,200,0.55)" stroke="rgba(0,0,0,0.10)"/>
+            <rect x="140" y="52" rx="14" ry="14" width="44" height="30" fill="rgba(140,170,200,0.55)" stroke="rgba(0,0,0,0.10)"/>
+            <rect x="58" y="82" width="152" height="16" rx="8" fill="rgba(0,0,0,0.14)"/>
+            <circle cx="80" cy="104" r="18" fill="#111"/>
+            <circle cx="80" cy="104" r="10" fill="rgba(255,255,255,0.60)"/>
+            <circle cx="172" cy="104" r="18" fill="#111"/>
+            <circle cx="172" cy="104" r="10" fill="rgba(255,255,255,0.60)"/>
+            <circle cx="56" cy="86" r="10" fill="rgba(255,255,255,0.75)"/>
+            <circle cx="214" cy="86" r="10" fill="rgba(255,255,255,0.75)"/>
+            <path d="M44 92c-3 12 0 22 12 22h128c12 0 22-10 24-22" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="4"/>
+          </svg>
+        `,
+        (c)=>`
+          <svg viewBox="0 0 240 140" aria-hidden="true">
+            <path d="M48 84c4-22 14-38 30-46 18-9 62-10 92-6 18 2 32 10 40 26 6 12 10 28 12 42 1 8-2 16-12 16H60c-12 0-14-10-12-16z" fill="${c}"/>
+            <rect x="84" y="44" rx="10" ry="10" width="64" height="30" fill="rgba(140,170,200,0.55)" stroke="rgba(0,0,0,0.10)"/>
+            <rect x="152" y="44" rx="10" ry="10" width="40" height="30" fill="rgba(140,170,200,0.55)" stroke="rgba(0,0,0,0.10)"/>
+            <path d="M60 88h156" stroke="rgba(0,0,0,0.14)" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="86" cy="108" r="18" fill="#111"/>
+            <circle cx="86" cy="108" r="10" fill="rgba(255,255,255,0.60)"/>
+            <circle cx="176" cy="108" r="18" fill="#111"/>
+            <circle cx="176" cy="108" r="10" fill="rgba(255,255,255,0.60)"/>
+            <rect x="58" y="78" rx="8" ry="8" width="20" height="14" fill="rgba(255,255,255,0.70)"/>
+            <rect x="202" y="78" rx="8" ry="8" width="20" height="14" fill="rgba(255,255,255,0.70)"/>
+          </svg>
+        `,
+        (c)=>`
+          <svg viewBox="0 0 240 140" aria-hidden="true">
+            <path d="M46 94c6-22 20-40 40-48 28-11 76-10 98-2 18 7 30 24 36 46 2 10-2 22-14 22H60c-14 0-18-12-14-18z" fill="${c}"/>
+            <path d="M88 44c20-10 62-10 82-3 12 4 18 10 24 20H78c2-8 6-14 10-17z" fill="rgba(255,255,255,0.18)"/>
+            <rect x="88" y="58" rx="14" ry="14" width="58" height="28" fill="rgba(140,170,200,0.55)" stroke="rgba(0,0,0,0.10)"/>
+            <rect x="150" y="58" rx="14" ry="14" width="36" height="28" fill="rgba(140,170,200,0.55)" stroke="rgba(0,0,0,0.10)"/>
+            <path d="M66 94h146" stroke="rgba(0,0,0,0.14)" stroke-width="12" stroke-linecap="round"/>
+            <circle cx="86" cy="110" r="18" fill="#111"/>
+            <circle cx="86" cy="110" r="10" fill="rgba(255,255,255,0.60)"/>
+            <circle cx="174" cy="110" r="18" fill="#111"/>
+            <circle cx="174" cy="110" r="10" fill="rgba(255,255,255,0.60)"/>
+            <circle cx="58" cy="88" r="9" fill="rgba(255,255,255,0.75)"/>
+          </svg>
+        `
+      ];
+      return styles[(styleId||0) % styles.length](fill);
+    }
+    function randomCarStyle(){ return Math.floor(Math.random() * 3); }
+
+    /* =========================
+       Pebble sizing
+    ========================= */
+    function sizePxFromChoice(choice){
+      const base = () => Math.floor(22 + Math.random()*26); // 22..48
+      if(choice === "sm") return Math.floor(18 + Math.random()*10);
+      if(choice === "md") return Math.floor(26 + Math.random()*14);
+      if(choice === "lg") return Math.floor(36 + Math.random()*22);
+      return base();
+    }
+
+    /* =========================
+       Current day/month state
+    ========================= */
+    let activeDay = toISODate(new Date());
+    let activeMonth = monthId(activeDay);
+
+    function syncLabels(){
+      $("#dayLabel").textContent = prettyDayLabel(activeDay);
+      $("#monthLabel").textContent = prettyMonthLabel(activeMonth);
+      $("#parkDatePill").textContent = activeDay;
+      $("#monthPill").textContent = activeMonth;
+    }
+
+    /* =========================
+       Parking lot
+    ========================= */
+    function addParked(){
+      const text = ($("#parkText").value || "").trim();
+      if(!text) return;
+
+      ensureDay(activeDay);
+      const color = normHex($("#parkColor").value, "#e0565b");
+
+      store.parkingByDay[activeDay].unshift({
+        id: uid(),
+        text,
+        color,
+        carStyle: randomCarStyle(),
+        created: Date.now()
+      });
+
+      saveStore(store);
+      $("#parkText").value = "";
+      renderParking();
+    }
+
+    function removeParked(id){
+      ensureDay(activeDay);
+      store.parkingByDay[activeDay] = store.parkingByDay[activeDay].filter(x => x.id !== id);
+      saveStore(store);
+      renderParking();
+    }
+
+    function recolorParked(id){
+      ensureDay(activeDay);
+      const item = store.parkingByDay[activeDay].find(x => x.id === id);
+      if(!item) return;
+      const palette = ["#e0565b","#f2994a","#f2c94c","#6fcf97","#56ccf2","#9b51e0","#eb7aa1","#2d9cdb","#27ae60","#b08968"];
+      item.color = palette[Math.floor(Math.random()*palette.length)];
+      saveStore(store);
+      renderParking();
+    }
+
+    function renderParking(){
+      ensureDay(activeDay);
+      const list = $("#parkList");
+      const items = store.parkingByDay[activeDay] || [];
+      $("#parkCountPill").textContent = `${items.length} parked`;
+
+      if(!items.length){
+        list.innerHTML = `<div class="hint">Nothing parked for this day.</div>`;
+        return;
+      }
+
+      list.innerHTML = items.map(it => {
+        const time = new Date(it.created).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+        return `
+          <div class="park-item" data-id="${it.id}">
+            <div class="car" title="Tap to recolor">${carSvg(it.color, it.carStyle || 0)}</div>
+            <div class="park-text">
+              <div class="t">${escapeHtml(it.text)}</div>
+              <div class="meta">Parked at ${time}</div>
+            </div>
+            <button class="x" type="button" data-action="remove" title="Remove">×</button>
+          </div>
+        `;
+      }).join("");
+
+      $$(".park-item", list).forEach(row => {
+        const id = row.getAttribute("data-id");
+        row.querySelector(".car").addEventListener("click", () => recolorParked(id));
+        row.querySelector('[data-action="remove"]').addEventListener("click", () => removeParked(id));
+      });
+    }
+
+    /* =========================
+       Pebbles
+    ========================= */
+    function addPebble(){
+      const text = ($("#gratText").value || "").trim();
+      if(!text) return;
+
+      ensureDay(activeDay);
+
+      const choice = $("#gratSize").value;
+      const sizePx = sizePxFromChoice(choice);
+
+      store.pebblesByDay[activeDay].push({
+        id: uid(),
+        text,
+        sizePx,
+        created: Date.now(),
+        day: activeDay
+      });
+
+      saveStore(store);
+      $("#gratText").value = "";
+      renderMonthTowers();
+      renderPebbleCountPill();
+    }
+
+    function deletePebbleById(dayIso, id){
+      ensureDay(dayIso);
+      store.pebblesByDay[dayIso] = (store.pebblesByDay[dayIso] || []).filter(p => p.id !== id);
+      saveStore(store);
+      renderMonthTowers();
+      renderPebbleCountPill();
+    }
+
+    function renderPebbleCountPill(){
+      ensureDay(activeDay);
+      const n = (store.pebblesByDay[activeDay] || []).length;
+      $("#pebbleCountPill").textContent = `${n} pebbles`;
+    }
+
+    function daysInMonthTower(){
+      const nDays = daysInMonth(activeMonth);
+      const [yy,mm] = activeMonth.split("-");
+      const pad2 = (x)=>String(x).padStart(2,"0");
+      const result = [];
+      for(let d=1; d<=nDays; d++) result.push(`${yy}-${mm}-${pad2(d)}`);
+      return result;
+    }
+
+    function renderMonthTowers(){
+      const towers = $("#towers");
+      towers.innerHTML = "";
+
+      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#cbb8ae";
+
+      daysInMonthTower().forEach(iso => {
+        ensureDay(iso);
+
+        const dayPebbles = store.pebblesByDay[iso] || [];
+        const dayLabel = new Date(iso + "T00:00:00").toLocaleDateString(undefined, { day: "numeric" });
+
+        const tower = document.createElement("div");
+        tower.className = "tower";
+        tower.innerHTML = `
+          <div class="stack" data-iso="${iso}"></div>
+          <div class="daycap">${dayLabel}</div>
+        `;
+        towers.appendChild(tower);
+
+        const stack = tower.querySelector(".stack");
+
+        dayPebbles.forEach((p, idx) => {
+          const el = document.createElement("div");
+          el.className = "pebble";
+          el.style.width  = `${p.sizePx}px`;
+          el.style.height = `${Math.max(16, Math.floor(p.sizePx * 0.72))}px`;
+
+          // Softly varied pebble tones from accent (no picker needed)
+          const a = 0.85 - Math.min(0.35, idx * 0.03);
+          el.style.setProperty("--pebble", hexToRgba(normHex(accent, "#cbb8ae"), clamp(a, 0.45, 0.90)));
+
+          el.title = "Click to read";
+          el.dataset.id = p.id;
+          el.dataset.iso = iso;
+
+          stack.appendChild(el);
+          el.addEventListener("click", () => openPebbleModal(iso, p.id));
+        });
+
+        tower.querySelector(".daycap").addEventListener("click", () => {
+          activeDay = iso;
+          syncLabels();
+          renderAll();
+        });
+      });
+    }
+
+    /* =========================
+       Modal
+    ========================= */
+    const modal = $("#modal");
+    let modalCtx = { iso: null, id: null };
+
+    function openPebbleModal(iso, id){
+      ensureDay(iso);
+      const p = (store.pebblesByDay[iso] || []).find(x => x.id === id);
+      if(!p) return;
+
+      modalCtx = { iso, id };
+
+      $("#modalTitle").textContent = "Gratitude Pebble";
+      $("#modalDate").textContent = iso;
+      $("#modalSize").textContent = `${p.sizePx}px`;
+      $("#modalText").textContent = p.text;
+
+      modal.classList.add("open");
+    }
+
+    function closeModal(){
+      modal.classList.remove("open");
+      modalCtx = { iso: null, id: null };
+    }
+
+    $("#modalClose").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
+
+    $("#deletePebble").addEventListener("click", () => {
+      if(!modalCtx.iso || !modalCtx.id) return;
+      deletePebbleById(modalCtx.iso, modalCtx.id);
+      closeModal();
+    });
+
+    /* =========================
+       Navigation
+    ========================= */
+    $("#prevDay").addEventListener("click", () => {
+      activeDay = addDays(activeDay, -1);
+      activeMonth = monthId(activeDay);
+      syncLabels();
+      renderAll();
+    });
+
+    $("#nextDay").addEventListener("click", () => {
+      activeDay = addDays(activeDay, 1);
+      activeMonth = monthId(activeDay);
+      syncLabels();
+      renderAll();
+    });
+
+    $("#prevMonth").addEventListener("click", () => {
+      const d = new Date(activeMonth + "-01T00:00:00");
+      d.setMonth(d.getMonth() - 1);
+      activeMonth = d.toISOString().slice(0,7);
+
+      const dayNum = Number(activeDay.slice(8,10));
+      const maxD = daysInMonth(activeMonth);
+      const clamped = String(Math.min(dayNum, maxD)).padStart(2,"0");
+      activeDay = `${activeMonth}-${clamped}`;
+
+      syncLabels();
+      renderAll();
+    });
+
+    $("#nextMonth").addEventListener("click", () => {
+      const d = new Date(activeMonth + "-01T00:00:00");
+      d.setMonth(d.getMonth() + 1);
+      activeMonth = d.toISOString().slice(0,7);
+
+      const dayNum = Number(activeDay.slice(8,10));
+      const maxD = daysInMonth(activeMonth);
+      const clamped = String(Math.min(dayNum, maxD)).padStart(2,"0");
+      activeDay = `${activeMonth}-${clamped}`;
+
+      syncLabels();
+      renderAll();
+    });
+
+    /* =========================
+       Inputs
+    ========================= */
+    $("#parkText").addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){ e.preventDefault(); addParked(); }
+    });
+    $("#gratText").addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){ e.preventDefault(); addPebble(); }
+    });
+
+    $("#addPark").addEventListener("click", addParked);
+    $("#addPebble").addEventListener("click", addPebble);
+
+    /* =========================
+       Render
+    ========================= */
+    function renderAll(){
+      ensureDay(activeDay);
+      syncLabels();
+      renderParking();
+      renderMonthTowers();
+      renderPebbleCountPill();
+    }
+
+    /* =========================
+       Boot
+    ========================= */
+    function boot(){
+      // panels
+      initPanelToggles();
+
+      // load store
+      store = loadStore();
+
+      // theme + bg init (drafts loaded from per-widget keys)
+      themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+      bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+
+      initThemeUI();
+      initBgUI();
+
+      // state
+      activeDay = toISODate(new Date());
+      activeMonth = monthId(activeDay);
+
+      syncLabels();
+      renderAll();
+    }
+
+    boot();
+  </script>
+</body>
+</html>

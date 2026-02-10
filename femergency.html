@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Emergency Fund Comfort Meter</title>
+  <style>
+    :root{
+      --bg:#ffffff; --card:#ffffffcc; --stroke:#e9e4dd; --ink:#2b2a28;
+      --muted:#6a665f; --soft:#f3efe9; --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      --board-tint:#ffffff;
+      --board-tint-a:0.30;
+      --board-image:none;
+
+      --panel-bg: rgba(255,255,255,0.92);
+      --field-bg: #ffffff;
+      --theme-dot: var(--ink);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink); background: var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{max-width:800px; margin:0 auto;}
+    h1{margin:0; font-size:18px}
+    .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
+
+    .widgetBoard{
+      max-width: 700px;
+      margin: 0 auto;
+      position:relative;
+      border-radius: var(--r);
+
+      /* allow panels to extend beyond the board without being clipped */
+      overflow: visible;
+
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.02);
+      z-index:0;
+      pointer-events:none;
+      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+      border-radius: var(--r);
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(740px 480px at 18% 20%, rgba(255,255,255,0.34), transparent 62%),
+        radial-gradient(680px 520px at 86% 28%, rgba(255,255,255,0.20), transparent 65%),
+        rgba(255,255,255,0.20);
+      background-blend-mode: screen;
+      pointer-events:none;
+      z-index:0;
+      border-radius: var(--r);
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+      background: rgba(0,0,0,0);
+      border-radius: var(--r);
+    }
+    .boardContent{
+      position:relative;
+      z-index:2;
+    }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:16px;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    .title{display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin-bottom:10px}
+    .title h2{margin:0; font-size:14px; font-weight:650; letter-spacing:.2px}
+    .hint{color:var(--muted); font-size:12px}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    button, input, select, textarea{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background:var(--field-bg);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    textarea{width:100%}
+    button{cursor:pointer}
+    button.soft{background:var(--soft)}
+    button:active{transform:translateY(1px)}
+    .divider{height:1px; background:var(--stroke); margin:12px 0}
+    .meter{
+      border:1px solid var(--stroke); border-radius:14px; padding:10px; background:var(--field-bg);
+    }
+    .track{
+      height:12px; border-radius:999px; background:var(--soft);
+      border:1px solid var(--stroke); overflow:hidden;
+    }
+    .fill{height:100%; width:0%; background:rgba(40,30,20,.12)}
+    .kpi{
+      display:flex; gap:12px; flex-wrap:wrap;
+    }
+    .kpi .box{
+      flex:1; min-width:180px; background:var(--soft);
+      border:1px solid var(--stroke); border-radius:14px; padding:10px;
+    }
+    .kpi .num{font-weight:750; font-size:16px}
+    .kpi .lab{font-size:12px; color:var(--muted)}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke); background:var(--field-bg); border-radius:999px;
+      padding:8px 12px; font-size:13px;
+    }
+    .tiny{font-size:12px; color:var(--muted)}
+    .right{margin-left:auto; display:flex; gap:8px; align-items:center}
+    .danger{border-color:#efc2c2}
+
+    .controlsWrap{ position:relative; display:flex; gap:10px; align-items:center; margin-left:auto; }
+    .bgBtn, .themeBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    }
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.30);
+    }
+    .themeDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--theme-dot);
+      box-shadow: 0 0 0 6px rgba(233,228,221,0.35);
+    }
+
+    .panel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 290px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: var(--panel-bg);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+
+      /* vertical scrollbars so nothing gets cut off */
+      max-height: min(70vh, 440px);
+      overflow: auto;
+    }
+    .panel.open{ display:block; }
+    .bgTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .bgRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .bgRow label{ font-size:12px; color:var(--muted); }
+    .bgRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .bgRow input[type="range"]{ width: 150px; }
+    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgMiniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.95);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    }
+    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    /* Presets UI (same vibe as your previous widget) */
+    .presetName{ width:100%; }
+    .presetArea{ width:100%; min-height:84px; font-size:12px; line-height:1.35; resize: vertical; }
+    .status{ font-size:12px; color: var(--muted); margin-top:6px; }
+
+    /* In-widget confirm modal */
+    .confirmBackdrop{
+      position: fixed;
+      inset: 0;
+      display:none;
+      place-items:center;
+      padding: 18px;
+      background: rgba(20,18,16,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 9999;
+    }
+    .confirmBackdrop.show{ display:grid; }
+    .confirmModal{
+      width: min(520px, 100%);
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(43,42,40,.14);
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.12);
+      overflow:hidden;
+    }
+    .confirmHead{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(43,42,40,.10);
+      font-weight:700;
+      letter-spacing:.02em;
+    }
+    .confirmBody{
+      padding:14px 16px;
+      line-height:1.45;
+      color: rgba(43,42,40,.92);
+      font-size: 13px;
+    }
+    .confirmFoot{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      padding:12px 16px;
+      border-top:1px solid rgba(43,42,40,.10);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Emergency Fund Meter</h1>
+    <div class="sub"></div>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Emergency Fund widget board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+          <div class="title">
+            <h2>Comfort meter</h2>
+
+            <div class="controlsWrap" id="controlsWrap">
+              <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+              </button>
+
+              <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+                <div class="bgTitle">Background</div>
+
+                <div class="bgRow">
+                  <label for="bgColor">Tint</label>
+                  <input id="bgColor" type="color" value="#efe7e1" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgStrength">Strength</label>
+                  <input id="bgStrength" type="range" min="0" max="70" value="30" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow" style="align-items:flex-start;">
+                  <label for="bgImage">Image</label>
+                  <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+                </div>
+
+                <div class="bgRow">
+                  <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <!-- IMPORTANT: draft-only until Apply -->
+                <div class="bgRow">
+                  <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
+                </div>
+              </div>
+
+              <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+                <div class="bgTitle">Theme</div>
+
+                <div class="bgRow">
+                  <label for="tPageBg">Page bg</label>
+                  <input id="tPageBg" type="color" value="#ffffff" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tText">Text</label>
+                  <input id="tText" type="color" value="#2b2a28" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tMuted">Muted</label>
+                  <input id="tMuted" type="color" value="#6a665f" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow">
+                  <label for="tStroke">Borders</label>
+                  <input id="tStroke" type="color" value="#e9e4dd" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tCard">Card</label>
+                  <input id="tCard" type="color" value="#ffffff" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tSoft">Secondary</label>
+                  <input id="tSoft" type="color" value="#f3efe9" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <!-- IMPORTANT: draft-only until Apply -->
+                <div class="bgRow">
+                  <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
+                </div>
+
+                <div class="bgRow">
+                  <button id="resetTheme" class="bgMiniBtn" type="button">Reset theme</button>
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <!-- Presets (shared network across widgets) -->
+                <div class="bgTitle" style="margin-top:2px;">Presets</div>
+
+                <div class="bgRow" style="align-items:flex-start; flex-direction:column; gap:8px;">
+                  <input id="presetName" class="presetName" placeholder="Preset name" />
+                  <button class="bgMiniBtn" id="presetSave" type="button">Save current as preset</button>
+                </div>
+
+                <div class="bgRow">
+                  <label for="presetSelect">Choose</label>
+                  <select id="presetSelect" style="padding:10px 12px; border-radius:12px; max-width:170px;">
+                    <option value="">—</option>
+                  </select>
+                </div>
+
+                <div class="bgRow">
+                  <button class="bgMiniBtn" id="presetApply" type="button">Apply preset</button>
+                </div>
+
+                <div class="bgRow">
+                  <button class="bgMiniBtn" id="presetDelete" type="button">Delete preset</button>
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow">
+                  <button class="bgMiniBtn" id="presetCopy" type="button">Copy presets JSON</button>
+                </div>
+
+                <div class="bgRow" style="align-items:flex-start; flex-direction:column; gap:8px;">
+                  <textarea id="presetImport" class="presetArea" placeholder='Paste presets JSON here, then click "Import presets".'></textarea>
+                  <button class="bgMiniBtn" id="presetImportBtn" type="button">Import presets</button>
+                  <div class="status" id="presetStatus" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <input type="number" id="efCurrent" step="0.01" placeholder="Current amount">
+            <input type="number" id="efTarget"  step="0.01" placeholder="Target amount">
+            <button id="saveBtn">Save</button>
+
+            <span class="pill">
+              Currency
+              <select id="currency">
+                <option value="AUTO">Auto (from locale)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="NGN">NGN (₦)</option>
+                <option value="CAD">CAD ($)</option>
+                <option value="AUD">AUD ($)</option>
+                <option value="JPY">JPY (¥)</option>
+                <option value="ZAR">ZAR (R)</option>
+              </select>
+            </span>
+
+            <div class="right">
+              <button class="danger" id="resetBtn" type="button">Reset</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="num" id="labelTxt">—</div>
+              <div class="lab">Comfort level</div>
+            </div>
+            <div class="box">
+              <div class="num" id="detailTxt">—</div>
+              <div class="lab">Progress</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="meter">
+            <div class="row" style="justify-content:space-between">
+              <span class="tiny">Fund progress</span>
+              <span class="tiny"><b id="pctTxt">—</b></span>
+            </div>
+            <div class="track"><div class="fill" id="fill"></div></div>
+            <div class="tiny" style="margin-top:8px" id="noteTxt">—</div>
+          </div>
+
+          <div class="divider"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- in-widget confirm modal -->
+  <div class="confirmBackdrop" id="confirmBackdrop" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="confirmModal">
+      <div class="confirmHead" id="confirmTitle">Confirm</div>
+      <div class="confirmBody" id="confirmBody"></div>
+      <div class="confirmFoot">
+        <button type="button" id="confirmCancel">Cancel</button>
+        <button type="button" id="confirmOk">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* -------------------------- helpers --------------------------- */
+function hexToRgba(hex, a){
+  const h = String(hex || "").replace("#","").trim();
+  const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+  const num = parseInt(full || "efe7e1", 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r},${g},${b},${a})`;
+}
+function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+function escapeHtml(s){
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+/* -------------------------- safe storage + widget id --------------------------- */
+(function(){
+  const mem = Object.create(null);
+
+  function canUseLocalStorage(){
+    try{
+      const k = "__t__" + Math.random().toString(16).slice(2);
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{
+      return false;
+    }
+  }
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+    catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{ if(hasLS) localStorage.setItem(key, value); else mem[key] = String(value); }
+    catch{ mem[key] = String(value); }
+  }
+  function storageRemove(key){
+    try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+    catch{ delete mem[key]; }
+  }
+
+  function getWidgetId(){
+    // 1) wid param
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = (sp.get("wid") || "").trim();
+      if(wid) return wid;
+    }catch{}
+    // 2) stable per-tab
+    try{
+      const cached = sessionStorage.getItem("ef_widget_wid");
+      if(cached) return cached;
+    }catch{}
+    // 3) generate and cache
+    const fresh = uid();
+    try{ sessionStorage.setItem("ef_widget_wid", fresh); }catch{}
+    return fresh;
+  }
+
+  window.__EF__ = {
+    wid: getWidgetId(),
+    get: storageGet,
+    set: storageSet,
+    remove: storageRemove
+  };
+})();
+
+/* -------------------------- in-widget confirm --------------------------- */
+(function(){
+  const back = document.getElementById("confirmBackdrop");
+  const body = document.getElementById("confirmBody");
+  const okBtn = document.getElementById("confirmOk");
+  const cancelBtn = document.getElementById("confirmCancel");
+  let resolver = null;
+
+  window.__confirmEF = function(message, { okText="Confirm", cancelText="Cancel" } = {}){
+    return new Promise((resolve)=>{
+      resolver = resolve;
+      body.innerHTML = `<div>${escapeHtml(message)}</div>`;
+      okBtn.textContent = okText;
+      cancelBtn.textContent = cancelText;
+      back.classList.add("show");
+      setTimeout(()=>okBtn.focus(), 0);
+    });
+  };
+
+  function close(val){
+    back.classList.remove("show");
+    const r = resolver;
+    resolver = null;
+    if(r) r(val);
+  }
+
+  okBtn.addEventListener("click", ()=>close(true));
+  cancelBtn.addEventListener("click", ()=>close(false));
+  back.addEventListener("click", (e)=>{ if(e.target === back) close(false); });
+  document.addEventListener("keydown", (e)=>{ if(back.classList.contains("show") && e.key === "Escape") close(false); });
+})();
+
+/* -------------------------- theme + bg + presets (draft until Apply) --------------------------- */
+(function initAppearance(){
+  const $ = (id)=>document.getElementById(id);
+
+  const WID = window.__EF__?.wid || "default";
+
+  // Per-widget persisted keys
+  const THEME_KEY = "emergency_fund_theme_v1__" + WID;
+  const BG_KEY    = "emergency_fund_bg_v1__" + WID;
+
+  // Shared "network" presets across widgets (same device/browser/origin)
+  const PRESETS_SHARED_KEY = "notion_widget_presets_v1__appearance";
+
+  const els = {
+    // panels
+    themeBtn: $("themeBtn"),
+    bgBtn: $("bgBtn"),
+    themePanel: $("themePanel"),
+    bgPanel: $("bgPanel"),
+    // theme inputs
+    tPageBg: $("tPageBg"),
+    tText: $("tText"),
+    tMuted: $("tMuted"),
+    tStroke: $("tStroke"),
+    tCard: $("tCard"),
+    tSoft: $("tSoft"),
+    themeApply: $("themeApply"),
+    resetTheme: $("resetTheme"),
+    themeDot: $("themeDot"),
+    // bg inputs
+    boardTintEl: $("boardTint"),
+    bgColor: $("bgColor"),
+    bgStrength: $("bgStrength"),
+    bgImage: $("bgImage"),
+    bgRemove: $("bgRemove"),
+    bgApply: $("bgApply"),
+    bgDot: $("bgDot"),
+    // presets
+    presetName: $("presetName"),
+    presetSave: $("presetSave"),
+    presetSelect: $("presetSelect"),
+    presetApply: $("presetApply"),
+    presetDelete: $("presetDelete"),
+    presetCopy: $("presetCopy"),
+    presetImport: $("presetImport"),
+    presetImportBtn: $("presetImportBtn"),
+    presetStatus: $("presetStatus"),
+  };
+
+  function loadJSON(key){
+    try{
+      const raw = window.__EF__.get(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  }
+  function saveJSON(key, value){
+    try{ window.__EF__.set(key, JSON.stringify(value)); }catch{}
+  }
+
+  function setStatus(msg){
+    if(!els.presetStatus) return;
+    els.presetStatus.textContent = msg || "";
+  }
+
+  const DEFAULT_THEME = {
+    pageBg:"#ffffff",
+    ink:"#2b2a28",
+    muted:"#6a665f",
+    stroke:"#e9e4dd",
+    cardBase:"#ffffff",
+    soft:"#f3efe9"
+  };
+
+  const DEFAULT_BG = { tint:"#efe7e1", strength:30, imageDataUrl:null };
+
+  function applyThemeToCSS(t){
+    document.documentElement.style.setProperty("--bg", t.pageBg);
+    document.documentElement.style.setProperty("--ink", t.ink);
+    document.documentElement.style.setProperty("--muted", t.muted);
+    document.documentElement.style.setProperty("--soft", t.soft);
+
+    document.documentElement.style.setProperty("--stroke", hexToRgba(t.stroke, 0.95));
+    document.documentElement.style.setProperty("--card", hexToRgba(t.cardBase, 0.80));
+    document.documentElement.style.setProperty("--theme-dot", t.ink);
+
+    if(els.themeDot){
+      els.themeDot.style.background = t.ink;
+      els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.stroke, 0.35)}`;
+      els.themeDot.style.borderColor = hexToRgba(t.stroke, 0.95);
+    }
+  }
+
+  function applyBgToCSS(bg){
+    const tint = bg.tint || "#efe7e1";
+    const strength = clamp(Number(bg.strength || 0), 0, 70) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", bg.imageDataUrl ? `url("${bg.imageDataUrl}")` : "none");
+
+    if(els.boardTintEl) els.boardTintEl.style.background = hexToRgba(tint, strength);
+
+    if(els.bgDot){
+      els.bgDot.style.background = tint;
+      els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+    }
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  // Load persisted + apply ONCE at start
+  const savedTheme = loadJSON(THEME_KEY) || DEFAULT_THEME;
+  const savedBg = loadJSON(BG_KEY) || DEFAULT_BG;
+
+  applyThemeToCSS({ ...DEFAULT_THEME, ...(savedTheme||{}) });
+  applyBgToCSS({ ...DEFAULT_BG, ...(savedBg||{}) });
+
+  // Draft state (UI changes do NOT apply until Apply pressed)
+  let themeDraft = { ...DEFAULT_THEME, ...(savedTheme||{}) };
+  let bgDraft = { ...DEFAULT_BG, ...(savedBg||{}) };
+
+  function syncThemeInputs(){
+    els.tPageBg.value = themeDraft.pageBg;
+    els.tText.value = themeDraft.ink;
+    els.tMuted.value = themeDraft.muted;
+    els.tStroke.value = themeDraft.stroke;
+    els.tCard.value = themeDraft.cardBase;
+    els.tSoft.value = themeDraft.soft;
+  }
+  function syncBgInputs(){
+    els.bgColor.value = bgDraft.tint;
+    els.bgStrength.value = String(bgDraft.strength);
+  }
+
+  // initial sync
+  syncThemeInputs();
+  syncBgInputs();
+
+  // Draft change handlers (do NOT apply to CSS; do NOT save)
+  function wireDraft(el, onChange){
+    el.addEventListener("input", ()=>{
+      onChange();
+      setStatus("");
+    });
+  }
+
+  wireDraft(els.tPageBg, ()=>{ themeDraft.pageBg = els.tPageBg.value; });
+  wireDraft(els.tText,   ()=>{ themeDraft.ink    = els.tText.value; });
+  wireDraft(els.tMuted,  ()=>{ themeDraft.muted  = els.tMuted.value; });
+  wireDraft(els.tStroke, ()=>{ themeDraft.stroke = els.tStroke.value; });
+  wireDraft(els.tCard,   ()=>{ themeDraft.cardBase = els.tCard.value; });
+  wireDraft(els.tSoft,   ()=>{ themeDraft.soft   = els.tSoft.value; });
+
+  wireDraft(els.bgColor, ()=>{ bgDraft.tint = els.bgColor.value; });
+  wireDraft(els.bgStrength, ()=>{ bgDraft.strength = Number(els.bgStrength.value); });
+
+  // Draft bg image (still draft until Apply)
+  els.bgImage.addEventListener("change", async ()=>{
+    const file = els.bgImage.files && els.bgImage.files[0];
+    if(!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    bgDraft.imageDataUrl = dataUrl;
+    setStatus("");
+  });
+
+  els.bgRemove.addEventListener("click", ()=>{
+    bgDraft.imageDataUrl = null;
+    els.bgImage.value = "";
+    setStatus("");
+  });
+
+  // Apply buttons (this is when it actually changes + persists)
+  els.themeApply.addEventListener("click", ()=>{
+    const applied = { ...DEFAULT_THEME, ...themeDraft };
+    applyThemeToCSS(applied);
+    saveJSON(THEME_KEY, applied);
+    setStatus("Theme applied.");
+  });
+
+  els.bgApply.addEventListener("click", ()=>{
+    const applied = { ...DEFAULT_BG, ...bgDraft };
+    applyBgToCSS(applied);
+    saveJSON(BG_KEY, applied);
+    setStatus("Background applied.");
+  });
+
+  els.resetTheme.addEventListener("click", ()=>{
+    themeDraft = { ...DEFAULT_THEME };
+    syncThemeInputs();
+    // Apply + persist reset only when user presses reset (counts as explicit change)
+    applyThemeToCSS({ ...DEFAULT_THEME });
+    saveJSON(THEME_KEY, { ...DEFAULT_THEME });
+    setStatus("Theme reset.");
+  });
+
+  // Panels open/close
+  els.themeBtn.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    els.themePanel.classList.toggle("open");
+    els.bgPanel.classList.remove("open");
+  });
+  els.bgBtn.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    els.bgPanel.classList.toggle("open");
+    els.themePanel.classList.remove("open");
+  });
+  document.addEventListener("click", (e)=>{
+    if(els.themePanel.classList.contains("open")){
+      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+      if(!inside) els.themePanel.classList.remove("open");
+    }
+    if(els.bgPanel.classList.contains("open")){
+      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      if(!inside) els.bgPanel.classList.remove("open");
+    }
+  });
+
+  // Presets (shared network)
+  function loadPresets(){
+    const list = loadJSON(PRESETS_SHARED_KEY);
+    return Array.isArray(list) ? list : [];
+  }
+  function savePresets(list){
+    saveJSON(PRESETS_SHARED_KEY, list);
+  }
+  function refreshPresetSelect(){
+    const list = loadPresets();
+    const current = els.presetSelect.value;
+    els.presetSelect.innerHTML = `<option value="">—</option>`;
+    for(const p of list){
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled";
+      els.presetSelect.appendChild(opt);
+    }
+    if(current) els.presetSelect.value = current;
+  }
+
+  async function copyText(text){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch{}
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.style.top = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return !!ok;
+    }catch{
+      return false;
+    }
+  }
+
+  refreshPresetSelect();
+
+  els.presetSave.addEventListener("click", ()=>{
+    const name = (els.presetName.value || "").trim();
+    if(!name){ setStatus("Type a preset name first."); return; }
+    const list = loadPresets();
+    const entry = {
+      id: uid(),
+      name,
+      theme: { ...DEFAULT_THEME, ...themeDraft },
+      bg: { ...DEFAULT_BG, ...bgDraft }
+    };
+    list.unshift(entry);
+    savePresets(list);
+    els.presetName.value = "";
+    refreshPresetSelect();
+    els.presetSelect.value = entry.id;
+    setStatus("Preset saved (shared across widgets).");
+  });
+
+  els.presetApply.addEventListener("click", ()=>{
+    const id = els.presetSelect.value;
+    if(!id){ setStatus("Choose a preset first."); return; }
+    const list = loadPresets();
+    const p = list.find(x=>x.id===id);
+    if(!p){ setStatus("Preset not found."); return; }
+
+    // Load into drafts + sync UI (still not applied until Apply buttons),
+    // but applying a preset is an explicit change, so we apply + persist immediately.
+    themeDraft = { ...DEFAULT_THEME, ...(p.theme || {}) };
+    bgDraft = { ...DEFAULT_BG, ...(p.bg || {}) };
+    syncThemeInputs();
+    syncBgInputs();
+
+    applyThemeToCSS(themeDraft);
+    applyBgToCSS(bgDraft);
+    saveJSON(THEME_KEY, themeDraft);
+    saveJSON(BG_KEY, bgDraft);
+
+    setStatus("Preset applied.");
+  });
+
+  els.presetDelete.addEventListener("click", async ()=>{
+    const id = els.presetSelect.value;
+    if(!id){ setStatus("Choose a preset first."); return; }
+    const list = loadPresets();
+    const p = list.find(x=>x.id===id);
+    if(!p){ setStatus("Preset not found."); return; }
+    const ok = await window.__confirmEF(`Delete preset "${p.name || "Untitled"}"?`, { okText:"Delete", cancelText:"Cancel" });
+    if(!ok) return;
+    const next = list.filter(x=>x.id!==id);
+    savePresets(next);
+    refreshPresetSelect();
+    els.presetSelect.value = "";
+    setStatus("Preset deleted.");
+  });
+
+  els.presetCopy.addEventListener("click", async ()=>{
+    const list = loadPresets();
+    const payload = JSON.stringify(list, null, 2);
+    const ok = await copyText(payload);
+    setStatus(ok ? "Presets JSON copied." : "Could not copy. You can copy from the import box.");
+    if(!ok){
+      els.presetImport.value = payload;
+      els.presetImport.focus();
+      els.presetImport.select();
+    }
+  });
+
+  els.presetImportBtn.addEventListener("click", ()=>{
+    const raw = (els.presetImport.value || "").trim();
+    if(!raw){ setStatus("Paste presets JSON first."); return; }
+    try{
+      const parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed)){ setStatus("That JSON doesn’t look like a preset list."); return; }
+      const cleaned = parsed
+        .filter(Boolean)
+        .map((p)=>({
+          id: String(p.id || uid()),
+          name: String(p.name || "Imported"),
+          theme: { ...DEFAULT_THEME, ...(p.theme || {}) },
+          bg: { ...DEFAULT_BG, ...(p.bg || {}) }
+        }));
+      savePresets(cleaned);
+      refreshPresetSelect();
+      setStatus("Presets imported (shared across widgets).");
+    }catch{
+      setStatus("Invalid JSON.");
+    }
+  });
+})();
+
+/* -------------------------- meter (per-widget + explicit Save/Reset only) --------------------------- */
+(function(){
+  const WID = window.__EF__?.wid || "default";
+  const KEY = "emergency_fund_meter_v1__" + WID;
+  const CUR_KEY = "emergency_fund_currency_pref_v1__" + WID;
+  const $ = (id)=>document.getElementById(id);
+
+  const REGION_TO_CURRENCY = {
+    GB:"GBP", US:"USD", CA:"CAD", AU:"AUD", NZ:"NZD",
+    IE:"EUR", FR:"EUR", DE:"EUR", ES:"EUR", IT:"EUR", NL:"EUR", PT:"EUR",
+    BE:"EUR", AT:"EUR", FI:"EUR", GR:"EUR", CY:"EUR", MT:"EUR",
+    SK:"EUR", SI:"EUR", EE:"EUR", LV:"EUR", LT:"EUR", LU:"EUR",
+    JP:"JPY", CN:"CNY", IN:"INR", NG:"NGN", ZA:"ZAR", KE:"KES",
+    GH:"GHS", BR:"BRL", MX:"MXN", CH:"CHF", SE:"SEK", NO:"NOK",
+    DK:"DKK", PL:"PLN", CZ:"CZK", HU:"HUF", RO:"RON", TR:"TRY"
+  };
+
+  function getRegionFromLocale(locale){
+    try{
+      if (typeof Intl !== "undefined" && Intl.Locale){
+        const loc = new Intl.Locale(locale);
+        if (loc.region) return loc.region.toUpperCase();
+      }
+    }catch(e){}
+    const norm = String(locale || "").replace("_","-");
+    const parts = norm.split("-");
+    return (parts[1] || "").toUpperCase();
+  }
+
+  function autoCurrency(){
+    const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || "";
+    const region = getRegionFromLocale(locale);
+    return REGION_TO_CURRENCY[region] || "";
+  }
+
+  function money(n){
+    const v = Number(n||0);
+    if(!isFinite(v)) return "0";
+    const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || undefined;
+    const pref = window.__EF__.get(CUR_KEY) || "AUTO";
+    const cur = (pref === "AUTO") ? autoCurrency() : pref;
+
+    try{
+      if(cur){
+        return new Intl.NumberFormat(locale, { style:"currency", currency: cur }).format(v);
+      }
+      return new Intl.NumberFormat(locale, { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v);
+    }catch(e){
+      return v.toFixed(2);
+    }
+  }
+
+  function defaultState(){
+    return { current: 0, target: 1000 };
+  }
+
+  function load(){
+    try{
+      const raw = window.__EF__.get(KEY);
+      return raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState();
+    }catch(e){
+      return defaultState();
+    }
+  }
+
+  let state = load();
+
+  function save(){
+    window.__EF__.set(KEY, JSON.stringify(state));
+  }
+
+  function comfortLabel(r){
+    if(r >= 0.9) return {label:"Safe", note:"You’re close to (or at) your target emergency fund. So proud of you!"};
+    if(r >= 0.6) return {label:"Comfortable", note:"You have meaningful breathing room. Yay!"};
+    if(r >= 0.3) return {label:"Okay", note:"Some cushion — keep going!"};
+    return {label:"Barely", note:"It’s okay to start small. Any amount helps :)"};
+  }
+
+  function render(){
+    const cur = Math.max(0, Number(state.current||0));
+    const tar = Math.max(1, Number(state.target||1));
+    const r = Math.min(1, cur / tar);
+    const pct = Math.round(r * 100);
+
+    const {label, note} = comfortLabel(r);
+
+    $("efCurrent").value = String(cur);
+    $("efTarget").value = String(tar);
+
+    $("labelTxt").textContent = label;
+    $("detailTxt").textContent = `${money(cur)} of ${money(tar)}`;
+    $("pctTxt").textContent = `${pct}%`;
+
+    $("fill").style.width = Math.max(2, pct) + "%";
+    $("noteTxt").textContent = note;
+  }
+
+  function init(){
+    const savedCur = window.__EF__.get(CUR_KEY) || "AUTO";
+    $("currency").value = savedCur;
+    $("currency").addEventListener("change", ()=>{
+      window.__EF__.set(CUR_KEY, $("currency").value);
+      render();
+    });
+
+    $("saveBtn").addEventListener("click", ()=>{
+      const cur = Number($("efCurrent").value);
+      const tar = Number($("efTarget").value);
+      if(!isFinite(cur) || cur < 0) return;
+      if(!isFinite(tar) || tar <= 0) return;
+      state.current = cur;
+      state.target = tar;
+      save();
+      render();
+    });
+
+    $("resetBtn").addEventListener("click", async ()=>{
+      const ok = await window.__confirmEF("Reset this widget’s saved values?", { okText:"Reset", cancelText:"Cancel" });
+      if(!ok) return;
+      window.__EF__.remove(KEY);
+      state = defaultState();
+      save();
+      render();
+    });
+
+    render();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

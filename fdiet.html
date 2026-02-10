@@ -1,0 +1,1432 @@
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Diet Planner + Tracker</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --cream:#e6d8cc;
+      --stone:#c9beb6;
+      --text:#1f1f1f;
+      --muted:#6b625c;
+
+      --border: rgba(201,190,182,0.85);
+      --borderSoft: rgba(201,190,182,0.55);
+      --creamSoft: rgba(230,216,204,0.20);
+
+      --shadow: 0 10px 26px rgba(0,0,0,0.06);
+      --shadowSoft: 0 3px 10px rgba(0,0,0,0.05);
+
+      --rOuter: 18px;
+      --rInner: 16px;
+      --rPill: 999px;
+
+      --fsKicker: 12px;
+      --fsLabel: 11px;
+      --fsBody: 13px;
+
+      --gap: 12px;
+
+      --board-tint: #ffffff;
+      --board-tint-a: 0.30;
+      --board-image: none;
+
+      /* theme editor overrides */
+      --card-bg: rgba(255,255,255,0.88);
+      --field-bg: #ffffff;
+
+      --focus: rgba(31,31,31,0.18);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      padding:26px;
+    }
+    .wrap{ max-width:1100px; margin:0 auto; }
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .kicker{
+      font-size:var(--fsKicker);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+      padding-top:4px;
+    }
+    .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:var(--field-bg);
+      color:var(--text);
+      border-radius:var(--rPill);
+      padding:9px 14px;
+      font-size:12px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .btn.primary{ background:var(--cream); }
+    .btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .popover{ position:relative; }
+    .icon-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      background: rgba(255,255,255,0.80);
+      border: 1px solid var(--borderSoft);
+      border-radius: 999px;
+      padding: 6px 10px;
+      box-shadow: var(--shadowSoft);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .bg-btn{
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      border:1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.95);
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+    .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
+    .bg-btn:active{ transform: translateY(0px); }
+    .bg-btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .bg-dot{
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
+    }
+    .theme-dot{
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background: var(--text);
+      box-shadow: 0 0 0 6px rgba(201,190,182,0.25);
+    }
+
+    .panel{
+      position:absolute;
+      top: 46px;
+      right: 0;
+      width: 270px;
+      border-radius: 16px;
+      border: 1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px;
+      display:none;
+      z-index: 80;
+    }
+    .panel.open{ display:block; }
+    .panel h2{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(31,31,31,0.72);
+    }
+    .panel .rowT{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 8px 0;
+    }
+    .panel .rowT label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    input[type="color"]{
+      width: 36px;
+      height: 28px;
+      border: 1px solid var(--borderSoft);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"]{ width: 150px; }
+    .file{
+      width:100%;
+      font-size: 12px;
+      color: rgba(31,31,31,0.75);
+    }
+    .mini-btn{
+      width: 100%;
+      border: 1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: 11px;
+      color: rgba(31,31,31,0.80);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+    .divider{
+      height: 1px;
+      background: rgba(201,190,182,0.35);
+      margin: 8px 0;
+    }
+    .hintSmall{
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .widgetBoard{
+      position: relative;
+      border-radius: var(--rOuter);
+      overflow: hidden;
+      border: 1px solid var(--borderSoft);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      background: transparent;
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(0.95);
+      transform: scale(1.02);
+      z-index:0;
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.35), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.22), transparent 62%),
+        rgba(255,255,255,0.30);
+      background-blend-mode: screen;
+      pointer-events: none;
+      z-index:0;
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+      /* background is set by JS (hex -> rgba) */
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap:14px;
+      align-items:start;
+      position:relative;
+      z-index:2;
+    }
+
+    .card{
+      background: var(--card-bg);
+      border:1px solid var(--border);
+      border-radius:var(--rOuter);
+      box-shadow:none;
+      padding:14px;
+      min-width:0;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .cardHead{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .cardTitle{
+      font-size:14px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0;
+    }
+    .meta{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.04em;
+      white-space:nowrap;
+    }
+
+    .mealList{ display:grid; gap:12px; }
+    .meal{
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rInner);
+      padding:12px;
+      background: linear-gradient(180deg, var(--creamSoft), rgba(255,255,255,0));
+    }
+    .mealTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .mealName{
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0;
+    }
+    .pill{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rPill);
+      padding:6px 10px;
+      background:var(--field-bg);
+      line-height:1;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1.3fr 0.9fr 0.7fr;
+      gap:10px;
+      align-items:end;
+    }
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+      align-items:end;
+    }
+
+    .label{
+      display:block;
+      font-size:var(--fsLabel);
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0 0 6px 0;
+    }
+    .input, .select{
+      width:100%;
+      border:1px solid var(--border);
+      background:var(--field-bg);
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:var(--fsBody);
+      outline:none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      height:36px;
+      color: var(--text);
+    }
+    .input:focus, .select:focus{
+      border-color: rgba(201,190,182,1);
+      box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
+    }
+    .mini{
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.35;
+      margin-top:8px;
+    }
+
+    .fullness{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      appearance:none;
+      border:1px solid var(--border);
+      background:var(--field-bg);
+      border-radius:var(--rPill);
+      padding:8px 10px;
+      font-size:12px;
+      cursor:pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      height:34px;
+      color: var(--text);
+    }
+    .chip:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .chip[data-active="true"]{
+      background:var(--cream);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.08);
+      transform:translateY(-1px);
+    }
+    .chip:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .box{
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rInner);
+      padding:12px;
+      background: linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0));
+      margin-bottom:12px;
+    }
+    .boxTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .boxLabel{
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .big{
+      font-size:26px;
+      font-weight:740;
+      letter-spacing:-0.02em;
+    }
+    .bar{
+      height:10px;
+      border-radius:var(--rPill);
+      background: rgba(201,190,182,0.30);
+      border:1px solid var(--borderSoft);
+      overflow:hidden;
+      margin:10px 0 8px;
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: var(--stone);
+      transition: width 220ms ease;
+    }
+    .hint{
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.4;
+      margin:0;
+    }
+    .totals{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .miniBox{
+      border:1px solid var(--borderSoft);
+      border-radius:14px;
+      padding:10px;
+      background:var(--field-bg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .miniLabel{
+      font-size:11px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .miniVal{
+      font-size:18px;
+      font-weight:720;
+      letter-spacing:-0.01em;
+    }
+
+    .goals{ display:grid; gap:10px; }
+    .goalRow{
+      display:grid;
+      grid-template-columns: 1fr 0.55fr;
+      gap:10px;
+      align-items:end;
+    }
+    .goalList{ display:grid; gap:10px; margin-top:10px; }
+    .goalItem{
+      border:1px solid var(--borderSoft);
+      border-radius:14px;
+      padding:10px;
+      background:var(--field-bg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      display:grid;
+      grid-template-columns: 1fr 0.7fr auto;
+      gap:10px;
+      align-items:end;
+    }
+    .iconBtn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:var(--field-bg);
+      border-radius:12px;
+      width:40px;
+      height:36px;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--text);
+    }
+    .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .iconBtn.danger{ background: rgba(230,216,204,0.30); }
+    .iconBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .row{ grid-template-columns: 1fr; }
+      .goalRow{ grid-template-columns: 1fr; }
+      .goalItem{ grid-template-columns: 1fr; }
+      .totals{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div class="kicker">Diet Planner + Tracker</div>
+
+      <div class="btns">
+        <!-- Background settings -->
+        <div class="popover" id="bgPopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings" aria-expanded="false">
+              <span class="bg-dot" id="bgDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <h2>Background</h2>
+
+            <div class="rowT">
+              <label for="bgColor">Tint</label>
+              <input id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="rowT">
+              <label for="bgStrength">Tint strength</label>
+              <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input id="bgImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+            </div>
+
+            <div class="hintSmall">Tip: press <kbd>Esc</kbd> to close panels.</div>
+          </div>
+        </div>
+
+        <!-- Theme settings -->
+        <div class="popover" id="themePopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings" aria-expanded="false">
+              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <h2>Theme</h2>
+
+            <div class="rowT">
+              <label for="tWidgetBg">Page bg</label>
+              <input id="tWidgetBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="rowT">
+              <label for="tCardBg">Card bg</label>
+              <input id="tCardBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="rowT">
+              <label for="tFieldBg">Fields bg</label>
+              <input id="tFieldBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <label for="tText">Text</label>
+              <input id="tText" type="color" value="#1f1f1f" />
+            </div>
+
+            <div class="rowT">
+              <label for="tMuted">Muted text</label>
+              <input id="tMuted" type="color" value="#6b625c" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <label for="tBorder">Borders</label>
+              <input id="tBorder" type="color" value="#c9beb6" />
+            </div>
+
+            <div class="rowT">
+              <label for="tStone">Accent</label>
+              <input id="tStone" type="color" value="#c9beb6" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <label for="tCream">Highlight</label>
+              <input id="tCream" type="color" value="#e6d8cc" />
+            </div>
+
+            <div class="rowT">
+              <label for="tCreamSoft">Highlight soft</label>
+              <input id="tCreamSoft" type="color" value="#e6d8cc" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
+            </div>
+
+          </div>
+        </div>
+
+        <button id="prevDay" class="btn" type="button">◀ PREV</button>
+        <button id="nextDay" class="btn" type="button">NEXT ▶</button>
+        <button id="clearDay" class="btn primary" type="button">CLEAR DAY</button>
+      </div>
+    </div>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Diet tracker widget board">
+      <div class="boardTint" id="boardTint"></div>
+
+      <div class="grid">
+        <!-- LEFT -->
+        <section class="card" aria-label="Meals">
+          <div class="cardHead">
+            <h2 class="cardTitle">Meals</h2>
+            <div id="dayMeta" class="meta"></div>
+          </div>
+
+          <div class="mealList" id="mealList"></div>
+        </section>
+
+        <!-- RIGHT -->
+        <aside class="card" aria-label="Totals and goals">
+          <div class="cardHead">
+            <h2 class="cardTitle">Totals</h2>
+          </div>
+
+          <div class="box">
+            <div class="boxTop">
+              <div class="boxLabel">Calories</div>
+              <div id="calTotal" class="big">0</div>
+            </div>
+            <div class="bar"><div id="calBar"></div></div>
+            <p id="calHint" class="hint">Set a calorie goal to see progress.</p>
+          </div>
+
+          <div class="box">
+            <div class="boxTop">
+              <div class="boxLabel">Protein (g)</div>
+              <div id="proteinTotal" class="big">0</div>
+            </div>
+            <div class="bar"><div id="proteinBar"></div></div>
+            <p id="proteinHint" class="hint">Set a protein goal to see progress.</p>
+
+            <div class="totals">
+              <div class="miniBox">
+                <div class="miniLabel">Carbs (g)</div>
+                <div id="carbTotal" class="miniVal">0</div>
+              </div>
+              <div class="miniBox">
+                <div class="miniLabel">Fiber (g)</div>
+                <div id="fiberTotal" class="miniVal">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cardHead" style="margin-top:6px;">
+            <h2 class="cardTitle">Goals</h2>
+          </div>
+
+          <div class="box">
+            <div class="goals">
+              <div class="goalRow">
+                <div>
+                  <label class="label" for="goalCalories">Calorie goal</label>
+                  <input id="goalCalories" class="input" type="number" min="0" placeholder="e.g. 1800" />
+                </div>
+                <div>
+                  <label class="label" for="goalProtein">Protein goal (g)</label>
+                  <input id="goalProtein" class="input" type="number" min="0" placeholder="e.g. 120" />
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:end;">
+                <div>
+                  <label class="label" for="newGoalName">Add another goal</label>
+                  <input id="newGoalName" class="input" type="text" placeholder="e.g. Water (cups), Steps, etc." />
+                </div>
+                <button id="addGoal" class="btn primary" type="button" style="height:36px;">ADD</button>
+              </div>
+
+              <div id="goalList" class="goalList"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      // ---------- Utilities ----------
+      const pad2 = (n) => String(n).padStart(2,"0");
+      const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
+      const clampPct = (p) => Math.max(0, Math.min(100, p));
+
+      const hexToRgba = (hex, a) => {
+        const h = String(hex || "").replace("#","").trim();
+        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+        const num = parseInt(full || "efe7e1", 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${a})`;
+      };
+
+      // ---------- Background settings ----------
+      const BG_KEY = "diet_tracker_bg_v1";
+
+      const bgPopover = document.getElementById("bgPopover");
+      const bgBtn = document.getElementById("bgBtn");
+      const bgPanel = document.getElementById("bgPanel");
+      const bgColor = document.getElementById("bgColor");
+      const bgStrength = document.getElementById("bgStrength");
+      const bgImage = document.getElementById("bgImage");
+      const removeImage = document.getElementById("removeImage");
+      const boardTintEl = document.getElementById("boardTint");
+      const bgDot = document.getElementById("bgDot");
+
+      const setBoardImage = (dataUrlOrNull) => {
+        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      };
+
+      const applyBoardTint = (colorHex, strengthPct) => {
+        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
+        document.documentElement.style.setProperty("--board-tint", colorHex);
+        document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+        if (bgDot){
+          bgDot.style.background = colorHex;
+          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
+        }
+        if (boardTintEl){
+          boardTintEl.style.background = hexToRgba(colorHex, strength);
+        }
+      };
+
+      const loadBg = () => {
+        try{
+          const raw = localStorage.getItem(BG_KEY);
+          return raw ? (JSON.parse(raw) || null) : null;
+        }catch{ return null; }
+      };
+      const saveBg = (bg) => { try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{} };
+
+      const fileToDataUrl = (file) =>
+        new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+
+      const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
+      bgColor.value = bgState.tint;
+      bgStrength.value = String(bgState.strength);
+      applyBoardTint(bgState.tint, bgState.strength);
+      setBoardImage(bgState.imageDataUrl);
+
+      // ---------- Theme settings ----------
+      const THEME_KEY = "diet_tracker_theme_v1";
+
+      const themePopover = document.getElementById("themePopover");
+      const themeBtn = document.getElementById("themeBtn");
+      const themePanel = document.getElementById("themePanel");
+      const themeDot = document.getElementById("themeDot");
+
+      const tWidgetBg = document.getElementById("tWidgetBg");
+      const tCardBg   = document.getElementById("tCardBg");
+      const tFieldBg  = document.getElementById("tFieldBg");
+      const tText     = document.getElementById("tText");
+      const tMuted    = document.getElementById("tMuted");
+      const tBorder   = document.getElementById("tBorder");
+      const tStone    = document.getElementById("tStone");
+      const tCream    = document.getElementById("tCream");
+      const tCreamSoft= document.getElementById("tCreamSoft");
+      const resetTheme= document.getElementById("resetTheme");
+
+      const DEFAULT_THEME = {
+        bg: "#ffffff",
+        cardBg: "#ffffff",
+        fieldBg: "#ffffff",
+        text: "#1f1f1f",
+        muted: "#6b625c",
+        borderHex: "#c9beb6",
+        stone: "#c9beb6",
+        cream: "#e6d8cc",
+        creamSoftHex: "#e6d8cc"
+      };
+
+      const loadTheme = () => {
+        try{
+          const raw = localStorage.getItem(THEME_KEY);
+          return raw ? (JSON.parse(raw) || null) : null;
+        }catch{ return null; }
+      };
+      const saveTheme = (t) => { try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{} };
+
+      const applyTheme = (t) => {
+        document.documentElement.style.setProperty("--bg", t.bg);
+        document.documentElement.style.setProperty("--text", t.text);
+        document.documentElement.style.setProperty("--muted", t.muted);
+
+        document.documentElement.style.setProperty("--stone", t.stone);
+        document.documentElement.style.setProperty("--cream", t.cream);
+
+        document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
+        document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
+
+        document.documentElement.style.setProperty("--creamSoft", hexToRgba(t.creamSoftHex, 0.20));
+
+        document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, 0.88));
+        document.documentElement.style.setProperty("--field-bg", t.fieldBg);
+
+        document.documentElement.style.setProperty("--focus", hexToRgba(t.text, 0.18));
+
+        if(themeDot){
+          themeDot.style.background = t.text;
+          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
+          themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
+        }
+      };
+
+      // Minimal override for any remaining hard-coded whites
+      const injected = document.createElement("style");
+      injected.textContent = `
+        .btn{ background: var(--field-bg, #fff); border-color: var(--border); color: var(--text); }
+        .mini-btn{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--text); }
+        .pill{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--muted); }
+        .miniBox, .goalItem{ background: var(--field-bg, #fff); }
+      `;
+      document.head.appendChild(injected);
+
+      const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
+
+      tWidgetBg.value = themeState.bg;
+      tCardBg.value = themeState.cardBg;
+      tFieldBg.value = themeState.fieldBg;
+      tText.value = themeState.text;
+      tMuted.value = themeState.muted;
+      tBorder.value = themeState.borderHex;
+      tStone.value = themeState.stone;
+      tCream.value = themeState.cream;
+      tCreamSoft.value = themeState.creamSoftHex;
+
+      applyTheme(themeState);
+
+      const wireThemeInput = (inputEl, key) => {
+        inputEl.addEventListener("input", () => {
+          themeState[key] = inputEl.value;
+          applyTheme(themeState);
+          saveTheme(themeState);
+
+          // keep bg dot visuals consistent (border color affects the dot ring)
+          applyBoardTint(bgState.tint, bgState.strength);
+        });
+      };
+
+      wireThemeInput(tWidgetBg, "bg");
+      wireThemeInput(tCardBg, "cardBg");
+      wireThemeInput(tFieldBg, "fieldBg");
+      wireThemeInput(tText, "text");
+      wireThemeInput(tMuted, "muted");
+      wireThemeInput(tBorder, "borderHex");
+      wireThemeInput(tStone, "stone");
+      wireThemeInput(tCream, "cream");
+      wireThemeInput(tCreamSoft, "creamSoftHex");
+
+      resetTheme.addEventListener("click", () => {
+        Object.assign(themeState, DEFAULT_THEME);
+
+        tWidgetBg.value = themeState.bg;
+        tCardBg.value = themeState.cardBg;
+        tFieldBg.value = themeState.fieldBg;
+        tText.value = themeState.text;
+        tMuted.value = themeState.muted;
+        tBorder.value = themeState.borderHex;
+        tStone.value = themeState.stone;
+        tCream.value = themeState.cream;
+        tCreamSoft.value = themeState.creamSoftHex;
+
+        applyTheme(themeState);
+        saveTheme(themeState);
+        applyBoardTint(bgState.tint, bgState.strength);
+      });
+
+      // ---------- Popover open/close (both panels) ----------
+      const openBg = () => {
+        bgPanel.classList.add("open");
+        themePanel.classList.remove("open");
+        bgBtn.setAttribute("aria-expanded", "true");
+        themeBtn.setAttribute("aria-expanded", "false");
+      };
+      const closeBg = () => {
+        bgPanel.classList.remove("open");
+        bgBtn.setAttribute("aria-expanded", "false");
+      };
+      const toggleBg = () => (bgPanel.classList.contains("open") ? closeBg() : openBg());
+
+      const openTheme = () => {
+        themePanel.classList.add("open");
+        bgPanel.classList.remove("open");
+        themeBtn.setAttribute("aria-expanded", "true");
+        bgBtn.setAttribute("aria-expanded", "false");
+      };
+      const closeTheme = () => {
+        themePanel.classList.remove("open");
+        themeBtn.setAttribute("aria-expanded", "false");
+      };
+      const toggleTheme = () => (themePanel.classList.contains("open") ? closeTheme() : openTheme());
+
+      bgBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleBg(); });
+      themeBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleTheme(); });
+
+      document.addEventListener("click", (e) => {
+        if (bgPanel.classList.contains("open") && !bgPopover.contains(e.target)) closeBg();
+        if (themePanel.classList.contains("open") && !themePopover.contains(e.target)) closeTheme();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape"){
+          closeBg();
+          closeTheme();
+        }
+      });
+
+      // ---------- Background handlers ----------
+      bgColor.addEventListener("input", () => {
+        bgState.tint = bgColor.value;
+        applyBoardTint(bgState.tint, bgStrength.value);
+        saveBg(bgState);
+      });
+
+      bgStrength.addEventListener("input", () => {
+        bgState.strength = Number(bgStrength.value);
+        applyBoardTint(bgState.tint, bgState.strength);
+        saveBg(bgState);
+      });
+
+      bgImage.addEventListener("change", async () => {
+        const file = bgImage.files && bgImage.files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataUrl(file);
+        bgState.imageDataUrl = dataUrl;
+        setBoardImage(dataUrl);
+        saveBg(bgState);
+      });
+
+      removeImage.addEventListener("click", () => {
+        bgState.imageDataUrl = null;
+        setBoardImage(null);
+        bgImage.value = "";
+        saveBg(bgState);
+      });
+
+      // ---------- App logic ----------
+      const MEALS = [
+        { id:"breakfast", label:"Breakfast" },
+        { id:"lunch", label:"Lunch" },
+        { id:"snack", label:"Snack" },
+        { id:"dinner", label:"Dinner" }
+      ];
+
+      const FULLNESS_OPTIONS = [
+        { id:"hungry", label:"Hungry" },
+        { id:"neutral", label:"Neutral" },
+        { id:"satisfied", label:"Satisfied" },
+        { id:"too_full", label:"Too full" }
+      ];
+
+      const STORAGE_PREFIX = "diet_tracker_v1_";
+
+      function defaultDayData(){
+        const meals = {};
+        MEALS.forEach(m => meals[m.id] = {
+          name: "",
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fiber: 0,
+          fullness: "",
+          tag: ""
+        });
+
+        return {
+          goals: { calories: 0, protein: 0, custom: [] },
+          meals
+        };
+      }
+
+      function keyFor(date){ return STORAGE_PREFIX + isoDay(date); }
+
+      function loadDay(date){
+        const raw = localStorage.getItem(keyFor(date));
+        if(!raw) return defaultDayData();
+        try{
+          const parsed = JSON.parse(raw);
+          const base = defaultDayData();
+
+          base.goals.calories = Number(parsed?.goals?.calories || 0);
+          base.goals.protein = Number(parsed?.goals?.protein || 0);
+          base.goals.custom = Array.isArray(parsed?.goals?.custom) ? parsed.goals.custom : [];
+
+          MEALS.forEach(m => {
+            const src = parsed?.meals?.[m.id] || {};
+            base.meals[m.id] = {
+              name: String(src.name || ""),
+              calories: Number(src.calories || 0),
+              protein: Number(src.protein || 0),
+              carbs: Number(src.carbs || 0),
+              fiber: Number(src.fiber || 0),
+              fullness: String(src.fullness || ""),
+              tag: String(src.tag || "")
+            };
+          });
+          return base;
+        }catch{
+          localStorage.removeItem(keyFor(date));
+          return defaultDayData();
+        }
+      }
+
+      function saveDay(date, data){
+        localStorage.setItem(keyFor(date), JSON.stringify(data));
+      }
+
+      // ---------- State ----------
+      let current = new Date();
+      current.setHours(0,0,0,0);
+      let data = loadDay(current);
+
+      // ---------- Elements ----------
+      const dayMeta = document.getElementById("dayMeta");
+      const mealList = document.getElementById("mealList");
+
+      const calTotalEl = document.getElementById("calTotal");
+      const proteinTotalEl = document.getElementById("proteinTotal");
+      const carbTotalEl = document.getElementById("carbTotal");
+      const fiberTotalEl = document.getElementById("fiberTotal");
+
+      const calBar = document.getElementById("calBar");
+      const proteinBar = document.getElementById("proteinBar");
+      const calHint = document.getElementById("calHint");
+      const proteinHint = document.getElementById("proteinHint");
+
+      const goalCalories = document.getElementById("goalCalories");
+      const goalProtein = document.getElementById("goalProtein");
+      const newGoalName = document.getElementById("newGoalName");
+      const addGoalBtn = document.getElementById("addGoal");
+      const goalList = document.getElementById("goalList");
+
+      const prevDayBtn = document.getElementById("prevDay");
+      const nextDayBtn = document.getElementById("nextDay");
+      const clearDayBtn = document.getElementById("clearDay");
+
+      // ---------- Rendering ----------
+      function render(){
+        dayMeta.textContent = niceDay(current);
+
+        goalCalories.value = data.goals.calories ? String(data.goals.calories) : "";
+        goalProtein.value = data.goals.protein ? String(data.goals.protein) : "";
+
+        mealList.innerHTML = "";
+        MEALS.forEach(m => mealList.appendChild(renderMeal(m.id, m.label)));
+
+        renderCustomGoals();
+        updateTotals();
+      }
+
+      function renderMeal(mealId, label){
+        const item = data.meals[mealId];
+
+        const wrap = document.createElement("div");
+        wrap.className = "meal";
+
+        const top = document.createElement("div");
+        top.className = "mealTop";
+
+        const title = document.createElement("p");
+        title.className = "mealName";
+        title.textContent = label;
+
+        const status = document.createElement("div");
+        status.className = "pill";
+        status.textContent = item.name.trim() ? "Added" : "Empty";
+
+        top.appendChild(title);
+        top.appendChild(status);
+        wrap.appendChild(top);
+
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const c1 = document.createElement("div");
+        const l1 = document.createElement("label");
+        l1.className = "label";
+        l1.textContent = "Meal";
+        const inpName = document.createElement("input");
+        inpName.className = "input";
+        inpName.type = "text";
+        inpName.value = item.name;
+
+        inpName.addEventListener("input", () => {
+          data.meals[mealId].name = inpName.value;
+          saveDay(current, data);
+          status.textContent = inpName.value.trim() ? "Added" : "Empty";
+          updateTotals();
+        });
+
+        c1.appendChild(l1);
+        c1.appendChild(inpName);
+
+        const c2 = document.createElement("div");
+        const l2 = document.createElement("label");
+        l2.className = "label";
+        l2.textContent = "Nutrient tag";
+        const sel = document.createElement("select");
+        sel.className = "select";
+
+        const currentTag = data.meals[mealId].tag || "";
+        const opts = [
+          { v:"", t:"Select…" },
+          { v:"protein", t:"Protein" },
+          { v:"fiber", t:"Fiber" },
+          { v:"carbs", t:"Carbohydrates" },
+          { v:"fat", t:"Fats" },
+          { v:"balanced", t:"Balanced" }
+        ];
+        opts.forEach(o => {
+          const op = document.createElement("option");
+          op.value = o.v;
+          op.textContent = o.t;
+          if(o.v === currentTag) op.selected = true;
+          sel.appendChild(op);
+        });
+
+        sel.addEventListener("change", () => {
+          data.meals[mealId].tag = sel.value;
+          saveDay(current, data);
+        });
+
+        c2.appendChild(l2);
+        c2.appendChild(sel);
+
+        const c3 = document.createElement("div");
+        const l3 = document.createElement("label");
+        l3.className = "label";
+        l3.textContent = "Calories";
+        const inpCal = document.createElement("input");
+        inpCal.className = "input";
+        inpCal.type = "number";
+        inpCal.min = "0";
+        inpCal.placeholder = "0";
+        inpCal.value = item.calories ? String(item.calories) : "";
+
+        inpCal.addEventListener("input", () => {
+          data.meals[mealId].calories = Number(inpCal.value || 0);
+          saveDay(current, data);
+          updateTotals();
+        });
+
+        c3.appendChild(l3);
+        c3.appendChild(inpCal);
+
+        row.appendChild(c1);
+        row.appendChild(c2);
+        row.appendChild(c3);
+
+        wrap.appendChild(row);
+
+        const row2 = document.createElement("div");
+        row2.className = "row2";
+        row2.style.gridTemplateColumns = "1fr 1fr 1fr";
+
+        row2.appendChild(macroField("Protein (g)", item.protein, (v)=>{ data.meals[mealId].protein = v; saveDay(current, data); updateTotals(); }));
+        row2.appendChild(macroField("Carbs (g)", item.carbs, (v)=>{ data.meals[mealId].carbs = v; saveDay(current, data); updateTotals(); }));
+        row2.appendChild(macroField("Fiber (g)", item.fiber, (v)=>{ data.meals[mealId].fiber = v; saveDay(current, data); updateTotals(); }));
+
+        wrap.appendChild(row2);
+
+        const full = document.createElement("div");
+        full.style.marginTop = "10px";
+
+        const lf = document.createElement("div");
+        lf.className = "label";
+        lf.textContent = "Fullness";
+        full.appendChild(lf);
+
+        const chips = document.createElement("div");
+        chips.className = "fullness";
+
+        FULLNESS_OPTIONS.forEach(o => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "chip";
+          b.textContent = o.label;
+          b.dataset.active = String(item.fullness === o.id);
+
+          b.addEventListener("click", () => {
+            const cur = data.meals[mealId].fullness;
+            data.meals[mealId].fullness = (cur === o.id) ? "" : o.id;
+            saveDay(current, data);
+
+            Array.from(chips.querySelectorAll(".chip")).forEach(x => x.dataset.active = "false");
+            if(data.meals[mealId].fullness === o.id) b.dataset.active = "true";
+          });
+
+          chips.appendChild(b);
+        });
+
+        full.appendChild(chips);
+        wrap.appendChild(full);
+
+        const note = document.createElement("div");
+        note.className = "mini";
+        wrap.appendChild(note);
+
+        return wrap;
+      }
+
+      function macroField(labelText, value, onChange){
+        const c = document.createElement("div");
+        const l = document.createElement("label");
+        l.className = "label";
+        l.textContent = labelText;
+
+        const inp = document.createElement("input");
+        inp.className = "input";
+        inp.type = "number";
+        inp.min = "0";
+        inp.placeholder = "0";
+        inp.value = value ? String(value) : "";
+
+        inp.addEventListener("input", () => onChange(Number(inp.value || 0)));
+
+        c.appendChild(l);
+        c.appendChild(inp);
+        return c;
+      }
+
+      function renderCustomGoals(){
+        goalList.innerHTML = "";
+        const custom = data.goals.custom || [];
+
+        if(custom.length === 0){
+          const p = document.createElement("p");
+          p.className = "hint";
+          p.textContent = "No extra goals yet.";
+          goalList.appendChild(p);
+          return;
+        }
+
+        custom.forEach(g => {
+          const row = document.createElement("div");
+          row.className = "goalItem";
+
+          const nameWrap = document.createElement("div");
+          const ln = document.createElement("label");
+          ln.className = "label";
+          ln.textContent = "Goal";
+          const name = document.createElement("input");
+          name.className = "input";
+          name.type = "text";
+          name.value = g.name || "";
+          name.addEventListener("input", () => {
+            g.name = name.value;
+            saveDay(current, data);
+          });
+          nameWrap.appendChild(ln);
+          nameWrap.appendChild(name);
+
+          const valWrap = document.createElement("div");
+          const lv = document.createElement("label");
+          lv.className = "label";
+          lv.textContent = "Target";
+          const val = document.createElement("input");
+          val.className = "input";
+          val.type = "number";
+          val.min = "0";
+          val.placeholder = "0";
+          val.value = (g.value && Number(g.value) !== 0) ? String(g.value) : "";
+          val.addEventListener("input", () => {
+            g.value = Number(val.value || 0);
+            saveDay(current, data);
+          });
+          valWrap.appendChild(lv);
+          valWrap.appendChild(val);
+
+          const del = document.createElement("button");
+          del.type = "button";
+          del.className = "iconBtn danger";
+          del.title = "Remove goal";
+          del.textContent = "✕";
+          del.addEventListener("click", () => {
+            data.goals.custom = (data.goals.custom || []).filter(x => x.id !== g.id);
+            saveDay(current, data);
+            renderCustomGoals();
+          });
+
+          row.appendChild(nameWrap);
+          row.appendChild(valWrap);
+          row.appendChild(del);
+
+          goalList.appendChild(row);
+        });
+      }
+
+      function updateTotals(){
+        let cal = 0, p = 0, c = 0, f = 0;
+        MEALS.forEach(m => {
+          const it = data.meals[m.id];
+          cal += Number(it.calories || 0);
+          p += Number(it.protein || 0);
+          c += Number(it.carbs || 0);
+          f += Number(it.fiber || 0);
+        });
+
+        calTotalEl.textContent = String(Math.round(cal));
+        proteinTotalEl.textContent = String(Math.round(p));
+        carbTotalEl.textContent = String(Math.round(c));
+        fiberTotalEl.textContent = String(Math.round(f));
+
+        const calGoal = Number(data.goals.calories || 0);
+        const pGoal = Number(data.goals.protein || 0);
+
+        if(calGoal > 0){
+          const pct = clampPct((cal / calGoal) * 100);
+          calBar.style.width = pct + "%";
+          calHint.textContent = `${Math.round(cal)} / ${Math.round(calGoal)} kcal`;
+        }else{
+          calBar.style.width = "0%";
+          calHint.textContent = "Set a calorie goal to see progress.";
+        }
+
+        if(pGoal > 0){
+          const pct = clampPct((p / pGoal) * 100);
+          proteinBar.style.width = pct + "%";
+          proteinHint.textContent = `${Math.round(p)} / ${Math.round(pGoal)} g protein`;
+        }else{
+          proteinBar.style.width = "0%";
+          proteinHint.textContent = "Set a protein goal to see progress.";
+        }
+      }
+
+      // ---------- Events: Goals ----------
+      goalCalories.addEventListener("input", () => {
+        data.goals.calories = Number(goalCalories.value || 0);
+        saveDay(current, data);
+        updateTotals();
+      });
+
+      goalProtein.addEventListener("input", () => {
+        data.goals.protein = Number(goalProtein.value || 0);
+        saveDay(current, data);
+        updateTotals();
+      });
+
+      addGoalBtn.addEventListener("click", () => {
+        const name = (newGoalName.value || "").trim();
+        if(!name) return;
+
+        const id = "g_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+        data.goals.custom = data.goals.custom || [];
+        data.goals.custom.push({ id, name, value: 0 });
+
+        newGoalName.value = "";
+        saveDay(current, data);
+        renderCustomGoals();
+      });
+
+      newGoalName.addEventListener("keydown", (e) => {
+        if(e.key === "Enter"){
+          e.preventDefault();
+          addGoalBtn.click();
+        }
+      });
+
+      // ---------- Day navigation ----------
+      const go = (deltaDays) => {
+        current = new Date(current.getTime() + deltaDays * 86400000);
+        current.setHours(0,0,0,0);
+        data = loadDay(current);
+        render();
+      };
+
+      prevDayBtn.addEventListener("click", () => go(-1));
+      nextDayBtn.addEventListener("click", () => go(1));
+
+      clearDayBtn.addEventListener("click", () => {
+        localStorage.removeItem(keyFor(current));
+        data = loadDay(current);
+        render();
+      });
+
+      // ---------- Init ----------
+      render();
+    });
+  </script>
+</body>
+</html>
+```

@@ -33,20 +33,10 @@
       --board-tint-a: 0.30;
       --board-image: none;
 
-      /* Theme-overridable surfaces */
+      /* theme editor overrides */
       --card-bg: rgba(255,255,255,0.88);
       --field-bg: #ffffff;
-
-      /* Popover surfaces */
-      --popover-pill-bg: rgba(255,255,255,0.80);
-      --popover-btn-bg: rgba(255,255,255,0.95);
-      --popover-panel-bg: rgba(255,255,255,0.92);
-
-      /* UI */
-      --divider: rgba(201,190,182,0.35);
-      --focus: rgba(31,31,31,0.18);
     }
-
     *{ box-sizing:border-box; }
     body{
       margin:0;
@@ -72,6 +62,7 @@
       padding-top:4px;
     }
     .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
     .btn{
       appearance:none;
       border:1px solid var(--border);
@@ -91,37 +82,15 @@
     }
     .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
     .btn:active{ transform:translateY(0px); }
-    .btn:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
     .btn.primary{ background:var(--cream); }
-
-    .statusPill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:7px 10px;
-      border-radius:999px;
-      border:1px solid var(--borderSoft);
-      background: var(--field-bg);
-      box-shadow: var(--shadowSoft);
-      font-size:12px;
-      color: var(--muted);
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .dotTiny{
-      width:8px; height:8px; border-radius:999px;
-      background: rgba(120,110,102,0.55);
-    }
-    .dotTiny.dirty{ background: rgba(170,120,70,0.85); }
+    .btn.danger{ background: rgba(230,216,204,0.30); }
 
     .popover{ position:relative; }
     .icon-pill{
       display:inline-flex;
       align-items:center;
       gap:10px;
-      background: var(--popover-pill-bg);
+      background: rgba(255,255,255,0.80);
       border: 1px solid var(--borderSoft);
       border-radius: 999px;
       padding: 6px 10px;
@@ -134,7 +103,7 @@
       height:34px;
       border-radius:999px;
       border:1px solid var(--borderSoft);
-      background: var(--popover-btn-bg);
+      background: rgba(255,255,255,0.95);
       cursor:pointer;
       display:grid;
       place-items:center;
@@ -144,7 +113,6 @@
     }
     .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
     .bg-btn:active{ transform: translateY(0px); }
-    .bg-btn:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
 
     .bg-dot{
       width:14px;
@@ -154,7 +122,6 @@
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
     }
-
     .theme-dot{
       width:14px;
       height:14px;
@@ -164,7 +131,6 @@
       box-shadow: 0 0 0 6px rgba(201,190,182,0.25);
     }
 
-    /* Panels: scrollable so they don't get cut off */
     .panel{
       position:absolute;
       top: 46px;
@@ -172,7 +138,7 @@
       width: 290px;
       border-radius: 16px;
       border: 1px solid var(--borderSoft);
-      background: var(--popover-panel-bg);
+      background: rgba(255,255,255,0.92);
       box-shadow: 0 18px 40px rgba(0,0,0,0.10);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -180,20 +146,11 @@
       display:none;
       z-index: 80;
 
-      max-height: min(72vh, 560px);
+      /* scroll so settings never cut off */
+      max-height: 72vh;
       overflow: auto;
-      overscroll-behavior: contain;
     }
     .panel.open{ display:block; }
-
-    /* Optional scrollbar styling */
-    .panel::-webkit-scrollbar{ width:10px; }
-    .panel::-webkit-scrollbar-thumb{
-      background: rgba(201,190,182,0.45);
-      border-radius: 999px;
-      border: 3px solid rgba(0,0,0,0);
-      background-clip: padding-box;
-    }
 
     .panel h2{
       margin: 0 0 10px 0;
@@ -234,7 +191,7 @@
     .mini-btn{
       width: 100%;
       border: 1px solid var(--borderSoft);
-      background: var(--field-bg);
+      background: rgba(255,255,255,0.95);
       border-radius: 12px;
       padding: 9px 10px;
       cursor: pointer;
@@ -247,10 +204,9 @@
       -webkit-tap-highlight-color: transparent;
     }
     .mini-btn:active{ transform: translateY(1px); }
-
     .divider{
       height: 1px;
-      background: var(--divider);
+      background: rgba(201,190,182,0.35);
       margin: 8px 0;
     }
     .hintSmall{
@@ -258,6 +214,34 @@
       font-size: 11px;
       color: var(--muted);
       line-height: 1.35;
+    }
+    .status{
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+      margin-top: 8px;
+    }
+    .presetName{ width:100%; }
+    .presetArea{
+      width:100%;
+      min-height:90px;
+      font-size:12px;
+      line-height:1.35;
+      border:1px solid var(--borderSoft);
+      border-radius:12px;
+      padding:10px;
+      background: var(--field-bg);
+      color: var(--text);
+      resize: vertical;
+    }
+    .select2{
+      width:100%;
+      border:1px solid var(--borderSoft);
+      background: var(--field-bg);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color: var(--text);
     }
 
     .widgetBoard{
@@ -313,7 +297,6 @@
       background: var(--card-bg);
       border:1px solid var(--border);
       border-radius:var(--rOuter);
-      box-shadow:none;
       padding:14px;
       min-width:0;
       backdrop-filter: blur(10px);
@@ -325,7 +308,7 @@
       justify-content:space-between;
       gap:12px;
       margin-bottom:12px;
-      flex-wrap: wrap;
+      flex-wrap:wrap;
     }
     .cardTitle{
       font-size:14px;
@@ -339,8 +322,23 @@
       color:var(--muted);
       letter-spacing:.04em;
       white-space:nowrap;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .badge{
+      border:1px solid var(--borderSoft);
+      border-radius: 999px;
+      padding:6px 10px;
+      background: rgba(255,255,255,0.65);
+    }
+    .badge.dirty{
+      background: rgba(230,216,204,0.55);
     }
 
+    /* Meals */
     .mealList{ display:grid; gap:12px; }
     .meal{
       border:1px solid var(--borderSoft);
@@ -412,7 +410,14 @@
       border-color: rgba(201,190,182,1);
       box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
     }
+    .mini{
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.35;
+      margin-top:8px;
+    }
 
+    /* Fullness */
     .fullness{
       display:flex;
       gap:8px;
@@ -440,6 +445,7 @@
       transform:translateY(-1px);
     }
 
+    /* Sidebar */
     .box{
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
@@ -485,7 +491,6 @@
       line-height:1.4;
       margin:0;
     }
-
     .totals{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -552,15 +557,80 @@
     .iconBtn.danger{ background: rgba(230,216,204,0.30); }
 
     @media (max-width: 980px){
-      body{ padding: 18px; }
       .grid{ grid-template-columns: 1fr; }
       .row{ grid-template-columns: 1fr; }
-      .row2{ grid-template-columns: 1fr; }
       .goalRow{ grid-template-columns: 1fr; }
       .goalItem{ grid-template-columns: 1fr; }
       .totals{ grid-template-columns: 1fr; }
-      .panel{ width: min(92vw, 320px); }
     }
+
+    /* In-widget modal + toast */
+    .modalBackdrop{
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(20,18,16,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 999;
+    }
+    .modalBackdrop.show{ display:grid; }
+    .modal{
+      width: min(560px, 100%);
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(43,43,43,.14);
+      border-radius: 20px;
+      box-shadow: 0 16px 50px rgba(0,0,0,.14);
+      overflow:hidden;
+    }
+    .modalHead{
+      padding: 14px 16px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      border-bottom: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.72);
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: rgba(31,31,31,0.75);
+    }
+    .modalBody{
+      padding: 14px 16px;
+      color: rgba(31,31,31,0.90);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+    .modalFoot{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding: 12px 16px 14px;
+      border-top: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.70);
+      flex-wrap:wrap;
+    }
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(43,43,43,.14);
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-size: 12px;
+      box-shadow: 0 12px 34px rgba(0,0,0,.12);
+      z-index: 1000;
+      display:none;
+      max-width: min(560px, calc(100% - 20px));
+      text-align:center;
+    }
+    .toast.show{ display:block; }
   </style>
 </head>
 
@@ -570,13 +640,6 @@
       <div class="kicker">Diet Planner + Tracker</div>
 
       <div class="btns">
-        <span class="statusPill" id="saveStatus" title="Saved/Unsaved status">
-          <span class="dotTiny" id="saveDot" aria-hidden="true"></span>
-          <span id="saveText">Saved</span>
-        </span>
-
-        <button id="saveBtn" class="btn primary" type="button">SAVE</button>
-
         <!-- Background settings -->
         <div class="popover" id="bgPopover">
           <div class="icon-pill">
@@ -608,10 +671,18 @@
             <div class="rowT">
               <button class="mini-btn" id="removeImage" type="button">Remove image</button>
             </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            </div>
+
+            <div class="status" id="bgStatus" aria-live="polite"></div>
           </div>
         </div>
 
-        <!-- Theme settings + Presets + Network -->
+        <!-- Theme settings -->
         <div class="popover" id="themePopover">
           <div class="icon-pill">
             <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -622,21 +693,22 @@
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
             <h2>Theme</h2>
 
-            <!-- Make theme settings consistent: top essentials -->
             <div class="rowT">
-              <label for="tBg">Page bg</label>
-              <input id="tBg" type="color" value="#ffffff" />
+              <label for="tWidgetBg">Page bg</label>
+              <input id="tWidgetBg" type="color" value="#ffffff" />
             </div>
 
             <div class="rowT">
-              <label for="tCard">Card</label>
-              <input id="tCard" type="color" value="#ffffff" />
+              <label for="tCardBg">Card bg</label>
+              <input id="tCardBg" type="color" value="#ffffff" />
             </div>
 
             <div class="rowT">
-              <label for="tBorders">Borders</label>
-              <input id="tBorders" type="color" value="#c9beb6" />
+              <label for="tFieldBg">Fields bg</label>
+              <input id="tFieldBg" type="color" value="#ffffff" />
             </div>
+
+            <div class="divider"></div>
 
             <div class="rowT">
               <label for="tText">Text</label>
@@ -644,112 +716,93 @@
             </div>
 
             <div class="rowT">
-              <label for="tMuted">Muted</label>
+              <label for="tMuted">Muted text</label>
               <input id="tMuted" type="color" value="#6b625c" />
             </div>
 
-            <div class="rowT">
-              <label for="tSecondary">Secondary</label>
-              <input id="tSecondary" type="color" value="#e6d8cc" />
-            </div>
-
             <div class="divider"></div>
 
-            <!-- Advanced surfaces -->
             <div class="rowT">
-              <label for="tFields">Fields bg</label>
-              <input id="tFields" type="color" value="#ffffff" />
-            </div>
-
-            <div class="rowT">
-              <label for="tAccent">Accent</label>
-              <input id="tAccent" type="color" value="#c9beb6" />
+              <label for="tBorder">Borders</label>
+              <input id="tBorder" type="color" value="#c9beb6" />
             </div>
 
             <div class="rowT">
-              <label for="tSecondarySoft">Secondary soft</label>
-              <input id="tSecondarySoft" type="color" value="#e6d8cc" />
-            </div>
-
-            <div class="divider"></div>
-
-            <!-- Popover surfaces (so nothing stays hard-coded white) -->
-            <div class="rowT">
-              <label for="tPopPill">Popover pill</label>
-              <input id="tPopPill" type="color" value="#ffffff" />
-            </div>
-            <div class="rowT">
-              <label for="tPopBtn">Popover button</label>
-              <input id="tPopBtn" type="color" value="#ffffff" />
-            </div>
-            <div class="rowT">
-              <label for="tPopPanel">Popover panel</label>
-              <input id="tPopPanel" type="color" value="#ffffff" />
-            </div>
-
-            <div class="divider"></div>
-
-            <!-- Network -->
-            <h2 style="margin-top:6px;">Preset Network</h2>
-            <div class="rowT" style="align-items:flex-start;">
-              <label for="networkId">Network ID</label>
-              <input id="networkId" class="input" style="height:36px;" type="text" placeholder="e.g. my-template-v1" />
-            </div>
-
-            <div class="rowT" style="align-items:flex-start;">
-              <label for="userKey">User key</label>
-              <input id="userKey" class="input" style="height:36px;" type="text" placeholder="optional (auto if blank)" />
-            </div>
-
-            <div class="hintSmall">
-            </div>
-
-            <div class="divider"></div>
-
-            <!-- Presets -->
-            <h2 style="margin-top:6px;">Presets</h2>
-            <div class="rowT" style="align-items:flex-start;">
-              <label for="presetSelect">Preset</label>
-              <select id="presetSelect" class="select" style="height:36px;">
-                <option value="">No presets</option>
-              </select>
-            </div>
-
-            <div class="rowT" style="align-items:flex-start;">
-              <label for="presetName">Name</label>
-              <input id="presetName" class="input" style="height:36px;" type="text" placeholder="e.g. Warm Beige" />
-            </div>
-
-            <div class="rowT">
-              <button class="mini-btn" id="savePreset" type="button">Save preset</button>
-            </div>
-            <div class="rowT">
-              <button class="mini-btn" id="applyPreset" type="button">Apply selected</button>
-            </div>
-            <div class="rowT">
-              <button class="mini-btn" id="deletePreset" type="button">Delete selected</button>
+              <label for="tStone">Accent</label>
+              <input id="tStone" type="color" value="#c9beb6" />
             </div>
 
             <div class="divider"></div>
 
             <div class="rowT">
-              <button class="mini-btn" id="copyPreset" type="button">Copy preset JSON</button>
+              <label for="tCream">Highlight</label>
+              <input id="tCream" type="color" value="#e6d8cc" />
             </div>
+
             <div class="rowT">
-              <button class="mini-btn" id="importPreset" type="button">Import preset JSON</button>
+              <label for="tCreamSoft">Highlight soft</label>
+              <input id="tCreamSoft" type="color" value="#e6d8cc" />
             </div>
 
             <div class="divider"></div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            </div>
 
             <div class="rowT">
               <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
             </div>
+
+            <div class="divider"></div>
+
+            <h2 style="margin: 4px 0 10px 0;">Presets</h2>
+
+            <div class="rowT" style="align-items:flex-start; flex-direction:column; gap:8px;">
+              <input id="presetName" class="input presetName" placeholder="Preset name" />
+              <button class="mini-btn" id="presetSave" type="button">Save current as preset</button>
+            </div>
+
+            <div class="rowT">
+              <label for="presetSelect">Choose</label>
+              <select id="presetSelect" class="select2">
+                <option value="">—</option>
+              </select>
+            </div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="presetApply" type="button">Apply preset</button>
+            </div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="presetDelete" type="button">Delete preset</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="presetCopy" type="button">Copy presets JSON</button>
+            </div>
+
+            <div class="rowT" style="align-items:flex-start; flex-direction:column; gap:8px;">
+              <textarea id="presetImport" class="presetArea" placeholder='Paste presets JSON here, then click "Import presets".'></textarea>
+              <button class="mini-btn" id="presetImportBtn" type="button">Import presets</button>
+              <div class="status" id="presetStatus" aria-live="polite"></div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="hintSmall">
+            </div>
           </div>
         </div>
 
+        <!-- Day actions -->
         <button id="prevDay" class="btn" type="button">◀ PREV</button>
         <button id="nextDay" class="btn" type="button">NEXT ▶</button>
-        <button id="clearDay" class="btn primary" type="button">CLEAR DAY</button>
+
+        <button id="revertDay" class="btn" type="button" title="Discard unsaved edits">REVERT</button>
+        <button id="saveDay" class="btn primary" type="button" title="Save current day">SAVE DAY</button>
+        <button id="clearDay" class="btn danger" type="button" title="Clear saved data for this day">CLEAR DAY</button>
       </div>
     </div>
 
@@ -757,16 +810,20 @@
       <div class="boardTint" id="boardTint"></div>
 
       <div class="grid">
-        <!-- LEFT -->
+        <!-- LEFT: Meals -->
         <section class="card" aria-label="Meals">
           <div class="cardHead">
             <h2 class="cardTitle">Meals</h2>
-            <div id="dayMeta" class="meta"></div>
+            <div class="meta">
+              <span id="dayMeta" class="badge"></span>
+              <span id="dirtyBadge" class="badge" style="display:none;">Unsaved</span>
+            </div>
           </div>
+
           <div class="mealList" id="mealList"></div>
         </section>
 
-        <!-- RIGHT -->
+        <!-- RIGHT: Totals + Goals -->
         <aside class="card" aria-label="Totals and goals">
           <div class="cardHead">
             <h2 class="cardTitle">Totals</h2>
@@ -834,399 +891,670 @@
     </div>
   </main>
 
-<script>
-(() => {
-  // -----------------------------
-  // Utilities
-  // -----------------------------
+  <!-- Confirm Modal -->
+  <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modalHead">
+        <div id="modalTitle">Confirm</div>
+        <button class="btn" id="modalClose" type="button">Close</button>
+      </div>
+      <div class="modalBody" id="modalBody"></div>
+      <div class="modalFoot">
+        <button class="btn" id="modalCancel" type="button">Cancel</button>
+        <button class="btn primary" id="modalOk" type="button">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+/* --------------------------
+   Safe storage + instance id
+--------------------------- */
+(function(){
+  const mem = Object.create(null);
+
+  function canUseLocalStorage(){
+    try{
+      const k = "__t__" + Math.random().toString(16).slice(2);
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{ return false; }
+  }
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{
+      if(hasLS) return localStorage.getItem(key);
+      return mem[key] ?? null;
+    }catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{
+      if(hasLS) localStorage.setItem(key, value);
+      else mem[key] = String(value);
+    }catch{ mem[key] = String(value); }
+  }
+  function storageRemove(key){
+    try{
+      if(hasLS) localStorage.removeItem(key);
+      else delete mem[key];
+    }catch{ delete mem[key]; }
+  }
+
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+
+  function getWidgetId(){
+    // 1) explicit wid param (best for “template buyers”)
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = (sp.get("wid") || "").trim();
+      if(wid) return wid;
+    }catch{}
+
+    // 2) persisted per-user (so each buyer gets a unique id automatically)
+    const PERSIST_KEY = "diet_tracker_user_wid_v1";
+    try{
+      const existing = storageGet(PERSIST_KEY);
+      if(existing) return existing;
+      const fresh = uid();
+      storageSet(PERSIST_KEY, fresh);
+      return fresh;
+    }catch{
+      return uid();
+    }
+  }
+
+  window.__DT__ = {
+    wid: getWidgetId(),
+    get: storageGet,
+    set: storageSet,
+    remove: storageRemove
+  };
+})();
+
+/* --------------------------
+   Main app
+--------------------------- */
+window.addEventListener("DOMContentLoaded", () => {
+  const WID = window.__DT__?.wid || "default";
+
+  // Keys are per-instance so multiple widgets won’t collide.
+  const KEY = (name) => `diet_tracker_${name}_v1__${WID}`;
+  const BG_KEY = KEY("bg");
+  const THEME_KEY = KEY("theme");
+  const PRESETS_KEY = KEY("presets");
+  const DAY_PREFIX = KEY("day_"); // + YYYY-MM-DD
+
+  // ---------- Utilities ----------
   const pad2 = (n) => String(n).padStart(2,"0");
   const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
   const clampPct = (p) => Math.max(0, Math.min(100, p));
+  const escapeHtml = (s) =>
+    String(s ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
 
-  const hexToRgba = (hex, a) => {
+  function hexToRgba(hex, a){
     const h = String(hex || "").replace("#","").trim();
     const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-    const num = parseInt(full || "000000", 16);
+    const num = parseInt(full || "efe7e1", 16);
     const r = (num >> 16) & 255;
     const g = (num >> 8) & 255;
     const b = num & 255;
     return `rgba(${r},${g},${b},${a})`;
-  };
+  }
 
-  const safeJsonParse = (raw, fallback=null) => {
-    try { return JSON.parse(raw); } catch { return fallback; }
-  };
+  function loadJSON(k){
+    try{
+      const raw = window.__DT__.get(k);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  }
+  function saveJSON(k, v){
+    try{ window.__DT__.set(k, JSON.stringify(v)); }catch{}
+  }
 
-  const uid = () => "id_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  function deepClone(x){
+    try{ return JSON.parse(JSON.stringify(x)); }catch{ return x; }
+  }
 
-  // -----------------------------
-  // IndexedDB KV Store (more durable on iOS webviews than localStorage in some cases)
-  // -----------------------------
-  const IDB_NAME = "notion_widgets_kv_v1";
-  const IDB_STORE = "kv";
+  // ---------- UI: toast + confirm ----------
+  const toastEl = document.getElementById("toast");
+  let toastTimer = null;
+  function toast(msg){
+    if(!toastEl) return;
+    toastEl.textContent = msg || "";
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toastEl.classList.remove("show"), 1800);
+  }
 
-  function idbOpen(){
-    return new Promise((resolve, reject) => {
-      if (!("indexedDB" in window)) return reject(new Error("indexedDB not supported"));
-      const req = indexedDB.open(IDB_NAME, 1);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalBody = document.getElementById("modalBody");
+  const modalOk = document.getElementById("modalOk");
+  const modalCancel = document.getElementById("modalCancel");
+  const modalClose = document.getElementById("modalClose");
+  const modalTitle = document.getElementById("modalTitle");
+
+  function askConfirm(message, { title="Confirm", okText="OK", cancelText="Cancel", danger=false } = {}){
+    return new Promise((resolve) => {
+      modalTitle.textContent = title;
+      modalBody.innerHTML = `<div>${escapeHtml(message)}</div>`;
+      modalOk.textContent = okText;
+      modalCancel.textContent = cancelText;
+      modalOk.classList.remove("danger","primary");
+      modalOk.classList.add(danger ? "danger" : "primary");
+
+      const cleanup = (val) => {
+        modalBackdrop.classList.remove("show");
+        modalOk.onclick = null;
+        modalCancel.onclick = null;
+        modalClose.onclick = null;
+        modalBackdrop.onclick = null;
+        document.removeEventListener("keydown", onKey);
+        resolve(val);
       };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+
+      const onKey = (e) => { if(e.key === "Escape") cleanup(false); };
+
+      modalOk.onclick = () => cleanup(true);
+      modalCancel.onclick = () => cleanup(false);
+      modalClose.onclick = () => cleanup(false);
+      modalBackdrop.onclick = (e) => { if(e.target === modalBackdrop) cleanup(false); };
+
+      document.addEventListener("keydown", onKey);
+      modalBackdrop.classList.add("show");
+      setTimeout(()=>modalOk.focus(), 0);
     });
   }
 
-  async function idbGet(key){
-    const db = await idbOpen();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(IDB_STORE, "readonly");
-      const store = tx.objectStore(IDB_STORE);
-      const req = store.get(key);
-      req.onsuccess = () => resolve(req.result ?? null);
-      req.onerror = () => reject(req.error);
-      tx.oncomplete = () => db.close();
-    });
-  }
-
-  async function idbSet(key, val){
-    const db = await idbOpen();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(IDB_STORE, "readwrite");
-      const store = tx.objectStore(IDB_STORE);
-      const req = store.put(val, key);
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => reject(req.error);
-      tx.oncomplete = () => db.close();
-    });
-  }
-
-  async function idbDel(key){
-    const db = await idbOpen();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(IDB_STORE, "readwrite");
-      const store = tx.objectStore(IDB_STORE);
-      const req = store.delete(key);
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => reject(req.error);
-      tx.oncomplete = () => db.close();
-    });
-  }
-
-  // Storage wrapper: IDB first, then localStorage fallback
-  const storage = {
-    async get(key){
-      try{
-        const v = await idbGet(key);
-        if (v != null) return v;
-      }catch{}
-      return localStorage.getItem(key);
-    },
-    async set(key, val){
-      try{
-        await idbSet(key, val);
-        return;
-      }catch{}
-      try{ localStorage.setItem(key, val); }catch{}
-    },
-    async del(key){
-      try{ await idbDel(key); }catch{}
-      try{ localStorage.removeItem(key); }catch{}
-    }
-  };
-
-  // -----------------------------
-  // Elements
-  // -----------------------------
+  // ---------- Elements ----------
   const els = {
-    // status/save
-    saveBtn: document.getElementById("saveBtn"),
-    saveDot: document.getElementById("saveDot"),
-    saveText: document.getElementById("saveText"),
+    // popovers
+    bgBtn: document.getElementById("bgBtn"),
+    bgPanel: document.getElementById("bgPanel"),
+    themeBtn: document.getElementById("themeBtn"),
+    themePanel: document.getElementById("themePanel"),
+    bgDot: document.getElementById("bgDot"),
+    themeDot: document.getElementById("themeDot"),
 
-    // day nav
+    // bg controls
+    bgColor: document.getElementById("bgColor"),
+    bgStrength: document.getElementById("bgStrength"),
+    bgImage: document.getElementById("bgImage"),
+    removeImage: document.getElementById("removeImage"),
+    bgApply: document.getElementById("bgApply"),
+    bgStatus: document.getElementById("bgStatus"),
+    boardTintEl: document.getElementById("boardTint"),
+
+    // theme controls
+    tWidgetBg: document.getElementById("tWidgetBg"),
+    tCardBg: document.getElementById("tCardBg"),
+    tFieldBg: document.getElementById("tFieldBg"),
+    tText: document.getElementById("tText"),
+    tMuted: document.getElementById("tMuted"),
+    tBorder: document.getElementById("tBorder"),
+    tStone: document.getElementById("tStone"),
+    tCream: document.getElementById("tCream"),
+    tCreamSoft: document.getElementById("tCreamSoft"),
+    resetTheme: document.getElementById("resetTheme"),
+    themeApply: document.getElementById("themeApply"),
+
+    // presets
+    presetName: document.getElementById("presetName"),
+    presetSave: document.getElementById("presetSave"),
+    presetSelect: document.getElementById("presetSelect"),
+    presetApply: document.getElementById("presetApply"),
+    presetDelete: document.getElementById("presetDelete"),
+    presetCopy: document.getElementById("presetCopy"),
+    presetImport: document.getElementById("presetImport"),
+    presetImportBtn: document.getElementById("presetImportBtn"),
+    presetStatus: document.getElementById("presetStatus"),
+
+    // day actions
     prevDayBtn: document.getElementById("prevDay"),
     nextDayBtn: document.getElementById("nextDay"),
+    saveDayBtn: document.getElementById("saveDay"),
+    revertDayBtn: document.getElementById("revertDay"),
     clearDayBtn: document.getElementById("clearDay"),
-    dayMeta: document.getElementById("dayMeta"),
 
-    // meals
+    // day + meals/goals
+    dayMeta: document.getElementById("dayMeta"),
+    dirtyBadge: document.getElementById("dirtyBadge"),
     mealList: document.getElementById("mealList"),
 
-    // totals
     calTotalEl: document.getElementById("calTotal"),
     proteinTotalEl: document.getElementById("proteinTotal"),
     carbTotalEl: document.getElementById("carbTotal"),
     fiberTotalEl: document.getElementById("fiberTotal"),
+
     calBar: document.getElementById("calBar"),
     proteinBar: document.getElementById("proteinBar"),
     calHint: document.getElementById("calHint"),
     proteinHint: document.getElementById("proteinHint"),
 
-    // goals inputs
     goalCalories: document.getElementById("goalCalories"),
     goalProtein: document.getElementById("goalProtein"),
     newGoalName: document.getElementById("newGoalName"),
     addGoalBtn: document.getElementById("addGoal"),
     goalList: document.getElementById("goalList"),
-
-    // bg
-    bgBtn: document.getElementById("bgBtn"),
-    bgPanel: document.getElementById("bgPanel"),
-    bgColor: document.getElementById("bgColor"),
-    bgStrength: document.getElementById("bgStrength"),
-    bgImage: document.getElementById("bgImage"),
-    removeImage: document.getElementById("removeImage"),
-    boardTintEl: document.getElementById("boardTint"),
-    bgDot: document.getElementById("bgDot"),
-
-    // theme + presets/network/user
-    themeBtn: document.getElementById("themeBtn"),
-    themePanel: document.getElementById("themePanel"),
-    themeDot: document.getElementById("themeDot"),
-
-    tBg: document.getElementById("tBg"),
-    tCard: document.getElementById("tCard"),
-    tBorders: document.getElementById("tBorders"),
-    tText: document.getElementById("tText"),
-    tMuted: document.getElementById("tMuted"),
-    tSecondary: document.getElementById("tSecondary"),
-    tFields: document.getElementById("tFields"),
-    tAccent: document.getElementById("tAccent"),
-    tSecondarySoft: document.getElementById("tSecondarySoft"),
-    tPopPill: document.getElementById("tPopPill"),
-    tPopBtn: document.getElementById("tPopBtn"),
-    tPopPanel: document.getElementById("tPopPanel"),
-    resetTheme: document.getElementById("resetTheme"),
-
-    networkId: document.getElementById("networkId"),
-    userKey: document.getElementById("userKey"),
-    presetSelect: document.getElementById("presetSelect"),
-    presetName: document.getElementById("presetName"),
-    savePreset: document.getElementById("savePreset"),
-    applyPreset: document.getElementById("applyPreset"),
-    deletePreset: document.getElementById("deletePreset"),
-    copyPreset: document.getElementById("copyPreset"),
-    importPreset: document.getElementById("importPreset"),
   };
 
-  // -----------------------------
-  // In-widget confirm (no browser confirm)
-  // -----------------------------
-  async function askConfirm(message, { okText="OK", cancelText="Cancel", neutralText=null } = {}){
-    return new Promise((resolve) => {
-      const host = document.getElementById("widgetBoard");
-      const wrap = document.createElement("div");
-      wrap.style.position = "absolute";
-      wrap.style.inset = "0";
-      wrap.style.zIndex = "9999";
-      wrap.style.display = "grid";
-      wrap.style.placeItems = "center";
-      wrap.style.padding = "14px";
-      wrap.style.background = "rgba(20,18,16,.35)";
-      wrap.style.backdropFilter = "blur(8px)";
-      wrap.style.webkitBackdropFilter = "blur(8px)";
+  // ---------- Popover open/close ----------
+  els.bgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.bgPanel.classList.toggle("open");
+    els.themePanel.classList.remove("open");
+  });
+  els.themeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.themePanel.classList.toggle("open");
+    els.bgPanel.classList.remove("open");
+  });
+  document.addEventListener("click", (e) => {
+    if(els.bgPanel.classList.contains("open")){
+      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      if(!inside) els.bgPanel.classList.remove("open");
+    }
+    if(els.themePanel.classList.contains("open")){
+      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+      if(!inside) els.themePanel.classList.remove("open");
+    }
+  });
 
-      wrap.innerHTML = `
-        <div style="
-          width:min(520px,100%);
-          background:rgba(255,255,255,.92);
-          border:1px solid rgba(43,43,43,.14);
-          border-radius:20px;
-          box-shadow:0 12px 40px rgba(0,0,0,.12);
-          overflow:hidden;">
-          <div style="padding:14px 16px;border-bottom:1px solid rgba(43,43,43,.10);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:12px;">
-            Confirm
-          </div>
-          <div style="padding:14px 16px;line-height:1.45;color:rgba(43,43,43,.92);font-size:13px;">
-            ${String(message).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
-          </div>
-          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
-            padding:12px 16px;border-top:1px solid rgba(43,43,43,.10);">
-            <button class="btn" type="button" data-action="cancel">${cancelText}</button>
-            ${neutralText ? `<button class="btn" type="button" data-action="neutral">${neutralText}</button>` : ""}
-            <button class="btn primary" type="button" data-action="ok">${okText}</button>
-          </div>
-        </div>
-      `;
+  // ---------- Background (draft + apply) ----------
+  const defaultBg = () => ({ tint:"#efe7e1", strength:30, imageDataUrl:null });
 
-      const cleanup = (val) => { wrap.remove(); resolve(val); };
-
-      wrap.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-action]");
-        if (!btn) return;
-        const a = btn.getAttribute("data-action");
-        if (a === "ok") cleanup("ok");
-        if (a === "cancel") cleanup("cancel");
-        if (a === "neutral") cleanup("neutral");
-      });
-
-      host.style.position = "relative";
-      host.appendChild(wrap);
-      const ok = wrap.querySelector('button[data-action="ok"]');
-      setTimeout(() => ok && ok.focus(), 0);
-    });
+  function setBoardImage(dataUrlOrNull){
+    document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
   }
 
-  // -----------------------------
-  // Background module (persists immediately, but only bg/theme settings – not day data)
-  // -----------------------------
-  const BG_KEY = "diet_tracker_bg_v2";
-  const loadBg = async () => safeJsonParse(await storage.get(BG_KEY), null);
-  const saveBg = async (bg) => storage.set(BG_KEY, JSON.stringify(bg));
-
-  const setBoardImage = (dataUrlOrNull) => {
-    document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-  };
-
-  const applyBoardTint = (colorHex, strengthPct) => {
+  function applyBoardTint(colorHex, strengthPct){
     const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
     document.documentElement.style.setProperty("--board-tint", colorHex);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
-    els.bgDot.style.background = colorHex;
-    els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
-    els.boardTintEl.style.background = hexToRgba(colorHex, strength);
-  };
+    if (els.bgDot){
+      els.bgDot.style.background = colorHex;
+      els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
+      els.bgDot.style.borderColor = hexToRgba(themeDraft.borderHex, 0.75);
+    }
+    if (els.boardTintEl){
+      els.boardTintEl.style.background = hexToRgba(colorHex, strength);
+    }
+  }
 
-  const fileToDataUrl = (file) =>
-    new Promise((resolve, reject) => {
+  async function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
       const r = new FileReader();
       r.onload = () => resolve(String(r.result));
       r.onerror = reject;
       r.readAsDataURL(file);
     });
+  }
 
-  // -----------------------------
-  // Theme module (with presets/network)
-  // -----------------------------
-  const THEME_KEY = "diet_tracker_theme_v2";
+  let bgSaved = loadJSON(BG_KEY) || defaultBg();
+  let bgDraft = deepClone(bgSaved);
+
+  function syncBgInputs(){
+    els.bgColor.value = bgDraft.tint || "#efe7e1";
+    els.bgStrength.value = String(bgDraft.strength ?? 30);
+  }
+  function applyBgDraft(){
+    applyBoardTint(bgDraft.tint, bgDraft.strength);
+    setBoardImage(bgDraft.imageDataUrl || null);
+  }
+  function setBgStatus(msg){
+    els.bgStatus.textContent = msg || "";
+  }
+
+  syncBgInputs();
+  applyBgDraft();
+
+  els.bgColor.addEventListener("input", () => {
+    bgDraft.tint = els.bgColor.value;
+    applyBgDraft();
+    setBgStatus("");
+  });
+  els.bgStrength.addEventListener("input", () => {
+    bgDraft.strength = Number(els.bgStrength.value);
+    applyBgDraft();
+    setBgStatus("");
+  });
+  els.bgImage.addEventListener("change", async () => {
+    const file = els.bgImage.files && els.bgImage.files[0];
+    if(!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    bgDraft.imageDataUrl = dataUrl;
+    applyBgDraft();
+    setBgStatus("");
+  });
+  els.removeImage.addEventListener("click", () => {
+    bgDraft.imageDataUrl = null;
+    els.bgImage.value = "";
+    applyBgDraft();
+    setBgStatus("");
+  });
+  els.bgApply.addEventListener("click", () => {
+    bgSaved = deepClone(bgDraft);
+    saveJSON(BG_KEY, bgSaved);
+    setBgStatus("Background applied.");
+    toast("Background saved.");
+  });
+
+  // ---------- Theme (draft + apply) ----------
   const DEFAULT_THEME = {
     bg: "#ffffff",
-    card: "#ffffff",
-    borders: "#c9beb6",
+    cardBg: "#ffffff",
+    fieldBg: "#ffffff",
     text: "#1f1f1f",
     muted: "#6b625c",
-    secondary: "#e6d8cc",
-
-    fields: "#ffffff",
-    accent: "#c9beb6",
-    secondarySoft: "#e6d8cc",
-
-    popPill: "#ffffff",
-    popBtn: "#ffffff",
-    popPanel: "#ffffff",
+    borderHex: "#c9beb6",
+    stone: "#c9beb6",
+    cream: "#e6d8cc",
+    creamSoftHex: "#e6d8cc"
   };
 
-  const loadTheme = async () => safeJsonParse(await storage.get(THEME_KEY), null);
-  const saveTheme = async (t) => storage.set(THEME_KEY, JSON.stringify(t));
+  // Minimal override for remaining hard-coded whites
+  const injected = document.createElement("style");
+  injected.textContent = `
+    .btn{ background: var(--field-bg, #fff); border-color: var(--border); color: var(--text); }
+    .mini-btn{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--text); }
+    .pill{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--muted); }
+    .miniBox, .goalItem{ background: var(--field-bg, #fff); }
+    .icon-pill{ border-color: var(--borderSoft); }
+    .bg-btn{ border-color: var(--borderSoft); }
+  `;
+  document.head.appendChild(injected);
 
-  const applyTheme = (t) => {
-    const theme = { ...DEFAULT_THEME, ...(t || {}) };
+  let themeSaved = { ...DEFAULT_THEME, ...(loadJSON(THEME_KEY) || {}) };
+  let themeDraft = deepClone(themeSaved);
 
-    document.documentElement.style.setProperty("--bg", theme.bg);
-    document.documentElement.style.setProperty("--text", theme.text);
-    document.documentElement.style.setProperty("--muted", theme.muted);
+  function applyTheme(t){
+    const tt = { ...DEFAULT_THEME, ...(t || {}) };
 
-    document.documentElement.style.setProperty("--cream", theme.secondary);
-    document.documentElement.style.setProperty("--stone", theme.accent);
+    document.documentElement.style.setProperty("--bg", tt.bg);
+    document.documentElement.style.setProperty("--text", tt.text);
+    document.documentElement.style.setProperty("--muted", tt.muted);
 
-    document.documentElement.style.setProperty("--border", hexToRgba(theme.borders, 0.85));
-    document.documentElement.style.setProperty("--borderSoft", hexToRgba(theme.borders, 0.55));
-    document.documentElement.style.setProperty("--divider", hexToRgba(theme.borders, 0.35));
-    document.documentElement.style.setProperty("--focus", hexToRgba(theme.text, 0.18));
+    document.documentElement.style.setProperty("--stone", tt.stone);
+    document.documentElement.style.setProperty("--cream", tt.cream);
 
-    document.documentElement.style.setProperty("--creamSoft", hexToRgba(theme.secondarySoft, 0.20));
-    document.documentElement.style.setProperty("--card-bg", hexToRgba(theme.card, 0.88));
-    document.documentElement.style.setProperty("--field-bg", theme.fields);
+    document.documentElement.style.setProperty("--border", hexToRgba(tt.borderHex, 0.85));
+    document.documentElement.style.setProperty("--borderSoft", hexToRgba(tt.borderHex, 0.55));
 
-    document.documentElement.style.setProperty("--popover-pill-bg", hexToRgba(theme.popPill, 0.80));
-    document.documentElement.style.setProperty("--popover-btn-bg", hexToRgba(theme.popBtn, 0.95));
-    document.documentElement.style.setProperty("--popover-panel-bg", hexToRgba(theme.popPanel, 0.92));
+    document.documentElement.style.setProperty("--creamSoft", hexToRgba(tt.creamSoftHex, 0.20));
+    document.documentElement.style.setProperty("--card-bg", hexToRgba(tt.cardBg, 0.88));
+    document.documentElement.style.setProperty("--field-bg", tt.fieldBg);
 
-    // dot preview
-    els.themeDot.style.background = theme.text;
-    els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(theme.borders, 0.25)}`;
-    els.themeDot.style.borderColor = hexToRgba(theme.borders, 0.75);
-  };
-
-  // Presets store (networked)
-  const NETWORK_KEY = "diet_tracker_network_id_v1";
-  const USER_KEY = "diet_tracker_user_key_v1";
-
-  const presetStorageKey = (networkId) => `notion_widget_theme_presets_v1__${networkId || "default"}`;
-
-  async function loadPresets(networkId){
-    return safeJsonParse(await storage.get(presetStorageKey(networkId)), { presets: [] }) || { presets: [] };
-  }
-  async function savePresets(networkId, obj){
-    await storage.set(presetStorageKey(networkId), JSON.stringify(obj));
-  }
-  function refreshPresetSelect(presets){
-    const cur = els.presetSelect.value;
-    els.presetSelect.innerHTML = "";
-    if (!presets.length){
-      const o = document.createElement("option");
-      o.value = "";
-      o.textContent = "No presets";
-      els.presetSelect.appendChild(o);
-      return;
+    if(els.themeDot){
+      els.themeDot.style.background = tt.text;
+      els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tt.borderHex, 0.25)}`;
+      els.themeDot.style.borderColor = hexToRgba(tt.borderHex, 0.75);
     }
-    presets.forEach(p => {
-      const o = document.createElement("option");
-      o.value = p.id;
-      o.textContent = p.name || "Untitled preset";
-      els.presetSelect.appendChild(o);
-    });
-    if ([...els.presetSelect.options].some(o => o.value === cur)) els.presetSelect.value = cur;
+
+    // keep bg dot border consistent with theme border
+    if(els.bgDot){
+      els.bgDot.style.borderColor = hexToRgba(tt.borderHex, 0.75);
+    }
+  }
+
+  function syncThemeInputs(){
+    els.tWidgetBg.value = themeDraft.bg;
+    els.tCardBg.value = themeDraft.cardBg;
+    els.tFieldBg.value = themeDraft.fieldBg;
+    els.tText.value = themeDraft.text;
+    els.tMuted.value = themeDraft.muted;
+    els.tBorder.value = themeDraft.borderHex;
+    els.tStone.value = themeDraft.stone;
+    els.tCream.value = themeDraft.cream;
+    els.tCreamSoft.value = themeDraft.creamSoftHex;
   }
 
   function readThemeFromUI(){
     return {
-      bg: els.tBg.value,
-      card: els.tCard.value,
-      borders: els.tBorders.value,
+      bg: els.tWidgetBg.value,
+      cardBg: els.tCardBg.value,
+      fieldBg: els.tFieldBg.value,
       text: els.tText.value,
       muted: els.tMuted.value,
-      secondary: els.tSecondary.value,
-
-      fields: els.tFields.value,
-      accent: els.tAccent.value,
-      secondarySoft: els.tSecondarySoft.value,
-
-      popPill: els.tPopPill.value,
-      popBtn: els.tPopBtn.value,
-      popPanel: els.tPopPanel.value,
+      borderHex: els.tBorder.value,
+      stone: els.tStone.value,
+      cream: els.tCream.value,
+      creamSoftHex: els.tCreamSoft.value
     };
   }
 
-  function writeThemeToUI(t){
-    const theme = { ...DEFAULT_THEME, ...(t || {}) };
-    els.tBg.value = theme.bg;
-    els.tCard.value = theme.card;
-    els.tBorders.value = theme.borders;
-    els.tText.value = theme.text;
-    els.tMuted.value = theme.muted;
-    els.tSecondary.value = theme.secondary;
-    els.tFields.value = theme.fields;
-    els.tAccent.value = theme.accent;
-    els.tSecondarySoft.value = theme.secondarySoft;
-    els.tPopPill.value = theme.popPill;
-    els.tPopBtn.value = theme.popBtn;
-    els.tPopPanel.value = theme.popPanel;
+  syncThemeInputs();
+  applyTheme(themeDraft);
+  applyBoardTint(bgDraft.tint, bgDraft.strength);
+
+  function onThemeDraftChange(){
+    themeDraft = { ...DEFAULT_THEME, ...readThemeFromUI() };
+    applyTheme(themeDraft);
+    // refresh bg dot visuals too
+    applyBoardTint(bgDraft.tint, bgDraft.strength);
+    setPresetStatus("");
   }
 
-  // -----------------------------
-  // App (SAVE-based persistence)
-  // -----------------------------
+  [
+    els.tWidgetBg, els.tCardBg, els.tFieldBg,
+    els.tText, els.tMuted,
+    els.tBorder, els.tStone, els.tCream, els.tCreamSoft
+  ].forEach(el => el.addEventListener("input", onThemeDraftChange));
+
+  els.themeApply.addEventListener("click", () => {
+    themeSaved = deepClone(themeDraft);
+    saveJSON(THEME_KEY, themeSaved);
+    toast("Theme saved.");
+    setPresetStatus("Theme applied.");
+  });
+
+  els.resetTheme.addEventListener("click", () => {
+    themeDraft = deepClone(DEFAULT_THEME);
+    syncThemeInputs();
+    applyTheme(themeDraft);
+
+    themeSaved = deepClone(themeDraft);
+    saveJSON(THEME_KEY, themeSaved);
+
+    applyBoardTint(bgDraft.tint, bgDraft.strength);
+    toast("Theme reset.");
+    setPresetStatus("Theme reset.");
+  });
+
+  // ---------- Presets (theme + bg) ----------
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+  function loadPresets(){
+    const list = loadJSON(PRESETS_KEY);
+    return Array.isArray(list) ? list : [];
+  }
+  function savePresets(list){
+    saveJSON(PRESETS_KEY, list);
+  }
+  function setPresetStatus(msg){
+    if(!els.presetStatus) return;
+    els.presetStatus.textContent = msg || "";
+  }
+  function refreshPresetSelect(){
+    const list = loadPresets();
+    const cur = els.presetSelect.value;
+    els.presetSelect.innerHTML = `<option value="">—</option>`;
+    for(const p of list){
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled";
+      els.presetSelect.appendChild(opt);
+    }
+    if(cur) els.presetSelect.value = cur;
+  }
+
+  async function copyText(text){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch{}
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.style.top = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return !!ok;
+    }catch{
+      return false;
+    }
+  }
+
+  refreshPresetSelect();
+
+  els.presetSave.addEventListener("click", () => {
+    const name = (els.presetName.value || "").trim();
+    if(!name){
+      setPresetStatus("Type a preset name first.");
+      return;
+    }
+    const list = loadPresets();
+    const entry = {
+      id: uid(),
+      name,
+      theme: deepClone(themeDraft),
+      bg: deepClone(bgDraft)
+    };
+    list.unshift(entry);
+    savePresets(list);
+    els.presetName.value = "";
+    refreshPresetSelect();
+    els.presetSelect.value = entry.id;
+    setPresetStatus("Preset saved.");
+    toast("Preset saved.");
+  });
+
+  els.presetApply.addEventListener("click", () => {
+    const id = els.presetSelect.value;
+    if(!id){
+      setPresetStatus("Choose a preset first.");
+      return;
+    }
+    const list = loadPresets();
+    const p = list.find(x => x.id === id);
+    if(!p){
+      setPresetStatus("Preset not found.");
+      return;
+    }
+
+    // load into drafts
+    bgDraft = { ...defaultBg(), ...(p.bg || {}) };
+    themeDraft = { ...DEFAULT_THEME, ...(p.theme || {}) };
+
+    // sync UI
+    syncBgInputs();
+    syncThemeInputs();
+
+    // apply visuals
+    applyTheme(themeDraft);
+    applyBgDraft();
+
+    // persist immediately (preset apply is a deliberate change)
+    bgSaved = deepClone(bgDraft);
+    themeSaved = deepClone(themeDraft);
+    saveJSON(BG_KEY, bgSaved);
+    saveJSON(THEME_KEY, themeSaved);
+
+    setPresetStatus("Preset applied.");
+    toast("Preset applied.");
+  });
+
+  els.presetDelete.addEventListener("click", async () => {
+    const id = els.presetSelect.value;
+    if(!id){
+      setPresetStatus("Choose a preset first.");
+      return;
+    }
+    const ok = await askConfirm("Delete this preset?", { okText:"Delete", cancelText:"Cancel", danger:true });
+    if(!ok) return;
+
+    let list = loadPresets();
+    const before = list.length;
+    list = list.filter(x => x.id !== id);
+    if(list.length === before){
+      setPresetStatus("Preset not found.");
+      return;
+    }
+    savePresets(list);
+    refreshPresetSelect();
+    els.presetSelect.value = "";
+    setPresetStatus("Preset deleted.");
+    toast("Preset deleted.");
+  });
+
+  els.presetCopy.addEventListener("click", async () => {
+    const list = loadPresets();
+    const payload = JSON.stringify(list, null, 2);
+    const ok = await copyText(payload);
+    if(ok){
+      setPresetStatus("Presets JSON copied.");
+      toast("Copied presets JSON.");
+    }else{
+      setPresetStatus("Could not copy. Use the import box below to manually copy.");
+      els.presetImport.value = payload;
+      els.presetImport.focus();
+      els.presetImport.select();
+    }
+  });
+
+  els.presetImportBtn.addEventListener("click", async () => {
+    const raw = (els.presetImport.value || "").trim();
+    if(!raw){
+      setPresetStatus("Paste presets JSON first.");
+      return;
+    }
+    try{
+      const parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed)){
+        setPresetStatus("That JSON doesn’t look like a presets list.");
+        return;
+      }
+      const cleaned = parsed
+        .filter(Boolean)
+        .map((p)=>({
+          id: String(p.id || uid()),
+          name: String(p.name || "Imported"),
+          theme: { ...DEFAULT_THEME, ...(p.theme || {}) },
+          bg: { ...defaultBg(), ...(p.bg || {}) }
+        }));
+      savePresets(cleaned);
+      refreshPresetSelect();
+      setPresetStatus("Presets imported.");
+      toast("Presets imported.");
+    }catch{
+      setPresetStatus("Invalid JSON.");
+    }
+  });
+
+  // ---------- App logic (draft day data + save/revert) ----------
   const MEALS = [
     { id:"breakfast", label:"Breakfast" },
     { id:"lunch", label:"Lunch" },
     { id:"snack", label:"Snack" },
     { id:"dinner", label:"Dinner" }
   ];
+
   const FULLNESS_OPTIONS = [
     { id:"hungry", label:"Hungry" },
     { id:"neutral", label:"Neutral" },
@@ -1238,104 +1566,105 @@
     const meals = {};
     MEALS.forEach(m => meals[m.id] = {
       name: "",
-      tag: "",
       calories: 0,
       protein: 0,
       carbs: 0,
       fiber: 0,
-      fullness: ""
+      fullness: "",
+      tag: ""
     });
+
     return {
-      goals: { calories: 0, protein: 0, custom: [] },
+      goals: {
+        calories: 0,
+        protein: 0,
+        custom: []
+      },
       meals
     };
   }
 
-  // Namespacing:
-  // - userKey separates users on same origin
-  // - dateKey separates days
-  function dayKey(userKey, date){
-    return `diet_tracker_day_v2__${userKey}__${isoDay(date)}`;
+  function keyFor(date){ return DAY_PREFIX + isoDay(date); }
+
+  function loadDay(date){
+    const raw = window.__DT__.get(keyFor(date));
+    if(!raw) return defaultDayData();
+    try{
+      const parsed = JSON.parse(raw);
+      const base = defaultDayData();
+
+      base.goals.calories = Number(parsed?.goals?.calories || 0);
+      base.goals.protein = Number(parsed?.goals?.protein || 0);
+      base.goals.custom = Array.isArray(parsed?.goals?.custom) ? parsed.goals.custom : [];
+
+      MEALS.forEach(m => {
+        const src = parsed?.meals?.[m.id] || {};
+        base.meals[m.id] = {
+          name: String(src.name || ""),
+          calories: Number(src.calories || 0),
+          protein: Number(src.protein || 0),
+          carbs: Number(src.carbs || 0),
+          fiber: Number(src.fiber || 0),
+          fullness: String(src.fullness || ""),
+          tag: String(src.tag || "")
+        };
+      });
+      return base;
+    }catch{
+      window.__DT__.remove(keyFor(date));
+      return defaultDayData();
+    }
   }
 
-  async function loadDay(userKey, date){
-    const raw = await storage.get(dayKey(userKey, date));
-    if (!raw) return defaultDayData();
-    const parsed = safeJsonParse(raw, null);
-    if (!parsed) return defaultDayData();
-
-    const base = defaultDayData();
-    base.goals.calories = Number(parsed?.goals?.calories || 0);
-    base.goals.protein = Number(parsed?.goals?.protein || 0);
-    base.goals.custom = Array.isArray(parsed?.goals?.custom) ? parsed.goals.custom : [];
-
-    MEALS.forEach(m => {
-      const src = parsed?.meals?.[m.id] || {};
-      base.meals[m.id] = {
-        name: String(src.name || ""),
-        tag: String(src.tag || ""),
-        calories: Number(src.calories || 0),
-        protein: Number(src.protein || 0),
-        carbs: Number(src.carbs || 0),
-        fiber: Number(src.fiber || 0),
-        fullness: String(src.fullness || "")
-      };
-    });
-    return base;
+  function saveDay(date, data){
+    window.__DT__.set(keyFor(date), JSON.stringify(data));
   }
 
-  async function saveDay(userKey, date, data){
-    await storage.set(dayKey(userKey, date), JSON.stringify(data));
-  }
+  // State: saved + draft
+  let current = new Date();
+  current.setHours(0,0,0,0);
 
-  async function clearDay(userKey, date){
-    await storage.del(dayKey(userKey, date));
-  }
-
-  // Working state:
-  // - savedData is what is persisted
-  // - draftData is what UI edits change
-  let current = new Date(); current.setHours(0,0,0,0);
-  let userKey = null;
-  let savedData = null;
-  let draftData = null;
-  let isDirty = false;
+  let saved = loadDay(current);
+  let draft = deepClone(saved);
+  let dirty = false;
 
   function setDirty(val){
-    isDirty = !!val;
-    els.saveDot.classList.toggle("dirty", isDirty);
-    els.saveText.textContent = isDirty ? "Unsaved" : "Saved";
-    els.saveDot.className = "dotTiny" + (isDirty ? " dirty" : "");
+    dirty = !!val;
+    if(els.dirtyBadge){
+      if(dirty){
+        els.dirtyBadge.style.display = "inline-flex";
+        els.dirtyBadge.classList.add("dirty");
+        els.dirtyBadge.textContent = "Unsaved";
+      }else{
+        els.dirtyBadge.style.display = "none";
+        els.dirtyBadge.classList.remove("dirty");
+      }
+    }
   }
 
-  function deepClone(obj){
-    return structuredClone ? structuredClone(obj) : JSON.parse(JSON.stringify(obj));
+  function markDirty(){
+    if(!dirty) setDirty(true);
   }
 
-  function computeTotals(data){
-    let cal=0,p=0,c=0,f=0;
+  function updateTotals(){
+    let cal = 0, p = 0, c = 0, f = 0;
     MEALS.forEach(m => {
-      const it = data.meals[m.id];
+      const it = draft.meals[m.id];
       cal += Number(it.calories || 0);
       p += Number(it.protein || 0);
       c += Number(it.carbs || 0);
       f += Number(it.fiber || 0);
     });
-    return { cal, p, c, f };
-  }
-
-  function renderTotals(){
-    const { cal, p, c, f } = computeTotals(draftData);
 
     els.calTotalEl.textContent = String(Math.round(cal));
     els.proteinTotalEl.textContent = String(Math.round(p));
     els.carbTotalEl.textContent = String(Math.round(c));
     els.fiberTotalEl.textContent = String(Math.round(f));
 
-    const calGoal = Number(draftData.goals.calories || 0);
-    const pGoal = Number(draftData.goals.protein || 0);
+    const calGoal = Number(draft.goals.calories || 0);
+    const pGoal = Number(draft.goals.protein || 0);
 
-    if (calGoal > 0){
+    if(calGoal > 0){
       const pct = clampPct((cal / calGoal) * 100);
       els.calBar.style.width = pct + "%";
       els.calHint.textContent = `${Math.round(cal)} / ${Math.round(calGoal)} kcal`;
@@ -1344,7 +1673,7 @@
       els.calHint.textContent = "Set a calorie goal to see progress.";
     }
 
-    if (pGoal > 0){
+    if(pGoal > 0){
       const pct = clampPct((p / pGoal) * 100);
       els.proteinBar.style.width = pct + "%";
       els.proteinHint.textContent = `${Math.round(p)} / ${Math.round(pGoal)} g protein`;
@@ -1367,7 +1696,7 @@
     inp.placeholder = "0";
     inp.value = value ? String(value) : "";
 
-    inp.addEventListener("input", () => { onChange(Number(inp.value || 0)); setDirty(true); renderTotals(); });
+    inp.addEventListener("input", () => onChange(Number(inp.value || 0)));
 
     c.appendChild(l);
     c.appendChild(inp);
@@ -1376,7 +1705,7 @@
 
   function renderCustomGoals(){
     els.goalList.innerHTML = "";
-    const custom = draftData.goals.custom || [];
+    const custom = draft.goals.custom || [];
 
     if(custom.length === 0){
       const p = document.createElement("p");
@@ -1398,7 +1727,10 @@
       name.className = "input";
       name.type = "text";
       name.value = g.name || "";
-      name.addEventListener("input", () => { g.name = name.value; setDirty(true); });
+      name.addEventListener("input", () => {
+        g.name = name.value;
+        markDirty();
+      });
       nameWrap.appendChild(ln);
       nameWrap.appendChild(name);
 
@@ -1412,7 +1744,10 @@
       val.min = "0";
       val.placeholder = "0";
       val.value = (g.value && Number(g.value) !== 0) ? String(g.value) : "";
-      val.addEventListener("input", () => { g.value = Number(val.value || 0); setDirty(true); renderTotals(); });
+      val.addEventListener("input", () => {
+        g.value = Number(val.value || 0);
+        markDirty();
+      });
       valWrap.appendChild(lv);
       valWrap.appendChild(val);
 
@@ -1422,8 +1757,8 @@
       del.title = "Remove goal";
       del.textContent = "✕";
       del.addEventListener("click", () => {
-        draftData.goals.custom = (draftData.goals.custom || []).filter(x => x.id !== g.id);
-        setDirty(true);
+        draft.goals.custom = (draft.goals.custom || []).filter(x => x.id !== g.id);
+        markDirty();
         renderCustomGoals();
       });
 
@@ -1436,7 +1771,7 @@
   }
 
   function renderMeal(mealId, label){
-    const item = draftData.meals[mealId];
+    const item = draft.meals[mealId];
 
     const wrap = document.createElement("div");
     wrap.className = "meal";
@@ -1450,7 +1785,7 @@
 
     const status = document.createElement("div");
     status.className = "pill";
-    status.textContent = item.name.trim() ? "Edited" : "Empty";
+    status.textContent = item.name.trim() ? "Added" : "Empty";
 
     top.appendChild(title);
     top.appendChild(status);
@@ -1459,6 +1794,7 @@
     const row = document.createElement("div");
     row.className = "row";
 
+    // meal name
     const c1 = document.createElement("div");
     const l1 = document.createElement("label");
     l1.className = "label";
@@ -1469,15 +1805,16 @@
     inpName.value = item.name;
 
     inpName.addEventListener("input", () => {
-      draftData.meals[mealId].name = inpName.value;
-      status.textContent = inpName.value.trim() ? "Edited" : "Empty";
-      setDirty(true);
-      renderTotals();
+      draft.meals[mealId].name = inpName.value;
+      status.textContent = inpName.value.trim() ? "Added" : "Empty";
+      markDirty();
+      updateTotals();
     });
 
     c1.appendChild(l1);
     c1.appendChild(inpName);
 
+    // nutrient tag
     const c2 = document.createElement("div");
     const l2 = document.createElement("label");
     l2.className = "label";
@@ -1485,6 +1822,7 @@
     const sel = document.createElement("select");
     sel.className = "select";
 
+    const currentTag = draft.meals[mealId].tag || "";
     const opts = [
       { v:"", t:"Select…" },
       { v:"protein", t:"Protein" },
@@ -1497,18 +1835,19 @@
       const op = document.createElement("option");
       op.value = o.v;
       op.textContent = o.t;
-      if(o.v === (item.tag || "")) op.selected = true;
+      if(o.v === currentTag) op.selected = true;
       sel.appendChild(op);
     });
 
     sel.addEventListener("change", () => {
-      draftData.meals[mealId].tag = sel.value;
-      setDirty(true);
+      draft.meals[mealId].tag = sel.value;
+      markDirty();
     });
 
     c2.appendChild(l2);
     c2.appendChild(sel);
 
+    // calories
     const c3 = document.createElement("div");
     const l3 = document.createElement("label");
     l3.className = "label";
@@ -1521,9 +1860,9 @@
     inpCal.value = item.calories ? String(item.calories) : "";
 
     inpCal.addEventListener("input", () => {
-      draftData.meals[mealId].calories = Number(inpCal.value || 0);
-      setDirty(true);
-      renderTotals();
+      draft.meals[mealId].calories = Number(inpCal.value || 0);
+      markDirty();
+      updateTotals();
     });
 
     c3.appendChild(l3);
@@ -1532,18 +1871,17 @@
     row.appendChild(c1);
     row.appendChild(c2);
     row.appendChild(c3);
-
     wrap.appendChild(row);
 
+    // macros
     const row2 = document.createElement("div");
     row2.className = "row2";
-
-    row2.appendChild(macroField("Protein (g)", item.protein, (v)=>{ draftData.meals[mealId].protein = v; }));
-    row2.appendChild(macroField("Carbs (g)", item.carbs, (v)=>{ draftData.meals[mealId].carbs = v; }));
-    row2.appendChild(macroField("Fiber (g)", item.fiber, (v)=>{ draftData.meals[mealId].fiber = v; }));
-
+    row2.appendChild(macroField("Protein (g)", item.protein, (v)=>{ draft.meals[mealId].protein = v; markDirty(); updateTotals(); }));
+    row2.appendChild(macroField("Carbs (g)", item.carbs, (v)=>{ draft.meals[mealId].carbs = v; markDirty(); updateTotals(); }));
+    row2.appendChild(macroField("Fiber (g)", item.fiber, (v)=>{ draft.meals[mealId].fiber = v; markDirty(); updateTotals(); }));
     wrap.appendChild(row2);
 
+    // fullness
     const full = document.createElement("div");
     full.style.marginTop = "10px";
 
@@ -1563,13 +1901,13 @@
       b.dataset.active = String(item.fullness === o.id);
 
       b.addEventListener("click", () => {
-        const cur = draftData.meals[mealId].fullness;
-        draftData.meals[mealId].fullness = (cur === o.id) ? "" : o.id;
+        const cur = draft.meals[mealId].fullness;
+        draft.meals[mealId].fullness = (cur === o.id) ? "" : o.id;
 
         Array.from(chips.querySelectorAll(".chip")).forEach(x => x.dataset.active = "false");
-        if(draftData.meals[mealId].fullness === o.id) b.dataset.active = "true";
+        if(draft.meals[mealId].fullness === o.id) b.dataset.active = "true";
 
-        setDirty(true);
+        markDirty();
       });
 
       chips.appendChild(b);
@@ -1578,369 +1916,124 @@
     full.appendChild(chips);
     wrap.appendChild(full);
 
+    const note = document.createElement("div");
+    note.className = "mini";
+    wrap.appendChild(note);
+
     return wrap;
   }
 
-  function renderAll(){
+  function render(){
     els.dayMeta.textContent = niceDay(current);
 
-    // bind goal inputs from draft
-    els.goalCalories.value = draftData.goals.calories ? String(draftData.goals.calories) : "";
-    els.goalProtein.value = draftData.goals.protein ? String(draftData.goals.protein) : "";
+    els.goalCalories.value = draft.goals.calories ? String(draft.goals.calories) : "";
+    els.goalProtein.value = draft.goals.protein ? String(draft.goals.protein) : "";
 
     els.mealList.innerHTML = "";
     MEALS.forEach(m => els.mealList.appendChild(renderMeal(m.id, m.label)));
 
     renderCustomGoals();
-    renderTotals();
+    updateTotals();
   }
 
-  // -----------------------------
-  // Save/Discard mechanics
-  // -----------------------------
-  async function doSave(){
-    savedData = deepClone(draftData);
-    await saveDay(userKey, current, savedData);
-    setDirty(false);
-  }
-
-  function doDiscard(){
-    draftData = deepClone(savedData);
-    setDirty(false);
-    renderAll();
-  }
-
-  async function ensureSafeToNavigate(){
-    if (!isDirty) return true;
-
-    const res = await askConfirm("You have unsaved changes. Save them?", { okText: "Save", neutralText: "Discard", cancelText: "Cancel" });
-    if (res === "ok"){
-      await doSave();
-      return true;
-    }
-    if (res === "neutral"){
-      doDiscard();
-      return true;
-    }
-    return false;
-  }
-
-  // -----------------------------
-  // Events: goals/inputs (draft only)
-  // -----------------------------
+  // Goal handlers (draft-only)
   els.goalCalories.addEventListener("input", () => {
-    draftData.goals.calories = Number(els.goalCalories.value || 0);
-    setDirty(true);
-    renderTotals();
+    draft.goals.calories = Number(els.goalCalories.value || 0);
+    markDirty();
+    updateTotals();
   });
   els.goalProtein.addEventListener("input", () => {
-    draftData.goals.protein = Number(els.goalProtein.value || 0);
-    setDirty(true);
-    renderTotals();
+    draft.goals.protein = Number(els.goalProtein.value || 0);
+    markDirty();
+    updateTotals();
   });
 
   els.addGoalBtn.addEventListener("click", () => {
     const name = (els.newGoalName.value || "").trim();
     if(!name) return;
-    draftData.goals.custom = draftData.goals.custom || [];
-    draftData.goals.custom.push({ id: uid(), name, value: 0 });
+
+    const id = "g_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+    draft.goals.custom = draft.goals.custom || [];
+    draft.goals.custom.push({ id, name, value: 0 });
+
     els.newGoalName.value = "";
-    setDirty(true);
+    markDirty();
     renderCustomGoals();
   });
 
   els.newGoalName.addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){ e.preventDefault(); els.addGoalBtn.click(); }
+    if(e.key === "Enter"){
+      e.preventDefault();
+      els.addGoalBtn.click();
+    }
   });
 
-  // Save button
-  els.saveBtn.addEventListener("click", async () => { await doSave(); });
+  // Save / Revert / Clear
+  els.saveDayBtn.addEventListener("click", () => {
+    saved = deepClone(draft);
+    saveDay(current, saved);
+    setDirty(false);
+    toast("Day saved.");
+  });
 
-  // Day navigation
+  els.revertDayBtn.addEventListener("click", async () => {
+    if(!dirty){
+      toast("Nothing to revert.");
+      return;
+    }
+    const ok = await askConfirm("Discard unsaved changes for this day?", { okText:"Revert", cancelText:"Cancel", danger:true });
+    if(!ok) return;
+    draft = deepClone(saved);
+    setDirty(false);
+    render();
+    toast("Reverted.");
+  });
+
+  els.clearDayBtn.addEventListener("click", async () => {
+    const ok = await askConfirm("Clear saved data for this day? This cannot be undone.", { okText:"Clear", cancelText:"Cancel", danger:true });
+    if(!ok) return;
+
+    window.__DT__.remove(keyFor(current));
+    saved = defaultDayData();
+    draft = deepClone(saved);
+    setDirty(false);
+    render();
+    toast("Day cleared.");
+  });
+
+  // Day navigation (with unsaved-change guard)
   async function go(deltaDays){
-    const ok = await ensureSafeToNavigate();
-    if (!ok) return;
+    if(dirty){
+      const ok = await askConfirm(
+        "You have unsaved changes. Save before switching days?",
+        { title:"Unsaved changes", okText:"Save & switch", cancelText:"Discard & switch" }
+      );
+      if(ok){
+        saved = deepClone(draft);
+        saveDay(current, saved);
+        setDirty(false);
+      }else{
+        // discard
+        draft = deepClone(saved);
+        setDirty(false);
+      }
+    }
 
     current = new Date(current.getTime() + deltaDays * 86400000);
     current.setHours(0,0,0,0);
-    savedData = await loadDay(userKey, current);
-    draftData = deepClone(savedData);
+    saved = loadDay(current);
+    draft = deepClone(saved);
     setDirty(false);
-    renderAll();
+    render();
   }
+
   els.prevDayBtn.addEventListener("click", () => go(-1));
   els.nextDayBtn.addEventListener("click", () => go(1));
 
-  // Clear day (explicit destructive action)
-  els.clearDayBtn.addEventListener("click", async () => {
-    const res = await askConfirm("Clear this day? This cannot be undone.", { okText: "Clear", cancelText: "Cancel" });
-    if (res !== "ok") return;
-
-    await clearDay(userKey, current);
-    savedData = await loadDay(userKey, current);
-    draftData = deepClone(savedData);
-    setDirty(false);
-    renderAll();
-  });
-
-  // -----------------------------
-  // Popover open/close (in-widget)
-  // -----------------------------
-  function closePanels(){
-    els.bgPanel.classList.remove("open");
-    els.themePanel.classList.remove("open");
-  }
-
-  els.bgBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    els.bgPanel.classList.toggle("open");
-    els.themePanel.classList.remove("open");
-  });
-
-  els.themeBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    els.themePanel.classList.toggle("open");
-    els.bgPanel.classList.remove("open");
-  });
-
-  document.addEventListener("click", (e) => {
-    const bgOpen = els.bgPanel.classList.contains("open");
-    const thOpen = els.themePanel.classList.contains("open");
-
-    if (bgOpen){
-      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      if (!inside) els.bgPanel.classList.remove("open");
-    }
-    if (thOpen){
-      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-      if (!inside) els.themePanel.classList.remove("open");
-    }
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closePanels();
-  });
-
-  // -----------------------------
-  // Background handlers (persist immediately)
-  // -----------------------------
-  let bgState = { tint:"#efe7e1", strength:30, imageDataUrl:null };
-
-  async function initBg(){
-    const loaded = await loadBg();
-    if (loaded && typeof loaded === "object") bgState = { ...bgState, ...loaded };
-
-    els.bgColor.value = bgState.tint;
-    els.bgStrength.value = String(bgState.strength);
-
-    applyBoardTint(bgState.tint, bgState.strength);
-    setBoardImage(bgState.imageDataUrl);
-
-    els.bgColor.addEventListener("input", async () => {
-      bgState.tint = els.bgColor.value;
-      applyBoardTint(bgState.tint, els.bgStrength.value);
-      await saveBg(bgState);
-    });
-
-    els.bgStrength.addEventListener("input", async () => {
-      bgState.strength = Number(els.bgStrength.value);
-      applyBoardTint(bgState.tint, bgState.strength);
-      await saveBg(bgState);
-    });
-
-    els.bgImage.addEventListener("change", async () => {
-      const file = els.bgImage.files && els.bgImage.files[0];
-      if(!file) return;
-      const dataUrl = await fileToDataUrl(file);
-      bgState.imageDataUrl = dataUrl;
-      setBoardImage(dataUrl);
-      await saveBg(bgState);
-    });
-
-    els.removeImage.addEventListener("click", async () => {
-      bgState.imageDataUrl = null;
-      setBoardImage(null);
-      els.bgImage.value = "";
-      await saveBg(bgState);
-    });
-  }
-
-  // -----------------------------
-  // Theme handlers (persist immediately) + presets/network
-  // -----------------------------
-  let themeState = { ...DEFAULT_THEME };
-
-  async function initTheme(){
-    const loaded = await loadTheme();
-    themeState = { ...DEFAULT_THEME, ...(loaded || {}) };
-    writeThemeToUI(themeState);
-    applyTheme(themeState);
-
-    // Load network + user key
-    const net = (await storage.get(NETWORK_KEY)) || "default";
-    els.networkId.value = String(net);
-
-    let u = await storage.get(USER_KEY);
-    if (!u){
-      u = "user_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
-      await storage.set(USER_KEY, u);
-    }
-    userKey = u;
-    els.userKey.value = userKey;
-
-    // If user edits userKey, we switch namespace (and reload current day)
-    els.userKey.addEventListener("change", async () => {
-      const next = (els.userKey.value || "").trim();
-      if (!next){
-        // revert to stored stable
-        els.userKey.value = userKey;
-        return;
-      }
-      if (isDirty){
-        const ok = await ensureSafeToNavigate();
-        if (!ok){
-          els.userKey.value = userKey;
-          return;
-        }
-      }
-      userKey = next;
-      await storage.set(USER_KEY, userKey);
-      savedData = await loadDay(userKey, current);
-      draftData = deepClone(savedData);
-      setDirty(false);
-      renderAll();
-    });
-
-    // Network change (affects presets list)
-    const loadAndRefreshPresets = async () => {
-      const networkId = (els.networkId.value || "default").trim() || "default";
-      await storage.set(NETWORK_KEY, networkId);
-      const ps = await loadPresets(networkId);
-      refreshPresetSelect(ps.presets || []);
-    };
-
-    els.networkId.addEventListener("change", loadAndRefreshPresets);
-    await loadAndRefreshPresets();
-
-    const onThemeInput = async () => {
-      themeState = readThemeFromUI();
-      applyTheme(themeState);
-      await saveTheme(themeState);
-      // keep bg dot shadow consistent
-      applyBoardTint(bgState.tint, bgState.strength);
-    };
-
-    [
-      els.tBg, els.tCard, els.tBorders, els.tText, els.tMuted, els.tSecondary,
-      els.tFields, els.tAccent, els.tSecondarySoft,
-      els.tPopPill, els.tPopBtn, els.tPopPanel
-    ].forEach(el => el.addEventListener("input", onThemeInput));
-
-    els.resetTheme.addEventListener("click", async () => {
-      themeState = { ...DEFAULT_THEME };
-      writeThemeToUI(themeState);
-      applyTheme(themeState);
-      await saveTheme(themeState);
-      applyBoardTint(bgState.tint, bgState.strength);
-    });
-
-    // Preset buttons
-    els.savePreset.addEventListener("click", async () => {
-      const networkId = (els.networkId.value || "default").trim() || "default";
-      const name = (els.presetName.value || "").trim();
-      if (!name){
-        await askConfirm("Give the preset a name first.", { okText: "OK", cancelText: "Close" });
-        return;
-      }
-      const ps = await loadPresets(networkId);
-      const preset = { id: uid(), name, theme: readThemeFromUI(), createdAt: Date.now() };
-      ps.presets = Array.isArray(ps.presets) ? ps.presets : [];
-      ps.presets.unshift(preset);
-      await savePresets(networkId, ps);
-      refreshPresetSelect(ps.presets);
-      els.presetSelect.value = preset.id;
-      els.presetName.value = "";
-    });
-
-    els.applyPreset.addEventListener("click", async () => {
-      const networkId = (els.networkId.value || "default").trim() || "default";
-      const id = els.presetSelect.value;
-      if (!id) return;
-      const ps = await loadPresets(networkId);
-      const p = (ps.presets || []).find(x => x.id === id);
-      if (!p) return;
-      themeState = { ...DEFAULT_THEME, ...(p.theme || {}) };
-      writeThemeToUI(themeState);
-      applyTheme(themeState);
-      await saveTheme(themeState);
-      applyBoardTint(bgState.tint, bgState.strength);
-    });
-
-    els.deletePreset.addEventListener("click", async () => {
-      const networkId = (els.networkId.value || "default").trim() || "default";
-      const id = els.presetSelect.value;
-      if (!id) return;
-      const res = await askConfirm("Delete this preset?", { okText:"Delete", cancelText:"Cancel" });
-      if (res !== "ok") return;
-
-      const ps = await loadPresets(networkId);
-      ps.presets = (ps.presets || []).filter(x => x.id !== id);
-      await savePresets(networkId, ps);
-      refreshPresetSelect(ps.presets || []);
-    });
-
-    els.copyPreset.addEventListener("click", async () => {
-      const t = readThemeFromUI();
-      const json = JSON.stringify({ theme: t }, null, 2);
-      try{
-        await navigator.clipboard.writeText(json);
-        await askConfirm("Preset JSON copied to clipboard.", { okText:"OK", cancelText:"Close" });
-      }catch{
-        await askConfirm("Could not copy automatically. Your browser blocked clipboard access.", { okText:"OK", cancelText:"Close" });
-      }
-    });
-
-    els.importPreset.addEventListener("click", async () => {
-      const networkId = (els.networkId.value || "default").trim() || "default";
-      const raw = prompt("Paste preset JSON here (copied from another widget):");
-      if (!raw) return;
-      const parsed = safeJsonParse(raw, null);
-      const theme = parsed?.theme;
-      if (!theme || typeof theme !== "object"){
-        await askConfirm("That JSON doesn't look like a preset.", { okText:"OK", cancelText:"Close" });
-        return;
-      }
-      const name = prompt("Name this imported preset:", "Imported preset") || "Imported preset";
-      const ps = await loadPresets(networkId);
-      ps.presets = Array.isArray(ps.presets) ? ps.presets : [];
-      const preset = { id: uid(), name, theme, createdAt: Date.now() };
-      ps.presets.unshift(preset);
-      await savePresets(networkId, ps);
-      refreshPresetSelect(ps.presets);
-      els.presetSelect.value = preset.id;
-    });
-  }
-
-  // -----------------------------
   // Init
-  // -----------------------------
-  (async function init(){
-    await initBg();
-    await initTheme();
-
-    // initial day load (after userKey is ready)
-    if (!userKey){
-      // fallback (shouldn't happen)
-      userKey = "user_" + Math.random().toString(16).slice(2);
-    }
-
-    savedData = await loadDay(userKey, current);
-    draftData = deepClone(savedData);
-    setDirty(false);
-    renderAll();
-  })();
-
-})();
-</script>
+  setDirty(false);
+  render();
+});
+  </script>
 </body>
 </html>

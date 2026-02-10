@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Diet Planner + Tracker</title>
+
   <style>
     :root{
       --bg:#ffffff;
@@ -33,11 +34,13 @@
       --board-tint-a: 0.30;
       --board-image: none;
 
-      /* theme editor overrides */
       --card-bg: rgba(255,255,255,0.88);
       --field-bg: #ffffff;
     }
+
     *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+
     body{
       margin:0;
       background:var(--bg);
@@ -45,7 +48,9 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       padding:26px;
     }
+
     .wrap{ max-width:1100px; margin:0 auto; }
+
     .top{
       display:flex;
       align-items:flex-start;
@@ -54,6 +59,7 @@
       margin-bottom:14px;
       flex-wrap:wrap;
     }
+
     .kicker{
       font-size:var(--fsKicker);
       letter-spacing:.12em;
@@ -61,7 +67,14 @@
       color:var(--muted);
       padding-top:4px;
     }
-    .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
 
     .btn{
       appearance:none;
@@ -81,11 +94,11 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
-    .btn:active{ transform:translateY(0px); }
     .btn.primary{ background:var(--cream); }
     .btn.danger{ background: rgba(230,216,204,0.30); }
 
     .popover{ position:relative; }
+
     .icon-pill{
       display:inline-flex;
       align-items:center;
@@ -98,6 +111,7 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     .bg-btn{
       width:34px;
       height:34px;
@@ -114,7 +128,7 @@
     .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
     .bg-btn:active{ transform: translateY(0px); }
 
-    .bg-dot{
+    .bg-dot, .theme-dot{
       width:14px;
       height:14px;
       border-radius:999px;
@@ -123,10 +137,6 @@
       box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
     }
     .theme-dot{
-      width:14px;
-      height:14px;
-      border-radius:999px;
-      border:1px solid rgba(201,190,182,0.75);
       background: var(--text);
       box-shadow: 0 0 0 6px rgba(201,190,182,0.25);
     }
@@ -135,7 +145,7 @@
       position:absolute;
       top: 46px;
       right: 0;
-      width: 290px;
+      width: 285px;
       border-radius: 16px;
       border: 1px solid var(--borderSoft);
       background: rgba(255,255,255,0.92);
@@ -146,9 +156,9 @@
       display:none;
       z-index: 80;
 
-      /* scroll so settings never cut off */
-      max-height: 72vh;
-      overflow: auto;
+      /* IMPORTANT: scroll so it never gets cut off */
+      max-height: 70vh;
+      overflow-y: auto;
     }
     .panel.open{ display:block; }
 
@@ -168,10 +178,12 @@
       gap:10px;
       padding: 8px 0;
     }
+
     .panel .rowT label{
       font-size: 12px;
       color: var(--muted);
     }
+
     input[type="color"]{
       width: 36px;
       height: 28px;
@@ -182,12 +194,15 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
+
     input[type="range"]{ width: 150px; }
+
     .file{
       width:100%;
       font-size: 12px;
       color: rgba(31,31,31,0.75);
     }
+
     .mini-btn{
       width: 100%;
       border: 1px solid var(--borderSoft);
@@ -204,44 +219,47 @@
       -webkit-tap-highlight-color: transparent;
     }
     .mini-btn:active{ transform: translateY(1px); }
+
     .divider{
       height: 1px;
       background: rgba(201,190,182,0.35);
       margin: 8px 0;
     }
+
     .hintSmall{
       margin-top: 8px;
       font-size: 11px;
       color: var(--muted);
       line-height: 1.35;
     }
-    .status{
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.35;
-      margin-top: 8px;
-    }
+
+    /* Presets UI */
     .presetName{ width:100%; }
     .presetArea{
       width:100%;
-      min-height:90px;
+      min-height:84px;
       font-size:12px;
       line-height:1.35;
       border:1px solid var(--borderSoft);
       border-radius:12px;
       padding:10px;
-      background: var(--field-bg);
+      background: rgba(255,255,255,0.92);
       color: var(--text);
       resize: vertical;
     }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top:6px;
+    }
     .select2{
       width:100%;
-      border:1px solid var(--borderSoft);
-      background: var(--field-bg);
-      border-radius:12px;
       padding:10px 12px;
-      font-size:12px;
+      border-radius:12px;
+      border:1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.92);
       color: var(--text);
+      outline:none;
     }
 
     .widgetBoard{
@@ -302,14 +320,15 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     .cardHead{
       display:flex;
       align-items:flex-end;
       justify-content:space-between;
       gap:12px;
       margin-bottom:12px;
-      flex-wrap:wrap;
     }
+
     .cardTitle{
       font-size:14px;
       letter-spacing:.14em;
@@ -317,35 +336,23 @@
       color:var(--muted);
       margin:0;
     }
+
     .meta{
       font-size:12px;
       color:var(--muted);
       letter-spacing:.04em;
       white-space:nowrap;
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:flex-end;
-    }
-    .badge{
-      border:1px solid var(--borderSoft);
-      border-radius: 999px;
-      padding:6px 10px;
-      background: rgba(255,255,255,0.65);
-    }
-    .badge.dirty{
-      background: rgba(230,216,204,0.55);
     }
 
-    /* Meals */
     .mealList{ display:grid; gap:12px; }
+
     .meal{
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
       padding:12px;
       background: linear-gradient(180deg, var(--creamSoft), rgba(255,255,255,0));
     }
+
     .mealTop{
       display:flex;
       align-items:center;
@@ -353,6 +360,7 @@
       gap:10px;
       margin-bottom:10px;
     }
+
     .mealName{
       font-size:12px;
       letter-spacing:.14em;
@@ -360,6 +368,7 @@
       color:var(--muted);
       margin:0;
     }
+
     .pill{
       font-size:11px;
       color:var(--muted);
@@ -378,6 +387,7 @@
       gap:10px;
       align-items:end;
     }
+
     .row2{
       display:grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -394,6 +404,7 @@
       color:var(--muted);
       margin:0 0 6px 0;
     }
+
     .input, .select{
       width:100%;
       border:1px solid var(--border);
@@ -406,10 +417,12 @@
       height:36px;
       color: var(--text);
     }
+
     .input:focus, .select:focus{
       border-color: rgba(201,190,182,1);
       box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
     }
+
     .mini{
       font-size:12px;
       color:#7a716a;
@@ -417,12 +430,12 @@
       margin-top:8px;
     }
 
-    /* Fullness */
     .fullness{
       display:flex;
       gap:8px;
       flex-wrap:wrap;
     }
+
     .chip{
       appearance:none;
       border:1px solid var(--border);
@@ -436,16 +449,16 @@
       user-select:none;
       height:34px;
       color: var(--text);
-      -webkit-tap-highlight-color: transparent;
     }
+
     .chip:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+
     .chip[data-active="true"]{
       background:var(--cream);
       box-shadow: 0 10px 18px rgba(0,0,0,0.08);
       transform:translateY(-1px);
     }
 
-    /* Sidebar */
     .box{
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
@@ -453,6 +466,7 @@
       background: linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0));
       margin-bottom:12px;
     }
+
     .boxTop{
       display:flex;
       align-items:flex-start;
@@ -460,17 +474,20 @@
       gap:10px;
       margin-bottom:8px;
     }
+
     .boxLabel{
       font-size:12px;
       letter-spacing:.14em;
       text-transform:uppercase;
       color:var(--muted);
     }
+
     .big{
       font-size:26px;
       font-weight:740;
       letter-spacing:-0.02em;
     }
+
     .bar{
       height:10px;
       border-radius:var(--rPill);
@@ -479,24 +496,28 @@
       overflow:hidden;
       margin:10px 0 8px;
     }
+
     .bar > div{
       height:100%;
       width:0%;
       background: var(--stone);
       transition: width 220ms ease;
     }
+
     .hint{
       font-size:12px;
       color:#7a716a;
       line-height:1.4;
       margin:0;
     }
+
     .totals{
       display:grid;
       grid-template-columns: 1fr 1fr;
       gap:10px;
       margin-top:10px;
     }
+
     .miniBox{
       border:1px solid var(--borderSoft);
       border-radius:14px;
@@ -504,6 +525,7 @@
       background:var(--field-bg);
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
+
     .miniLabel{
       font-size:11px;
       letter-spacing:.14em;
@@ -511,6 +533,7 @@
       color:var(--muted);
       margin-bottom:6px;
     }
+
     .miniVal{
       font-size:18px;
       font-weight:720;
@@ -521,13 +544,16 @@
       display:grid;
       gap:10px;
     }
+
     .goalRow{
       display:grid;
       grid-template-columns: 1fr 0.55fr;
       gap:10px;
       align-items:end;
     }
+
     .goalList{ display:grid; gap:10px; margin-top:10px; }
+
     .goalItem{
       border:1px solid var(--borderSoft);
       border-radius:14px;
@@ -539,6 +565,7 @@
       gap:10px;
       align-items:end;
     }
+
     .iconBtn{
       appearance:none;
       border:1px solid var(--border);
@@ -553,84 +580,20 @@
       -webkit-tap-highlight-color: transparent;
       color: var(--text);
     }
+
     .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+
     .iconBtn.danger{ background: rgba(230,216,204,0.30); }
 
     @media (max-width: 980px){
+      body{ padding: 16px; }
       .grid{ grid-template-columns: 1fr; }
       .row{ grid-template-columns: 1fr; }
       .goalRow{ grid-template-columns: 1fr; }
       .goalItem{ grid-template-columns: 1fr; }
       .totals{ grid-template-columns: 1fr; }
+      .panel{ right: 0; left: auto; }
     }
-
-    /* In-widget modal + toast */
-    .modalBackdrop{
-      position: fixed;
-      inset: 0;
-      display: none;
-      place-items: center;
-      padding: 18px;
-      background: rgba(20,18,16,.35);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 999;
-    }
-    .modalBackdrop.show{ display:grid; }
-    .modal{
-      width: min(560px, 100%);
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(43,43,43,.14);
-      border-radius: 20px;
-      box-shadow: 0 16px 50px rgba(0,0,0,.14);
-      overflow:hidden;
-    }
-    .modalHead{
-      padding: 14px 16px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      border-bottom: 1px solid rgba(43,43,43,.10);
-      background: rgba(255,255,255,.72);
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      font-size: 12px;
-      color: rgba(31,31,31,0.75);
-    }
-    .modalBody{
-      padding: 14px 16px;
-      color: rgba(31,31,31,0.90);
-      line-height: 1.45;
-      font-size: 13px;
-    }
-    .modalFoot{
-      display:flex;
-      justify-content:flex-end;
-      gap:10px;
-      padding: 12px 16px 14px;
-      border-top: 1px solid rgba(43,43,43,.10);
-      background: rgba(255,255,255,.70);
-      flex-wrap:wrap;
-    }
-    .toast{
-      position: fixed;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(43,43,43,.14);
-      border-radius: 999px;
-      padding: 10px 12px;
-      font-size: 12px;
-      box-shadow: 0 12px 34px rgba(0,0,0,.12);
-      z-index: 1000;
-      display:none;
-      max-width: min(560px, calc(100% - 20px));
-      text-align:center;
-    }
-    .toast.show{ display:block; }
   </style>
 </head>
 
@@ -640,6 +603,7 @@
       <div class="kicker">Diet Planner + Tracker</div>
 
       <div class="btns">
+
         <!-- Background settings -->
         <div class="popover" id="bgPopover">
           <div class="icon-pill">
@@ -678,7 +642,7 @@
               <button class="mini-btn" id="bgApply" type="button">Apply background</button>
             </div>
 
-            <div class="status" id="bgStatus" aria-live="polite"></div>
+            <div class="hintSmall">Changes only save when you click Apply.</div>
           </div>
         </div>
 
@@ -756,10 +720,10 @@
 
             <div class="divider"></div>
 
-            <h2 style="margin: 4px 0 10px 0;">Presets</h2>
+            <h2 style="margin:0 0 10px 0;">Presets</h2>
 
             <div class="rowT" style="align-items:flex-start; flex-direction:column; gap:8px;">
-              <input id="presetName" class="input presetName" placeholder="Preset name" />
+              <input id="presetName" class="presetName input" placeholder="Preset name" style="height:36px;" />
               <button class="mini-btn" id="presetSave" type="button">Save current as preset</button>
             </div>
 
@@ -781,28 +745,23 @@
             <div class="divider"></div>
 
             <div class="rowT">
-              <button class="mini-btn" id="presetCopy" type="button">Copy presets JSON</button>
+              <button class="mini-btn" id="presetCopy" type="button">Copy preset JSON</button>
             </div>
 
             <div class="rowT" style="align-items:flex-start; flex-direction:column; gap:8px;">
-              <textarea id="presetImport" class="presetArea" placeholder='Paste presets JSON here, then click "Import presets".'></textarea>
+              <textarea id="presetImport" class="presetArea" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
               <button class="mini-btn" id="presetImportBtn" type="button">Import presets</button>
               <div class="status" id="presetStatus" aria-live="polite"></div>
             </div>
 
-            <div class="divider"></div>
             <div class="hintSmall">
             </div>
           </div>
         </div>
 
-        <!-- Day actions -->
         <button id="prevDay" class="btn" type="button">◀ PREV</button>
         <button id="nextDay" class="btn" type="button">NEXT ▶</button>
-
-        <button id="revertDay" class="btn" type="button" title="Discard unsaved edits">REVERT</button>
-        <button id="saveDay" class="btn primary" type="button" title="Save current day">SAVE DAY</button>
-        <button id="clearDay" class="btn danger" type="button" title="Clear saved data for this day">CLEAR DAY</button>
+        <button id="clearDay" class="btn primary" type="button">CLEAR DAY</button>
       </div>
     </div>
 
@@ -810,20 +769,17 @@
       <div class="boardTint" id="boardTint"></div>
 
       <div class="grid">
-        <!-- LEFT: Meals -->
+        <!-- LEFT -->
         <section class="card" aria-label="Meals">
           <div class="cardHead">
             <h2 class="cardTitle">Meals</h2>
-            <div class="meta">
-              <span id="dayMeta" class="badge"></span>
-              <span id="dirtyBadge" class="badge" style="display:none;">Unsaved</span>
-            </div>
+            <div id="dayMeta" class="meta"></div>
           </div>
 
           <div class="mealList" id="mealList"></div>
         </section>
 
-        <!-- RIGHT: Totals + Goals -->
+        <!-- RIGHT -->
         <aside class="card" aria-label="Totals and goals">
           <div class="cardHead">
             <h2 class="cardTitle">Totals</h2>
@@ -891,1149 +847,1047 @@
     </div>
   </main>
 
-  <!-- Confirm Modal -->
-  <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal">
-      <div class="modalHead">
-        <div id="modalTitle">Confirm</div>
-        <button class="btn" id="modalClose" type="button">Close</button>
-      </div>
-      <div class="modalBody" id="modalBody"></div>
-      <div class="modalFoot">
-        <button class="btn" id="modalCancel" type="button">Cancel</button>
-        <button class="btn primary" id="modalOk" type="button">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
   <script>
-/* --------------------------
-   Safe storage + instance id
---------------------------- */
-(function(){
-  const mem = Object.create(null);
+  /* --------------------------
+     Safe storage + instance id
+  --------------------------- */
+  (function(){
+    const mem = Object.create(null);
 
-  function canUseLocalStorage(){
-    try{
-      const k = "__t__" + Math.random().toString(16).slice(2);
-      localStorage.setItem(k, "1");
-      localStorage.removeItem(k);
-      return true;
-    }catch{ return false; }
-  }
-  const hasLS = canUseLocalStorage();
-
-  function storageGet(key){
-    try{
-      if(hasLS) return localStorage.getItem(key);
-      return mem[key] ?? null;
-    }catch{ return mem[key] ?? null; }
-  }
-  function storageSet(key, value){
-    try{
-      if(hasLS) localStorage.setItem(key, value);
-      else mem[key] = String(value);
-    }catch{ mem[key] = String(value); }
-  }
-  function storageRemove(key){
-    try{
-      if(hasLS) localStorage.removeItem(key);
-      else delete mem[key];
-    }catch{ delete mem[key]; }
-  }
-
-  function uid(){
-    return Math.random().toString(16).slice(2) + Date.now().toString(16);
-  }
-
-  function getWidgetId(){
-    // 1) explicit wid param (best for “template buyers”)
-    try{
-      const sp = new URLSearchParams(location.search);
-      const wid = (sp.get("wid") || "").trim();
-      if(wid) return wid;
-    }catch{}
-
-    // 2) persisted per-user (so each buyer gets a unique id automatically)
-    const PERSIST_KEY = "diet_tracker_user_wid_v1";
-    try{
-      const existing = storageGet(PERSIST_KEY);
-      if(existing) return existing;
-      const fresh = uid();
-      storageSet(PERSIST_KEY, fresh);
-      return fresh;
-    }catch{
-      return uid();
-    }
-  }
-
-  window.__DT__ = {
-    wid: getWidgetId(),
-    get: storageGet,
-    set: storageSet,
-    remove: storageRemove
-  };
-})();
-
-/* --------------------------
-   Main app
---------------------------- */
-window.addEventListener("DOMContentLoaded", () => {
-  const WID = window.__DT__?.wid || "default";
-
-  // Keys are per-instance so multiple widgets won’t collide.
-  const KEY = (name) => `diet_tracker_${name}_v1__${WID}`;
-  const BG_KEY = KEY("bg");
-  const THEME_KEY = KEY("theme");
-  const PRESETS_KEY = KEY("presets");
-  const DAY_PREFIX = KEY("day_"); // + YYYY-MM-DD
-
-  // ---------- Utilities ----------
-  const pad2 = (n) => String(n).padStart(2,"0");
-  const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
-  const clampPct = (p) => Math.max(0, Math.min(100, p));
-  const escapeHtml = (s) =>
-    String(s ?? "")
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-
-  function hexToRgba(hex, a){
-    const h = String(hex || "").replace("#","").trim();
-    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-    const num = parseInt(full || "efe7e1", 16);
-    const r = (num >> 16) & 255;
-    const g = (num >> 8) & 255;
-    const b = num & 255;
-    return `rgba(${r},${g},${b},${a})`;
-  }
-
-  function loadJSON(k){
-    try{
-      const raw = window.__DT__.get(k);
-      return raw ? JSON.parse(raw) : null;
-    }catch{ return null; }
-  }
-  function saveJSON(k, v){
-    try{ window.__DT__.set(k, JSON.stringify(v)); }catch{}
-  }
-
-  function deepClone(x){
-    try{ return JSON.parse(JSON.stringify(x)); }catch{ return x; }
-  }
-
-  // ---------- UI: toast + confirm ----------
-  const toastEl = document.getElementById("toast");
-  let toastTimer = null;
-  function toast(msg){
-    if(!toastEl) return;
-    toastEl.textContent = msg || "";
-    toastEl.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=>toastEl.classList.remove("show"), 1800);
-  }
-
-  const modalBackdrop = document.getElementById("modalBackdrop");
-  const modalBody = document.getElementById("modalBody");
-  const modalOk = document.getElementById("modalOk");
-  const modalCancel = document.getElementById("modalCancel");
-  const modalClose = document.getElementById("modalClose");
-  const modalTitle = document.getElementById("modalTitle");
-
-  function askConfirm(message, { title="Confirm", okText="OK", cancelText="Cancel", danger=false } = {}){
-    return new Promise((resolve) => {
-      modalTitle.textContent = title;
-      modalBody.innerHTML = `<div>${escapeHtml(message)}</div>`;
-      modalOk.textContent = okText;
-      modalCancel.textContent = cancelText;
-      modalOk.classList.remove("danger","primary");
-      modalOk.classList.add(danger ? "danger" : "primary");
-
-      const cleanup = (val) => {
-        modalBackdrop.classList.remove("show");
-        modalOk.onclick = null;
-        modalCancel.onclick = null;
-        modalClose.onclick = null;
-        modalBackdrop.onclick = null;
-        document.removeEventListener("keydown", onKey);
-        resolve(val);
-      };
-
-      const onKey = (e) => { if(e.key === "Escape") cleanup(false); };
-
-      modalOk.onclick = () => cleanup(true);
-      modalCancel.onclick = () => cleanup(false);
-      modalClose.onclick = () => cleanup(false);
-      modalBackdrop.onclick = (e) => { if(e.target === modalBackdrop) cleanup(false); };
-
-      document.addEventListener("keydown", onKey);
-      modalBackdrop.classList.add("show");
-      setTimeout(()=>modalOk.focus(), 0);
-    });
-  }
-
-  // ---------- Elements ----------
-  const els = {
-    // popovers
-    bgBtn: document.getElementById("bgBtn"),
-    bgPanel: document.getElementById("bgPanel"),
-    themeBtn: document.getElementById("themeBtn"),
-    themePanel: document.getElementById("themePanel"),
-    bgDot: document.getElementById("bgDot"),
-    themeDot: document.getElementById("themeDot"),
-
-    // bg controls
-    bgColor: document.getElementById("bgColor"),
-    bgStrength: document.getElementById("bgStrength"),
-    bgImage: document.getElementById("bgImage"),
-    removeImage: document.getElementById("removeImage"),
-    bgApply: document.getElementById("bgApply"),
-    bgStatus: document.getElementById("bgStatus"),
-    boardTintEl: document.getElementById("boardTint"),
-
-    // theme controls
-    tWidgetBg: document.getElementById("tWidgetBg"),
-    tCardBg: document.getElementById("tCardBg"),
-    tFieldBg: document.getElementById("tFieldBg"),
-    tText: document.getElementById("tText"),
-    tMuted: document.getElementById("tMuted"),
-    tBorder: document.getElementById("tBorder"),
-    tStone: document.getElementById("tStone"),
-    tCream: document.getElementById("tCream"),
-    tCreamSoft: document.getElementById("tCreamSoft"),
-    resetTheme: document.getElementById("resetTheme"),
-    themeApply: document.getElementById("themeApply"),
-
-    // presets
-    presetName: document.getElementById("presetName"),
-    presetSave: document.getElementById("presetSave"),
-    presetSelect: document.getElementById("presetSelect"),
-    presetApply: document.getElementById("presetApply"),
-    presetDelete: document.getElementById("presetDelete"),
-    presetCopy: document.getElementById("presetCopy"),
-    presetImport: document.getElementById("presetImport"),
-    presetImportBtn: document.getElementById("presetImportBtn"),
-    presetStatus: document.getElementById("presetStatus"),
-
-    // day actions
-    prevDayBtn: document.getElementById("prevDay"),
-    nextDayBtn: document.getElementById("nextDay"),
-    saveDayBtn: document.getElementById("saveDay"),
-    revertDayBtn: document.getElementById("revertDay"),
-    clearDayBtn: document.getElementById("clearDay"),
-
-    // day + meals/goals
-    dayMeta: document.getElementById("dayMeta"),
-    dirtyBadge: document.getElementById("dirtyBadge"),
-    mealList: document.getElementById("mealList"),
-
-    calTotalEl: document.getElementById("calTotal"),
-    proteinTotalEl: document.getElementById("proteinTotal"),
-    carbTotalEl: document.getElementById("carbTotal"),
-    fiberTotalEl: document.getElementById("fiberTotal"),
-
-    calBar: document.getElementById("calBar"),
-    proteinBar: document.getElementById("proteinBar"),
-    calHint: document.getElementById("calHint"),
-    proteinHint: document.getElementById("proteinHint"),
-
-    goalCalories: document.getElementById("goalCalories"),
-    goalProtein: document.getElementById("goalProtein"),
-    newGoalName: document.getElementById("newGoalName"),
-    addGoalBtn: document.getElementById("addGoal"),
-    goalList: document.getElementById("goalList"),
-  };
-
-  // ---------- Popover open/close ----------
-  els.bgBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    els.bgPanel.classList.toggle("open");
-    els.themePanel.classList.remove("open");
-  });
-  els.themeBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    els.themePanel.classList.toggle("open");
-    els.bgPanel.classList.remove("open");
-  });
-  document.addEventListener("click", (e) => {
-    if(els.bgPanel.classList.contains("open")){
-      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      if(!inside) els.bgPanel.classList.remove("open");
-    }
-    if(els.themePanel.classList.contains("open")){
-      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-      if(!inside) els.themePanel.classList.remove("open");
-    }
-  });
-
-  // ---------- Background (draft + apply) ----------
-  const defaultBg = () => ({ tint:"#efe7e1", strength:30, imageDataUrl:null });
-
-  function setBoardImage(dataUrlOrNull){
-    document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-  }
-
-  function applyBoardTint(colorHex, strengthPct){
-    const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
-    document.documentElement.style.setProperty("--board-tint", colorHex);
-    document.documentElement.style.setProperty("--board-tint-a", String(strength));
-
-    if (els.bgDot){
-      els.bgDot.style.background = colorHex;
-      els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
-      els.bgDot.style.borderColor = hexToRgba(themeDraft.borderHex, 0.75);
-    }
-    if (els.boardTintEl){
-      els.boardTintEl.style.background = hexToRgba(colorHex, strength);
-    }
-  }
-
-  async function fileToDataUrl(file){
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
-
-  let bgSaved = loadJSON(BG_KEY) || defaultBg();
-  let bgDraft = deepClone(bgSaved);
-
-  function syncBgInputs(){
-    els.bgColor.value = bgDraft.tint || "#efe7e1";
-    els.bgStrength.value = String(bgDraft.strength ?? 30);
-  }
-  function applyBgDraft(){
-    applyBoardTint(bgDraft.tint, bgDraft.strength);
-    setBoardImage(bgDraft.imageDataUrl || null);
-  }
-  function setBgStatus(msg){
-    els.bgStatus.textContent = msg || "";
-  }
-
-  syncBgInputs();
-  applyBgDraft();
-
-  els.bgColor.addEventListener("input", () => {
-    bgDraft.tint = els.bgColor.value;
-    applyBgDraft();
-    setBgStatus("");
-  });
-  els.bgStrength.addEventListener("input", () => {
-    bgDraft.strength = Number(els.bgStrength.value);
-    applyBgDraft();
-    setBgStatus("");
-  });
-  els.bgImage.addEventListener("change", async () => {
-    const file = els.bgImage.files && els.bgImage.files[0];
-    if(!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    bgDraft.imageDataUrl = dataUrl;
-    applyBgDraft();
-    setBgStatus("");
-  });
-  els.removeImage.addEventListener("click", () => {
-    bgDraft.imageDataUrl = null;
-    els.bgImage.value = "";
-    applyBgDraft();
-    setBgStatus("");
-  });
-  els.bgApply.addEventListener("click", () => {
-    bgSaved = deepClone(bgDraft);
-    saveJSON(BG_KEY, bgSaved);
-    setBgStatus("Background applied.");
-    toast("Background saved.");
-  });
-
-  // ---------- Theme (draft + apply) ----------
-  const DEFAULT_THEME = {
-    bg: "#ffffff",
-    cardBg: "#ffffff",
-    fieldBg: "#ffffff",
-    text: "#1f1f1f",
-    muted: "#6b625c",
-    borderHex: "#c9beb6",
-    stone: "#c9beb6",
-    cream: "#e6d8cc",
-    creamSoftHex: "#e6d8cc"
-  };
-
-  // Minimal override for remaining hard-coded whites
-  const injected = document.createElement("style");
-  injected.textContent = `
-    .btn{ background: var(--field-bg, #fff); border-color: var(--border); color: var(--text); }
-    .mini-btn{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--text); }
-    .pill{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--muted); }
-    .miniBox, .goalItem{ background: var(--field-bg, #fff); }
-    .icon-pill{ border-color: var(--borderSoft); }
-    .bg-btn{ border-color: var(--borderSoft); }
-  `;
-  document.head.appendChild(injected);
-
-  let themeSaved = { ...DEFAULT_THEME, ...(loadJSON(THEME_KEY) || {}) };
-  let themeDraft = deepClone(themeSaved);
-
-  function applyTheme(t){
-    const tt = { ...DEFAULT_THEME, ...(t || {}) };
-
-    document.documentElement.style.setProperty("--bg", tt.bg);
-    document.documentElement.style.setProperty("--text", tt.text);
-    document.documentElement.style.setProperty("--muted", tt.muted);
-
-    document.documentElement.style.setProperty("--stone", tt.stone);
-    document.documentElement.style.setProperty("--cream", tt.cream);
-
-    document.documentElement.style.setProperty("--border", hexToRgba(tt.borderHex, 0.85));
-    document.documentElement.style.setProperty("--borderSoft", hexToRgba(tt.borderHex, 0.55));
-
-    document.documentElement.style.setProperty("--creamSoft", hexToRgba(tt.creamSoftHex, 0.20));
-    document.documentElement.style.setProperty("--card-bg", hexToRgba(tt.cardBg, 0.88));
-    document.documentElement.style.setProperty("--field-bg", tt.fieldBg);
-
-    if(els.themeDot){
-      els.themeDot.style.background = tt.text;
-      els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tt.borderHex, 0.25)}`;
-      els.themeDot.style.borderColor = hexToRgba(tt.borderHex, 0.75);
-    }
-
-    // keep bg dot border consistent with theme border
-    if(els.bgDot){
-      els.bgDot.style.borderColor = hexToRgba(tt.borderHex, 0.75);
-    }
-  }
-
-  function syncThemeInputs(){
-    els.tWidgetBg.value = themeDraft.bg;
-    els.tCardBg.value = themeDraft.cardBg;
-    els.tFieldBg.value = themeDraft.fieldBg;
-    els.tText.value = themeDraft.text;
-    els.tMuted.value = themeDraft.muted;
-    els.tBorder.value = themeDraft.borderHex;
-    els.tStone.value = themeDraft.stone;
-    els.tCream.value = themeDraft.cream;
-    els.tCreamSoft.value = themeDraft.creamSoftHex;
-  }
-
-  function readThemeFromUI(){
-    return {
-      bg: els.tWidgetBg.value,
-      cardBg: els.tCardBg.value,
-      fieldBg: els.tFieldBg.value,
-      text: els.tText.value,
-      muted: els.tMuted.value,
-      borderHex: els.tBorder.value,
-      stone: els.tStone.value,
-      cream: els.tCream.value,
-      creamSoftHex: els.tCreamSoft.value
-    };
-  }
-
-  syncThemeInputs();
-  applyTheme(themeDraft);
-  applyBoardTint(bgDraft.tint, bgDraft.strength);
-
-  function onThemeDraftChange(){
-    themeDraft = { ...DEFAULT_THEME, ...readThemeFromUI() };
-    applyTheme(themeDraft);
-    // refresh bg dot visuals too
-    applyBoardTint(bgDraft.tint, bgDraft.strength);
-    setPresetStatus("");
-  }
-
-  [
-    els.tWidgetBg, els.tCardBg, els.tFieldBg,
-    els.tText, els.tMuted,
-    els.tBorder, els.tStone, els.tCream, els.tCreamSoft
-  ].forEach(el => el.addEventListener("input", onThemeDraftChange));
-
-  els.themeApply.addEventListener("click", () => {
-    themeSaved = deepClone(themeDraft);
-    saveJSON(THEME_KEY, themeSaved);
-    toast("Theme saved.");
-    setPresetStatus("Theme applied.");
-  });
-
-  els.resetTheme.addEventListener("click", () => {
-    themeDraft = deepClone(DEFAULT_THEME);
-    syncThemeInputs();
-    applyTheme(themeDraft);
-
-    themeSaved = deepClone(themeDraft);
-    saveJSON(THEME_KEY, themeSaved);
-
-    applyBoardTint(bgDraft.tint, bgDraft.strength);
-    toast("Theme reset.");
-    setPresetStatus("Theme reset.");
-  });
-
-  // ---------- Presets (theme + bg) ----------
-  function uid(){
-    return Math.random().toString(16).slice(2) + Date.now().toString(16);
-  }
-  function loadPresets(){
-    const list = loadJSON(PRESETS_KEY);
-    return Array.isArray(list) ? list : [];
-  }
-  function savePresets(list){
-    saveJSON(PRESETS_KEY, list);
-  }
-  function setPresetStatus(msg){
-    if(!els.presetStatus) return;
-    els.presetStatus.textContent = msg || "";
-  }
-  function refreshPresetSelect(){
-    const list = loadPresets();
-    const cur = els.presetSelect.value;
-    els.presetSelect.innerHTML = `<option value="">—</option>`;
-    for(const p of list){
-      const opt = document.createElement("option");
-      opt.value = p.id;
-      opt.textContent = p.name || "Untitled";
-      els.presetSelect.appendChild(opt);
-    }
-    if(cur) els.presetSelect.value = cur;
-  }
-
-  async function copyText(text){
-    try{
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        await navigator.clipboard.writeText(text);
+    function canUseLocalStorage(){
+      try{
+        const k = "__t__" + Math.random().toString(16).slice(2);
+        localStorage.setItem(k, "1");
+        localStorage.removeItem(k);
         return true;
-      }
-    }catch{}
-    try{
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      ta.style.top = "0";
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      return !!ok;
-    }catch{
-      return false;
+      }catch{ return false; }
     }
-  }
+    const hasLS = canUseLocalStorage();
 
-  refreshPresetSelect();
-
-  els.presetSave.addEventListener("click", () => {
-    const name = (els.presetName.value || "").trim();
-    if(!name){
-      setPresetStatus("Type a preset name first.");
-      return;
+    function storageGet(key){
+      try{
+        if(hasLS) return localStorage.getItem(key);
+        return mem[key] ?? null;
+      }catch{ return mem[key] ?? null; }
     }
-    const list = loadPresets();
-    const entry = {
-      id: uid(),
-      name,
-      theme: deepClone(themeDraft),
-      bg: deepClone(bgDraft)
+    function storageSet(key, value){
+      try{
+        if(hasLS) localStorage.setItem(key, value);
+        else mem[key] = String(value);
+      }catch{ mem[key] = String(value); }
+    }
+    function storageRemove(key){
+      try{
+        if(hasLS) localStorage.removeItem(key);
+        else delete mem[key];
+      }catch{ delete mem[key]; }
+    }
+
+    function uid(){
+      return Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+
+    function getWidgetId(){
+      // 1) explicit wid param
+      try{
+        const sp = new URLSearchParams(location.search);
+        const wid = (sp.get("wid") || "").trim();
+        if(wid) return wid;
+      }catch{}
+
+      // 2) cached per-tab
+      try{
+        const cached = sessionStorage.getItem("diet_tracker_wid");
+        if(cached) return cached;
+      }catch{}
+
+      // 3) generate and cache
+      const fresh = uid();
+      try{ sessionStorage.setItem("diet_tracker_wid", fresh); }catch{}
+      return fresh;
+    }
+
+    window.__DT__ = {
+      wid: getWidgetId(),
+      get: storageGet,
+      set: storageSet,
+      remove: storageRemove
     };
-    list.unshift(entry);
-    savePresets(list);
-    els.presetName.value = "";
-    refreshPresetSelect();
-    els.presetSelect.value = entry.id;
-    setPresetStatus("Preset saved.");
-    toast("Preset saved.");
-  });
+  })();
 
-  els.presetApply.addEventListener("click", () => {
-    const id = els.presetSelect.value;
-    if(!id){
-      setPresetStatus("Choose a preset first.");
-      return;
+  /* --------------------------
+     Main app
+  --------------------------- */
+  window.addEventListener("DOMContentLoaded", () => {
+
+    const WID = window.__DT__?.wid || "default";
+
+    const DAY_PREFIX = "diet_tracker_v1__" + WID + "__";
+    const BG_KEY = "diet_tracker_bg_v1__" + WID;
+    const THEME_KEY = "diet_tracker_theme_v1__" + WID;
+    const PRESETS_KEY = "diet_tracker_presets_v1__" + WID;
+
+    // ---------- Utilities ----------
+    const pad2 = (n) => String(n).padStart(2,"0");
+    const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
+    const clampPct = (p) => Math.max(0, Math.min(100, p));
+
+    const els = {
+      bgBtn: document.getElementById("bgBtn"),
+      bgPanel: document.getElementById("bgPanel"),
+      bgColor: document.getElementById("bgColor"),
+      bgStrength: document.getElementById("bgStrength"),
+      bgImage: document.getElementById("bgImage"),
+      removeImage: document.getElementById("removeImage"),
+      bgApply: document.getElementById("bgApply"),
+      boardTintEl: document.getElementById("boardTint"),
+      bgDot: document.getElementById("bgDot"),
+
+      themeBtn: document.getElementById("themeBtn"),
+      themePanel: document.getElementById("themePanel"),
+      themeDot: document.getElementById("themeDot"),
+      themeApply: document.getElementById("themeApply"),
+      resetTheme: document.getElementById("resetTheme"),
+
+      tWidgetBg: document.getElementById("tWidgetBg"),
+      tCardBg: document.getElementById("tCardBg"),
+      tFieldBg: document.getElementById("tFieldBg"),
+      tText: document.getElementById("tText"),
+      tMuted: document.getElementById("tMuted"),
+      tBorder: document.getElementById("tBorder"),
+      tStone: document.getElementById("tStone"),
+      tCream: document.getElementById("tCream"),
+      tCreamSoft: document.getElementById("tCreamSoft"),
+
+      presetName: document.getElementById("presetName"),
+      presetSave: document.getElementById("presetSave"),
+      presetSelect: document.getElementById("presetSelect"),
+      presetApply: document.getElementById("presetApply"),
+      presetDelete: document.getElementById("presetDelete"),
+      presetCopy: document.getElementById("presetCopy"),
+      presetImport: document.getElementById("presetImport"),
+      presetImportBtn: document.getElementById("presetImportBtn"),
+      presetStatus: document.getElementById("presetStatus"),
+
+      dayMeta: document.getElementById("dayMeta"),
+      mealList: document.getElementById("mealList"),
+
+      calTotalEl: document.getElementById("calTotal"),
+      proteinTotalEl: document.getElementById("proteinTotal"),
+      carbTotalEl: document.getElementById("carbTotal"),
+      fiberTotalEl: document.getElementById("fiberTotal"),
+
+      calBar: document.getElementById("calBar"),
+      proteinBar: document.getElementById("proteinBar"),
+      calHint: document.getElementById("calHint"),
+      proteinHint: document.getElementById("proteinHint"),
+
+      goalCalories: document.getElementById("goalCalories"),
+      goalProtein: document.getElementById("goalProtein"),
+      newGoalName: document.getElementById("newGoalName"),
+      addGoalBtn: document.getElementById("addGoal"),
+      goalList: document.getElementById("goalList"),
+
+      prevDayBtn: document.getElementById("prevDay"),
+      nextDayBtn: document.getElementById("nextDay"),
+      clearDayBtn: document.getElementById("clearDay"),
+    };
+
+    // ---------- Helpers ----------
+    const normalizeHex = (hex, fallback="#ffffff") => {
+      const s = String(hex || "").trim();
+      if(/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+      return fallback;
+    };
+
+    const hexToRgba = (hex, a) => {
+      const h = normalizeHex(hex, "#efe7e1").slice(1);
+      const r = parseInt(h.slice(0,2), 16);
+      const g = parseInt(h.slice(2,4), 16);
+      const b = parseInt(h.slice(4,6), 16);
+      return `rgba(${r},${g},${b},${a})`;
+    };
+
+    const loadJSON = (k) => {
+      try{
+        const raw = window.__DT__.get(k);
+        return raw ? JSON.parse(raw) : null;
+      }catch{ return null; }
+    };
+    const saveJSON = (k, v) => {
+      try{ window.__DT__.set(k, JSON.stringify(v)); }catch{}
+    };
+
+    const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+    async function copyText(text){
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      }catch{}
+      try{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return !!ok;
+      }catch{
+        return false;
+      }
     }
-    const list = loadPresets();
-    const p = list.find(x => x.id === id);
-    if(!p){
-      setPresetStatus("Preset not found.");
-      return;
+
+    function setStatus(msg){
+      if(!els.presetStatus) return;
+      els.presetStatus.textContent = msg || "";
     }
 
-    // load into drafts
-    bgDraft = { ...defaultBg(), ...(p.bg || {}) };
-    themeDraft = { ...DEFAULT_THEME, ...(p.theme || {}) };
+    // ---------- Confirm modal ----------
+    const escapeHtml = (s) =>
+      String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 
-    // sync UI
+    const askConfirm = (message, { okText="Confirm", cancelText="Cancel", danger=false } = {}) =>
+      new Promise((resolve) => {
+        const wrap = document.createElement("div");
+        wrap.style.position = "fixed";
+        wrap.style.inset = "0";
+        wrap.style.zIndex = "9999";
+        wrap.style.display = "grid";
+        wrap.style.placeItems = "center";
+        wrap.style.padding = "18px";
+        wrap.style.background = "rgba(20,18,16,.35)";
+        wrap.style.backdropFilter = "blur(8px)";
+        wrap.style.webkitBackdropFilter = "blur(8px)";
+
+        wrap.innerHTML = `
+          <div style="
+            width:min(520px,100%);
+            background:rgba(255,255,255,.92);
+            border:1px solid rgba(43,43,43,.14);
+            border-radius:20px;
+            box-shadow:0 12px 40px rgba(0,0,0,.12);
+            overflow:hidden;">
+            <div style="padding:14px 16px;border-bottom:1px solid rgba(43,43,43,.10);font-weight:650;">
+              Confirm
+            </div>
+            <div style="padding:14px 16px;line-height:1.45;color:rgba(43,43,43,.92);">
+              ${escapeHtml(message)}
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+              padding:12px 16px;border-top:1px solid rgba(43,43,43,.10);">
+              <button class="btn" type="button" id="cnlBtn">${escapeHtml(cancelText)}</button>
+              <button class="btn ${danger ? "danger" : "primary"}" type="button" id="okBtn">${escapeHtml(okText)}</button>
+            </div>
+          </div>
+        `;
+
+        const cleanup = (val) => {
+          document.removeEventListener("keydown", onKey);
+          wrap.remove();
+          resolve(val);
+        };
+
+        const onKey = (e) => { if (e.key === "Escape") cleanup(false); };
+
+        wrap.addEventListener("click", (e) => {
+          if (e.target === wrap) cleanup(false);
+        });
+
+        document.body.appendChild(wrap);
+        document.addEventListener("keydown", onKey);
+
+        const okBtn = wrap.querySelector("#okBtn");
+        const cnlBtn = wrap.querySelector("#cnlBtn");
+
+        cnlBtn.addEventListener("click", () => cleanup(false));
+        okBtn.addEventListener("click", () => cleanup(true));
+
+        setTimeout(() => okBtn.focus(), 0);
+      });
+
+    // ---------- Background ----------
+    const defaultBg = () => ({ tint:"#efe7e1", strength:30, imageDataUrl:null });
+
+    function setBoardImage(dataUrlOrNull){
+      document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    }
+
+    function applyBoardTint(colorHex, strengthPct){
+      const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
+      const tint = normalizeHex(colorHex, "#efe7e1");
+
+      document.documentElement.style.setProperty("--board-tint", tint);
+      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+      const borderHex = (themeDraft && themeDraft.borderHex) ? themeDraft.borderHex : "#c9beb6";
+
+      if (els.bgDot){
+        els.bgDot.style.background = tint;
+        els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+        els.bgDot.style.borderColor = hexToRgba(borderHex, 0.75);
+      }
+      if (els.boardTintEl){
+        els.boardTintEl.style.background = hexToRgba(tint, strength);
+      }
+    }
+
+    async function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    // ---------- Theme ----------
+    const DEFAULT_THEME = {
+      bg: "#ffffff",
+      cardBg: "#ffffff",
+      fieldBg: "#ffffff",
+      text: "#1f1f1f",
+      muted: "#6b625c",
+      borderHex: "#c9beb6",
+      stone: "#c9beb6",
+      cream: "#e6d8cc",
+      creamSoftHex: "#e6d8cc"
+    };
+
+    function applyTheme(t){
+      const theme = { ...DEFAULT_THEME, ...(t || {}) };
+
+      document.documentElement.style.setProperty("--bg", normalizeHex(theme.bg));
+      document.documentElement.style.setProperty("--text", normalizeHex(theme.text));
+      document.documentElement.style.setProperty("--muted", normalizeHex(theme.muted));
+
+      document.documentElement.style.setProperty("--stone", normalizeHex(theme.stone, "#c9beb6"));
+      document.documentElement.style.setProperty("--cream", normalizeHex(theme.cream, "#e6d8cc"));
+
+      document.documentElement.style.setProperty("--border", hexToRgba(theme.borderHex, 0.85));
+      document.documentElement.style.setProperty("--borderSoft", hexToRgba(theme.borderHex, 0.55));
+      document.documentElement.style.setProperty("--creamSoft", hexToRgba(theme.creamSoftHex, 0.20));
+
+      document.documentElement.style.setProperty("--card-bg", hexToRgba(theme.cardBg, 0.88));
+      document.documentElement.style.setProperty("--field-bg", normalizeHex(theme.fieldBg, "#ffffff"));
+
+      if(els.themeDot){
+        els.themeDot.style.background = normalizeHex(theme.text);
+        els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(theme.borderHex, 0.25)}`;
+        els.themeDot.style.borderColor = hexToRgba(theme.borderHex, 0.75);
+      }
+
+      // sync UI
+      els.tWidgetBg.value = normalizeHex(theme.bg);
+      els.tCardBg.value = normalizeHex(theme.cardBg);
+      els.tFieldBg.value = normalizeHex(theme.fieldBg);
+      els.tText.value = normalizeHex(theme.text);
+      els.tMuted.value = normalizeHex(theme.muted);
+      els.tBorder.value = normalizeHex(theme.borderHex, "#c9beb6");
+      els.tStone.value = normalizeHex(theme.stone, "#c9beb6");
+      els.tCream.value = normalizeHex(theme.cream, "#e6d8cc");
+      els.tCreamSoft.value = normalizeHex(theme.creamSoftHex, "#e6d8cc");
+    }
+
+    function readThemeFromUI(){
+      return {
+        bg: normalizeHex(els.tWidgetBg.value),
+        cardBg: normalizeHex(els.tCardBg.value),
+        fieldBg: normalizeHex(els.tFieldBg.value),
+        text: normalizeHex(els.tText.value),
+        muted: normalizeHex(els.tMuted.value),
+        borderHex: normalizeHex(els.tBorder.value, "#c9beb6"),
+        stone: normalizeHex(els.tStone.value, "#c9beb6"),
+        cream: normalizeHex(els.tCream.value, "#e6d8cc"),
+        creamSoftHex: normalizeHex(els.tCreamSoft.value, "#e6d8cc")
+      };
+    }
+
+    // ---------- Presets ----------
+    function loadPresets(){
+      const list = loadJSON(PRESETS_KEY);
+      return Array.isArray(list) ? list : [];
+    }
+    function savePresets(list){
+      saveJSON(PRESETS_KEY, list);
+    }
+    function refreshPresetSelect(){
+      const list = loadPresets();
+      const current = els.presetSelect.value;
+
+      els.presetSelect.innerHTML = `<option value="">—</option>`;
+      for(const p of list){
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || "Untitled";
+        els.presetSelect.appendChild(opt);
+      }
+
+      if(current) els.presetSelect.value = current;
+    }
+
+    // ---------- Draft system ----------
+    let bgDraft = loadJSON(BG_KEY) || defaultBg();
+    let themeDraft = { ...DEFAULT_THEME, ...(loadJSON(THEME_KEY) || {}) };
+
+    function syncBgInputs(){
+      els.bgColor.value = bgDraft.tint || "#efe7e1";
+      els.bgStrength.value = String(bgDraft.strength ?? 30);
+    }
+
+    function applyBgDraft(){
+      applyBoardTint(bgDraft.tint, bgDraft.strength);
+      setBoardImage(bgDraft.imageDataUrl || null);
+    }
+
+    // Init
     syncBgInputs();
-    syncThemeInputs();
-
-    // apply visuals
     applyTheme(themeDraft);
     applyBgDraft();
-
-    // persist immediately (preset apply is a deliberate change)
-    bgSaved = deepClone(bgDraft);
-    themeSaved = deepClone(themeDraft);
-    saveJSON(BG_KEY, bgSaved);
-    saveJSON(THEME_KEY, themeSaved);
-
-    setPresetStatus("Preset applied.");
-    toast("Preset applied.");
-  });
-
-  els.presetDelete.addEventListener("click", async () => {
-    const id = els.presetSelect.value;
-    if(!id){
-      setPresetStatus("Choose a preset first.");
-      return;
-    }
-    const ok = await askConfirm("Delete this preset?", { okText:"Delete", cancelText:"Cancel", danger:true });
-    if(!ok) return;
-
-    let list = loadPresets();
-    const before = list.length;
-    list = list.filter(x => x.id !== id);
-    if(list.length === before){
-      setPresetStatus("Preset not found.");
-      return;
-    }
-    savePresets(list);
     refreshPresetSelect();
-    els.presetSelect.value = "";
-    setPresetStatus("Preset deleted.");
-    toast("Preset deleted.");
-  });
 
-  els.presetCopy.addEventListener("click", async () => {
-    const list = loadPresets();
-    const payload = JSON.stringify(list, null, 2);
-    const ok = await copyText(payload);
-    if(ok){
-      setPresetStatus("Presets JSON copied.");
-      toast("Copied presets JSON.");
-    }else{
-      setPresetStatus("Could not copy. Use the import box below to manually copy.");
-      els.presetImport.value = payload;
-      els.presetImport.focus();
-      els.presetImport.select();
-    }
-  });
+    // ---------- Popovers ----------
+    els.bgBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      els.bgPanel.classList.toggle("open");
+      els.themePanel.classList.remove("open");
+    });
 
-  els.presetImportBtn.addEventListener("click", async () => {
-    const raw = (els.presetImport.value || "").trim();
-    if(!raw){
-      setPresetStatus("Paste presets JSON first.");
-      return;
+    els.themeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      els.themePanel.classList.toggle("open");
+      els.bgPanel.classList.remove("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if(els.bgPanel.classList.contains("open")){
+        const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+        if(!inside) els.bgPanel.classList.remove("open");
+      }
+      if(els.themePanel.classList.contains("open")){
+        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+        if(!inside) els.themePanel.classList.remove("open");
+      }
+    });
+
+    // ---------- Background draft changes (preview only) ----------
+    els.bgColor.addEventListener("input", () => {
+      bgDraft.tint = els.bgColor.value;
+      applyBgDraft();
+      setStatus("");
+    });
+
+    els.bgStrength.addEventListener("input", () => {
+      bgDraft.strength = Number(els.bgStrength.value);
+      applyBgDraft();
+      setStatus("");
+    });
+
+    els.bgImage.addEventListener("change", async () => {
+      const file = els.bgImage.files && els.bgImage.files[0];
+      if(!file) return;
+      const dataUrl = await fileToDataUrl(file);
+      bgDraft.imageDataUrl = dataUrl;
+      applyBgDraft();
+      setStatus("");
+    });
+
+    els.removeImage.addEventListener("click", () => {
+      bgDraft.imageDataUrl = null;
+      els.bgImage.value = "";
+      applyBgDraft();
+      setStatus("");
+    });
+
+    // Persist background
+    els.bgApply.addEventListener("click", () => {
+      saveJSON(BG_KEY, bgDraft);
+      setStatus("Background applied.");
+    });
+
+    // ---------- Theme draft changes (preview only) ----------
+    function onThemeDraftChange(){
+      themeDraft = readThemeFromUI();
+      applyTheme(themeDraft);
+      applyBoardTint(bgDraft.tint, bgDraft.strength);
+      setStatus("");
     }
-    try{
-      const parsed = JSON.parse(raw);
-      if(!Array.isArray(parsed)){
-        setPresetStatus("That JSON doesn’t look like a presets list.");
+
+    [
+      els.tWidgetBg, els.tCardBg, els.tFieldBg,
+      els.tText, els.tMuted,
+      els.tBorder, els.tStone, els.tCream, els.tCreamSoft
+    ].forEach(el => el.addEventListener("input", onThemeDraftChange));
+
+    // Persist theme
+    els.themeApply.addEventListener("click", () => {
+      saveJSON(THEME_KEY, themeDraft);
+      setStatus("Theme applied.");
+    });
+
+    // Reset theme
+    els.resetTheme.addEventListener("click", () => {
+      themeDraft = { ...DEFAULT_THEME };
+      applyTheme(themeDraft);
+      saveJSON(THEME_KEY, themeDraft);
+      applyBoardTint(bgDraft.tint, bgDraft.strength);
+      setStatus("Theme reset.");
+    });
+
+    // ---------- Presets ----------
+    els.presetSave.addEventListener("click", () => {
+      const name = (els.presetName.value || "").trim();
+      if(!name){
+        setStatus("Type a preset name first.");
         return;
       }
-      const cleaned = parsed
-        .filter(Boolean)
-        .map((p)=>({
-          id: String(p.id || uid()),
-          name: String(p.name || "Imported"),
-          theme: { ...DEFAULT_THEME, ...(p.theme || {}) },
-          bg: { ...defaultBg(), ...(p.bg || {}) }
-        }));
-      savePresets(cleaned);
+
+      const list = loadPresets();
+      const entry = {
+        id: uid(),
+        name,
+        theme: { ...themeDraft },
+        bg: { ...bgDraft }
+      };
+
+      list.unshift(entry);
+      savePresets(list);
+      els.presetName.value = "";
       refreshPresetSelect();
-      setPresetStatus("Presets imported.");
-      toast("Presets imported.");
-    }catch{
-      setPresetStatus("Invalid JSON.");
-    }
-  });
-
-  // ---------- App logic (draft day data + save/revert) ----------
-  const MEALS = [
-    { id:"breakfast", label:"Breakfast" },
-    { id:"lunch", label:"Lunch" },
-    { id:"snack", label:"Snack" },
-    { id:"dinner", label:"Dinner" }
-  ];
-
-  const FULLNESS_OPTIONS = [
-    { id:"hungry", label:"Hungry" },
-    { id:"neutral", label:"Neutral" },
-    { id:"satisfied", label:"Satisfied" },
-    { id:"too_full", label:"Too full" }
-  ];
-
-  function defaultDayData(){
-    const meals = {};
-    MEALS.forEach(m => meals[m.id] = {
-      name: "",
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fiber: 0,
-      fullness: "",
-      tag: ""
+      els.presetSelect.value = entry.id;
+      setStatus("Preset saved.");
     });
 
-    return {
-      goals: {
+    els.presetApply.addEventListener("click", () => {
+      const id = els.presetSelect.value;
+      if(!id){
+        setStatus("Choose a preset first.");
+        return;
+      }
+
+      const list = loadPresets();
+      const p = list.find(x => x.id === id);
+      if(!p){
+        setStatus("Preset not found.");
+        return;
+      }
+
+      bgDraft = { ...defaultBg(), ...(p.bg || {}) };
+      themeDraft = { ...DEFAULT_THEME, ...(p.theme || {}) };
+
+      syncBgInputs();
+      applyTheme(themeDraft);
+      applyBgDraft();
+
+      saveJSON(BG_KEY, bgDraft);
+      saveJSON(THEME_KEY, themeDraft);
+
+      setStatus("Preset applied.");
+    });
+
+    els.presetDelete.addEventListener("click", async () => {
+      const id = els.presetSelect.value;
+      if(!id){
+        setStatus("Choose a preset first.");
+        return;
+      }
+
+      const ok = await askConfirm("Delete this preset?", { okText: "Delete", cancelText: "Cancel", danger: true });
+      if(!ok) return;
+
+      let list = loadPresets();
+      list = list.filter(x => x.id !== id);
+
+      savePresets(list);
+      refreshPresetSelect();
+      els.presetSelect.value = "";
+      setStatus("Preset deleted.");
+    });
+
+    els.presetCopy.addEventListener("click", async () => {
+      const list = loadPresets();
+      const payload = JSON.stringify(list, null, 2);
+      const ok = await copyText(payload);
+
+      setStatus(ok ? "Preset JSON copied." : "Could not copy. JSON placed in import box.");
+      if(!ok){
+        els.presetImport.value = payload;
+        els.presetImport.focus();
+        els.presetImport.select();
+      }
+    });
+
+    els.presetImportBtn.addEventListener("click", () => {
+      const raw = (els.presetImport.value || "").trim();
+      if(!raw){
+        setStatus("Paste preset JSON first.");
+        return;
+      }
+
+      try{
+        const parsed = JSON.parse(raw);
+        if(!Array.isArray(parsed)){
+          setStatus("That JSON doesn’t look like a preset list.");
+          return;
+        }
+
+        const cleaned = parsed
+          .filter(Boolean)
+          .map((p)=>({
+            id: String(p.id || uid()),
+            name: String(p.name || "Imported"),
+            theme: { ...DEFAULT_THEME, ...(p.theme || {}) },
+            bg: { ...defaultBg(), ...(p.bg || {}) }
+          }));
+
+        savePresets(cleaned);
+        refreshPresetSelect();
+        setStatus("Presets imported.");
+      }catch{
+        setStatus("Invalid JSON.");
+      }
+    });
+
+    /* ---------------------------
+       APP LOGIC (unchanged)
+    ---------------------------- */
+    const MEALS = [
+      { id:"breakfast", label:"Breakfast" },
+      { id:"lunch", label:"Lunch" },
+      { id:"snack", label:"Snack" },
+      { id:"dinner", label:"Dinner" }
+    ];
+
+    const FULLNESS_OPTIONS = [
+      { id:"hungry", label:"Hungry" },
+      { id:"neutral", label:"Neutral" },
+      { id:"satisfied", label:"Satisfied" },
+      { id:"too_full", label:"Too full" }
+    ];
+
+    function defaultDayData(){
+      const meals = {};
+      MEALS.forEach(m => meals[m.id] = {
+        name: "",
         calories: 0,
         protein: 0,
-        custom: []
-      },
-      meals
-    };
-  }
-
-  function keyFor(date){ return DAY_PREFIX + isoDay(date); }
-
-  function loadDay(date){
-    const raw = window.__DT__.get(keyFor(date));
-    if(!raw) return defaultDayData();
-    try{
-      const parsed = JSON.parse(raw);
-      const base = defaultDayData();
-
-      base.goals.calories = Number(parsed?.goals?.calories || 0);
-      base.goals.protein = Number(parsed?.goals?.protein || 0);
-      base.goals.custom = Array.isArray(parsed?.goals?.custom) ? parsed.goals.custom : [];
-
-      MEALS.forEach(m => {
-        const src = parsed?.meals?.[m.id] || {};
-        base.meals[m.id] = {
-          name: String(src.name || ""),
-          calories: Number(src.calories || 0),
-          protein: Number(src.protein || 0),
-          carbs: Number(src.carbs || 0),
-          fiber: Number(src.fiber || 0),
-          fullness: String(src.fullness || ""),
-          tag: String(src.tag || "")
-        };
-      });
-      return base;
-    }catch{
-      window.__DT__.remove(keyFor(date));
-      return defaultDayData();
-    }
-  }
-
-  function saveDay(date, data){
-    window.__DT__.set(keyFor(date), JSON.stringify(data));
-  }
-
-  // State: saved + draft
-  let current = new Date();
-  current.setHours(0,0,0,0);
-
-  let saved = loadDay(current);
-  let draft = deepClone(saved);
-  let dirty = false;
-
-  function setDirty(val){
-    dirty = !!val;
-    if(els.dirtyBadge){
-      if(dirty){
-        els.dirtyBadge.style.display = "inline-flex";
-        els.dirtyBadge.classList.add("dirty");
-        els.dirtyBadge.textContent = "Unsaved";
-      }else{
-        els.dirtyBadge.style.display = "none";
-        els.dirtyBadge.classList.remove("dirty");
-      }
-    }
-  }
-
-  function markDirty(){
-    if(!dirty) setDirty(true);
-  }
-
-  function updateTotals(){
-    let cal = 0, p = 0, c = 0, f = 0;
-    MEALS.forEach(m => {
-      const it = draft.meals[m.id];
-      cal += Number(it.calories || 0);
-      p += Number(it.protein || 0);
-      c += Number(it.carbs || 0);
-      f += Number(it.fiber || 0);
-    });
-
-    els.calTotalEl.textContent = String(Math.round(cal));
-    els.proteinTotalEl.textContent = String(Math.round(p));
-    els.carbTotalEl.textContent = String(Math.round(c));
-    els.fiberTotalEl.textContent = String(Math.round(f));
-
-    const calGoal = Number(draft.goals.calories || 0);
-    const pGoal = Number(draft.goals.protein || 0);
-
-    if(calGoal > 0){
-      const pct = clampPct((cal / calGoal) * 100);
-      els.calBar.style.width = pct + "%";
-      els.calHint.textContent = `${Math.round(cal)} / ${Math.round(calGoal)} kcal`;
-    }else{
-      els.calBar.style.width = "0%";
-      els.calHint.textContent = "Set a calorie goal to see progress.";
-    }
-
-    if(pGoal > 0){
-      const pct = clampPct((p / pGoal) * 100);
-      els.proteinBar.style.width = pct + "%";
-      els.proteinHint.textContent = `${Math.round(p)} / ${Math.round(pGoal)} g protein`;
-    }else{
-      els.proteinBar.style.width = "0%";
-      els.proteinHint.textContent = "Set a protein goal to see progress.";
-    }
-  }
-
-  function macroField(labelText, value, onChange){
-    const c = document.createElement("div");
-    const l = document.createElement("label");
-    l.className = "label";
-    l.textContent = labelText;
-
-    const inp = document.createElement("input");
-    inp.className = "input";
-    inp.type = "number";
-    inp.min = "0";
-    inp.placeholder = "0";
-    inp.value = value ? String(value) : "";
-
-    inp.addEventListener("input", () => onChange(Number(inp.value || 0)));
-
-    c.appendChild(l);
-    c.appendChild(inp);
-    return c;
-  }
-
-  function renderCustomGoals(){
-    els.goalList.innerHTML = "";
-    const custom = draft.goals.custom || [];
-
-    if(custom.length === 0){
-      const p = document.createElement("p");
-      p.className = "hint";
-      p.textContent = "No extra goals yet.";
-      els.goalList.appendChild(p);
-      return;
-    }
-
-    custom.forEach(g => {
-      const row = document.createElement("div");
-      row.className = "goalItem";
-
-      const nameWrap = document.createElement("div");
-      const ln = document.createElement("label");
-      ln.className = "label";
-      ln.textContent = "Goal";
-      const name = document.createElement("input");
-      name.className = "input";
-      name.type = "text";
-      name.value = g.name || "";
-      name.addEventListener("input", () => {
-        g.name = name.value;
-        markDirty();
-      });
-      nameWrap.appendChild(ln);
-      nameWrap.appendChild(name);
-
-      const valWrap = document.createElement("div");
-      const lv = document.createElement("label");
-      lv.className = "label";
-      lv.textContent = "Target";
-      const val = document.createElement("input");
-      val.className = "input";
-      val.type = "number";
-      val.min = "0";
-      val.placeholder = "0";
-      val.value = (g.value && Number(g.value) !== 0) ? String(g.value) : "";
-      val.addEventListener("input", () => {
-        g.value = Number(val.value || 0);
-        markDirty();
-      });
-      valWrap.appendChild(lv);
-      valWrap.appendChild(val);
-
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "iconBtn danger";
-      del.title = "Remove goal";
-      del.textContent = "✕";
-      del.addEventListener("click", () => {
-        draft.goals.custom = (draft.goals.custom || []).filter(x => x.id !== g.id);
-        markDirty();
-        renderCustomGoals();
+        carbs: 0,
+        fiber: 0,
+        fullness: "",
+        tag: ""
       });
 
-      row.appendChild(nameWrap);
-      row.appendChild(valWrap);
-      row.appendChild(del);
-
-      els.goalList.appendChild(row);
-    });
-  }
-
-  function renderMeal(mealId, label){
-    const item = draft.meals[mealId];
-
-    const wrap = document.createElement("div");
-    wrap.className = "meal";
-
-    const top = document.createElement("div");
-    top.className = "mealTop";
-
-    const title = document.createElement("p");
-    title.className = "mealName";
-    title.textContent = label;
-
-    const status = document.createElement("div");
-    status.className = "pill";
-    status.textContent = item.name.trim() ? "Added" : "Empty";
-
-    top.appendChild(title);
-    top.appendChild(status);
-    wrap.appendChild(top);
-
-    const row = document.createElement("div");
-    row.className = "row";
-
-    // meal name
-    const c1 = document.createElement("div");
-    const l1 = document.createElement("label");
-    l1.className = "label";
-    l1.textContent = "Meal";
-    const inpName = document.createElement("input");
-    inpName.className = "input";
-    inpName.type = "text";
-    inpName.value = item.name;
-
-    inpName.addEventListener("input", () => {
-      draft.meals[mealId].name = inpName.value;
-      status.textContent = inpName.value.trim() ? "Added" : "Empty";
-      markDirty();
-      updateTotals();
-    });
-
-    c1.appendChild(l1);
-    c1.appendChild(inpName);
-
-    // nutrient tag
-    const c2 = document.createElement("div");
-    const l2 = document.createElement("label");
-    l2.className = "label";
-    l2.textContent = "Nutrient tag";
-    const sel = document.createElement("select");
-    sel.className = "select";
-
-    const currentTag = draft.meals[mealId].tag || "";
-    const opts = [
-      { v:"", t:"Select…" },
-      { v:"protein", t:"Protein" },
-      { v:"fiber", t:"Fiber" },
-      { v:"carbs", t:"Carbohydrates" },
-      { v:"fat", t:"Fats" },
-      { v:"balanced", t:"Balanced" }
-    ];
-    opts.forEach(o => {
-      const op = document.createElement("option");
-      op.value = o.v;
-      op.textContent = o.t;
-      if(o.v === currentTag) op.selected = true;
-      sel.appendChild(op);
-    });
-
-    sel.addEventListener("change", () => {
-      draft.meals[mealId].tag = sel.value;
-      markDirty();
-    });
-
-    c2.appendChild(l2);
-    c2.appendChild(sel);
-
-    // calories
-    const c3 = document.createElement("div");
-    const l3 = document.createElement("label");
-    l3.className = "label";
-    l3.textContent = "Calories";
-    const inpCal = document.createElement("input");
-    inpCal.className = "input";
-    inpCal.type = "number";
-    inpCal.min = "0";
-    inpCal.placeholder = "0";
-    inpCal.value = item.calories ? String(item.calories) : "";
-
-    inpCal.addEventListener("input", () => {
-      draft.meals[mealId].calories = Number(inpCal.value || 0);
-      markDirty();
-      updateTotals();
-    });
-
-    c3.appendChild(l3);
-    c3.appendChild(inpCal);
-
-    row.appendChild(c1);
-    row.appendChild(c2);
-    row.appendChild(c3);
-    wrap.appendChild(row);
-
-    // macros
-    const row2 = document.createElement("div");
-    row2.className = "row2";
-    row2.appendChild(macroField("Protein (g)", item.protein, (v)=>{ draft.meals[mealId].protein = v; markDirty(); updateTotals(); }));
-    row2.appendChild(macroField("Carbs (g)", item.carbs, (v)=>{ draft.meals[mealId].carbs = v; markDirty(); updateTotals(); }));
-    row2.appendChild(macroField("Fiber (g)", item.fiber, (v)=>{ draft.meals[mealId].fiber = v; markDirty(); updateTotals(); }));
-    wrap.appendChild(row2);
-
-    // fullness
-    const full = document.createElement("div");
-    full.style.marginTop = "10px";
-
-    const lf = document.createElement("div");
-    lf.className = "label";
-    lf.textContent = "Fullness";
-    full.appendChild(lf);
-
-    const chips = document.createElement("div");
-    chips.className = "fullness";
-
-    FULLNESS_OPTIONS.forEach(o => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "chip";
-      b.textContent = o.label;
-      b.dataset.active = String(item.fullness === o.id);
-
-      b.addEventListener("click", () => {
-        const cur = draft.meals[mealId].fullness;
-        draft.meals[mealId].fullness = (cur === o.id) ? "" : o.id;
-
-        Array.from(chips.querySelectorAll(".chip")).forEach(x => x.dataset.active = "false");
-        if(draft.meals[mealId].fullness === o.id) b.dataset.active = "true";
-
-        markDirty();
-      });
-
-      chips.appendChild(b);
-    });
-
-    full.appendChild(chips);
-    wrap.appendChild(full);
-
-    const note = document.createElement("div");
-    note.className = "mini";
-    wrap.appendChild(note);
-
-    return wrap;
-  }
-
-  function render(){
-    els.dayMeta.textContent = niceDay(current);
-
-    els.goalCalories.value = draft.goals.calories ? String(draft.goals.calories) : "";
-    els.goalProtein.value = draft.goals.protein ? String(draft.goals.protein) : "";
-
-    els.mealList.innerHTML = "";
-    MEALS.forEach(m => els.mealList.appendChild(renderMeal(m.id, m.label)));
-
-    renderCustomGoals();
-    updateTotals();
-  }
-
-  // Goal handlers (draft-only)
-  els.goalCalories.addEventListener("input", () => {
-    draft.goals.calories = Number(els.goalCalories.value || 0);
-    markDirty();
-    updateTotals();
-  });
-  els.goalProtein.addEventListener("input", () => {
-    draft.goals.protein = Number(els.goalProtein.value || 0);
-    markDirty();
-    updateTotals();
-  });
-
-  els.addGoalBtn.addEventListener("click", () => {
-    const name = (els.newGoalName.value || "").trim();
-    if(!name) return;
-
-    const id = "g_" + Math.random().toString(16).slice(2) + "_" + Date.now();
-    draft.goals.custom = draft.goals.custom || [];
-    draft.goals.custom.push({ id, name, value: 0 });
-
-    els.newGoalName.value = "";
-    markDirty();
-    renderCustomGoals();
-  });
-
-  els.newGoalName.addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){
-      e.preventDefault();
-      els.addGoalBtn.click();
+      return {
+        goals: {
+          calories: 0,
+          protein: 0,
+          custom: []
+        },
+        meals
+      };
     }
-  });
 
-  // Save / Revert / Clear
-  els.saveDayBtn.addEventListener("click", () => {
-    saved = deepClone(draft);
-    saveDay(current, saved);
-    setDirty(false);
-    toast("Day saved.");
-  });
+    function keyFor(date){ return DAY_PREFIX + isoDay(date); }
 
-  els.revertDayBtn.addEventListener("click", async () => {
-    if(!dirty){
-      toast("Nothing to revert.");
-      return;
-    }
-    const ok = await askConfirm("Discard unsaved changes for this day?", { okText:"Revert", cancelText:"Cancel", danger:true });
-    if(!ok) return;
-    draft = deepClone(saved);
-    setDirty(false);
-    render();
-    toast("Reverted.");
-  });
+    function loadDay(date){
+      const raw = window.__DT__.get(keyFor(date));
+      if(!raw) return defaultDayData();
 
-  els.clearDayBtn.addEventListener("click", async () => {
-    const ok = await askConfirm("Clear saved data for this day? This cannot be undone.", { okText:"Clear", cancelText:"Cancel", danger:true });
-    if(!ok) return;
+      try{
+        const parsed = JSON.parse(raw);
+        const base = defaultDayData();
 
-    window.__DT__.remove(keyFor(current));
-    saved = defaultDayData();
-    draft = deepClone(saved);
-    setDirty(false);
-    render();
-    toast("Day cleared.");
-  });
+        base.goals.calories = Number(parsed?.goals?.calories || 0);
+        base.goals.protein = Number(parsed?.goals?.protein || 0);
+        base.goals.custom = Array.isArray(parsed?.goals?.custom) ? parsed.goals.custom : [];
 
-  // Day navigation (with unsaved-change guard)
-  async function go(deltaDays){
-    if(dirty){
-      const ok = await askConfirm(
-        "You have unsaved changes. Save before switching days?",
-        { title:"Unsaved changes", okText:"Save & switch", cancelText:"Discard & switch" }
-      );
-      if(ok){
-        saved = deepClone(draft);
-        saveDay(current, saved);
-        setDirty(false);
-      }else{
-        // discard
-        draft = deepClone(saved);
-        setDirty(false);
+        MEALS.forEach(m => {
+          const src = parsed?.meals?.[m.id] || {};
+          base.meals[m.id] = {
+            name: String(src.name || ""),
+            calories: Number(src.calories || 0),
+            protein: Number(src.protein || 0),
+            carbs: Number(src.carbs || 0),
+            fiber: Number(src.fiber || 0),
+            fullness: String(src.fullness || ""),
+            tag: String(src.tag || "")
+          };
+        });
+
+        return base;
+      }catch{
+        window.__DT__.remove(keyFor(date));
+        return defaultDayData();
       }
     }
 
-    current = new Date(current.getTime() + deltaDays * 86400000);
+    function saveDay(date, data){
+      window.__DT__.set(keyFor(date), JSON.stringify(data));
+    }
+
+    // ---------- State ----------
+    let current = new Date();
     current.setHours(0,0,0,0);
-    saved = loadDay(current);
-    draft = deepClone(saved);
-    setDirty(false);
+    let data = loadDay(current);
+
+    // ---------- Rendering ----------
+    function render(){
+      els.dayMeta.textContent = niceDay(current);
+
+      els.goalCalories.value = data.goals.calories ? String(data.goals.calories) : "";
+      els.goalProtein.value = data.goals.protein ? String(data.goals.protein) : "";
+
+      els.mealList.innerHTML = "";
+      MEALS.forEach(m => els.mealList.appendChild(renderMeal(m.id, m.label)));
+
+      renderCustomGoals();
+      updateTotals();
+    }
+
+    function renderMeal(mealId, label){
+      const item = data.meals[mealId];
+
+      const wrap = document.createElement("div");
+      wrap.className = "meal";
+
+      const top = document.createElement("div");
+      top.className = "mealTop";
+
+      const title = document.createElement("p");
+      title.className = "mealName";
+      title.textContent = label;
+
+      const status = document.createElement("div");
+      status.className = "pill";
+      status.textContent = item.name.trim() ? "Added" : "Empty";
+
+      top.appendChild(title);
+      top.appendChild(status);
+      wrap.appendChild(top);
+
+      const row = document.createElement("div");
+      row.className = "row";
+
+      const c1 = document.createElement("div");
+      const l1 = document.createElement("label");
+      l1.className = "label";
+      l1.textContent = "Meal";
+      const inpName = document.createElement("input");
+      inpName.className = "input";
+      inpName.type = "text";
+      inpName.value = item.name;
+
+      inpName.addEventListener("input", () => {
+        data.meals[mealId].name = inpName.value;
+        saveDay(current, data);
+        status.textContent = inpName.value.trim() ? "Added" : "Empty";
+        updateTotals();
+      });
+
+      c1.appendChild(l1);
+      c1.appendChild(inpName);
+
+      const c2 = document.createElement("div");
+      const l2 = document.createElement("label");
+      l2.className = "label";
+      l2.textContent = "Nutrient tag";
+      const sel = document.createElement("select");
+      sel.className = "select";
+
+      const currentTag = data.meals[mealId].tag || "";
+      const opts = [
+        { v:"", t:"Select…" },
+        { v:"protein", t:"Protein" },
+        { v:"fiber", t:"Fiber" },
+        { v:"carbs", t:"Carbohydrates" },
+        { v:"fat", t:"Fats" },
+        { v:"balanced", t:"Balanced" }
+      ];
+
+      opts.forEach(o => {
+        const op = document.createElement("option");
+        op.value = o.v;
+        op.textContent = o.t;
+        if(o.v === currentTag) op.selected = true;
+        sel.appendChild(op);
+      });
+
+      sel.addEventListener("change", () => {
+        data.meals[mealId].tag = sel.value;
+        saveDay(current, data);
+      });
+
+      c2.appendChild(l2);
+      c2.appendChild(sel);
+
+      const c3 = document.createElement("div");
+      const l3 = document.createElement("label");
+      l3.className = "label";
+      l3.textContent = "Calories";
+      const inpCal = document.createElement("input");
+      inpCal.className = "input";
+      inpCal.type = "number";
+      inpCal.min = "0";
+      inpCal.placeholder = "0";
+      inpCal.value = item.calories ? String(item.calories) : "";
+
+      inpCal.addEventListener("input", () => {
+        data.meals[mealId].calories = Number(inpCal.value || 0);
+        saveDay(current, data);
+        updateTotals();
+      });
+
+      c3.appendChild(l3);
+      c3.appendChild(inpCal);
+
+      row.appendChild(c1);
+      row.appendChild(c2);
+      row.appendChild(c3);
+      wrap.appendChild(row);
+
+      const row2 = document.createElement("div");
+      row2.className = "row2";
+
+      row2.appendChild(macroField("Protein (g)", item.protein, (v)=>{ data.meals[mealId].protein = v; saveDay(current, data); updateTotals(); }));
+      row2.appendChild(macroField("Carbs (g)", item.carbs, (v)=>{ data.meals[mealId].carbs = v; saveDay(current, data); updateTotals(); }));
+      row2.appendChild(macroField("Fiber (g)", item.fiber, (v)=>{ data.meals[mealId].fiber = v; saveDay(current, data); updateTotals(); }));
+
+      wrap.appendChild(row2);
+
+      const full = document.createElement("div");
+      full.style.marginTop = "10px";
+
+      const lf = document.createElement("div");
+      lf.className = "label";
+      lf.textContent = "Fullness";
+      full.appendChild(lf);
+
+      const chips = document.createElement("div");
+      chips.className = "fullness";
+
+      FULLNESS_OPTIONS.forEach(o => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip";
+        b.textContent = o.label;
+        b.dataset.active = String(item.fullness === o.id);
+
+        b.addEventListener("click", () => {
+          const cur = data.meals[mealId].fullness;
+          data.meals[mealId].fullness = (cur === o.id) ? "" : o.id;
+          saveDay(current, data);
+
+          Array.from(chips.querySelectorAll(".chip")).forEach(x => x.dataset.active = "false");
+          if(data.meals[mealId].fullness === o.id) b.dataset.active = "true";
+        });
+
+        chips.appendChild(b);
+      });
+
+      full.appendChild(chips);
+      wrap.appendChild(full);
+
+      const note = document.createElement("div");
+      note.className = "mini";
+      wrap.appendChild(note);
+
+      return wrap;
+    }
+
+    function macroField(labelText, value, onChange){
+      const c = document.createElement("div");
+      const l = document.createElement("label");
+      l.className = "label";
+      l.textContent = labelText;
+
+      const inp = document.createElement("input");
+      inp.className = "input";
+      inp.type = "number";
+      inp.min = "0";
+      inp.placeholder = "0";
+      inp.value = value ? String(value) : "";
+
+      inp.addEventListener("input", () => onChange(Number(inp.value || 0)));
+
+      c.appendChild(l);
+      c.appendChild(inp);
+      return c;
+    }
+
+    function renderCustomGoals(){
+      els.goalList.innerHTML = "";
+      const custom = data.goals.custom || [];
+
+      if(custom.length === 0){
+        const p = document.createElement("p");
+        p.className = "hint";
+        p.textContent = "No extra goals yet.";
+        els.goalList.appendChild(p);
+        return;
+      }
+
+      custom.forEach(g => {
+        const row = document.createElement("div");
+        row.className = "goalItem";
+
+        const nameWrap = document.createElement("div");
+        const ln = document.createElement("label");
+        ln.className = "label";
+        ln.textContent = "Goal";
+        const name = document.createElement("input");
+        name.className = "input";
+        name.type = "text";
+        name.value = g.name || "";
+        name.addEventListener("input", () => {
+          g.name = name.value;
+          saveDay(current, data);
+        });
+        nameWrap.appendChild(ln);
+        nameWrap.appendChild(name);
+
+        const valWrap = document.createElement("div");
+        const lv = document.createElement("label");
+        lv.className = "label";
+        lv.textContent = "Target";
+        const val = document.createElement("input");
+        val.className = "input";
+        val.type = "number";
+        val.min = "0";
+        val.placeholder = "0";
+        val.value = (g.value && Number(g.value) !== 0) ? String(g.value) : "";
+        val.addEventListener("input", () => {
+          g.value = Number(val.value || 0);
+          saveDay(current, data);
+        });
+        valWrap.appendChild(lv);
+        valWrap.appendChild(val);
+
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "iconBtn danger";
+        del.title = "Remove goal";
+        del.textContent = "✕";
+        del.addEventListener("click", async () => {
+          const ok = await askConfirm("Remove this goal?", { okText: "Remove", cancelText: "Cancel", danger: true });
+          if(!ok) return;
+          data.goals.custom = (data.goals.custom || []).filter(x => x.id !== g.id);
+          saveDay(current, data);
+          renderCustomGoals();
+        });
+
+        row.appendChild(nameWrap);
+        row.appendChild(valWrap);
+        row.appendChild(del);
+
+        els.goalList.appendChild(row);
+      });
+    }
+
+    function updateTotals(){
+      let cal = 0, p = 0, c = 0, f = 0;
+      MEALS.forEach(m => {
+        const it = data.meals[m.id];
+        cal += Number(it.calories || 0);
+        p += Number(it.protein || 0);
+        c += Number(it.carbs || 0);
+        f += Number(it.fiber || 0);
+      });
+
+      els.calTotalEl.textContent = String(Math.round(cal));
+      els.proteinTotalEl.textContent = String(Math.round(p));
+      els.carbTotalEl.textContent = String(Math.round(c));
+      els.fiberTotalEl.textContent = String(Math.round(f));
+
+      const calGoal = Number(data.goals.calories || 0);
+      const pGoal = Number(data.goals.protein || 0);
+
+      if(calGoal > 0){
+        const pct = clampPct((cal / calGoal) * 100);
+        els.calBar.style.width = pct + "%";
+        els.calHint.textContent = `${Math.round(cal)} / ${Math.round(calGoal)} kcal`;
+      }else{
+        els.calBar.style.width = "0%";
+        els.calHint.textContent = "Set a calorie goal to see progress.";
+      }
+
+      if(pGoal > 0){
+        const pct = clampPct((p / pGoal) * 100);
+        els.proteinBar.style.width = pct + "%";
+        els.proteinHint.textContent = `${Math.round(p)} / ${Math.round(pGoal)} g protein`;
+      }else{
+        els.proteinBar.style.width = "0%";
+        els.proteinHint.textContent = "Set a protein goal to see progress.";
+      }
+    }
+
+    // ---------- Events: Goals ----------
+    els.goalCalories.addEventListener("input", () => {
+      data.goals.calories = Number(els.goalCalories.value || 0);
+      saveDay(current, data);
+      updateTotals();
+    });
+
+    els.goalProtein.addEventListener("input", () => {
+      data.goals.protein = Number(els.goalProtein.value || 0);
+      saveDay(current, data);
+      updateTotals();
+    });
+
+    els.addGoalBtn.addEventListener("click", () => {
+      const name = (els.newGoalName.value || "").trim();
+      if(!name) return;
+
+      const id = "g_" + uid();
+      data.goals.custom = data.goals.custom || [];
+      data.goals.custom.push({ id, name, value: 0 });
+
+      els.newGoalName.value = "";
+      saveDay(current, data);
+      renderCustomGoals();
+    });
+
+    els.newGoalName.addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){
+        e.preventDefault();
+        els.addGoalBtn.click();
+      }
+    });
+
+    // ---------- Day navigation ----------
+    function go(deltaDays){
+      current = new Date(current.getTime() + deltaDays * 86400000);
+      current.setHours(0,0,0,0);
+      data = loadDay(current);
+      render();
+    }
+
+    els.prevDayBtn.addEventListener("click", () => go(-1));
+    els.nextDayBtn.addEventListener("click", () => go(1));
+
+    els.clearDayBtn.addEventListener("click", async () => {
+      const ok = await askConfirm("Clear this day?", { okText: "Clear", cancelText: "Cancel", danger: true });
+      if(!ok) return;
+
+      window.__DT__.remove(keyFor(current));
+      data = loadDay(current);
+      render();
+    });
+
+    // ---------- Init ----------
     render();
-  }
-
-  els.prevDayBtn.addEventListener("click", () => go(-1));
-  els.nextDayBtn.addEventListener("click", () => go(1));
-
-  // Init
-  setDirty(false);
-  render();
-});
+  });
   </script>
 </body>
 </html>

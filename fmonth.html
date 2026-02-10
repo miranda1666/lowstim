@@ -1,0 +1,1373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Monthly Planner</title>
+  <style>
+    :root{
+      --app-bg: #ffffff;
+
+      --ink: #2b2b2b;
+      --muted: #7a7a7a;
+
+      /* borders + shadows */
+      --border-rgb: 30,30,30;
+      --border-a: 0.10;
+      --border: rgba(var(--border-rgb), var(--border-a));
+      --shadow: 0 10px 26px rgba(20, 20, 20, 0.08);
+
+      /* key surfaces */
+      --surface-a: 0.75;
+
+      --panel-a: 0.92;
+      --calendar-a: 0.60;
+      --card-a: 0.92;
+      --daycell-a: 0.92;
+      --dow-a: 0.55;
+      --input-a: 0.95;
+
+      /* controls */
+      --btn-a: 0.90;
+      --btn-border-a: 0.10;
+      --btn-ink: rgba(43,43,43,0.70);
+
+      /* accents */
+      --accent: #cbb8ae;
+
+      /* board background */
+      --board-radius: 24px;
+      --board-tint: #efe7e1;
+      --board-tint-a: 0.35;
+      --board-image: none;
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--ink);
+      background: var(--app-bg);
+    }
+
+    .wrap{
+      max-width: 1760px;
+      margin: 22px auto;
+      padding: 16px;
+    }
+
+    .titlebar{
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    h1{
+      margin: 0;
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: 0.2px;
+    }
+
+    .controls{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .icon-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(var(--surface-bg-rgb, 255,255,255), var(--surface-a));
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      box-shadow: 0 6px 18px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+
+    .bg-btn, .nav-btn, .theme-btn{
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
+      background: rgba(var(--btn-bg-rgb, 255,255,255), var(--btn-a));
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--btn-ink);
+      font-weight: 800;
+      line-height: 1;
+    }
+    .bg-btn:active, .nav-btn:active, .theme-btn:active{ transform: translateY(1px); }
+
+    .bg-dot, .theme-dot{
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), 0.14);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
+    }
+    .theme-dot{
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(203,184,174,0.25);
+    }
+
+    .popover{ position: relative; }
+
+    .panel{
+      position: absolute;
+      top: 44px;
+      right: 0;
+      width: 310px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(var(--panel-bg-rgb, 255,255,255), var(--panel-a));
+      box-shadow: 0 18px 40px rgba(20,20,20,0.10);
+      backdrop-filter: blur(2px);
+      padding: 12px;
+      display: none;
+      z-index: 50;
+    }
+    .panel.open{ display: block; }
+
+    .panelTitle{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.70);
+    }
+
+    .row{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+    }
+
+    .row label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="color"]{
+      width: 34px;
+      height: 26px;
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"]{ width: 150px; }
+
+    .file{
+      width: 100%;
+      font-size: 12px;
+      color: rgba(43,43,43,0.75);
+    }
+
+    .mini-btn{
+      width: 100%;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.90);
+      border-radius: 12px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 650;
+      color: rgba(43,43,43,0.85);
+      -webkit-tap-highlight-color: transparent;
+      margin-top: 8px;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+
+    .divider{
+      height: 1px;
+      background: rgba(var(--border-rgb), 0.08);
+      margin: 8px 0;
+    }
+
+    .month-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(var(--surface-bg-rgb,255,255,255), var(--surface-a));
+      box-shadow: 0 6px 18px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+    .month-label{
+      font-size: 12px;
+      color: rgba(43,43,43,0.78);
+      min-width: 170px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .board{
+      border: 1px solid var(--border);
+      border-radius: var(--board-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      background: none;
+    }
+
+    .board::before{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(0.95);
+      transform: scale(1.02);
+    }
+
+    /* overlay gets injected via JS */
+    .board::after{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.38);
+      pointer-events: none;
+    }
+
+    .board-tint{
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+
+    .board-content{
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(2px);
+    }
+
+    .layout{
+      display: grid;
+      grid-template-columns: 1.9fr 0.45fr;
+      gap: 16px;
+      padding: 14px;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    .calendar{
+      background: rgba(var(--calendar-bg-rgb,255,255,255), var(--calendar-a));
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: 20px;
+      padding: 12px;
+      box-shadow: 0 10px 24px rgba(20,20,20,0.06);
+      overflow: hidden;
+    }
+
+    .dow{
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+      padding: 2px 2px 10px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .dow div{
+      text-align: center;
+      padding: 8px 0;
+      border-radius: 12px;
+      background: rgba(var(--dow-bg-rgb,255,255,255), var(--dow-a));
+      border: 1px solid rgba(var(--border-rgb), 0.06);
+    }
+
+    .cal-grid{
+      display: grid;
+      grid-template-columns: repeat(7, minmax(160px, 1fr));
+      gap: 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
+    @media (min-width: 1400px){
+      .cal-grid{ overflow-x: visible; }
+    }
+
+    .daycell{
+      background: rgba(var(--daycell-bg-rgb,255,255,255), var(--daycell-a));
+      border: 1px solid rgba(var(--border-rgb), 0.08);
+      border-radius: 16px;
+      min-height: 190px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 8px 18px rgba(20,20,20,0.05);
+      min-width: 160px;
+    }
+    .daycell.outside{ opacity: 0.55; }
+
+    .daytop{
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .daynum{
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(43,43,43,0.80);
+    }
+
+    .daynote{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: 12px;
+      padding: 9px 10px;
+      outline: none;
+      background: rgba(var(--input-bg-rgb,255,255,255), var(--input-a));
+      color: var(--ink);
+      font-size: 12px;
+      resize: none;
+      min-height: 64px;
+      line-height: 1.25;
+    }
+    .daynote:focus{
+      border-color: rgba(var(--border-rgb), 0.18);
+      box-shadow: 0 0 0 4px rgba(203,184,174,0.18);
+    }
+
+    .goals-wrap{ display: flex; flex-direction: column; gap: 8px; }
+
+    .goal-chip{
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 26px 26px;
+      gap: 8px;
+      align-items: start;
+      padding: 8px 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(var(--border-rgb), 0.08);
+      background: rgba(203,184,174,0.22);
+      min-width: 0;
+    }
+    .goalText{
+      width: 100%;
+      border: none;
+      background: transparent;
+      outline: none;
+      color: var(--ink);
+      font-size: 12px;
+      padding: 4px 2px;
+      min-width: 0;
+      resize: none;
+      min-height: 44px;
+      line-height: 1.25;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .gbtn{
+      width: 26px;
+      height: 26px;
+      border-radius: 10px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.75);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: rgba(43,43,43,0.72);
+      -webkit-tap-highlight-color: transparent;
+      font-weight: 900;
+      line-height: 1;
+      user-select: none;
+      padding: 0;
+    }
+    .gbtn:active{ transform: translateY(1px); }
+
+    .goalColorLabel{ position: relative; overflow: hidden; }
+    .goalColorPicker{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .add-goal{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.85);
+      border-radius: 12px;
+      padding: 8px 8px;
+      cursor: pointer;
+      color: rgba(43,43,43,0.78);
+      font-weight: 650;
+      font-size: 12px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .add-goal:active{ transform: translateY(1px); }
+
+    .side{ display: flex; flex-direction: column; gap: 12px; }
+
+    .card{
+      background: rgba(var(--card-bg-rgb,255,255,255), var(--card-a));
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: 20px;
+      padding: 12px;
+      box-shadow: 0 10px 24px rgba(20,20,20,0.06);
+    }
+
+    .card-title{
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .card-title h2{
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(43,43,43,0.85);
+    }
+    .small{ font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="titlebar">
+      <div class="title"></div>
+
+      <div class="controls">
+        <div class="month-pill" aria-label="Month navigation">
+          <button class="nav-btn" id="prevMonth" type="button" aria-label="Previous month" title="Previous month">‹</button>
+          <div class="month-label" id="monthLabel">Month</div>
+          <button class="nav-btn" id="nextMonth" type="button" aria-label="Next month" title="Next month">›</button>
+        </div>
+
+        <!-- Theme -->
+        <div class="popover" id="themePopover">
+          <div class="icon-pill">
+            <button class="theme-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <div class="panelTitle">Theme</div>
+
+            <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
+            <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
+            <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e" /></div>
+            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tSurfaceColor">Pills bg</label><input id="tSurfaceColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tSurfaceA">Pills opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="75" /></div>
+
+            <div class="row"><label for="tPanelColor">Panel bg</label><input id="tPanelColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tCalendarColor">Calendar bg</label><input id="tCalendarColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tCalendarA">Calendar opacity</label><input id="tCalendarA" type="range" min="35" max="95" value="60" /></div>
+
+            <div class="row"><label for="tDaycellColor">Daycell bg</label><input id="tDaycellColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDaycellA">Daycell opacity</label><input id="tDaycellA" type="range" min="45" max="98" value="92" /></div>
+
+            <div class="row"><label for="tDowColor">DOW bg</label><input id="tDowColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDowA">DOW opacity</label><input id="tDowA" type="range" min="25" max="95" value="55" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tInputColor">Inputs bg</label><input id="tInputColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInputA">Inputs opacity</label><input id="tInputA" type="range" min="55" max="100" value="95" /></div>
+
+            <div class="row"><label for="tCardColor">Side cards bg</label><input id="tCardColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tCardA">Side cards opacity</label><input id="tCardA" type="range" min="55" max="100" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBtnColor">Buttons bg</label><input id="tBtnColor" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="90" /></div>
+            <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10" /></div>
+            <div class="row"><label for="tBtnInk">Btn icon/text</label><input id="tBtnInk" type="color" value="#2b2b2b" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tOverlayBase">Overlay color</label><input id="tOverlayBase" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="38" /></div>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+            <button class="mini-btn" id="exportSettings" type="button">Export settings JSON</button>
+            <button class="mini-btn" id="importSettings" type="button">Import settings JSON</button>
+            <input id="importFile" type="file" accept="application/json" style="display:none" />
+          </div>
+        </div>
+
+        <!-- Background (per-month) -->
+        <div class="popover" id="bgPopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <span class="bg-dot" id="bgDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <div class="panelTitle">Background</div>
+
+            <div class="row">
+              <label for="bgColor">Tint</label>
+              <input id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="row">
+              <label for="bgStrength">Tint strength</label>
+              <input id="bgStrength" type="range" min="0" max="70" value="35" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input id="bgImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="row">
+              <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="board-tint" id="boardTint"></div>
+
+      <div class="board-content">
+        <div class="layout">
+          <section class="calendar" aria-label="Monthly calendar">
+            <div class="dow" aria-hidden="true">
+              <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+          </section>
+
+          <aside class="side" aria-label="Notes">
+            <div class="card">
+              <div class="card-title">
+                <h2>Notes</h2>
+                <div class="small">Monthly</div>
+              </div>
+              <textarea id="monthNotes" class="daynote"></textarea>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================
+       Robust helpers
+    ========================== */
+    function safeJSONParse(s){ try{ return JSON.parse(s); }catch{ return null; } }
+
+    function storageGet(key){
+      try{ const v = localStorage.getItem(key); if(v != null) return v; }catch{}
+      try{ const v = sessionStorage.getItem(key); if(v != null) return v; }catch{}
+      return null;
+    }
+    function storageSet(key, val){
+      try{ localStorage.setItem(key, val); return true; }catch{}
+      try{ sessionStorage.setItem(key, val); return true; }catch{}
+      return false;
+    }
+    function storageRemove(key){
+      try{ localStorage.removeItem(key); }catch{}
+      try{ sessionStorage.removeItem(key); }catch{}
+    }
+
+    function clamp(n, min, max){
+      const x = Number(n);
+      if(!Number.isFinite(x)) return min;
+      return Math.max(min, Math.min(max, x));
+    }
+
+    function normHex(hex, fallback){
+      const s = String(hex || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+    }
+
+    function hexToRgbTuple(hex){
+      const h = normHex(hex, "#ffffff").slice(1);
+      const r = parseInt(h.slice(0,2), 16);
+      const g = parseInt(h.slice(2,4), 16);
+      const b = parseInt(h.slice(4,6), 16);
+      return `${r},${g},${b}`;
+    }
+
+    function hexToRgba(hex, a){
+      const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function downloadJSON(filename, obj){
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function monthIdFromDate(d){ const x = new Date(d); return `${x.getFullYear()}-${pad2(x.getMonth()+1)}`; }
+    function addMonths(date, delta){
+      const d = new Date(date);
+      const day = d.getDate();
+      d.setDate(1);
+      d.setMonth(d.getMonth() + delta);
+      const last = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+      d.setDate(Math.min(day, last));
+      return d;
+    }
+    function prettyMonthLabel(monthId){
+      const [y,m] = monthId.split("-").map(Number);
+      const d = new Date(y, m-1, 1);
+      return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    }
+    function startOfCalendarGrid(year, monthIndex){
+      const first = new Date(year, monthIndex, 1);
+      const day = first.getDay();
+      const mondayIndex = (day === 0) ? 6 : day - 1;
+      const start = new Date(year, monthIndex, 1 - mondayIndex);
+      start.setHours(0,0,0,0);
+      return start;
+    }
+
+    function autoGrow(el){
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 260) + "px";
+    }
+
+    function chipBg(color){
+      return `linear-gradient(180deg, ${hexToRgba(color, 0.22)}, ${hexToRgba(color, 0.18)})`;
+    }
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    /* =========================
+       Keys
+    ========================== */
+    const STORAGE_KEY = "monthly_planner_v2_day_goals";
+    const THEME_KEY   = "monthly_planner_theme_v2";
+
+    // universal bundle key (reusable approach)
+    const SETTINGS_BUNDLE_KEY = "widget_settings_monthly_planner_v1";
+
+    const DEFAULT_THEME = {
+      appBg: "#ffffff",
+      ink: "#2b2b2b",
+      muted: "#7a7a7a",
+      accent: "#cbb8ae",
+
+      borderColor: "#1e1e1e",
+      borderA: 0.10,
+
+      surfaceColor: "#ffffff",
+      surfaceA: 0.75,
+
+      panelColor: "#ffffff",
+      panelA: 0.92,
+
+      calendarColor: "#ffffff",
+      calendarA: 0.60,
+
+      daycellColor: "#ffffff",
+      daycellA: 0.92,
+
+      dowColor: "#ffffff",
+      dowA: 0.55,
+
+      inputColor: "#ffffff",
+      inputA: 0.95,
+
+      cardColor: "#ffffff",
+      cardA: 0.92,
+
+      btnColor: "#ffffff",
+      btnA: 0.90,
+      btnBorderA: 0.10,
+      btnInk: "#2b2b2b",
+
+      overlayBase: "#ffffff",
+      overlayA: 0.38
+    };
+
+    function themeLoad(){
+      const raw = storageGet(THEME_KEY);
+      return raw ? safeJSONParse(raw) : null;
+    }
+    function themeSave(t){
+      storageSet(THEME_KEY, JSON.stringify(t));
+    }
+
+    function themeApply(t){
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
+      const r = document.documentElement.style;
+
+      const appBg = normHex(theme.appBg, DEFAULT_THEME.appBg);
+      const ink = normHex(theme.ink, DEFAULT_THEME.ink);
+      const muted = normHex(theme.muted, DEFAULT_THEME.muted);
+      const accent = normHex(theme.accent, DEFAULT_THEME.accent);
+
+      r.setProperty("--app-bg", appBg);
+      r.setProperty("--ink", ink);
+      r.setProperty("--muted", muted);
+      r.setProperty("--accent", accent);
+
+      r.setProperty("--border-rgb", hexToRgbTuple(normHex(theme.borderColor, DEFAULT_THEME.borderColor)));
+      r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
+
+      r.setProperty("--surface-bg-rgb", hexToRgbTuple(normHex(theme.surfaceColor, DEFAULT_THEME.surfaceColor)));
+      r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
+
+      r.setProperty("--panel-bg-rgb", hexToRgbTuple(normHex(theme.panelColor, DEFAULT_THEME.panelColor)));
+      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
+
+      r.setProperty("--calendar-bg-rgb", hexToRgbTuple(normHex(theme.calendarColor, DEFAULT_THEME.calendarColor)));
+      r.setProperty("--calendar-a", String(clamp(theme.calendarA, 0.35, 0.95)));
+
+      r.setProperty("--daycell-bg-rgb", hexToRgbTuple(normHex(theme.daycellColor, DEFAULT_THEME.daycellColor)));
+      r.setProperty("--daycell-a", String(clamp(theme.daycellA, 0.45, 0.98)));
+
+      r.setProperty("--dow-bg-rgb", hexToRgbTuple(normHex(theme.dowColor, DEFAULT_THEME.dowColor)));
+      r.setProperty("--dow-a", String(clamp(theme.dowA, 0.25, 0.95)));
+
+      r.setProperty("--input-bg-rgb", hexToRgbTuple(normHex(theme.inputColor, DEFAULT_THEME.inputColor)));
+      r.setProperty("--input-a", String(clamp(theme.inputA, 0.55, 1.00)));
+
+      r.setProperty("--card-bg-rgb", hexToRgbTuple(normHex(theme.cardColor, DEFAULT_THEME.cardColor)));
+      r.setProperty("--card-a", String(clamp(theme.cardA, 0.55, 1.00)));
+
+      r.setProperty("--btn-bg-rgb", hexToRgbTuple(normHex(theme.btnColor, DEFAULT_THEME.btnColor)));
+      r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
+      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
+
+      // IMPORTANT: btn-ink must be rgba in CSS (your buttons use color: var(--btn-ink))
+      const btnInkHex = normHex(theme.btnInk, DEFAULT_THEME.btnInk);
+      r.setProperty("--btn-ink", hexToRgba(btnInkHex, 0.70));
+
+      // Theme dot
+      const dot = document.getElementById("themeDot");
+      if(dot){
+        dot.style.background = accent;
+        dot.style.boxShadow = `0 0 0 6px ${hexToRgba(accent, 0.25)}`;
+      }
+
+      // Overlay: single layer (no radials)
+      const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
+      const overlayA = clamp(theme.overlayA, 0.00, 0.70);
+      const css = hexToRgba(overlayBase, overlayA);
+
+      let st = document.getElementById("overlayStyle");
+      if(!st){
+        st = document.createElement("style");
+        st.id = "overlayStyle";
+        document.head.appendChild(st);
+      }
+      st.textContent = `.board::after{ background: ${css} !important; }`;
+    }
+
+    function themeSyncInputs(t){
+      const theme = Object.assign({}, DEFAULT_THEME, t || {});
+      const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
+
+      set("tAppBg", theme.appBg);
+      set("tInk", theme.ink);
+      set("tMuted", theme.muted);
+      set("tAccent", theme.accent);
+
+      set("tBorderColor", theme.borderColor);
+      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+
+      set("tSurfaceColor", theme.surfaceColor);
+      set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
+
+      set("tPanelColor", theme.panelColor);
+      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+
+      set("tCalendarColor", theme.calendarColor);
+      set("tCalendarA", Math.round(clamp(theme.calendarA, 0.35, 0.95) * 100));
+
+      set("tDaycellColor", theme.daycellColor);
+      set("tDaycellA", Math.round(clamp(theme.daycellA, 0.45, 0.98) * 100));
+
+      set("tDowColor", theme.dowColor);
+      set("tDowA", Math.round(clamp(theme.dowA, 0.25, 0.95) * 100));
+
+      set("tInputColor", theme.inputColor);
+      set("tInputA", Math.round(clamp(theme.inputA, 0.55, 1.00) * 100));
+
+      set("tCardColor", theme.cardColor);
+      set("tCardA", Math.round(clamp(theme.cardA, 0.55, 1.00) * 100));
+
+      set("tBtnColor", theme.btnColor);
+      set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
+      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+      set("tBtnInk", theme.btnInk);
+
+      set("tOverlayBase", theme.overlayBase);
+      set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
+    }
+
+    function themeReadFromInputs(){
+      const g = (id)=>document.getElementById(id);
+
+      return {
+        appBg: g("tAppBg")?.value,
+        ink: g("tInk")?.value,
+        muted: g("tMuted")?.value,
+        accent: g("tAccent")?.value,
+
+        borderColor: g("tBorderColor")?.value,
+        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
+
+        surfaceColor: g("tSurfaceColor")?.value,
+        surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
+
+        panelColor: g("tPanelColor")?.value,
+        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
+
+        calendarColor: g("tCalendarColor")?.value,
+        calendarA: clamp(Number(g("tCalendarA")?.value)/100, 0.35, 0.95),
+
+        daycellColor: g("tDaycellColor")?.value,
+        daycellA: clamp(Number(g("tDaycellA")?.value)/100, 0.45, 0.98),
+
+        dowColor: g("tDowColor")?.value,
+        dowA: clamp(Number(g("tDowA")?.value)/100, 0.25, 0.95),
+
+        inputColor: g("tInputColor")?.value,
+        inputA: clamp(Number(g("tInputA")?.value)/100, 0.55, 1.00),
+
+        cardColor: g("tCardColor")?.value,
+        cardA: clamp(Number(g("tCardA")?.value)/100, 0.55, 1.00),
+
+        btnColor: g("tBtnColor")?.value,
+        btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
+        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
+        btnInk: g("tBtnInk")?.value,
+
+        overlayBase: g("tOverlayBase")?.value,
+        overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70)
+      };
+    }
+
+    function initPanels(){
+      const themeBtn = document.getElementById("themeBtn");
+      const themePanel = document.getElementById("themePanel");
+      const bgBtn = document.getElementById("bgBtn");
+      const bgPanel = document.getElementById("bgPanel");
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        bgPanel.classList.remove("open");
+      });
+
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+        themePanel.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+        const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+
+        if(themePanel.classList.contains("open") && !insideTheme) themePanel.classList.remove("open");
+        if(bgPanel.classList.contains("open") && !insideBg) bgPanel.classList.remove("open");
+      });
+
+      window.addEventListener("scroll", () => {
+        themePanel.classList.remove("open");
+        bgPanel.classList.remove("open");
+      }, { passive:true });
+    }
+
+    function initThemeUI(){
+      initPanels();
+
+      const ids = [
+        "tAppBg","tInk","tMuted","tAccent",
+        "tBorderColor","tBorderA",
+        "tSurfaceColor","tSurfaceA",
+        "tPanelColor","tPanelA",
+        "tCalendarColor","tCalendarA",
+        "tDaycellColor","tDaycellA",
+        "tDowColor","tDowA",
+        "tInputColor","tInputA",
+        "tCardColor","tCardA",
+        "tBtnColor","tBtnA","tBtnBorderA","tBtnInk",
+        "tOverlayBase","tOverlayA"
+      ];
+
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener("input", () => {
+          const t = themeReadFromInputs();
+          themeApply(t);
+          themeSave(t);
+        });
+      });
+
+      document.getElementById("themeReset").addEventListener("click", () => {
+        storageRemove(THEME_KEY);
+        themeApply(DEFAULT_THEME);
+        themeSyncInputs(DEFAULT_THEME);
+      });
+
+      // Export settings JSON (theme + planner data)
+      document.getElementById("exportSettings").addEventListener("click", () => {
+        snapshotMonthToStore(); // make sure latest edits are saved
+        const bundle = buildSettingsBundle();
+        downloadJSON("monthly-planner-settings.json", bundle);
+      });
+
+      // Import settings JSON
+      const importFile = document.getElementById("importFile");
+      document.getElementById("importSettings").addEventListener("click", () => importFile.click());
+
+      importFile.addEventListener("change", async () => {
+        const f = importFile.files && importFile.files[0];
+        if(!f) return;
+        const text = await f.text();
+        const obj = safeJSONParse(text);
+        if(!obj || typeof obj !== "object"){
+          alert("That file isn't valid JSON.");
+          importFile.value = "";
+          return;
+        }
+        const ok = applySettingsBundle(obj);
+        if(!ok) alert("Settings JSON was missing required fields.");
+        importFile.value = "";
+      });
+
+      const saved = themeLoad() || DEFAULT_THEME;
+      themeApply(saved);
+      themeSyncInputs(saved);
+    }
+
+    /* =========================
+       Planner store (per-month)
+    ========================== */
+    function loadStore(){
+      const raw = storageGet(STORAGE_KEY);
+      const parsed = raw ? safeJSONParse(raw) : null;
+      if(parsed && typeof parsed === "object" && parsed.months && typeof parsed.months === "object") return parsed;
+      return { months: {} };
+    }
+    function saveStore(store){
+      storageSet(STORAGE_KEY, JSON.stringify(store));
+    }
+
+    function dayKey(d){
+      const y = d.getFullYear();
+      const m = pad2(d.getMonth()+1);
+      const day = pad2(d.getDate());
+      return `${y}-${m}-${day}`;
+    }
+
+    let store = loadStore();
+    let activeMonthId = monthIdFromDate(new Date());
+
+    const calGrid = document.getElementById("calGrid");
+    const monthNotes = document.getElementById("monthNotes");
+
+    function ensureMonthData(monthId){
+      if (!store.months[monthId]){
+        store.months[monthId] = {
+          days: {},
+          notes: "",
+          background: { tint: "#efe7e1", strength: 35, imageDataUrl: null }
+        };
+        saveStore(store);
+      }
+      return store.months[monthId];
+    }
+
+    function ensureDayData(monthData, key){
+      if (!monthData.days[key]){
+        monthData.days[key] = { note: "", goals: [] };
+      }
+      if (!Array.isArray(monthData.days[key].goals)) monthData.days[key].goals = [];
+      return monthData.days[key];
+    }
+
+    function goalChipHTML(goal){
+      const color = normHex(goal?.color, "#cbb8ae");
+      const text = (goal?.text ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+
+      return `
+        <div class="goal-chip" data-kind="goal" style="background:${chipBg(color)};">
+          <textarea class="goalText" placeholder="Goal…">${text}</textarea>
+
+          <label class="gbtn goalColorLabel" title="Color">
+            •
+            <input class="goalColorPicker" type="color" value="${color}" aria-label="Goal color" />
+          </label>
+
+          <button class="gbtn removeGoalBtn" type="button" aria-label="Remove goal" title="Remove">×</button>
+        </div>
+      `;
+    }
+
+    function buildMonth(monthId){
+      activeMonthId = monthId;
+      const monthData = ensureMonthData(monthId);
+
+      document.getElementById("monthLabel").textContent = prettyMonthLabel(monthId);
+      applyBackgroundFromMonth(monthData.background);
+
+      monthNotes.value = monthData.notes || "";
+      autoGrow(monthNotes);
+
+      const [year, monthNum] = monthId.split("-").map(Number);
+      const monthIndex = monthNum - 1;
+
+      const start = startOfCalendarGrid(year, monthIndex);
+      const daysInView = 42;
+
+      calGrid.innerHTML = "";
+      for (let i = 0; i < daysInView; i++){
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+
+        const key = dayKey(d);
+        const inMonth = d.getMonth() === monthIndex;
+
+        const dayData = ensureDayData(monthData, key);
+        const note = dayData.note ?? "";
+        const goals = dayData.goals ?? [];
+
+        const cell = document.createElement("div");
+        cell.className = "daycell" + (inMonth ? "" : " outside");
+        cell.dataset.dateKey = key;
+
+        const goalsHtml = goals.map(g => goalChipHTML(g)).join("");
+
+        cell.innerHTML = `
+          <div class="daytop">
+            <div class="daynum">${d.getDate()}</div>
+          </div>
+
+          <div class="goals-wrap">
+            <div class="goalsListInDay" data-goals="1">
+              ${goalsHtml}
+            </div>
+            <button class="add-goal" type="button">+ goal</button>
+          </div>
+
+          <textarea class="daynote dayNoteInput" placeholder="Note…">${(note ?? "")
+            .replaceAll("&","&amp;")
+            .replaceAll("<","&lt;")
+            .replaceAll(">","&gt;")}</textarea>
+        `;
+
+        calGrid.appendChild(cell);
+      }
+
+      calGrid.querySelectorAll("textarea").forEach(autoGrow);
+
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    }
+
+    function snapshotMonthToStore(){
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.notes = monthNotes.value ?? "";
+
+      document.querySelectorAll(".daycell").forEach(cell => {
+        const key = cell.dataset.dateKey;
+        const noteVal = cell.querySelector(".dayNoteInput")?.value ?? "";
+
+        const goals = [];
+        cell.querySelectorAll(".goal-chip").forEach(chip => {
+          const text = chip.querySelector(".goalText")?.value ?? "";
+          const picker = chip.querySelector(".goalColorPicker");
+          const color = picker?.value ?? "#cbb8ae";
+          goals.push({ text, color });
+        });
+
+        monthData.days[key] = {
+          ...(monthData.days[key] || {}),
+          note: noteVal,
+          goals
+        };
+      });
+
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    }
+
+    /* =========================
+       Background (per month)
+    ========================== */
+    const boardTint = document.getElementById("boardTint");
+    const bgColor = document.getElementById("bgColor");
+    const bgStrength = document.getElementById("bgStrength");
+    const bgImage = document.getElementById("bgImage");
+    const removeImage = document.getElementById("removeImage");
+    const bgDot = document.getElementById("bgDot");
+
+    function setBoardImage(dataUrlOrNull){
+      document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    }
+
+    function applyBoardTint(colorHex, strengthPct){
+      const tint = normHex(colorHex, "#efe7e1");
+      const strength = clamp(Number(strengthPct)/100, 0, 0.70);
+
+      document.documentElement.style.setProperty("--board-tint", tint);
+      document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+      if(bgDot){
+        bgDot.style.background = tint;
+        bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.1))}`;
+      }
+
+      boardTint.style.background = hexToRgba(tint, strength);
+    }
+
+    function applyBackgroundFromMonth(bg){
+      const tint = bg?.tint ?? "#efe7e1";
+      const strength = bg?.strength ?? 35;
+
+      bgColor.value = tint;
+      bgStrength.value = String(strength);
+
+      applyBoardTint(tint, strength);
+      setBoardImage(bg?.imageDataUrl ?? null);
+    }
+
+    bgColor.addEventListener("input", () => {
+      applyBoardTint(bgColor.value, bgStrength.value);
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.background = monthData.background || {};
+      monthData.background.tint = bgColor.value;
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    });
+
+    bgStrength.addEventListener("input", () => {
+      applyBoardTint(bgColor.value, bgStrength.value);
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.background = monthData.background || {};
+      monthData.background.strength = Number(bgStrength.value);
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    });
+
+    bgImage.addEventListener("change", async () => {
+      const file = bgImage.files && bgImage.files[0];
+      if (!file) return;
+
+      const dataUrl = await fileToDataUrl(file);
+      setBoardImage(dataUrl);
+
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.background = monthData.background || {};
+      monthData.background.imageDataUrl = dataUrl;
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    });
+
+    removeImage.addEventListener("click", () => {
+      setBoardImage(null);
+      bgImage.value = "";
+
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.background = monthData.background || {};
+      monthData.background.imageDataUrl = null;
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+    });
+
+    /* =========================
+       Month navigation
+    ========================== */
+    document.getElementById("prevMonth").addEventListener("click", () => {
+      snapshotMonthToStore();
+      const [y, m] = activeMonthId.split("-").map(Number);
+      const d = new Date(y, m-1, 15);
+      buildMonth(monthIdFromDate(addMonths(d, -1)));
+    });
+
+    document.getElementById("nextMonth").addEventListener("click", () => {
+      snapshotMonthToStore();
+      const [y, m] = activeMonthId.split("-").map(Number);
+      const d = new Date(y, m-1, 15);
+      buildMonth(monthIdFromDate(addMonths(d, 1)));
+    });
+
+    /* =========================
+       Day-goal interactions + autosave
+    ========================== */
+    calGrid.addEventListener("click", (e) => {
+      const cell = e.target.closest(".daycell");
+      if (!cell) return;
+
+      const add = e.target.closest(".add-goal");
+      if (add){
+        const list = cell.querySelector(".goalsListInDay");
+        const goal = { text: "", color: "#cbb8ae" };
+        const wrap = document.createElement("div");
+        wrap.innerHTML = goalChipHTML(goal);
+        const chip = wrap.firstElementChild;
+        list.appendChild(chip);
+        const ta = chip.querySelector(".goalText");
+        ta?.focus({ preventScroll: false });
+        if (ta) autoGrow(ta);
+        snapshotMonthToStore();
+        return;
+      }
+
+      const rm = e.target.closest(".removeGoalBtn");
+      if (rm){
+        rm.closest(".goal-chip")?.remove();
+        snapshotMonthToStore();
+        return;
+      }
+    });
+
+    calGrid.addEventListener("input", (e) => {
+      if (e.target.classList.contains("dayNoteInput")){
+        autoGrow(e.target);
+        snapshotMonthToStore();
+        return;
+      }
+      if (e.target.classList.contains("goalText")){
+        autoGrow(e.target);
+        snapshotMonthToStore();
+        return;
+      }
+      if (e.target.classList.contains("goalColorPicker")){
+        const chip = e.target.closest(".goal-chip");
+        const color = e.target.value;
+        chip.style.background = chipBg(color);
+        snapshotMonthToStore();
+        return;
+      }
+    });
+
+    monthNotes.addEventListener("input", () => {
+      autoGrow(monthNotes);
+      snapshotMonthToStore();
+    });
+
+    window.addEventListener("beforeunload", () => snapshotMonthToStore());
+
+    /* =========================
+       Settings JSON (reusable format)
+    ========================== */
+    function buildSettingsBundle(){
+      const theme = themeLoad() || DEFAULT_THEME;
+      const data = loadStore(); // includes all months
+
+      return {
+        version: 1,
+        theme,
+        data: {
+          monthlyPlanner: data
+        }
+      };
+    }
+
+    function applySettingsBundle(obj){
+      // minimal validation (keeps it reusable for other widgets)
+      if(!obj || typeof obj !== "object") return false;
+
+      // Theme (optional)
+      if(obj.theme && typeof obj.theme === "object"){
+        const incomingTheme = Object.assign({}, DEFAULT_THEME, obj.theme);
+        themeApply(incomingTheme);
+        themeSyncInputs(incomingTheme);
+        themeSave(incomingTheme);
+      }
+
+      // Data (optional)
+      const mp = obj?.data?.monthlyPlanner;
+      if(mp && typeof mp === "object" && mp.months && typeof mp.months === "object"){
+        // Replace entire store with imported data
+        store = { months: mp.months };
+        saveStore(store);
+
+        // keep user on current month if exists; else jump to first available; else default
+        const months = Object.keys(store.months);
+        if(months.length){
+          if(!store.months[activeMonthId]) activeMonthId = months.sort().reverse()[0];
+        }else{
+          activeMonthId = monthIdFromDate(new Date());
+        }
+        buildMonth(activeMonthId);
+      }
+
+      return true;
+    }
+
+    /* =========================
+       Boot
+    ========================== */
+    initThemeUI();
+    buildMonth(activeMonthId);
+  </script>
+</body>
+</html>

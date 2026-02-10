@@ -44,10 +44,6 @@
       --field-bg: #ffffff;
       --panel-bg: rgba(255,255,255,0.92);
       --chip-bg: #ffffff;
-
-      /* overlay for board (single layer injected by JS) */
-      --overlay-base: #ffffff;
-      --overlay-a: 0.30;
     }
 
     *{ box-sizing:border-box; }
@@ -213,7 +209,6 @@
       color: rgba(31,31,31,0.80);
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       -webkit-tap-highlight-color: transparent;
-      margin-top: 8px;
     }
     .mini-btn:active{ transform: translateY(1px); }
     .divider{
@@ -221,11 +216,12 @@
       background: rgba(201,190,182,0.35);
       margin: 8px 0;
     }
-    .hint{
-      margin-top: 8px;
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.35;
+
+    .panelActions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 10px;
     }
 
     .grid{
@@ -258,12 +254,15 @@
       transform: scale(1.02);
       z-index:0;
     }
-    /* overlay injected by JS (single color layer) */
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
-      background: rgba(255,255,255,0.30);
+      background:
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.35), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.22), transparent 62%),
+        rgba(255,255,255,0.30);
+      background-blend-mode: screen;
       pointer-events: none;
       z-index:0;
     }
@@ -440,7 +439,6 @@
       color: var(--text);
       border-radius: 12px;
       user-select:text;
-
       position: relative;
 
       background-image: repeating-linear-gradient(
@@ -458,6 +456,7 @@
     }
     .editor p{ margin:0; }
 
+    /* Image blocks */
     .imgWrap{
       display:inline-block;
       position:relative;
@@ -530,6 +529,7 @@
       font-size:12px;
     }
 
+    /* Sticker layer */
     .stickerLayer{
       position:absolute;
       inset:0;
@@ -611,6 +611,14 @@
       box-shadow: var(--shadowSoft);
     }
 
+    .hint{
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.4;
+      margin:0;
+    }
+
+    /* Sidebar */
     .side{
       border:1px solid var(--border);
       border-radius: var(--rOuter);
@@ -696,7 +704,6 @@
 
       <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; align-items:flex-start;">
 
-        <!-- Background -->
         <div class="popover" id="bgPopover">
           <div class="icon-pill">
             <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
@@ -727,10 +734,14 @@
             <div class="row">
               <button class="mini-btn" id="removeImage" type="button">Remove image</button>
             </div>
+
+            <div class="panelActions">
+              <button class="mini-btn" id="bgReset" type="button">Reset</button>
+              <button class="mini-btn" id="bgApply" type="button">Apply</button>
+            </div>
           </div>
         </div>
 
-        <!-- Paper -->
         <div class="popover" id="paperPopover">
           <div class="icon-pill">
             <button class="bg-btn" id="paperBtn" type="button" aria-label="Paper settings" title="Paper settings">
@@ -761,10 +772,14 @@
             <div class="row">
               <button class="mini-btn" id="removePaperImage" type="button">Remove image</button>
             </div>
+
+            <div class="panelActions">
+              <button class="mini-btn" id="paperReset" type="button">Reset</button>
+              <button class="mini-btn" id="paperApply" type="button">Apply</button>
+            </div>
           </div>
         </div>
 
-        <!-- Theme -->
         <div class="popover" id="themePopover">
           <div class="icon-pill">
             <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -821,25 +836,10 @@
               <input id="tCream" type="color" value="#e6d8cc" />
             </div>
 
-            <div class="divider"></div>
-
-            <div class="row">
-              <label for="tOverlayBase">Overlay</label>
-              <input id="tOverlayBase" type="color" value="#ffffff" />
+            <div class="panelActions">
+              <button class="mini-btn" id="themeReset" type="button">Reset</button>
+              <button class="mini-btn" id="themeApply" type="button">Apply</button>
             </div>
-            <div class="row">
-              <label for="tOverlayA">Overlay strength</label>
-              <input id="tOverlayA" type="range" min="0" max="70" value="30" />
-            </div>
-
-            <div class="divider"></div>
-
-            <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
-            <button class="mini-btn" id="exportSettings" type="button">Export settings JSON</button>
-            <button class="mini-btn" id="importSettings" type="button">Import settings JSON</button>
-            <input id="importFile" type="file" accept="application/json" style="display:none" />
-
-            <div class="hint"></div>
           </div>
         </div>
 
@@ -989,102 +989,69 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      /* =========================
-         Storage helpers (local + session fallback)
-      ========================== */
-      function safeJSONParse(s){ try{ return JSON.parse(s); }catch{ return null; } }
+      // =========================================================
+      // SETTINGS (Theme + Background + Paper) — Preview until Apply
+      // =========================================================
+      const SETTINGS_KEY = "notion_widget_settings_v1";
 
-      function storageGet(key){
-        try{ const v = localStorage.getItem(key); if(v != null) return v; }catch{}
-        try{ const v = sessionStorage.getItem(key); if(v != null) return v; }catch{}
-        return null;
-      }
-      function storageSet(key, val){
-        try{ localStorage.setItem(key, val); return true; }catch{}
-        try{ sessionStorage.setItem(key, val); return true; }catch{}
-        return false;
-      }
-      function storageRemove(key){
-        try{ localStorage.removeItem(key); }catch{}
-        try{ sessionStorage.removeItem(key); }catch{}
-      }
+      const DEFAULT_SETTINGS = {
+        version: 1,
+        theme: {
+          bg: "#ffffff",
+          cardBg: "#ffffff",
+          fieldBg: "#ffffff",
+          text: "#1f1f1f",
+          muted: "#6b625c",
+          borderHex: "#c9beb6",
+          stone: "#c9beb6",
+          cream: "#e6d8cc"
+        },
+        background: {
+          tint: "#efe7e1",
+          strength: 30,
+          imageDataUrl: null
+        },
+        paper: {
+          color: "#fffdfb",
+          strength: 0,
+          imageDataUrl: null
+        }
+      };
 
-      function downloadJSON(filename, obj){
-        const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+      function safeParseJSON(raw){
+        try{ return JSON.parse(raw); }catch{ return null; }
       }
-
-      const STORE_KEY = "cute_notebook_journal_v4";
-      const THEME_KEY = "cute_notebook_theme_v2"; // bumped
-      const SETTINGS_BUNDLE_KEY = "widget_settings_journal_v1";
-
-      const pad2 = (n) => String(n).padStart(2,"0");
-      const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-
-      const today = new Date();
-      today.setHours(0,0,0,0);
-
-      function loadStore(){
-        const raw = storageGet(STORE_KEY);
-        const parsed = raw ? safeJSONParse(raw) : null;
-        return (parsed && typeof parsed === "object") ? parsed : {};
+      function loadSettings(){
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        const parsed = raw ? safeParseJSON(raw) : null;
+        if(!parsed || typeof parsed !== "object") return null;
+        return parsed;
       }
-      function saveStore(store){
-        storageSet(STORE_KEY, JSON.stringify(store));
+      function saveSettings(settings){
+        try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }catch{}
       }
+      function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
 
-      function defaultPage(){
-        return {
-          html: "",
-          font: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
-          customFont: "",
-          bookmark: false,
-          stickers: []
-        };
-      }
-
-      // make this LET so we can replace on import
-      let store = loadStore();
-
-      /* =========================
-         Color helpers
-      ========================== */
-      function normHex(hex, fallback){
-        const s = String(hex || "").trim();
-        return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
-      }
-      function hexToRgbTuple(hex){
-        const h = normHex(hex, "#ffffff").slice(1);
-        const r = parseInt(h.slice(0,2), 16);
-        const g = parseInt(h.slice(2,4), 16);
-        const b = parseInt(h.slice(4,6), 16);
-        return `${r},${g},${b}`;
-      }
+      // Helpers
       function hexToRgba(hex, a){
-        const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+        const h = String(hex || "").replace("#","").trim();
+        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+        const num = parseInt(full || "efe7e1", 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
         return `rgba(${r},${g},${b},${a})`;
       }
-      function clamp(n, a, b){ n = Number(n); if(!Number.isFinite(n)) return a; return Math.max(a, Math.min(b, n)); }
 
-      async function fileToDataUrl(file){
-        return new Promise((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(String(r.result));
-          r.onerror = reject;
-          r.readAsDataURL(file);
-        });
-      }
+      // State: saved + draft
+      const savedSettings = (() => {
+        const s = loadSettings();
+        return s ? ({...DEFAULT_SETTINGS, ...s, theme:{...DEFAULT_SETTINGS.theme, ...(s.theme||{})}, background:{...DEFAULT_SETTINGS.background, ...(s.background||{})}, paper:{...DEFAULT_SETTINGS.paper, ...(s.paper||{})} }) : deepClone(DEFAULT_SETTINGS);
+      })();
 
-      /* =========================
-         Theme (full working)
-      ========================== */
+      const draftSettings = deepClone(savedSettings);
+
+      // DOM
       const themeBtn = document.getElementById("themeBtn");
       const themePanel = document.getElementById("themePanel");
       const themeDot = document.getElementById("themeDot");
@@ -1097,59 +1064,38 @@
       const tBorder   = document.getElementById("tBorder");
       const tStone    = document.getElementById("tStone");
       const tCream    = document.getElementById("tCream");
-      const tOverlayBase = document.getElementById("tOverlayBase");
-      const tOverlayA = document.getElementById("tOverlayA");
-      const resetTheme= document.getElementById("resetTheme");
+      const themeResetBtn = document.getElementById("themeReset");
+      const themeApplyBtn = document.getElementById("themeApply");
 
-      const DEFAULT_THEME = {
-        bg: "#ffffff",
-        cardBg: "#ffffff",
-        fieldBg: "#ffffff",
-        text: "#1f1f1f",
-        muted: "#6b625c",
-        borderHex: "#c9beb6",
-        stone: "#c9beb6",
-        cream: "#e6d8cc",
-        overlayBase: "#ffffff",
-        overlayA: 0.30
-      };
+      const boardTintEl = document.getElementById("boardTint");
+      const bgBtn = document.getElementById("bgBtn");
+      const bgPanel = document.getElementById("bgPanel");
+      const bgColor = document.getElementById("bgColor");
+      const bgStrength = document.getElementById("bgStrength");
+      const bgImage = document.getElementById("bgImage");
+      const removeImage = document.getElementById("removeImage");
+      const boardDot = document.getElementById("boardDot");
+      const bgResetBtn = document.getElementById("bgReset");
+      const bgApplyBtn = document.getElementById("bgApply");
 
-      function loadTheme(){
-        const raw = storageGet(THEME_KEY);
-        const parsed = raw ? safeJSONParse(raw) : null;
-        return (parsed && typeof parsed === "object") ? parsed : null;
+      const paperBtn = document.getElementById("paperBtn");
+      const paperPanel = document.getElementById("paperPanel");
+      const paperColor = document.getElementById("paperColor");
+      const paperStrength = document.getElementById("paperStrength");
+      const paperImage = document.getElementById("paperImage");
+      const removePaperImage = document.getElementById("removePaperImage");
+      const paperDot = document.getElementById("paperDot");
+      const paperResetBtn = document.getElementById("paperReset");
+      const paperApplyBtn = document.getElementById("paperApply");
+
+      function setBoardImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
       }
-      function saveTheme(t){
-        storageSet(THEME_KEY, JSON.stringify(t));
-      }
-
-      function applyOverlay(theme){
-        const base = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
-        const a = clamp(theme.overlayA, 0, 0.70);
-        const css = hexToRgba(base, a);
-
-        let st = document.getElementById("overlayStyle");
-        if(!st){
-          st = document.createElement("style");
-          st.id = "overlayStyle";
-          document.head.appendChild(st);
-        }
-        st.textContent = `.widgetBoard::after{ background:${css} !important; }`;
+      function setPaperImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--paper-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
       }
 
-      function applyTheme(t){
-        const theme = { ...DEFAULT_THEME, ...(t || {}) };
-        theme.bg = normHex(theme.bg, DEFAULT_THEME.bg);
-        theme.cardBg = normHex(theme.cardBg, DEFAULT_THEME.cardBg);
-        theme.fieldBg = normHex(theme.fieldBg, DEFAULT_THEME.fieldBg);
-        theme.text = normHex(theme.text, DEFAULT_THEME.text);
-        theme.muted = normHex(theme.muted, DEFAULT_THEME.muted);
-        theme.borderHex = normHex(theme.borderHex, DEFAULT_THEME.borderHex);
-        theme.stone = normHex(theme.stone, DEFAULT_THEME.stone);
-        theme.cream = normHex(theme.cream, DEFAULT_THEME.cream);
-        theme.overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
-        theme.overlayA = clamp(Number(theme.overlayA), 0, 0.70);
-
+      function applyTheme(theme){
         document.documentElement.style.setProperty("--bg", theme.bg);
         document.documentElement.style.setProperty("--text", theme.text);
         document.documentElement.style.setProperty("--muted", theme.muted);
@@ -1164,166 +1110,97 @@
         document.documentElement.style.setProperty("--field-bg", theme.fieldBg);
         document.documentElement.style.setProperty("--chip-bg", theme.fieldBg);
 
-        document.documentElement.style.setProperty("--overlay-base", theme.overlayBase);
-        document.documentElement.style.setProperty("--overlay-a", String(theme.overlayA));
-
         if(themeDot){
           themeDot.style.background = theme.text;
           themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(theme.borderHex, 0.25)}`;
           themeDot.style.borderColor = hexToRgba(theme.borderHex, 0.75);
         }
-
-        applyOverlay(theme);
-        return theme;
       }
 
-      const themeState = applyTheme({ ...DEFAULT_THEME, ...(loadTheme() || {}) });
-
-      function syncThemeInputs(){
-        tWidgetBg.value = themeState.bg;
-        tCardBg.value = themeState.cardBg;
-        tFieldBg.value = themeState.fieldBg;
-        tText.value = themeState.text;
-        tMuted.value = themeState.muted;
-        tBorder.value = themeState.borderHex;
-        tStone.value = themeState.stone;
-        tCream.value = themeState.cream;
-        tOverlayBase.value = themeState.overlayBase;
-        tOverlayA.value = String(Math.round(themeState.overlayA * 100));
-      }
-      syncThemeInputs();
-
-      function wireThemeInput(el, key, transform){
-        el.addEventListener("input", () => {
-          themeState[key] = transform ? transform(el.value) : el.value;
-          applyTheme(themeState);
-          saveTheme(themeState);
-          applyBackgroundFromStore();
-          applyPaperFromStore();
-        });
-      }
-
-      wireThemeInput(tWidgetBg, "bg", v => normHex(v, DEFAULT_THEME.bg));
-      wireThemeInput(tCardBg, "cardBg", v => normHex(v, DEFAULT_THEME.cardBg));
-      wireThemeInput(tFieldBg, "fieldBg", v => normHex(v, DEFAULT_THEME.fieldBg));
-      wireThemeInput(tText, "text", v => normHex(v, DEFAULT_THEME.text));
-      wireThemeInput(tMuted, "muted", v => normHex(v, DEFAULT_THEME.muted));
-      wireThemeInput(tBorder, "borderHex", v => normHex(v, DEFAULT_THEME.borderHex));
-      wireThemeInput(tStone, "stone", v => normHex(v, DEFAULT_THEME.stone));
-      wireThemeInput(tCream, "cream", v => normHex(v, DEFAULT_THEME.cream));
-      wireThemeInput(tOverlayBase, "overlayBase", v => normHex(v, DEFAULT_THEME.overlayBase));
-      wireThemeInput(tOverlayA, "overlayA", v => clamp(Number(v)/100, 0, 0.70));
-
-      resetTheme.addEventListener("click", () => {
-        Object.assign(themeState, DEFAULT_THEME);
-        applyTheme(themeState);
-        saveTheme(themeState);
-        syncThemeInputs();
-        applyBackgroundFromStore();
-        applyPaperFromStore();
-      });
-
-      /* =========================
-         Background + Paper (stored in store.__ui)
-      ========================== */
-      const boardTintEl = document.getElementById("boardTint");
-      const bgBtn = document.getElementById("bgBtn");
-      const bgPanel = document.getElementById("bgPanel");
-      const bgColor = document.getElementById("bgColor");
-      const bgStrength = document.getElementById("bgStrength");
-      const bgImage = document.getElementById("bgImage");
-      const removeImage = document.getElementById("removeImage");
-      const boardDot = document.getElementById("boardDot");
-
-      const paperBtn = document.getElementById("paperBtn");
-      const paperPanel = document.getElementById("paperPanel");
-      const paperColor = document.getElementById("paperColor");
-      const paperStrength = document.getElementById("paperStrength");
-      const paperImage = document.getElementById("paperImage");
-      const removePaperImage = document.getElementById("removePaperImage");
-      const paperDot = document.getElementById("paperDot");
-
-      function ensureUI(){
-        store.__ui = store.__ui || {};
-        store.__ui.background = store.__ui.background || { tint: "#efe7e1", strength: 30, imageDataUrl: null };
-        store.__ui.paper = store.__ui.paper || { color: "#fffdfb", strength: 0, imageDataUrl: null };
-        return store.__ui;
-      }
-
-      function setBoardImage(dataUrlOrNull){
-        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-      }
-
-      function applyBoardTint(colorHex, strengthPct){
-        const tint = normHex(colorHex, "#efe7e1");
-        const strength = clamp(Number(strengthPct), 0, 70) / 100;
-
-        document.documentElement.style.setProperty("--board-tint", tint);
+      function applyBoardTint(tintHex, strengthPct){
+        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
+        document.documentElement.style.setProperty("--board-tint", tintHex);
         document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
         if (boardDot){
-          boardDot.style.background = tint;
-          boardDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+          boardDot.style.background = tintHex;
+          boardDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tintHex, Math.min(0.35, strength + 0.12))}`;
+          boardDot.style.borderColor = hexToRgba(draftSettings.theme.borderHex, 0.75);
         }
         if (boardTintEl){
-          boardTintEl.style.background = hexToRgba(tint, strength);
+          boardTintEl.style.background = hexToRgba(tintHex, strength);
         }
-      }
-
-      function setPaperImage(dataUrlOrNull){
-        document.documentElement.style.setProperty("--paper-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
       }
 
       function applyPaper(colorHex, strengthPct){
-        const color = normHex(colorHex, "#fffdfb");
-        const strength = clamp(Number(strengthPct), 0, 70) / 100;
-
-        document.documentElement.style.setProperty("--paper", color);
+        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
+        document.documentElement.style.setProperty("--paper", colorHex);
         document.documentElement.style.setProperty("--paper-tint-a", String(strength));
 
         if (paperDot){
-          paperDot.style.background = color;
-          paperDot.style.boxShadow = `0 0 0 6px ${hexToRgba(color, Math.min(0.20, strength + 0.10))}`;
+          paperDot.style.background = colorHex;
+          paperDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.20, strength + 0.10))}`;
+          paperDot.style.borderColor = hexToRgba(draftSettings.theme.borderHex, 0.75);
         }
       }
 
-      function applyBackgroundFromStore(){
-        const ui = ensureUI();
-        const bg = ui.background;
-
-        bgColor.value = normHex(bg.tint, "#efe7e1");
-        bgStrength.value = String(bg.strength ?? 30);
-
-        applyBoardTint(bgColor.value, bgStrength.value);
-        setBoardImage(bg.imageDataUrl || null);
+      function syncThemeInputs(theme){
+        tWidgetBg.value = theme.bg;
+        tCardBg.value = theme.cardBg;
+        tFieldBg.value = theme.fieldBg;
+        tText.value = theme.text;
+        tMuted.value = theme.muted;
+        tBorder.value = theme.borderHex;
+        tStone.value = theme.stone;
+        tCream.value = theme.cream;
+      }
+      function syncBgInputs(bg){
+        bgColor.value = bg.tint;
+        bgStrength.value = String(bg.strength);
+        bgImage.value = "";
+      }
+      function syncPaperInputs(p){
+        paperColor.value = p.color;
+        paperStrength.value = String(p.strength);
+        paperImage.value = "";
       }
 
-      function applyPaperFromStore(){
-        const ui = ensureUI();
-        const p = ui.paper;
-
-        paperColor.value = normHex(p.color, "#fffdfb");
-        paperStrength.value = String(p.strength ?? 0);
-
-        applyPaper(paperColor.value, paperStrength.value);
-        setPaperImage(p.imageDataUrl || null);
+      async function fileToDataUrl(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
       }
 
-      /* =========================
-         Popovers (solid + consistent)
-      ========================== */
+      function applyAllPreview(){
+        applyTheme(draftSettings.theme);
+        applyBoardTint(draftSettings.background.tint, draftSettings.background.strength);
+        setBoardImage(draftSettings.background.imageDataUrl);
+        applyPaper(draftSettings.paper.color, draftSettings.paper.strength);
+        setPaperImage(draftSettings.paper.imageDataUrl);
+      }
+
+      // Initial: sync inputs from draft + apply preview
+      syncThemeInputs(draftSettings.theme);
+      syncBgInputs(draftSettings.background);
+      syncPaperInputs(draftSettings.paper);
+      applyAllPreview();
+
+      // -------- Popovers
       bgBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         bgPanel.classList.toggle("open");
-        paperPanel.classList.remove("open");
         themePanel.classList.remove("open");
+        paperPanel.classList.remove("open");
       });
 
       paperBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         paperPanel.classList.toggle("open");
-        bgPanel.classList.remove("open");
         themePanel.classList.remove("open");
+        bgPanel.classList.remove("open");
       });
 
       themeBtn.addEventListener("click", (e) => {
@@ -1334,156 +1211,159 @@
       });
 
       document.addEventListener("click", (e) => {
-        const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-        const insidePaper = e.target.closest("#paperPanel") || e.target.closest("#paperBtn");
-        const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-
-        if(bgPanel.classList.contains("open") && !insideBg) bgPanel.classList.remove("open");
-        if(paperPanel.classList.contains("open") && !insidePaper) paperPanel.classList.remove("open");
-        if(themePanel.classList.contains("open") && !insideTheme) themePanel.classList.remove("open");
+        if (bgPanel.classList.contains("open")) {
+          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          if (!inside) bgPanel.classList.remove("open");
+        }
+        if (paperPanel.classList.contains("open")) {
+          const inside2 = e.target.closest("#paperPanel") || e.target.closest("#paperBtn");
+          if (!inside2) paperPanel.classList.remove("open");
+        }
+        if (themePanel.classList.contains("open")) {
+          const inside3 = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if (!inside3) themePanel.classList.remove("open");
+        }
       });
 
-      window.addEventListener("scroll", () => {
-        bgPanel.classList.remove("open");
-        paperPanel.classList.remove("open");
-        themePanel.classList.remove("open");
-      }, { passive:true });
+      // -------- Theme draft (preview on input, no save)
+      function wireThemeInput(el, key){
+        el.addEventListener("input", () => {
+          draftSettings.theme[key] = el.value;
+          applyAllPreview();
+        });
+      }
+      wireThemeInput(tWidgetBg, "bg");
+      wireThemeInput(tCardBg, "cardBg");
+      wireThemeInput(tFieldBg, "fieldBg");
+      wireThemeInput(tText, "text");
+      wireThemeInput(tMuted, "muted");
+      wireThemeInput(tBorder, "borderHex");
+      wireThemeInput(tStone, "stone");
+      wireThemeInput(tCream, "cream");
 
-      // Board inputs
+      themeResetBtn.addEventListener("click", () => {
+        draftSettings.theme = deepClone(DEFAULT_SETTINGS.theme);
+        syncThemeInputs(draftSettings.theme);
+        applyAllPreview();
+      });
+
+      themeApplyBtn.addEventListener("click", () => {
+        savedSettings.theme = deepClone(draftSettings.theme);
+        saveSettings({ ...savedSettings, version: 1 });
+      });
+
+      // -------- Background draft (preview on input, no save)
       bgColor.addEventListener("input", () => {
-        const ui = ensureUI();
-        ui.background.tint = bgColor.value;
-        applyBoardTint(ui.background.tint, bgStrength.value);
-        saveStore(store);
+        draftSettings.background.tint = bgColor.value;
+        applyAllPreview();
       });
 
       bgStrength.addEventListener("input", () => {
-        const ui = ensureUI();
-        ui.background.strength = Number(bgStrength.value);
-        applyBoardTint(bgColor.value, ui.background.strength);
-        saveStore(store);
+        draftSettings.background.strength = Number(bgStrength.value);
+        applyAllPreview();
       });
 
       bgImage.addEventListener("change", async () => {
         const file = bgImage.files && bgImage.files[0];
         if(!file) return;
-        const ui = ensureUI();
         const dataUrl = await fileToDataUrl(file);
-        ui.background.imageDataUrl = dataUrl;
-        setBoardImage(dataUrl);
-        saveStore(store);
+        draftSettings.background.imageDataUrl = dataUrl;
+        applyAllPreview();
       });
 
       removeImage.addEventListener("click", () => {
-        const ui = ensureUI();
-        ui.background.imageDataUrl = null;
-        setBoardImage(null);
+        draftSettings.background.imageDataUrl = null;
         bgImage.value = "";
-        saveStore(store);
+        applyAllPreview();
       });
 
-      // Paper inputs
+      bgResetBtn.addEventListener("click", () => {
+        draftSettings.background = deepClone(DEFAULT_SETTINGS.background);
+        syncBgInputs(draftSettings.background);
+        applyAllPreview();
+      });
+
+      bgApplyBtn.addEventListener("click", () => {
+        savedSettings.background = deepClone(draftSettings.background);
+        saveSettings({ ...savedSettings, version: 1 });
+      });
+
+      // -------- Paper draft (preview on input, no save)
       paperColor.addEventListener("input", () => {
-        const ui = ensureUI();
-        ui.paper.color = paperColor.value;
-        applyPaper(ui.paper.color, paperStrength.value);
-        saveStore(store);
+        draftSettings.paper.color = paperColor.value;
+        applyAllPreview();
       });
 
       paperStrength.addEventListener("input", () => {
-        const ui = ensureUI();
-        ui.paper.strength = Number(paperStrength.value);
-        applyPaper(paperColor.value, ui.paper.strength);
-        saveStore(store);
+        draftSettings.paper.strength = Number(paperStrength.value);
+        applyAllPreview();
       });
 
       paperImage.addEventListener("change", async () => {
         const file = paperImage.files && paperImage.files[0];
         if(!file) return;
-        const ui = ensureUI();
         const dataUrl = await fileToDataUrl(file);
-        ui.paper.imageDataUrl = dataUrl;
-        setPaperImage(dataUrl);
-        saveStore(store);
+        draftSettings.paper.imageDataUrl = dataUrl;
+        applyAllPreview();
       });
 
       removePaperImage.addEventListener("click", () => {
-        const ui = ensureUI();
-        ui.paper.imageDataUrl = null;
-        setPaperImage(null);
+        draftSettings.paper.imageDataUrl = null;
         paperImage.value = "";
-        saveStore(store);
+        applyAllPreview();
       });
 
-      // Apply on load
-      applyBackgroundFromStore();
-      applyPaperFromStore();
+      paperResetBtn.addEventListener("click", () => {
+        draftSettings.paper = deepClone(DEFAULT_SETTINGS.paper);
+        syncPaperInputs(draftSettings.paper);
+        applyAllPreview();
+      });
 
-      /* =========================
-         Export / Import (universal bundle)
-      ========================== */
-      const exportSettings = document.getElementById("exportSettings");
-      const importSettings = document.getElementById("importSettings");
-      const importFile = document.getElementById("importFile");
+      paperApplyBtn.addEventListener("click", () => {
+        savedSettings.paper = deepClone(draftSettings.paper);
+        saveSettings({ ...savedSettings, version: 1 });
+      });
 
-      function buildSettingsBundle(){
+      // =========================================================
+      // JOURNAL PAGES (existing autosave logic — unchanged)
+      // =========================================================
+      const STORE_KEY = "cute_notebook_journal_v4";
+
+      const pad2 = (n) => String(n).padStart(2,"0");
+      const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      function loadStore(){
+        try{
+          const raw = localStorage.getItem(STORE_KEY);
+          if(raw) return JSON.parse(raw) || {};
+        }catch{}
+        try{
+          const raw = sessionStorage.getItem(STORE_KEY);
+          if(raw) return JSON.parse(raw) || {};
+        }catch{}
+        return {};
+      }
+      function saveStore(store){
+        const data = JSON.stringify(store);
+        try{ localStorage.setItem(STORE_KEY, data); return; }catch{}
+        try{ sessionStorage.setItem(STORE_KEY, data); return; }catch{}
+      }
+
+      function defaultPage(){
         return {
-          version: 1,
-          theme: { ...themeState },
-          data: {
-            journal: store
-          }
+          html: "",
+          font: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
+          customFont: "",
+          bookmark: false,
+          stickers: []
         };
       }
 
-      function applySettingsBundle(obj){
-        if(!obj || typeof obj !== "object") return false;
+      const store = loadStore();
 
-        // theme optional
-        if(obj.theme && typeof obj.theme === "object"){
-          Object.assign(themeState, DEFAULT_THEME, obj.theme);
-          applyTheme(themeState);
-          saveTheme(themeState);
-          syncThemeInputs();
-        }
-
-        // data optional
-        const j = obj?.data?.journal;
-        if(j && typeof j === "object"){
-          store = j; // replace
-          saveStore(store);
-          applyBackgroundFromStore();
-          applyPaperFromStore();
-          // re-render journal UI with same selected date if possible
-          ensureDay(currentDate);
-          currentPageIndex = Math.min(currentPageIndex, (getDay().pages?.length || 1) - 1);
-          renderAll();
-        }
-        return true;
-      }
-
-      exportSettings.addEventListener("click", () => {
-        scheduleSave(); // flush edits
-        downloadJSON("journal-settings.json", buildSettingsBundle());
-        // optional persist
-        try{ storageSet(SETTINGS_BUNDLE_KEY, JSON.stringify(buildSettingsBundle())); }catch{}
-      });
-
-      importSettings.addEventListener("click", () => importFile.click());
-      importFile.addEventListener("change", async () => {
-        const f = importFile.files && importFile.files[0];
-        if(!f) return;
-        const text = await f.text();
-        const obj = safeJSONParse(text);
-        if(!obj){ alert("That file isn't valid JSON."); importFile.value = ""; return; }
-        const ok = applySettingsBundle(obj);
-        if(!ok) alert("Settings JSON was missing required fields.");
-        importFile.value = "";
-      });
-
-      /* =========================
-         Journal logic (original behavior preserved)
-      ========================== */
       const datePick = document.getElementById("datePick");
       const pagePick = document.getElementById("pagePick");
       const editor = document.getElementById("editor");
@@ -1746,12 +1626,12 @@
 
       editor.addEventListener("input", scheduleSaveFromEditor);
 
-      // Images: insert + resize handle + drag
       imgPick.addEventListener("change", async () => {
         const file = imgPick.files && imgPick.files[0];
         if(!file) return;
 
-        const dataUrl = await fileToDataUrl(file);
+        const dataUrl = await fileToDataURL(file);
+
         const id = "img_" + Math.random().toString(16).slice(2) + "_" + Date.now();
 
         const html =
@@ -1766,6 +1646,15 @@
         scheduleSaveFromEditor();
       });
 
+      function fileToDataURL(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
       function safeInsertHTML(html){
         editor.focus();
         try{
@@ -1778,6 +1667,8 @@
 
       let resizing = null;
       let imgDragging = null;
+
+      function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
       function removeTrailingBrIfAny(wrap){
         const n = wrap && wrap.nextSibling;
@@ -1833,7 +1724,6 @@
 
         const wrap = e.target && e.target.closest ? e.target.closest(".imgWrap") : null;
         if(!wrap) return;
-
         if(e.target.classList && (e.target.classList.contains("imgHandle") || e.target.classList.contains("imgDel"))) return;
 
         promoteToFreeMove(wrap);
@@ -1965,7 +1855,6 @@
         scheduleSaveFromEditor();
       });
 
-      // Pages
       addPageBtn.addEventListener("click", () => {
         const day = getDay();
         day.pages.push(defaultPage());
@@ -2014,7 +1903,6 @@
         });
       });
 
-      // Sidebar
       function stripHtml(html){
         const tmp = document.createElement("div");
         tmp.innerHTML = html;

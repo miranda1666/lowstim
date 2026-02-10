@@ -1,4 +1,3 @@
-```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -34,12 +33,19 @@
       --board-tint-a: 0.30;
       --board-image: none;
 
-      /* theme editor overrides */
+      /* Theme-driven surfaces */
       --card-bg: rgba(255,255,255,0.88);
       --field-bg: #ffffff;
 
-      --focus: rgba(31,31,31,0.18);
+      /* NEW: popover + misc surfaces so theme applies everywhere */
+      --popover-pill-bg: rgba(255,255,255,0.80);
+      --popover-btn-bg: rgba(255,255,255,0.95);
+      --popover-panel-bg: rgba(255,255,255,0.92);
+      --divider: rgba(201,190,182,0.35);
+
+      --focus: rgba(230,216,204,0.55);
     }
+
     *{ box-sizing:border-box; }
     body{
       margin:0;
@@ -49,6 +55,7 @@
       padding:26px;
     }
     .wrap{ max-width:1100px; margin:0 auto; }
+
     .top{
       display:flex;
       align-items:flex-start;
@@ -65,6 +72,7 @@
       padding-top:4px;
     }
     .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
     .btn{
       appearance:none;
       border:1px solid var(--border);
@@ -84,14 +92,15 @@
     }
     .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
     .btn.primary{ background:var(--cream); }
-    .btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .btn:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
 
     .popover{ position:relative; }
+
     .icon-pill{
       display:inline-flex;
       align-items:center;
       gap:10px;
-      background: rgba(255,255,255,0.80);
+      background: var(--popover-pill-bg);
       border: 1px solid var(--borderSoft);
       border-radius: 999px;
       padding: 6px 10px;
@@ -99,12 +108,13 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     .bg-btn{
       width:34px;
       height:34px;
       border-radius:999px;
       border:1px solid var(--borderSoft);
-      background: rgba(255,255,255,0.95);
+      background: var(--popover-btn-bg);
       cursor:pointer;
       display:grid;
       place-items:center;
@@ -114,7 +124,7 @@
     }
     .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
     .bg-btn:active{ transform: translateY(0px); }
-    .bg-btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .bg-btn:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
 
     .bg-dot{
       width:14px;
@@ -124,6 +134,7 @@
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
     }
+
     .theme-dot{
       width:14px;
       height:14px;
@@ -140,7 +151,7 @@
       width: 270px;
       border-radius: 16px;
       border: 1px solid var(--borderSoft);
-      background: rgba(255,255,255,0.92);
+      background: var(--popover-panel-bg);
       box-shadow: 0 18px 40px rgba(0,0,0,0.10);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -149,6 +160,7 @@
       z-index: 80;
     }
     .panel.open{ display:block; }
+
     .panel h2{
       margin: 0 0 10px 0;
       font-size: 12px;
@@ -157,6 +169,7 @@
       text-transform: uppercase;
       color: rgba(31,31,31,0.72);
     }
+
     .panel .rowT{
       display:flex;
       align-items:center;
@@ -187,7 +200,7 @@
     .mini-btn{
       width: 100%;
       border: 1px solid var(--borderSoft);
-      background: rgba(255,255,255,0.95);
+      background: var(--field-bg);
       border-radius: 12px;
       padding: 9px 10px;
       cursor: pointer;
@@ -202,7 +215,7 @@
     .mini-btn:active{ transform: translateY(1px); }
     .divider{
       height: 1px;
-      background: rgba(201,190,182,0.35);
+      background: var(--divider);
       margin: 8px 0;
     }
     .hintSmall{
@@ -250,7 +263,6 @@
       inset:0;
       pointer-events:none;
       z-index:1;
-      /* background is set by JS (hex -> rgba) */
     }
 
     .grid{
@@ -362,11 +374,12 @@
     }
     .input:focus, .select:focus{
       border-color: rgba(201,190,182,1);
-      box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
+      box-shadow: 0 0 0 3px var(--focus);
     }
+
     .mini{
       font-size:12px;
-      color:#7a716a;
+      color:var(--muted);
       line-height:1.35;
       margin-top:8px;
     }
@@ -396,7 +409,6 @@
       box-shadow: 0 10px 18px rgba(0,0,0,0.08);
       transform:translateY(-1px);
     }
-    .chip:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
 
     .box{
       border:1px solid var(--borderSoft);
@@ -439,7 +451,7 @@
     }
     .hint{
       font-size:12px;
-      color:#7a716a;
+      color:var(--muted);
       line-height:1.4;
       margin:0;
     }
@@ -469,7 +481,10 @@
       letter-spacing:-0.01em;
     }
 
-    .goals{ display:grid; gap:10px; }
+    .goals{
+      display:grid;
+      gap:10px;
+    }
     .goalRow{
       display:grid;
       grid-template-columns: 1fr 0.55fr;
@@ -504,7 +519,7 @@
     }
     .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
     .iconBtn.danger{ background: rgba(230,216,204,0.30); }
-    .iconBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .iconBtn:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
 
     @media (max-width: 980px){
       .grid{ grid-template-columns: 1fr; }
@@ -520,12 +535,12 @@
   <main class="wrap">
     <div class="top">
       <div class="kicker">Diet Planner + Tracker</div>
-
       <div class="btns">
+
         <!-- Background settings -->
         <div class="popover" id="bgPopover">
           <div class="icon-pill">
-            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings" aria-expanded="false">
+            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
               <span class="bg-dot" id="bgDot" aria-hidden="true"></span>
             </button>
           </div>
@@ -553,15 +568,13 @@
             <div class="rowT">
               <button class="mini-btn" id="removeImage" type="button">Remove image</button>
             </div>
-
-            <div class="hintSmall">Tip: press <kbd>Esc</kbd> to close panels.</div>
           </div>
         </div>
 
         <!-- Theme settings -->
         <div class="popover" id="themePopover">
           <div class="icon-pill">
-            <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings" aria-expanded="false">
+            <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
               <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
             </button>
           </div>
@@ -623,9 +636,27 @@
             <div class="divider"></div>
 
             <div class="rowT">
+              <label for="tPopoverPill">Popover pill</label>
+              <input id="tPopoverPill" type="color" value="#ffffff" />
+            </div>
+
+            <div class="rowT">
+              <label for="tPopoverBtn">Popover button</label>
+              <input id="tPopoverBtn" type="color" value="#ffffff" />
+            </div>
+
+            <div class="rowT">
+              <label for="tPopoverPanel">Popover panel</label>
+              <input id="tPopoverPanel" type="color" value="#ffffff" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="rowT">
               <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
             </div>
 
+            <div class="hintSmall"></div>
           </div>
         </div>
 
@@ -639,17 +670,14 @@
       <div class="boardTint" id="boardTint"></div>
 
       <div class="grid">
-        <!-- LEFT -->
         <section class="card" aria-label="Meals">
           <div class="cardHead">
             <h2 class="cardTitle">Meals</h2>
             <div id="dayMeta" class="meta"></div>
           </div>
-
           <div class="mealList" id="mealList"></div>
         </section>
 
-        <!-- RIGHT -->
         <aside class="card" aria-label="Totals and goals">
           <div class="cardHead">
             <h2 class="cardTitle">Totals</h2>
@@ -725,20 +753,26 @@
       const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
       const clampPct = (p) => Math.max(0, Math.min(100, p));
 
-      const hexToRgba = (hex, a) => {
+      function hexToRgba(hex, a){
         const h = String(hex || "").replace("#","").trim();
         const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-        const num = parseInt(full || "efe7e1", 16);
+        const num = parseInt(full || "000000", 16);
         const r = (num >> 16) & 255;
         const g = (num >> 8) & 255;
         const b = num & 255;
         return `rgba(${r},${g},${b},${a})`;
-      };
+      }
+      function normalizeHex(hex, fallback="#ffffff"){
+        const s = String(hex || "").trim();
+        if(/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+        return fallback;
+      }
 
-      // ---------- Background settings ----------
+      /* ---------------------------
+         BACKGROUND SETTINGS
+      ---------------------------- */
       const BG_KEY = "diet_tracker_bg_v1";
 
-      const bgPopover = document.getElementById("bgPopover");
       const bgBtn = document.getElementById("bgBtn");
       const bgPanel = document.getElementById("bgPanel");
       const bgColor = document.getElementById("bgColor");
@@ -748,39 +782,42 @@
       const boardTintEl = document.getElementById("boardTint");
       const bgDot = document.getElementById("bgDot");
 
-      const setBoardImage = (dataUrlOrNull) => {
+      function loadBg(){
+        try{
+          const raw = localStorage.getItem(BG_KEY);
+          if(raw) return JSON.parse(raw) || null;
+        }catch{}
+        return null;
+      }
+      function saveBg(bg){
+        try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+      }
+      function setBoardImage(dataUrlOrNull){
         document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-      };
-
-      const applyBoardTint = (colorHex, strengthPct) => {
+      }
+      function applyBoardTint(colorHex, strengthPct){
         const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
-        document.documentElement.style.setProperty("--board-tint", colorHex);
+        const tint = normalizeHex(colorHex, "#efe7e1");
+
+        document.documentElement.style.setProperty("--board-tint", tint);
         document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
         if (bgDot){
-          bgDot.style.background = colorHex;
-          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
+          bgDot.style.background = tint;
+          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
         }
         if (boardTintEl){
-          boardTintEl.style.background = hexToRgba(colorHex, strength);
+          boardTintEl.style.background = hexToRgba(tint, strength);
         }
-      };
-
-      const loadBg = () => {
-        try{
-          const raw = localStorage.getItem(BG_KEY);
-          return raw ? (JSON.parse(raw) || null) : null;
-        }catch{ return null; }
-      };
-      const saveBg = (bg) => { try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{} };
-
-      const fileToDataUrl = (file) =>
-        new Promise((resolve, reject) => {
+      }
+      async function fileToDataUrl(file){
+        return new Promise((resolve, reject) => {
           const r = new FileReader();
           r.onload = () => resolve(String(r.result));
           r.onerror = reject;
           r.readAsDataURL(file);
         });
+      }
 
       const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
       bgColor.value = bgState.tint;
@@ -788,10 +825,11 @@
       applyBoardTint(bgState.tint, bgState.strength);
       setBoardImage(bgState.imageDataUrl);
 
-      // ---------- Theme settings ----------
+      /* ---------------------------
+         THEME SETTINGS
+      ---------------------------- */
       const THEME_KEY = "diet_tracker_theme_v1";
 
-      const themePopover = document.getElementById("themePopover");
       const themeBtn = document.getElementById("themeBtn");
       const themePanel = document.getElementById("themePanel");
       const themeDot = document.getElementById("themeDot");
@@ -805,65 +843,86 @@
       const tStone    = document.getElementById("tStone");
       const tCream    = document.getElementById("tCream");
       const tCreamSoft= document.getElementById("tCreamSoft");
+
+      const tPopoverPill = document.getElementById("tPopoverPill");
+      const tPopoverBtn  = document.getElementById("tPopoverBtn");
+      const tPopoverPanel= document.getElementById("tPopoverPanel");
+
       const resetTheme= document.getElementById("resetTheme");
 
       const DEFAULT_THEME = {
         bg: "#ffffff",
         cardBg: "#ffffff",
         fieldBg: "#ffffff",
+
         text: "#1f1f1f",
         muted: "#6b625c",
+
         borderHex: "#c9beb6",
         stone: "#c9beb6",
         cream: "#e6d8cc",
-        creamSoftHex: "#e6d8cc"
+        creamSoftHex: "#e6d8cc",
+
+        popoverPill: "#ffffff",
+        popoverBtn: "#ffffff",
+        popoverPanel: "#ffffff",
       };
 
-      const loadTheme = () => {
+      function loadTheme(){
         try{
           const raw = localStorage.getItem(THEME_KEY);
-          return raw ? (JSON.parse(raw) || null) : null;
-        }catch{ return null; }
-      };
-      const saveTheme = (t) => { try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{} };
+          if(raw) return JSON.parse(raw) || null;
+        }catch{}
+        return null;
+      }
+      function saveTheme(t){
+        try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+      }
 
-      const applyTheme = (t) => {
-        document.documentElement.style.setProperty("--bg", t.bg);
-        document.documentElement.style.setProperty("--text", t.text);
-        document.documentElement.style.setProperty("--muted", t.muted);
+      function applyTheme(t){
+        const theme = { ...DEFAULT_THEME, ...(t || {}) };
 
-        document.documentElement.style.setProperty("--stone", t.stone);
-        document.documentElement.style.setProperty("--cream", t.cream);
+        // Base
+        document.documentElement.style.setProperty("--bg", normalizeHex(theme.bg, "#ffffff"));
+        document.documentElement.style.setProperty("--text", normalizeHex(theme.text, "#1f1f1f"));
+        document.documentElement.style.setProperty("--muted", normalizeHex(theme.muted, "#6b625c"));
 
-        document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
-        document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
+        // Accents
+        document.documentElement.style.setProperty("--stone", normalizeHex(theme.stone, "#c9beb6"));
+        document.documentElement.style.setProperty("--cream", normalizeHex(theme.cream, "#e6d8cc"));
 
-        document.documentElement.style.setProperty("--creamSoft", hexToRgba(t.creamSoftHex, 0.20));
+        // Borders from one hex
+        const b = normalizeHex(theme.borderHex, "#c9beb6");
+        document.documentElement.style.setProperty("--border", hexToRgba(b, 0.85));
+        document.documentElement.style.setProperty("--borderSoft", hexToRgba(b, 0.55));
+        document.documentElement.style.setProperty("--divider", hexToRgba(b, 0.35));
 
-        document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, 0.88));
-        document.documentElement.style.setProperty("--field-bg", t.fieldBg);
+        // Soft cream
+        document.documentElement.style.setProperty("--creamSoft", hexToRgba(normalizeHex(theme.creamSoftHex, "#e6d8cc"), 0.20));
 
-        document.documentElement.style.setProperty("--focus", hexToRgba(t.text, 0.18));
+        // Card/field
+        document.documentElement.style.setProperty("--card-bg", hexToRgba(normalizeHex(theme.cardBg, "#ffffff"), 0.88));
+        document.documentElement.style.setProperty("--field-bg", normalizeHex(theme.fieldBg, "#ffffff"));
 
+        // Popover surfaces
+        document.documentElement.style.setProperty("--popover-pill-bg", hexToRgba(normalizeHex(theme.popoverPill, "#ffffff"), 0.80));
+        document.documentElement.style.setProperty("--popover-btn-bg", hexToRgba(normalizeHex(theme.popoverBtn, "#ffffff"), 0.95));
+        document.documentElement.style.setProperty("--popover-panel-bg", hexToRgba(normalizeHex(theme.popoverPanel, "#ffffff"), 0.92));
+
+        // Focus ring should follow highlight
+        document.documentElement.style.setProperty("--focus", hexToRgba(normalizeHex(theme.cream, "#e6d8cc"), 0.55));
+
+        // Dot preview
         if(themeDot){
-          themeDot.style.background = t.text;
-          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
-          themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
+          themeDot.style.background = normalizeHex(theme.text, "#1f1f1f");
+          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(b, 0.25)}`;
+          themeDot.style.borderColor = hexToRgba(b, 0.75);
         }
-      };
-
-      // Minimal override for any remaining hard-coded whites
-      const injected = document.createElement("style");
-      injected.textContent = `
-        .btn{ background: var(--field-bg, #fff); border-color: var(--border); color: var(--text); }
-        .mini-btn{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--text); }
-        .pill{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--muted); }
-        .miniBox, .goalItem{ background: var(--field-bg, #fff); }
-      `;
-      document.head.appendChild(injected);
+      }
 
       const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
 
+      // Init inputs
       tWidgetBg.value = themeState.bg;
       tCardBg.value = themeState.cardBg;
       tFieldBg.value = themeState.fieldBg;
@@ -874,18 +933,21 @@
       tCream.value = themeState.cream;
       tCreamSoft.value = themeState.creamSoftHex;
 
+      tPopoverPill.value = themeState.popoverPill;
+      tPopoverBtn.value = themeState.popoverBtn;
+      tPopoverPanel.value = themeState.popoverPanel;
+
       applyTheme(themeState);
 
-      const wireThemeInput = (inputEl, key) => {
+      function wireThemeInput(inputEl, key){
         inputEl.addEventListener("input", () => {
           themeState[key] = inputEl.value;
           applyTheme(themeState);
           saveTheme(themeState);
-
-          // keep bg dot visuals consistent (border color affects the dot ring)
+          // keep bg dot visuals consistent vs changed border
           applyBoardTint(bgState.tint, bgState.strength);
         });
-      };
+      }
 
       wireThemeInput(tWidgetBg, "bg");
       wireThemeInput(tCardBg, "cardBg");
@@ -896,6 +958,9 @@
       wireThemeInput(tStone, "stone");
       wireThemeInput(tCream, "cream");
       wireThemeInput(tCreamSoft, "creamSoftHex");
+      wireThemeInput(tPopoverPill, "popoverPill");
+      wireThemeInput(tPopoverBtn, "popoverBtn");
+      wireThemeInput(tPopoverPanel, "popoverPanel");
 
       resetTheme.addEventListener("click", () => {
         Object.assign(themeState, DEFAULT_THEME);
@@ -909,53 +974,54 @@
         tStone.value = themeState.stone;
         tCream.value = themeState.cream;
         tCreamSoft.value = themeState.creamSoftHex;
+        tPopoverPill.value = themeState.popoverPill;
+        tPopoverBtn.value = themeState.popoverBtn;
+        tPopoverPanel.value = themeState.popoverPanel;
 
         applyTheme(themeState);
         saveTheme(themeState);
         applyBoardTint(bgState.tint, bgState.strength);
       });
 
-      // ---------- Popover open/close (both panels) ----------
-      const openBg = () => {
-        bgPanel.classList.add("open");
+      /* ---------------------------
+         POPOVER OPEN/CLOSE (both panels)
+      ---------------------------- */
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
         themePanel.classList.remove("open");
-        bgBtn.setAttribute("aria-expanded", "true");
-        themeBtn.setAttribute("aria-expanded", "false");
-      };
-      const closeBg = () => {
-        bgPanel.classList.remove("open");
-        bgBtn.setAttribute("aria-expanded", "false");
-      };
-      const toggleBg = () => (bgPanel.classList.contains("open") ? closeBg() : openBg());
-
-      const openTheme = () => {
-        themePanel.classList.add("open");
-        bgPanel.classList.remove("open");
-        themeBtn.setAttribute("aria-expanded", "true");
-        bgBtn.setAttribute("aria-expanded", "false");
-      };
-      const closeTheme = () => {
-        themePanel.classList.remove("open");
-        themeBtn.setAttribute("aria-expanded", "false");
-      };
-      const toggleTheme = () => (themePanel.classList.contains("open") ? closeTheme() : openTheme());
-
-      bgBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleBg(); });
-      themeBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleTheme(); });
-
-      document.addEventListener("click", (e) => {
-        if (bgPanel.classList.contains("open") && !bgPopover.contains(e.target)) closeBg();
-        if (themePanel.classList.contains("open") && !themePopover.contains(e.target)) closeTheme();
       });
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape"){
-          closeBg();
-          closeTheme();
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        bgPanel.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        const bgOpen = bgPanel.classList.contains("open");
+        const thOpen = themePanel.classList.contains("open");
+
+        if(bgOpen){
+          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          if (!inside) bgPanel.classList.remove("open");
+        }
+        if(thOpen){
+          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if (!inside) themePanel.classList.remove("open");
         }
       });
 
-      // ---------- Background handlers ----------
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Escape"){
+          bgPanel.classList.remove("open");
+          themePanel.classList.remove("open");
+        }
+      });
+
+      /* ---------------------------
+         BACKGROUND HANDLERS
+      ---------------------------- */
       bgColor.addEventListener("input", () => {
         bgState.tint = bgColor.value;
         applyBoardTint(bgState.tint, bgStrength.value);
@@ -984,7 +1050,9 @@
         saveBg(bgState);
       });
 
-      // ---------- App logic ----------
+      /* ---------------------------
+         APP LOGIC
+      ---------------------------- */
       const MEALS = [
         { id:"breakfast", label:"Breakfast" },
         { id:"lunch", label:"Lunch" },
@@ -1014,7 +1082,11 @@
         });
 
         return {
-          goals: { calories: 0, protein: 0, custom: [] },
+          goals: {
+            calories: 0,
+            protein: 0,
+            custom: []
+          },
           meals
         };
       }
@@ -1055,12 +1127,10 @@
         localStorage.setItem(keyFor(date), JSON.stringify(data));
       }
 
-      // ---------- State ----------
       let current = new Date();
       current.setHours(0,0,0,0);
       let data = loadDay(current);
 
-      // ---------- Elements ----------
       const dayMeta = document.getElementById("dayMeta");
       const mealList = document.getElementById("mealList");
 
@@ -1084,7 +1154,6 @@
       const nextDayBtn = document.getElementById("nextDay");
       const clearDayBtn = document.getElementById("clearDay");
 
-      // ---------- Rendering ----------
       function render(){
         dayMeta.textContent = niceDay(current);
 
@@ -1196,7 +1265,6 @@
         row.appendChild(c1);
         row.appendChild(c2);
         row.appendChild(c3);
-
         wrap.appendChild(row);
 
         const row2 = document.createElement("div");
@@ -1373,7 +1441,6 @@
         }
       }
 
-      // ---------- Events: Goals ----------
       goalCalories.addEventListener("input", () => {
         data.goals.calories = Number(goalCalories.value || 0);
         saveDay(current, data);
@@ -1406,13 +1473,12 @@
         }
       });
 
-      // ---------- Day navigation ----------
-      const go = (deltaDays) => {
+      function go(deltaDays){
         current = new Date(current.getTime() + deltaDays * 86400000);
         current.setHours(0,0,0,0);
         data = loadDay(current);
         render();
-      };
+      }
 
       prevDayBtn.addEventListener("click", () => go(-1));
       nextDayBtn.addEventListener("click", () => go(1));
@@ -1423,10 +1489,8 @@
         render();
       });
 
-      // ---------- Init ----------
       render();
     });
   </script>
 </body>
 </html>
-```

@@ -33,17 +33,18 @@
       --board-tint-a: 0.30;
       --board-image: none;
 
-      /* Theme-driven surfaces */
+      /* Theme-overridable surfaces */
       --card-bg: rgba(255,255,255,0.88);
       --field-bg: #ffffff;
 
-      /* NEW: popover + misc surfaces so theme applies everywhere */
+      /* Popover surfaces */
       --popover-pill-bg: rgba(255,255,255,0.80);
       --popover-btn-bg: rgba(255,255,255,0.95);
       --popover-panel-bg: rgba(255,255,255,0.92);
-      --divider: rgba(201,190,182,0.35);
 
-      --focus: rgba(230,216,204,0.55);
+      /* UI */
+      --divider: rgba(201,190,182,0.35);
+      --focus: rgba(31,31,31,0.18);
     }
 
     *{ box-sizing:border-box; }
@@ -55,7 +56,6 @@
       padding:26px;
     }
     .wrap{ max-width:1100px; margin:0 auto; }
-
     .top{
       display:flex;
       align-items:flex-start;
@@ -72,7 +72,6 @@
       padding-top:4px;
     }
     .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
-
     .btn{
       appearance:none;
       border:1px solid var(--border);
@@ -91,11 +90,33 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
-    .btn.primary{ background:var(--cream); }
+    .btn:active{ transform:translateY(0px); }
     .btn:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
+    .btn.primary{ background:var(--cream); }
+
+    .statusPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--borderSoft);
+      background: var(--field-bg);
+      box-shadow: var(--shadowSoft);
+      font-size:12px;
+      color: var(--muted);
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .dotTiny{
+      width:8px; height:8px; border-radius:999px;
+      background: rgba(120,110,102,0.55);
+    }
+    .dotTiny.dirty{ background: rgba(170,120,70,0.85); }
 
     .popover{ position:relative; }
-
     .icon-pill{
       display:inline-flex;
       align-items:center;
@@ -108,7 +129,6 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
-
     .bg-btn{
       width:34px;
       height:34px;
@@ -144,11 +164,12 @@
       box-shadow: 0 0 0 6px rgba(201,190,182,0.25);
     }
 
+    /* Panels: scrollable so they don't get cut off */
     .panel{
       position:absolute;
       top: 46px;
       right: 0;
-      width: 270px;
+      width: 290px;
       border-radius: 16px;
       border: 1px solid var(--borderSoft);
       background: var(--popover-panel-bg);
@@ -158,8 +179,21 @@
       padding: 12px;
       display:none;
       z-index: 80;
+
+      max-height: min(72vh, 560px);
+      overflow: auto;
+      overscroll-behavior: contain;
     }
     .panel.open{ display:block; }
+
+    /* Optional scrollbar styling */
+    .panel::-webkit-scrollbar{ width:10px; }
+    .panel::-webkit-scrollbar-thumb{
+      background: rgba(201,190,182,0.45);
+      border-radius: 999px;
+      border: 3px solid rgba(0,0,0,0);
+      background-clip: padding-box;
+    }
 
     .panel h2{
       margin: 0 0 10px 0;
@@ -213,6 +247,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .mini-btn:active{ transform: translateY(1px); }
+
     .divider{
       height: 1px;
       background: var(--divider);
@@ -290,6 +325,7 @@
       justify-content:space-between;
       gap:12px;
       margin-bottom:12px;
+      flex-wrap: wrap;
     }
     .cardTitle{
       font-size:14px;
@@ -346,7 +382,7 @@
     }
     .row2{
       display:grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap:10px;
       margin-top:10px;
       align-items:end;
@@ -374,14 +410,7 @@
     }
     .input:focus, .select:focus{
       border-color: rgba(201,190,182,1);
-      box-shadow: 0 0 0 3px var(--focus);
-    }
-
-    .mini{
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.35;
-      margin-top:8px;
+      box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
     }
 
     .fullness{
@@ -402,6 +431,7 @@
       user-select:none;
       height:34px;
       color: var(--text);
+      -webkit-tap-highlight-color: transparent;
     }
     .chip:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
     .chip[data-active="true"]{
@@ -451,10 +481,11 @@
     }
     .hint{
       font-size:12px;
-      color:var(--muted);
+      color:#7a716a;
       line-height:1.4;
       margin:0;
     }
+
     .totals{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -519,14 +550,16 @@
     }
     .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
     .iconBtn.danger{ background: rgba(230,216,204,0.30); }
-    .iconBtn:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
 
     @media (max-width: 980px){
+      body{ padding: 18px; }
       .grid{ grid-template-columns: 1fr; }
       .row{ grid-template-columns: 1fr; }
+      .row2{ grid-template-columns: 1fr; }
       .goalRow{ grid-template-columns: 1fr; }
       .goalItem{ grid-template-columns: 1fr; }
       .totals{ grid-template-columns: 1fr; }
+      .panel{ width: min(92vw, 320px); }
     }
   </style>
 </head>
@@ -535,7 +568,14 @@
   <main class="wrap">
     <div class="top">
       <div class="kicker">Diet Planner + Tracker</div>
+
       <div class="btns">
+        <span class="statusPill" id="saveStatus" title="Saved/Unsaved status">
+          <span class="dotTiny" id="saveDot" aria-hidden="true"></span>
+          <span id="saveText">Saved</span>
+        </span>
+
+        <button id="saveBtn" class="btn primary" type="button">SAVE</button>
 
         <!-- Background settings -->
         <div class="popover" id="bgPopover">
@@ -571,7 +611,7 @@
           </div>
         </div>
 
-        <!-- Theme settings -->
+        <!-- Theme settings + Presets + Network -->
         <div class="popover" id="themePopover">
           <div class="icon-pill">
             <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -582,22 +622,21 @@
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
             <h2>Theme</h2>
 
+            <!-- Make theme settings consistent: top essentials -->
             <div class="rowT">
-              <label for="tWidgetBg">Page bg</label>
-              <input id="tWidgetBg" type="color" value="#ffffff" />
+              <label for="tBg">Page bg</label>
+              <input id="tBg" type="color" value="#ffffff" />
             </div>
 
             <div class="rowT">
-              <label for="tCardBg">Card bg</label>
-              <input id="tCardBg" type="color" value="#ffffff" />
+              <label for="tCard">Card</label>
+              <input id="tCard" type="color" value="#ffffff" />
             </div>
 
             <div class="rowT">
-              <label for="tFieldBg">Fields bg</label>
-              <input id="tFieldBg" type="color" value="#ffffff" />
+              <label for="tBorders">Borders</label>
+              <input id="tBorders" type="color" value="#c9beb6" />
             </div>
-
-            <div class="divider"></div>
 
             <div class="rowT">
               <label for="tText">Text</label>
@@ -605,49 +644,99 @@
             </div>
 
             <div class="rowT">
-              <label for="tMuted">Muted text</label>
+              <label for="tMuted">Muted</label>
               <input id="tMuted" type="color" value="#6b625c" />
             </div>
 
-            <div class="divider"></div>
-
             <div class="rowT">
-              <label for="tBorder">Borders</label>
-              <input id="tBorder" type="color" value="#c9beb6" />
-            </div>
-
-            <div class="rowT">
-              <label for="tStone">Accent</label>
-              <input id="tStone" type="color" value="#c9beb6" />
+              <label for="tSecondary">Secondary</label>
+              <input id="tSecondary" type="color" value="#e6d8cc" />
             </div>
 
             <div class="divider"></div>
 
+            <!-- Advanced surfaces -->
             <div class="rowT">
-              <label for="tCream">Highlight</label>
-              <input id="tCream" type="color" value="#e6d8cc" />
+              <label for="tFields">Fields bg</label>
+              <input id="tFields" type="color" value="#ffffff" />
             </div>
 
             <div class="rowT">
-              <label for="tCreamSoft">Highlight soft</label>
-              <input id="tCreamSoft" type="color" value="#e6d8cc" />
+              <label for="tAccent">Accent</label>
+              <input id="tAccent" type="color" value="#c9beb6" />
+            </div>
+
+            <div class="rowT">
+              <label for="tSecondarySoft">Secondary soft</label>
+              <input id="tSecondarySoft" type="color" value="#e6d8cc" />
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Popover surfaces (so nothing stays hard-coded white) -->
+            <div class="rowT">
+              <label for="tPopPill">Popover pill</label>
+              <input id="tPopPill" type="color" value="#ffffff" />
+            </div>
+            <div class="rowT">
+              <label for="tPopBtn">Popover button</label>
+              <input id="tPopBtn" type="color" value="#ffffff" />
+            </div>
+            <div class="rowT">
+              <label for="tPopPanel">Popover panel</label>
+              <input id="tPopPanel" type="color" value="#ffffff" />
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Network -->
+            <h2 style="margin-top:6px;">Preset Network</h2>
+            <div class="rowT" style="align-items:flex-start;">
+              <label for="networkId">Network ID</label>
+              <input id="networkId" class="input" style="height:36px;" type="text" placeholder="e.g. my-template-v1" />
+            </div>
+
+            <div class="rowT" style="align-items:flex-start;">
+              <label for="userKey">User key</label>
+              <input id="userKey" class="input" style="height:36px;" type="text" placeholder="optional (auto if blank)" />
+            </div>
+
+            <div class="hintSmall">
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Presets -->
+            <h2 style="margin-top:6px;">Presets</h2>
+            <div class="rowT" style="align-items:flex-start;">
+              <label for="presetSelect">Preset</label>
+              <select id="presetSelect" class="select" style="height:36px;">
+                <option value="">No presets</option>
+              </select>
+            </div>
+
+            <div class="rowT" style="align-items:flex-start;">
+              <label for="presetName">Name</label>
+              <input id="presetName" class="input" style="height:36px;" type="text" placeholder="e.g. Warm Beige" />
+            </div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="savePreset" type="button">Save preset</button>
+            </div>
+            <div class="rowT">
+              <button class="mini-btn" id="applyPreset" type="button">Apply selected</button>
+            </div>
+            <div class="rowT">
+              <button class="mini-btn" id="deletePreset" type="button">Delete selected</button>
             </div>
 
             <div class="divider"></div>
 
             <div class="rowT">
-              <label for="tPopoverPill">Popover pill</label>
-              <input id="tPopoverPill" type="color" value="#ffffff" />
+              <button class="mini-btn" id="copyPreset" type="button">Copy preset JSON</button>
             </div>
-
             <div class="rowT">
-              <label for="tPopoverBtn">Popover button</label>
-              <input id="tPopoverBtn" type="color" value="#ffffff" />
-            </div>
-
-            <div class="rowT">
-              <label for="tPopoverPanel">Popover panel</label>
-              <input id="tPopoverPanel" type="color" value="#ffffff" />
+              <button class="mini-btn" id="importPreset" type="button">Import preset JSON</button>
             </div>
 
             <div class="divider"></div>
@@ -655,8 +744,6 @@
             <div class="rowT">
               <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
             </div>
-
-            <div class="hintSmall"></div>
           </div>
         </div>
 
@@ -670,6 +757,7 @@
       <div class="boardTint" id="boardTint"></div>
 
       <div class="grid">
+        <!-- LEFT -->
         <section class="card" aria-label="Meals">
           <div class="cardHead">
             <h2 class="cardTitle">Meals</h2>
@@ -678,6 +766,7 @@
           <div class="mealList" id="mealList"></div>
         </section>
 
+        <!-- RIGHT -->
         <aside class="card" aria-label="Totals and goals">
           <div class="cardHead">
             <h2 class="cardTitle">Totals</h2>
@@ -745,752 +834,1113 @@
     </div>
   </main>
 
-  <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      // ---------- Utilities ----------
-      const pad2 = (n) => String(n).padStart(2,"0");
-      const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-      const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
-      const clampPct = (p) => Math.max(0, Math.min(100, p));
+<script>
+(() => {
+  // -----------------------------
+  // Utilities
+  // -----------------------------
+  const pad2 = (n) => String(n).padStart(2,"0");
+  const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
+  const clampPct = (p) => Math.max(0, Math.min(100, p));
 
-      function hexToRgba(hex, a){
-        const h = String(hex || "").replace("#","").trim();
-        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-        const num = parseInt(full || "000000", 16);
-        const r = (num >> 16) & 255;
-        const g = (num >> 8) & 255;
-        const b = num & 255;
-        return `rgba(${r},${g},${b},${a})`;
-      }
-      function normalizeHex(hex, fallback="#ffffff"){
-        const s = String(hex || "").trim();
-        if(/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
-        return fallback;
-      }
+  const hexToRgba = (hex, a) => {
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "000000", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  };
 
-      /* ---------------------------
-         BACKGROUND SETTINGS
-      ---------------------------- */
-      const BG_KEY = "diet_tracker_bg_v1";
+  const safeJsonParse = (raw, fallback=null) => {
+    try { return JSON.parse(raw); } catch { return fallback; }
+  };
 
-      const bgBtn = document.getElementById("bgBtn");
-      const bgPanel = document.getElementById("bgPanel");
-      const bgColor = document.getElementById("bgColor");
-      const bgStrength = document.getElementById("bgStrength");
-      const bgImage = document.getElementById("bgImage");
-      const removeImage = document.getElementById("removeImage");
-      const boardTintEl = document.getElementById("boardTint");
-      const bgDot = document.getElementById("bgDot");
+  const uid = () => "id_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
 
-      function loadBg(){
-        try{
-          const raw = localStorage.getItem(BG_KEY);
-          if(raw) return JSON.parse(raw) || null;
-        }catch{}
-        return null;
-      }
-      function saveBg(bg){
-        try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-      }
-      function setBoardImage(dataUrlOrNull){
-        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-      }
-      function applyBoardTint(colorHex, strengthPct){
-        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
-        const tint = normalizeHex(colorHex, "#efe7e1");
+  // -----------------------------
+  // IndexedDB KV Store (more durable on iOS webviews than localStorage in some cases)
+  // -----------------------------
+  const IDB_NAME = "notion_widgets_kv_v1";
+  const IDB_STORE = "kv";
 
-        document.documentElement.style.setProperty("--board-tint", tint);
-        document.documentElement.style.setProperty("--board-tint-a", String(strength));
-
-        if (bgDot){
-          bgDot.style.background = tint;
-          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
-        }
-        if (boardTintEl){
-          boardTintEl.style.background = hexToRgba(tint, strength);
-        }
-      }
-      async function fileToDataUrl(file){
-        return new Promise((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(String(r.result));
-          r.onerror = reject;
-          r.readAsDataURL(file);
-        });
-      }
-
-      const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
-      bgColor.value = bgState.tint;
-      bgStrength.value = String(bgState.strength);
-      applyBoardTint(bgState.tint, bgState.strength);
-      setBoardImage(bgState.imageDataUrl);
-
-      /* ---------------------------
-         THEME SETTINGS
-      ---------------------------- */
-      const THEME_KEY = "diet_tracker_theme_v1";
-
-      const themeBtn = document.getElementById("themeBtn");
-      const themePanel = document.getElementById("themePanel");
-      const themeDot = document.getElementById("themeDot");
-
-      const tWidgetBg = document.getElementById("tWidgetBg");
-      const tCardBg   = document.getElementById("tCardBg");
-      const tFieldBg  = document.getElementById("tFieldBg");
-      const tText     = document.getElementById("tText");
-      const tMuted    = document.getElementById("tMuted");
-      const tBorder   = document.getElementById("tBorder");
-      const tStone    = document.getElementById("tStone");
-      const tCream    = document.getElementById("tCream");
-      const tCreamSoft= document.getElementById("tCreamSoft");
-
-      const tPopoverPill = document.getElementById("tPopoverPill");
-      const tPopoverBtn  = document.getElementById("tPopoverBtn");
-      const tPopoverPanel= document.getElementById("tPopoverPanel");
-
-      const resetTheme= document.getElementById("resetTheme");
-
-      const DEFAULT_THEME = {
-        bg: "#ffffff",
-        cardBg: "#ffffff",
-        fieldBg: "#ffffff",
-
-        text: "#1f1f1f",
-        muted: "#6b625c",
-
-        borderHex: "#c9beb6",
-        stone: "#c9beb6",
-        cream: "#e6d8cc",
-        creamSoftHex: "#e6d8cc",
-
-        popoverPill: "#ffffff",
-        popoverBtn: "#ffffff",
-        popoverPanel: "#ffffff",
+  function idbOpen(){
+    return new Promise((resolve, reject) => {
+      if (!("indexedDB" in window)) return reject(new Error("indexedDB not supported"));
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
       };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
 
-      function loadTheme(){
-        try{
-          const raw = localStorage.getItem(THEME_KEY);
-          if(raw) return JSON.parse(raw) || null;
-        }catch{}
-        return null;
-      }
-      function saveTheme(t){
-        try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-      }
+  async function idbGet(key){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readonly");
+      const store = tx.objectStore(IDB_STORE);
+      const req = store.get(key);
+      req.onsuccess = () => resolve(req.result ?? null);
+      req.onerror = () => reject(req.error);
+      tx.oncomplete = () => db.close();
+    });
+  }
 
-      function applyTheme(t){
-        const theme = { ...DEFAULT_THEME, ...(t || {}) };
+  async function idbSet(key, val){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readwrite");
+      const store = tx.objectStore(IDB_STORE);
+      const req = store.put(val, key);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => reject(req.error);
+      tx.oncomplete = () => db.close();
+    });
+  }
 
-        // Base
-        document.documentElement.style.setProperty("--bg", normalizeHex(theme.bg, "#ffffff"));
-        document.documentElement.style.setProperty("--text", normalizeHex(theme.text, "#1f1f1f"));
-        document.documentElement.style.setProperty("--muted", normalizeHex(theme.muted, "#6b625c"));
+  async function idbDel(key){
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readwrite");
+      const store = tx.objectStore(IDB_STORE);
+      const req = store.delete(key);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => reject(req.error);
+      tx.oncomplete = () => db.close();
+    });
+  }
 
-        // Accents
-        document.documentElement.style.setProperty("--stone", normalizeHex(theme.stone, "#c9beb6"));
-        document.documentElement.style.setProperty("--cream", normalizeHex(theme.cream, "#e6d8cc"));
+  // Storage wrapper: IDB first, then localStorage fallback
+  const storage = {
+    async get(key){
+      try{
+        const v = await idbGet(key);
+        if (v != null) return v;
+      }catch{}
+      return localStorage.getItem(key);
+    },
+    async set(key, val){
+      try{
+        await idbSet(key, val);
+        return;
+      }catch{}
+      try{ localStorage.setItem(key, val); }catch{}
+    },
+    async del(key){
+      try{ await idbDel(key); }catch{}
+      try{ localStorage.removeItem(key); }catch{}
+    }
+  };
 
-        // Borders from one hex
-        const b = normalizeHex(theme.borderHex, "#c9beb6");
-        document.documentElement.style.setProperty("--border", hexToRgba(b, 0.85));
-        document.documentElement.style.setProperty("--borderSoft", hexToRgba(b, 0.55));
-        document.documentElement.style.setProperty("--divider", hexToRgba(b, 0.35));
+  // -----------------------------
+  // Elements
+  // -----------------------------
+  const els = {
+    // status/save
+    saveBtn: document.getElementById("saveBtn"),
+    saveDot: document.getElementById("saveDot"),
+    saveText: document.getElementById("saveText"),
 
-        // Soft cream
-        document.documentElement.style.setProperty("--creamSoft", hexToRgba(normalizeHex(theme.creamSoftHex, "#e6d8cc"), 0.20));
+    // day nav
+    prevDayBtn: document.getElementById("prevDay"),
+    nextDayBtn: document.getElementById("nextDay"),
+    clearDayBtn: document.getElementById("clearDay"),
+    dayMeta: document.getElementById("dayMeta"),
 
-        // Card/field
-        document.documentElement.style.setProperty("--card-bg", hexToRgba(normalizeHex(theme.cardBg, "#ffffff"), 0.88));
-        document.documentElement.style.setProperty("--field-bg", normalizeHex(theme.fieldBg, "#ffffff"));
+    // meals
+    mealList: document.getElementById("mealList"),
 
-        // Popover surfaces
-        document.documentElement.style.setProperty("--popover-pill-bg", hexToRgba(normalizeHex(theme.popoverPill, "#ffffff"), 0.80));
-        document.documentElement.style.setProperty("--popover-btn-bg", hexToRgba(normalizeHex(theme.popoverBtn, "#ffffff"), 0.95));
-        document.documentElement.style.setProperty("--popover-panel-bg", hexToRgba(normalizeHex(theme.popoverPanel, "#ffffff"), 0.92));
+    // totals
+    calTotalEl: document.getElementById("calTotal"),
+    proteinTotalEl: document.getElementById("proteinTotal"),
+    carbTotalEl: document.getElementById("carbTotal"),
+    fiberTotalEl: document.getElementById("fiberTotal"),
+    calBar: document.getElementById("calBar"),
+    proteinBar: document.getElementById("proteinBar"),
+    calHint: document.getElementById("calHint"),
+    proteinHint: document.getElementById("proteinHint"),
 
-        // Focus ring should follow highlight
-        document.documentElement.style.setProperty("--focus", hexToRgba(normalizeHex(theme.cream, "#e6d8cc"), 0.55));
+    // goals inputs
+    goalCalories: document.getElementById("goalCalories"),
+    goalProtein: document.getElementById("goalProtein"),
+    newGoalName: document.getElementById("newGoalName"),
+    addGoalBtn: document.getElementById("addGoal"),
+    goalList: document.getElementById("goalList"),
 
-        // Dot preview
-        if(themeDot){
-          themeDot.style.background = normalizeHex(theme.text, "#1f1f1f");
-          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(b, 0.25)}`;
-          themeDot.style.borderColor = hexToRgba(b, 0.75);
-        }
-      }
+    // bg
+    bgBtn: document.getElementById("bgBtn"),
+    bgPanel: document.getElementById("bgPanel"),
+    bgColor: document.getElementById("bgColor"),
+    bgStrength: document.getElementById("bgStrength"),
+    bgImage: document.getElementById("bgImage"),
+    removeImage: document.getElementById("removeImage"),
+    boardTintEl: document.getElementById("boardTint"),
+    bgDot: document.getElementById("bgDot"),
 
-      const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
+    // theme + presets/network/user
+    themeBtn: document.getElementById("themeBtn"),
+    themePanel: document.getElementById("themePanel"),
+    themeDot: document.getElementById("themeDot"),
 
-      // Init inputs
-      tWidgetBg.value = themeState.bg;
-      tCardBg.value = themeState.cardBg;
-      tFieldBg.value = themeState.fieldBg;
-      tText.value = themeState.text;
-      tMuted.value = themeState.muted;
-      tBorder.value = themeState.borderHex;
-      tStone.value = themeState.stone;
-      tCream.value = themeState.cream;
-      tCreamSoft.value = themeState.creamSoftHex;
+    tBg: document.getElementById("tBg"),
+    tCard: document.getElementById("tCard"),
+    tBorders: document.getElementById("tBorders"),
+    tText: document.getElementById("tText"),
+    tMuted: document.getElementById("tMuted"),
+    tSecondary: document.getElementById("tSecondary"),
+    tFields: document.getElementById("tFields"),
+    tAccent: document.getElementById("tAccent"),
+    tSecondarySoft: document.getElementById("tSecondarySoft"),
+    tPopPill: document.getElementById("tPopPill"),
+    tPopBtn: document.getElementById("tPopBtn"),
+    tPopPanel: document.getElementById("tPopPanel"),
+    resetTheme: document.getElementById("resetTheme"),
 
-      tPopoverPill.value = themeState.popoverPill;
-      tPopoverBtn.value = themeState.popoverBtn;
-      tPopoverPanel.value = themeState.popoverPanel;
+    networkId: document.getElementById("networkId"),
+    userKey: document.getElementById("userKey"),
+    presetSelect: document.getElementById("presetSelect"),
+    presetName: document.getElementById("presetName"),
+    savePreset: document.getElementById("savePreset"),
+    applyPreset: document.getElementById("applyPreset"),
+    deletePreset: document.getElementById("deletePreset"),
+    copyPreset: document.getElementById("copyPreset"),
+    importPreset: document.getElementById("importPreset"),
+  };
 
-      applyTheme(themeState);
+  // -----------------------------
+  // In-widget confirm (no browser confirm)
+  // -----------------------------
+  async function askConfirm(message, { okText="OK", cancelText="Cancel", neutralText=null } = {}){
+    return new Promise((resolve) => {
+      const host = document.getElementById("widgetBoard");
+      const wrap = document.createElement("div");
+      wrap.style.position = "absolute";
+      wrap.style.inset = "0";
+      wrap.style.zIndex = "9999";
+      wrap.style.display = "grid";
+      wrap.style.placeItems = "center";
+      wrap.style.padding = "14px";
+      wrap.style.background = "rgba(20,18,16,.35)";
+      wrap.style.backdropFilter = "blur(8px)";
+      wrap.style.webkitBackdropFilter = "blur(8px)";
 
-      function wireThemeInput(inputEl, key){
-        inputEl.addEventListener("input", () => {
-          themeState[key] = inputEl.value;
-          applyTheme(themeState);
-          saveTheme(themeState);
-          // keep bg dot visuals consistent vs changed border
-          applyBoardTint(bgState.tint, bgState.strength);
-        });
-      }
+      wrap.innerHTML = `
+        <div style="
+          width:min(520px,100%);
+          background:rgba(255,255,255,.92);
+          border:1px solid rgba(43,43,43,.14);
+          border-radius:20px;
+          box-shadow:0 12px 40px rgba(0,0,0,.12);
+          overflow:hidden;">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(43,43,43,.10);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:12px;">
+            Confirm
+          </div>
+          <div style="padding:14px 16px;line-height:1.45;color:rgba(43,43,43,.92);font-size:13px;">
+            ${String(message).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+            padding:12px 16px;border-top:1px solid rgba(43,43,43,.10);">
+            <button class="btn" type="button" data-action="cancel">${cancelText}</button>
+            ${neutralText ? `<button class="btn" type="button" data-action="neutral">${neutralText}</button>` : ""}
+            <button class="btn primary" type="button" data-action="ok">${okText}</button>
+          </div>
+        </div>
+      `;
 
-      wireThemeInput(tWidgetBg, "bg");
-      wireThemeInput(tCardBg, "cardBg");
-      wireThemeInput(tFieldBg, "fieldBg");
-      wireThemeInput(tText, "text");
-      wireThemeInput(tMuted, "muted");
-      wireThemeInput(tBorder, "borderHex");
-      wireThemeInput(tStone, "stone");
-      wireThemeInput(tCream, "cream");
-      wireThemeInput(tCreamSoft, "creamSoftHex");
-      wireThemeInput(tPopoverPill, "popoverPill");
-      wireThemeInput(tPopoverBtn, "popoverBtn");
-      wireThemeInput(tPopoverPanel, "popoverPanel");
+      const cleanup = (val) => { wrap.remove(); resolve(val); };
 
-      resetTheme.addEventListener("click", () => {
-        Object.assign(themeState, DEFAULT_THEME);
-
-        tWidgetBg.value = themeState.bg;
-        tCardBg.value = themeState.cardBg;
-        tFieldBg.value = themeState.fieldBg;
-        tText.value = themeState.text;
-        tMuted.value = themeState.muted;
-        tBorder.value = themeState.borderHex;
-        tStone.value = themeState.stone;
-        tCream.value = themeState.cream;
-        tCreamSoft.value = themeState.creamSoftHex;
-        tPopoverPill.value = themeState.popoverPill;
-        tPopoverBtn.value = themeState.popoverBtn;
-        tPopoverPanel.value = themeState.popoverPanel;
-
-        applyTheme(themeState);
-        saveTheme(themeState);
-        applyBoardTint(bgState.tint, bgState.strength);
+      wrap.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-action]");
+        if (!btn) return;
+        const a = btn.getAttribute("data-action");
+        if (a === "ok") cleanup("ok");
+        if (a === "cancel") cleanup("cancel");
+        if (a === "neutral") cleanup("neutral");
       });
 
-      /* ---------------------------
-         POPOVER OPEN/CLOSE (both panels)
-      ---------------------------- */
-      bgBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        bgPanel.classList.toggle("open");
-        themePanel.classList.remove("open");
-      });
+      host.style.position = "relative";
+      host.appendChild(wrap);
+      const ok = wrap.querySelector('button[data-action="ok"]');
+      setTimeout(() => ok && ok.focus(), 0);
+    });
+  }
 
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        bgPanel.classList.remove("open");
-      });
+  // -----------------------------
+  // Background module (persists immediately, but only bg/theme settings – not day data)
+  // -----------------------------
+  const BG_KEY = "diet_tracker_bg_v2";
+  const loadBg = async () => safeJsonParse(await storage.get(BG_KEY), null);
+  const saveBg = async (bg) => storage.set(BG_KEY, JSON.stringify(bg));
 
-      document.addEventListener("click", (e) => {
-        const bgOpen = bgPanel.classList.contains("open");
-        const thOpen = themePanel.classList.contains("open");
+  const setBoardImage = (dataUrlOrNull) => {
+    document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+  };
 
-        if(bgOpen){
-          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-          if (!inside) bgPanel.classList.remove("open");
-        }
-        if(thOpen){
-          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-          if (!inside) themePanel.classList.remove("open");
-        }
-      });
+  const applyBoardTint = (colorHex, strengthPct) => {
+    const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
+    document.documentElement.style.setProperty("--board-tint", colorHex);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
-      document.addEventListener("keydown", (e) => {
-        if(e.key === "Escape"){
-          bgPanel.classList.remove("open");
-          themePanel.classList.remove("open");
-        }
-      });
+    els.bgDot.style.background = colorHex;
+    els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
+    els.boardTintEl.style.background = hexToRgba(colorHex, strength);
+  };
 
-      /* ---------------------------
-         BACKGROUND HANDLERS
-      ---------------------------- */
-      bgColor.addEventListener("input", () => {
-        bgState.tint = bgColor.value;
-        applyBoardTint(bgState.tint, bgStrength.value);
-        saveBg(bgState);
-      });
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
 
-      bgStrength.addEventListener("input", () => {
-        bgState.strength = Number(bgStrength.value);
-        applyBoardTint(bgState.tint, bgState.strength);
-        saveBg(bgState);
-      });
+  // -----------------------------
+  // Theme module (with presets/network)
+  // -----------------------------
+  const THEME_KEY = "diet_tracker_theme_v2";
+  const DEFAULT_THEME = {
+    bg: "#ffffff",
+    card: "#ffffff",
+    borders: "#c9beb6",
+    text: "#1f1f1f",
+    muted: "#6b625c",
+    secondary: "#e6d8cc",
 
-      bgImage.addEventListener("change", async () => {
-        const file = bgImage.files && bgImage.files[0];
-        if(!file) return;
-        const dataUrl = await fileToDataUrl(file);
-        bgState.imageDataUrl = dataUrl;
-        setBoardImage(dataUrl);
-        saveBg(bgState);
-      });
+    fields: "#ffffff",
+    accent: "#c9beb6",
+    secondarySoft: "#e6d8cc",
 
-      removeImage.addEventListener("click", () => {
-        bgState.imageDataUrl = null;
-        setBoardImage(null);
-        bgImage.value = "";
-        saveBg(bgState);
-      });
+    popPill: "#ffffff",
+    popBtn: "#ffffff",
+    popPanel: "#ffffff",
+  };
 
-      /* ---------------------------
-         APP LOGIC
-      ---------------------------- */
-      const MEALS = [
-        { id:"breakfast", label:"Breakfast" },
-        { id:"lunch", label:"Lunch" },
-        { id:"snack", label:"Snack" },
-        { id:"dinner", label:"Dinner" }
-      ];
+  const loadTheme = async () => safeJsonParse(await storage.get(THEME_KEY), null);
+  const saveTheme = async (t) => storage.set(THEME_KEY, JSON.stringify(t));
 
-      const FULLNESS_OPTIONS = [
-        { id:"hungry", label:"Hungry" },
-        { id:"neutral", label:"Neutral" },
-        { id:"satisfied", label:"Satisfied" },
-        { id:"too_full", label:"Too full" }
-      ];
+  const applyTheme = (t) => {
+    const theme = { ...DEFAULT_THEME, ...(t || {}) };
 
-      const STORAGE_PREFIX = "diet_tracker_v1_";
+    document.documentElement.style.setProperty("--bg", theme.bg);
+    document.documentElement.style.setProperty("--text", theme.text);
+    document.documentElement.style.setProperty("--muted", theme.muted);
 
-      function defaultDayData(){
-        const meals = {};
-        MEALS.forEach(m => meals[m.id] = {
-          name: "",
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fiber: 0,
-          fullness: "",
-          tag: ""
-        });
+    document.documentElement.style.setProperty("--cream", theme.secondary);
+    document.documentElement.style.setProperty("--stone", theme.accent);
 
-        return {
-          goals: {
-            calories: 0,
-            protein: 0,
-            custom: []
-          },
-          meals
-        };
-      }
+    document.documentElement.style.setProperty("--border", hexToRgba(theme.borders, 0.85));
+    document.documentElement.style.setProperty("--borderSoft", hexToRgba(theme.borders, 0.55));
+    document.documentElement.style.setProperty("--divider", hexToRgba(theme.borders, 0.35));
+    document.documentElement.style.setProperty("--focus", hexToRgba(theme.text, 0.18));
 
-      function keyFor(date){ return STORAGE_PREFIX + isoDay(date); }
+    document.documentElement.style.setProperty("--creamSoft", hexToRgba(theme.secondarySoft, 0.20));
+    document.documentElement.style.setProperty("--card-bg", hexToRgba(theme.card, 0.88));
+    document.documentElement.style.setProperty("--field-bg", theme.fields);
 
-      function loadDay(date){
-        const raw = localStorage.getItem(keyFor(date));
-        if(!raw) return defaultDayData();
-        try{
-          const parsed = JSON.parse(raw);
-          const base = defaultDayData();
+    document.documentElement.style.setProperty("--popover-pill-bg", hexToRgba(theme.popPill, 0.80));
+    document.documentElement.style.setProperty("--popover-btn-bg", hexToRgba(theme.popBtn, 0.95));
+    document.documentElement.style.setProperty("--popover-panel-bg", hexToRgba(theme.popPanel, 0.92));
 
-          base.goals.calories = Number(parsed?.goals?.calories || 0);
-          base.goals.protein = Number(parsed?.goals?.protein || 0);
-          base.goals.custom = Array.isArray(parsed?.goals?.custom) ? parsed.goals.custom : [];
+    // dot preview
+    els.themeDot.style.background = theme.text;
+    els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(theme.borders, 0.25)}`;
+    els.themeDot.style.borderColor = hexToRgba(theme.borders, 0.75);
+  };
 
-          MEALS.forEach(m => {
-            const src = parsed?.meals?.[m.id] || {};
-            base.meals[m.id] = {
-              name: String(src.name || ""),
-              calories: Number(src.calories || 0),
-              protein: Number(src.protein || 0),
-              carbs: Number(src.carbs || 0),
-              fiber: Number(src.fiber || 0),
-              fullness: String(src.fullness || ""),
-              tag: String(src.tag || "")
-            };
-          });
-          return base;
-        }catch{
-          localStorage.removeItem(keyFor(date));
-          return defaultDayData();
-        }
-      }
+  // Presets store (networked)
+  const NETWORK_KEY = "diet_tracker_network_id_v1";
+  const USER_KEY = "diet_tracker_user_key_v1";
 
-      function saveDay(date, data){
-        localStorage.setItem(keyFor(date), JSON.stringify(data));
-      }
+  const presetStorageKey = (networkId) => `notion_widget_theme_presets_v1__${networkId || "default"}`;
 
-      let current = new Date();
-      current.setHours(0,0,0,0);
-      let data = loadDay(current);
+  async function loadPresets(networkId){
+    return safeJsonParse(await storage.get(presetStorageKey(networkId)), { presets: [] }) || { presets: [] };
+  }
+  async function savePresets(networkId, obj){
+    await storage.set(presetStorageKey(networkId), JSON.stringify(obj));
+  }
+  function refreshPresetSelect(presets){
+    const cur = els.presetSelect.value;
+    els.presetSelect.innerHTML = "";
+    if (!presets.length){
+      const o = document.createElement("option");
+      o.value = "";
+      o.textContent = "No presets";
+      els.presetSelect.appendChild(o);
+      return;
+    }
+    presets.forEach(p => {
+      const o = document.createElement("option");
+      o.value = p.id;
+      o.textContent = p.name || "Untitled preset";
+      els.presetSelect.appendChild(o);
+    });
+    if ([...els.presetSelect.options].some(o => o.value === cur)) els.presetSelect.value = cur;
+  }
 
-      const dayMeta = document.getElementById("dayMeta");
-      const mealList = document.getElementById("mealList");
+  function readThemeFromUI(){
+    return {
+      bg: els.tBg.value,
+      card: els.tCard.value,
+      borders: els.tBorders.value,
+      text: els.tText.value,
+      muted: els.tMuted.value,
+      secondary: els.tSecondary.value,
 
-      const calTotalEl = document.getElementById("calTotal");
-      const proteinTotalEl = document.getElementById("proteinTotal");
-      const carbTotalEl = document.getElementById("carbTotal");
-      const fiberTotalEl = document.getElementById("fiberTotal");
+      fields: els.tFields.value,
+      accent: els.tAccent.value,
+      secondarySoft: els.tSecondarySoft.value,
 
-      const calBar = document.getElementById("calBar");
-      const proteinBar = document.getElementById("proteinBar");
-      const calHint = document.getElementById("calHint");
-      const proteinHint = document.getElementById("proteinHint");
+      popPill: els.tPopPill.value,
+      popBtn: els.tPopBtn.value,
+      popPanel: els.tPopPanel.value,
+    };
+  }
 
-      const goalCalories = document.getElementById("goalCalories");
-      const goalProtein = document.getElementById("goalProtein");
-      const newGoalName = document.getElementById("newGoalName");
-      const addGoalBtn = document.getElementById("addGoal");
-      const goalList = document.getElementById("goalList");
+  function writeThemeToUI(t){
+    const theme = { ...DEFAULT_THEME, ...(t || {}) };
+    els.tBg.value = theme.bg;
+    els.tCard.value = theme.card;
+    els.tBorders.value = theme.borders;
+    els.tText.value = theme.text;
+    els.tMuted.value = theme.muted;
+    els.tSecondary.value = theme.secondary;
+    els.tFields.value = theme.fields;
+    els.tAccent.value = theme.accent;
+    els.tSecondarySoft.value = theme.secondarySoft;
+    els.tPopPill.value = theme.popPill;
+    els.tPopBtn.value = theme.popBtn;
+    els.tPopPanel.value = theme.popPanel;
+  }
 
-      const prevDayBtn = document.getElementById("prevDay");
-      const nextDayBtn = document.getElementById("nextDay");
-      const clearDayBtn = document.getElementById("clearDay");
+  // -----------------------------
+  // App (SAVE-based persistence)
+  // -----------------------------
+  const MEALS = [
+    { id:"breakfast", label:"Breakfast" },
+    { id:"lunch", label:"Lunch" },
+    { id:"snack", label:"Snack" },
+    { id:"dinner", label:"Dinner" }
+  ];
+  const FULLNESS_OPTIONS = [
+    { id:"hungry", label:"Hungry" },
+    { id:"neutral", label:"Neutral" },
+    { id:"satisfied", label:"Satisfied" },
+    { id:"too_full", label:"Too full" }
+  ];
 
-      function render(){
-        dayMeta.textContent = niceDay(current);
+  function defaultDayData(){
+    const meals = {};
+    MEALS.forEach(m => meals[m.id] = {
+      name: "",
+      tag: "",
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fiber: 0,
+      fullness: ""
+    });
+    return {
+      goals: { calories: 0, protein: 0, custom: [] },
+      meals
+    };
+  }
 
-        goalCalories.value = data.goals.calories ? String(data.goals.calories) : "";
-        goalProtein.value = data.goals.protein ? String(data.goals.protein) : "";
+  // Namespacing:
+  // - userKey separates users on same origin
+  // - dateKey separates days
+  function dayKey(userKey, date){
+    return `diet_tracker_day_v2__${userKey}__${isoDay(date)}`;
+  }
 
-        mealList.innerHTML = "";
-        MEALS.forEach(m => mealList.appendChild(renderMeal(m.id, m.label)));
+  async function loadDay(userKey, date){
+    const raw = await storage.get(dayKey(userKey, date));
+    if (!raw) return defaultDayData();
+    const parsed = safeJsonParse(raw, null);
+    if (!parsed) return defaultDayData();
 
+    const base = defaultDayData();
+    base.goals.calories = Number(parsed?.goals?.calories || 0);
+    base.goals.protein = Number(parsed?.goals?.protein || 0);
+    base.goals.custom = Array.isArray(parsed?.goals?.custom) ? parsed.goals.custom : [];
+
+    MEALS.forEach(m => {
+      const src = parsed?.meals?.[m.id] || {};
+      base.meals[m.id] = {
+        name: String(src.name || ""),
+        tag: String(src.tag || ""),
+        calories: Number(src.calories || 0),
+        protein: Number(src.protein || 0),
+        carbs: Number(src.carbs || 0),
+        fiber: Number(src.fiber || 0),
+        fullness: String(src.fullness || "")
+      };
+    });
+    return base;
+  }
+
+  async function saveDay(userKey, date, data){
+    await storage.set(dayKey(userKey, date), JSON.stringify(data));
+  }
+
+  async function clearDay(userKey, date){
+    await storage.del(dayKey(userKey, date));
+  }
+
+  // Working state:
+  // - savedData is what is persisted
+  // - draftData is what UI edits change
+  let current = new Date(); current.setHours(0,0,0,0);
+  let userKey = null;
+  let savedData = null;
+  let draftData = null;
+  let isDirty = false;
+
+  function setDirty(val){
+    isDirty = !!val;
+    els.saveDot.classList.toggle("dirty", isDirty);
+    els.saveText.textContent = isDirty ? "Unsaved" : "Saved";
+    els.saveDot.className = "dotTiny" + (isDirty ? " dirty" : "");
+  }
+
+  function deepClone(obj){
+    return structuredClone ? structuredClone(obj) : JSON.parse(JSON.stringify(obj));
+  }
+
+  function computeTotals(data){
+    let cal=0,p=0,c=0,f=0;
+    MEALS.forEach(m => {
+      const it = data.meals[m.id];
+      cal += Number(it.calories || 0);
+      p += Number(it.protein || 0);
+      c += Number(it.carbs || 0);
+      f += Number(it.fiber || 0);
+    });
+    return { cal, p, c, f };
+  }
+
+  function renderTotals(){
+    const { cal, p, c, f } = computeTotals(draftData);
+
+    els.calTotalEl.textContent = String(Math.round(cal));
+    els.proteinTotalEl.textContent = String(Math.round(p));
+    els.carbTotalEl.textContent = String(Math.round(c));
+    els.fiberTotalEl.textContent = String(Math.round(f));
+
+    const calGoal = Number(draftData.goals.calories || 0);
+    const pGoal = Number(draftData.goals.protein || 0);
+
+    if (calGoal > 0){
+      const pct = clampPct((cal / calGoal) * 100);
+      els.calBar.style.width = pct + "%";
+      els.calHint.textContent = `${Math.round(cal)} / ${Math.round(calGoal)} kcal`;
+    }else{
+      els.calBar.style.width = "0%";
+      els.calHint.textContent = "Set a calorie goal to see progress.";
+    }
+
+    if (pGoal > 0){
+      const pct = clampPct((p / pGoal) * 100);
+      els.proteinBar.style.width = pct + "%";
+      els.proteinHint.textContent = `${Math.round(p)} / ${Math.round(pGoal)} g protein`;
+    }else{
+      els.proteinBar.style.width = "0%";
+      els.proteinHint.textContent = "Set a protein goal to see progress.";
+    }
+  }
+
+  function macroField(labelText, value, onChange){
+    const c = document.createElement("div");
+    const l = document.createElement("label");
+    l.className = "label";
+    l.textContent = labelText;
+
+    const inp = document.createElement("input");
+    inp.className = "input";
+    inp.type = "number";
+    inp.min = "0";
+    inp.placeholder = "0";
+    inp.value = value ? String(value) : "";
+
+    inp.addEventListener("input", () => { onChange(Number(inp.value || 0)); setDirty(true); renderTotals(); });
+
+    c.appendChild(l);
+    c.appendChild(inp);
+    return c;
+  }
+
+  function renderCustomGoals(){
+    els.goalList.innerHTML = "";
+    const custom = draftData.goals.custom || [];
+
+    if(custom.length === 0){
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "No extra goals yet.";
+      els.goalList.appendChild(p);
+      return;
+    }
+
+    custom.forEach(g => {
+      const row = document.createElement("div");
+      row.className = "goalItem";
+
+      const nameWrap = document.createElement("div");
+      const ln = document.createElement("label");
+      ln.className = "label";
+      ln.textContent = "Goal";
+      const name = document.createElement("input");
+      name.className = "input";
+      name.type = "text";
+      name.value = g.name || "";
+      name.addEventListener("input", () => { g.name = name.value; setDirty(true); });
+      nameWrap.appendChild(ln);
+      nameWrap.appendChild(name);
+
+      const valWrap = document.createElement("div");
+      const lv = document.createElement("label");
+      lv.className = "label";
+      lv.textContent = "Target";
+      const val = document.createElement("input");
+      val.className = "input";
+      val.type = "number";
+      val.min = "0";
+      val.placeholder = "0";
+      val.value = (g.value && Number(g.value) !== 0) ? String(g.value) : "";
+      val.addEventListener("input", () => { g.value = Number(val.value || 0); setDirty(true); renderTotals(); });
+      valWrap.appendChild(lv);
+      valWrap.appendChild(val);
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "iconBtn danger";
+      del.title = "Remove goal";
+      del.textContent = "✕";
+      del.addEventListener("click", () => {
+        draftData.goals.custom = (draftData.goals.custom || []).filter(x => x.id !== g.id);
+        setDirty(true);
         renderCustomGoals();
-        updateTotals();
+      });
+
+      row.appendChild(nameWrap);
+      row.appendChild(valWrap);
+      row.appendChild(del);
+
+      els.goalList.appendChild(row);
+    });
+  }
+
+  function renderMeal(mealId, label){
+    const item = draftData.meals[mealId];
+
+    const wrap = document.createElement("div");
+    wrap.className = "meal";
+
+    const top = document.createElement("div");
+    top.className = "mealTop";
+
+    const title = document.createElement("p");
+    title.className = "mealName";
+    title.textContent = label;
+
+    const status = document.createElement("div");
+    status.className = "pill";
+    status.textContent = item.name.trim() ? "Edited" : "Empty";
+
+    top.appendChild(title);
+    top.appendChild(status);
+    wrap.appendChild(top);
+
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const c1 = document.createElement("div");
+    const l1 = document.createElement("label");
+    l1.className = "label";
+    l1.textContent = "Meal";
+    const inpName = document.createElement("input");
+    inpName.className = "input";
+    inpName.type = "text";
+    inpName.value = item.name;
+
+    inpName.addEventListener("input", () => {
+      draftData.meals[mealId].name = inpName.value;
+      status.textContent = inpName.value.trim() ? "Edited" : "Empty";
+      setDirty(true);
+      renderTotals();
+    });
+
+    c1.appendChild(l1);
+    c1.appendChild(inpName);
+
+    const c2 = document.createElement("div");
+    const l2 = document.createElement("label");
+    l2.className = "label";
+    l2.textContent = "Nutrient tag";
+    const sel = document.createElement("select");
+    sel.className = "select";
+
+    const opts = [
+      { v:"", t:"Select…" },
+      { v:"protein", t:"Protein" },
+      { v:"fiber", t:"Fiber" },
+      { v:"carbs", t:"Carbohydrates" },
+      { v:"fat", t:"Fats" },
+      { v:"balanced", t:"Balanced" }
+    ];
+    opts.forEach(o => {
+      const op = document.createElement("option");
+      op.value = o.v;
+      op.textContent = o.t;
+      if(o.v === (item.tag || "")) op.selected = true;
+      sel.appendChild(op);
+    });
+
+    sel.addEventListener("change", () => {
+      draftData.meals[mealId].tag = sel.value;
+      setDirty(true);
+    });
+
+    c2.appendChild(l2);
+    c2.appendChild(sel);
+
+    const c3 = document.createElement("div");
+    const l3 = document.createElement("label");
+    l3.className = "label";
+    l3.textContent = "Calories";
+    const inpCal = document.createElement("input");
+    inpCal.className = "input";
+    inpCal.type = "number";
+    inpCal.min = "0";
+    inpCal.placeholder = "0";
+    inpCal.value = item.calories ? String(item.calories) : "";
+
+    inpCal.addEventListener("input", () => {
+      draftData.meals[mealId].calories = Number(inpCal.value || 0);
+      setDirty(true);
+      renderTotals();
+    });
+
+    c3.appendChild(l3);
+    c3.appendChild(inpCal);
+
+    row.appendChild(c1);
+    row.appendChild(c2);
+    row.appendChild(c3);
+
+    wrap.appendChild(row);
+
+    const row2 = document.createElement("div");
+    row2.className = "row2";
+
+    row2.appendChild(macroField("Protein (g)", item.protein, (v)=>{ draftData.meals[mealId].protein = v; }));
+    row2.appendChild(macroField("Carbs (g)", item.carbs, (v)=>{ draftData.meals[mealId].carbs = v; }));
+    row2.appendChild(macroField("Fiber (g)", item.fiber, (v)=>{ draftData.meals[mealId].fiber = v; }));
+
+    wrap.appendChild(row2);
+
+    const full = document.createElement("div");
+    full.style.marginTop = "10px";
+
+    const lf = document.createElement("div");
+    lf.className = "label";
+    lf.textContent = "Fullness";
+    full.appendChild(lf);
+
+    const chips = document.createElement("div");
+    chips.className = "fullness";
+
+    FULLNESS_OPTIONS.forEach(o => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.textContent = o.label;
+      b.dataset.active = String(item.fullness === o.id);
+
+      b.addEventListener("click", () => {
+        const cur = draftData.meals[mealId].fullness;
+        draftData.meals[mealId].fullness = (cur === o.id) ? "" : o.id;
+
+        Array.from(chips.querySelectorAll(".chip")).forEach(x => x.dataset.active = "false");
+        if(draftData.meals[mealId].fullness === o.id) b.dataset.active = "true";
+
+        setDirty(true);
+      });
+
+      chips.appendChild(b);
+    });
+
+    full.appendChild(chips);
+    wrap.appendChild(full);
+
+    return wrap;
+  }
+
+  function renderAll(){
+    els.dayMeta.textContent = niceDay(current);
+
+    // bind goal inputs from draft
+    els.goalCalories.value = draftData.goals.calories ? String(draftData.goals.calories) : "";
+    els.goalProtein.value = draftData.goals.protein ? String(draftData.goals.protein) : "";
+
+    els.mealList.innerHTML = "";
+    MEALS.forEach(m => els.mealList.appendChild(renderMeal(m.id, m.label)));
+
+    renderCustomGoals();
+    renderTotals();
+  }
+
+  // -----------------------------
+  // Save/Discard mechanics
+  // -----------------------------
+  async function doSave(){
+    savedData = deepClone(draftData);
+    await saveDay(userKey, current, savedData);
+    setDirty(false);
+  }
+
+  function doDiscard(){
+    draftData = deepClone(savedData);
+    setDirty(false);
+    renderAll();
+  }
+
+  async function ensureSafeToNavigate(){
+    if (!isDirty) return true;
+
+    const res = await askConfirm("You have unsaved changes. Save them?", { okText: "Save", neutralText: "Discard", cancelText: "Cancel" });
+    if (res === "ok"){
+      await doSave();
+      return true;
+    }
+    if (res === "neutral"){
+      doDiscard();
+      return true;
+    }
+    return false;
+  }
+
+  // -----------------------------
+  // Events: goals/inputs (draft only)
+  // -----------------------------
+  els.goalCalories.addEventListener("input", () => {
+    draftData.goals.calories = Number(els.goalCalories.value || 0);
+    setDirty(true);
+    renderTotals();
+  });
+  els.goalProtein.addEventListener("input", () => {
+    draftData.goals.protein = Number(els.goalProtein.value || 0);
+    setDirty(true);
+    renderTotals();
+  });
+
+  els.addGoalBtn.addEventListener("click", () => {
+    const name = (els.newGoalName.value || "").trim();
+    if(!name) return;
+    draftData.goals.custom = draftData.goals.custom || [];
+    draftData.goals.custom.push({ id: uid(), name, value: 0 });
+    els.newGoalName.value = "";
+    setDirty(true);
+    renderCustomGoals();
+  });
+
+  els.newGoalName.addEventListener("keydown", (e) => {
+    if(e.key === "Enter"){ e.preventDefault(); els.addGoalBtn.click(); }
+  });
+
+  // Save button
+  els.saveBtn.addEventListener("click", async () => { await doSave(); });
+
+  // Day navigation
+  async function go(deltaDays){
+    const ok = await ensureSafeToNavigate();
+    if (!ok) return;
+
+    current = new Date(current.getTime() + deltaDays * 86400000);
+    current.setHours(0,0,0,0);
+    savedData = await loadDay(userKey, current);
+    draftData = deepClone(savedData);
+    setDirty(false);
+    renderAll();
+  }
+  els.prevDayBtn.addEventListener("click", () => go(-1));
+  els.nextDayBtn.addEventListener("click", () => go(1));
+
+  // Clear day (explicit destructive action)
+  els.clearDayBtn.addEventListener("click", async () => {
+    const res = await askConfirm("Clear this day? This cannot be undone.", { okText: "Clear", cancelText: "Cancel" });
+    if (res !== "ok") return;
+
+    await clearDay(userKey, current);
+    savedData = await loadDay(userKey, current);
+    draftData = deepClone(savedData);
+    setDirty(false);
+    renderAll();
+  });
+
+  // -----------------------------
+  // Popover open/close (in-widget)
+  // -----------------------------
+  function closePanels(){
+    els.bgPanel.classList.remove("open");
+    els.themePanel.classList.remove("open");
+  }
+
+  els.bgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.bgPanel.classList.toggle("open");
+    els.themePanel.classList.remove("open");
+  });
+
+  els.themeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.themePanel.classList.toggle("open");
+    els.bgPanel.classList.remove("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    const bgOpen = els.bgPanel.classList.contains("open");
+    const thOpen = els.themePanel.classList.contains("open");
+
+    if (bgOpen){
+      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      if (!inside) els.bgPanel.classList.remove("open");
+    }
+    if (thOpen){
+      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+      if (!inside) els.themePanel.classList.remove("open");
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closePanels();
+  });
+
+  // -----------------------------
+  // Background handlers (persist immediately)
+  // -----------------------------
+  let bgState = { tint:"#efe7e1", strength:30, imageDataUrl:null };
+
+  async function initBg(){
+    const loaded = await loadBg();
+    if (loaded && typeof loaded === "object") bgState = { ...bgState, ...loaded };
+
+    els.bgColor.value = bgState.tint;
+    els.bgStrength.value = String(bgState.strength);
+
+    applyBoardTint(bgState.tint, bgState.strength);
+    setBoardImage(bgState.imageDataUrl);
+
+    els.bgColor.addEventListener("input", async () => {
+      bgState.tint = els.bgColor.value;
+      applyBoardTint(bgState.tint, els.bgStrength.value);
+      await saveBg(bgState);
+    });
+
+    els.bgStrength.addEventListener("input", async () => {
+      bgState.strength = Number(els.bgStrength.value);
+      applyBoardTint(bgState.tint, bgState.strength);
+      await saveBg(bgState);
+    });
+
+    els.bgImage.addEventListener("change", async () => {
+      const file = els.bgImage.files && els.bgImage.files[0];
+      if(!file) return;
+      const dataUrl = await fileToDataUrl(file);
+      bgState.imageDataUrl = dataUrl;
+      setBoardImage(dataUrl);
+      await saveBg(bgState);
+    });
+
+    els.removeImage.addEventListener("click", async () => {
+      bgState.imageDataUrl = null;
+      setBoardImage(null);
+      els.bgImage.value = "";
+      await saveBg(bgState);
+    });
+  }
+
+  // -----------------------------
+  // Theme handlers (persist immediately) + presets/network
+  // -----------------------------
+  let themeState = { ...DEFAULT_THEME };
+
+  async function initTheme(){
+    const loaded = await loadTheme();
+    themeState = { ...DEFAULT_THEME, ...(loaded || {}) };
+    writeThemeToUI(themeState);
+    applyTheme(themeState);
+
+    // Load network + user key
+    const net = (await storage.get(NETWORK_KEY)) || "default";
+    els.networkId.value = String(net);
+
+    let u = await storage.get(USER_KEY);
+    if (!u){
+      u = "user_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+      await storage.set(USER_KEY, u);
+    }
+    userKey = u;
+    els.userKey.value = userKey;
+
+    // If user edits userKey, we switch namespace (and reload current day)
+    els.userKey.addEventListener("change", async () => {
+      const next = (els.userKey.value || "").trim();
+      if (!next){
+        // revert to stored stable
+        els.userKey.value = userKey;
+        return;
       }
-
-      function renderMeal(mealId, label){
-        const item = data.meals[mealId];
-
-        const wrap = document.createElement("div");
-        wrap.className = "meal";
-
-        const top = document.createElement("div");
-        top.className = "mealTop";
-
-        const title = document.createElement("p");
-        title.className = "mealName";
-        title.textContent = label;
-
-        const status = document.createElement("div");
-        status.className = "pill";
-        status.textContent = item.name.trim() ? "Added" : "Empty";
-
-        top.appendChild(title);
-        top.appendChild(status);
-        wrap.appendChild(top);
-
-        const row = document.createElement("div");
-        row.className = "row";
-
-        const c1 = document.createElement("div");
-        const l1 = document.createElement("label");
-        l1.className = "label";
-        l1.textContent = "Meal";
-        const inpName = document.createElement("input");
-        inpName.className = "input";
-        inpName.type = "text";
-        inpName.value = item.name;
-
-        inpName.addEventListener("input", () => {
-          data.meals[mealId].name = inpName.value;
-          saveDay(current, data);
-          status.textContent = inpName.value.trim() ? "Added" : "Empty";
-          updateTotals();
-        });
-
-        c1.appendChild(l1);
-        c1.appendChild(inpName);
-
-        const c2 = document.createElement("div");
-        const l2 = document.createElement("label");
-        l2.className = "label";
-        l2.textContent = "Nutrient tag";
-        const sel = document.createElement("select");
-        sel.className = "select";
-
-        const currentTag = data.meals[mealId].tag || "";
-        const opts = [
-          { v:"", t:"Select…" },
-          { v:"protein", t:"Protein" },
-          { v:"fiber", t:"Fiber" },
-          { v:"carbs", t:"Carbohydrates" },
-          { v:"fat", t:"Fats" },
-          { v:"balanced", t:"Balanced" }
-        ];
-        opts.forEach(o => {
-          const op = document.createElement("option");
-          op.value = o.v;
-          op.textContent = o.t;
-          if(o.v === currentTag) op.selected = true;
-          sel.appendChild(op);
-        });
-
-        sel.addEventListener("change", () => {
-          data.meals[mealId].tag = sel.value;
-          saveDay(current, data);
-        });
-
-        c2.appendChild(l2);
-        c2.appendChild(sel);
-
-        const c3 = document.createElement("div");
-        const l3 = document.createElement("label");
-        l3.className = "label";
-        l3.textContent = "Calories";
-        const inpCal = document.createElement("input");
-        inpCal.className = "input";
-        inpCal.type = "number";
-        inpCal.min = "0";
-        inpCal.placeholder = "0";
-        inpCal.value = item.calories ? String(item.calories) : "";
-
-        inpCal.addEventListener("input", () => {
-          data.meals[mealId].calories = Number(inpCal.value || 0);
-          saveDay(current, data);
-          updateTotals();
-        });
-
-        c3.appendChild(l3);
-        c3.appendChild(inpCal);
-
-        row.appendChild(c1);
-        row.appendChild(c2);
-        row.appendChild(c3);
-        wrap.appendChild(row);
-
-        const row2 = document.createElement("div");
-        row2.className = "row2";
-        row2.style.gridTemplateColumns = "1fr 1fr 1fr";
-
-        row2.appendChild(macroField("Protein (g)", item.protein, (v)=>{ data.meals[mealId].protein = v; saveDay(current, data); updateTotals(); }));
-        row2.appendChild(macroField("Carbs (g)", item.carbs, (v)=>{ data.meals[mealId].carbs = v; saveDay(current, data); updateTotals(); }));
-        row2.appendChild(macroField("Fiber (g)", item.fiber, (v)=>{ data.meals[mealId].fiber = v; saveDay(current, data); updateTotals(); }));
-
-        wrap.appendChild(row2);
-
-        const full = document.createElement("div");
-        full.style.marginTop = "10px";
-
-        const lf = document.createElement("div");
-        lf.className = "label";
-        lf.textContent = "Fullness";
-        full.appendChild(lf);
-
-        const chips = document.createElement("div");
-        chips.className = "fullness";
-
-        FULLNESS_OPTIONS.forEach(o => {
-          const b = document.createElement("button");
-          b.type = "button";
-          b.className = "chip";
-          b.textContent = o.label;
-          b.dataset.active = String(item.fullness === o.id);
-
-          b.addEventListener("click", () => {
-            const cur = data.meals[mealId].fullness;
-            data.meals[mealId].fullness = (cur === o.id) ? "" : o.id;
-            saveDay(current, data);
-
-            Array.from(chips.querySelectorAll(".chip")).forEach(x => x.dataset.active = "false");
-            if(data.meals[mealId].fullness === o.id) b.dataset.active = "true";
-          });
-
-          chips.appendChild(b);
-        });
-
-        full.appendChild(chips);
-        wrap.appendChild(full);
-
-        const note = document.createElement("div");
-        note.className = "mini";
-        wrap.appendChild(note);
-
-        return wrap;
-      }
-
-      function macroField(labelText, value, onChange){
-        const c = document.createElement("div");
-        const l = document.createElement("label");
-        l.className = "label";
-        l.textContent = labelText;
-
-        const inp = document.createElement("input");
-        inp.className = "input";
-        inp.type = "number";
-        inp.min = "0";
-        inp.placeholder = "0";
-        inp.value = value ? String(value) : "";
-
-        inp.addEventListener("input", () => onChange(Number(inp.value || 0)));
-
-        c.appendChild(l);
-        c.appendChild(inp);
-        return c;
-      }
-
-      function renderCustomGoals(){
-        goalList.innerHTML = "";
-        const custom = data.goals.custom || [];
-
-        if(custom.length === 0){
-          const p = document.createElement("p");
-          p.className = "hint";
-          p.textContent = "No extra goals yet.";
-          goalList.appendChild(p);
+      if (isDirty){
+        const ok = await ensureSafeToNavigate();
+        if (!ok){
+          els.userKey.value = userKey;
           return;
         }
-
-        custom.forEach(g => {
-          const row = document.createElement("div");
-          row.className = "goalItem";
-
-          const nameWrap = document.createElement("div");
-          const ln = document.createElement("label");
-          ln.className = "label";
-          ln.textContent = "Goal";
-          const name = document.createElement("input");
-          name.className = "input";
-          name.type = "text";
-          name.value = g.name || "";
-          name.addEventListener("input", () => {
-            g.name = name.value;
-            saveDay(current, data);
-          });
-          nameWrap.appendChild(ln);
-          nameWrap.appendChild(name);
-
-          const valWrap = document.createElement("div");
-          const lv = document.createElement("label");
-          lv.className = "label";
-          lv.textContent = "Target";
-          const val = document.createElement("input");
-          val.className = "input";
-          val.type = "number";
-          val.min = "0";
-          val.placeholder = "0";
-          val.value = (g.value && Number(g.value) !== 0) ? String(g.value) : "";
-          val.addEventListener("input", () => {
-            g.value = Number(val.value || 0);
-            saveDay(current, data);
-          });
-          valWrap.appendChild(lv);
-          valWrap.appendChild(val);
-
-          const del = document.createElement("button");
-          del.type = "button";
-          del.className = "iconBtn danger";
-          del.title = "Remove goal";
-          del.textContent = "✕";
-          del.addEventListener("click", () => {
-            data.goals.custom = (data.goals.custom || []).filter(x => x.id !== g.id);
-            saveDay(current, data);
-            renderCustomGoals();
-          });
-
-          row.appendChild(nameWrap);
-          row.appendChild(valWrap);
-          row.appendChild(del);
-
-          goalList.appendChild(row);
-        });
       }
-
-      function updateTotals(){
-        let cal = 0, p = 0, c = 0, f = 0;
-        MEALS.forEach(m => {
-          const it = data.meals[m.id];
-          cal += Number(it.calories || 0);
-          p += Number(it.protein || 0);
-          c += Number(it.carbs || 0);
-          f += Number(it.fiber || 0);
-        });
-
-        calTotalEl.textContent = String(Math.round(cal));
-        proteinTotalEl.textContent = String(Math.round(p));
-        carbTotalEl.textContent = String(Math.round(c));
-        fiberTotalEl.textContent = String(Math.round(f));
-
-        const calGoal = Number(data.goals.calories || 0);
-        const pGoal = Number(data.goals.protein || 0);
-
-        if(calGoal > 0){
-          const pct = clampPct((cal / calGoal) * 100);
-          calBar.style.width = pct + "%";
-          calHint.textContent = `${Math.round(cal)} / ${Math.round(calGoal)} kcal`;
-        }else{
-          calBar.style.width = "0%";
-          calHint.textContent = "Set a calorie goal to see progress.";
-        }
-
-        if(pGoal > 0){
-          const pct = clampPct((p / pGoal) * 100);
-          proteinBar.style.width = pct + "%";
-          proteinHint.textContent = `${Math.round(p)} / ${Math.round(pGoal)} g protein`;
-        }else{
-          proteinBar.style.width = "0%";
-          proteinHint.textContent = "Set a protein goal to see progress.";
-        }
-      }
-
-      goalCalories.addEventListener("input", () => {
-        data.goals.calories = Number(goalCalories.value || 0);
-        saveDay(current, data);
-        updateTotals();
-      });
-
-      goalProtein.addEventListener("input", () => {
-        data.goals.protein = Number(goalProtein.value || 0);
-        saveDay(current, data);
-        updateTotals();
-      });
-
-      addGoalBtn.addEventListener("click", () => {
-        const name = (newGoalName.value || "").trim();
-        if(!name) return;
-
-        const id = "g_" + Math.random().toString(16).slice(2) + "_" + Date.now();
-        data.goals.custom = data.goals.custom || [];
-        data.goals.custom.push({ id, name, value: 0 });
-
-        newGoalName.value = "";
-        saveDay(current, data);
-        renderCustomGoals();
-      });
-
-      newGoalName.addEventListener("keydown", (e) => {
-        if(e.key === "Enter"){
-          e.preventDefault();
-          addGoalBtn.click();
-        }
-      });
-
-      function go(deltaDays){
-        current = new Date(current.getTime() + deltaDays * 86400000);
-        current.setHours(0,0,0,0);
-        data = loadDay(current);
-        render();
-      }
-
-      prevDayBtn.addEventListener("click", () => go(-1));
-      nextDayBtn.addEventListener("click", () => go(1));
-
-      clearDayBtn.addEventListener("click", () => {
-        localStorage.removeItem(keyFor(current));
-        data = loadDay(current);
-        render();
-      });
-
-      render();
+      userKey = next;
+      await storage.set(USER_KEY, userKey);
+      savedData = await loadDay(userKey, current);
+      draftData = deepClone(savedData);
+      setDirty(false);
+      renderAll();
     });
-  </script>
+
+    // Network change (affects presets list)
+    const loadAndRefreshPresets = async () => {
+      const networkId = (els.networkId.value || "default").trim() || "default";
+      await storage.set(NETWORK_KEY, networkId);
+      const ps = await loadPresets(networkId);
+      refreshPresetSelect(ps.presets || []);
+    };
+
+    els.networkId.addEventListener("change", loadAndRefreshPresets);
+    await loadAndRefreshPresets();
+
+    const onThemeInput = async () => {
+      themeState = readThemeFromUI();
+      applyTheme(themeState);
+      await saveTheme(themeState);
+      // keep bg dot shadow consistent
+      applyBoardTint(bgState.tint, bgState.strength);
+    };
+
+    [
+      els.tBg, els.tCard, els.tBorders, els.tText, els.tMuted, els.tSecondary,
+      els.tFields, els.tAccent, els.tSecondarySoft,
+      els.tPopPill, els.tPopBtn, els.tPopPanel
+    ].forEach(el => el.addEventListener("input", onThemeInput));
+
+    els.resetTheme.addEventListener("click", async () => {
+      themeState = { ...DEFAULT_THEME };
+      writeThemeToUI(themeState);
+      applyTheme(themeState);
+      await saveTheme(themeState);
+      applyBoardTint(bgState.tint, bgState.strength);
+    });
+
+    // Preset buttons
+    els.savePreset.addEventListener("click", async () => {
+      const networkId = (els.networkId.value || "default").trim() || "default";
+      const name = (els.presetName.value || "").trim();
+      if (!name){
+        await askConfirm("Give the preset a name first.", { okText: "OK", cancelText: "Close" });
+        return;
+      }
+      const ps = await loadPresets(networkId);
+      const preset = { id: uid(), name, theme: readThemeFromUI(), createdAt: Date.now() };
+      ps.presets = Array.isArray(ps.presets) ? ps.presets : [];
+      ps.presets.unshift(preset);
+      await savePresets(networkId, ps);
+      refreshPresetSelect(ps.presets);
+      els.presetSelect.value = preset.id;
+      els.presetName.value = "";
+    });
+
+    els.applyPreset.addEventListener("click", async () => {
+      const networkId = (els.networkId.value || "default").trim() || "default";
+      const id = els.presetSelect.value;
+      if (!id) return;
+      const ps = await loadPresets(networkId);
+      const p = (ps.presets || []).find(x => x.id === id);
+      if (!p) return;
+      themeState = { ...DEFAULT_THEME, ...(p.theme || {}) };
+      writeThemeToUI(themeState);
+      applyTheme(themeState);
+      await saveTheme(themeState);
+      applyBoardTint(bgState.tint, bgState.strength);
+    });
+
+    els.deletePreset.addEventListener("click", async () => {
+      const networkId = (els.networkId.value || "default").trim() || "default";
+      const id = els.presetSelect.value;
+      if (!id) return;
+      const res = await askConfirm("Delete this preset?", { okText:"Delete", cancelText:"Cancel" });
+      if (res !== "ok") return;
+
+      const ps = await loadPresets(networkId);
+      ps.presets = (ps.presets || []).filter(x => x.id !== id);
+      await savePresets(networkId, ps);
+      refreshPresetSelect(ps.presets || []);
+    });
+
+    els.copyPreset.addEventListener("click", async () => {
+      const t = readThemeFromUI();
+      const json = JSON.stringify({ theme: t }, null, 2);
+      try{
+        await navigator.clipboard.writeText(json);
+        await askConfirm("Preset JSON copied to clipboard.", { okText:"OK", cancelText:"Close" });
+      }catch{
+        await askConfirm("Could not copy automatically. Your browser blocked clipboard access.", { okText:"OK", cancelText:"Close" });
+      }
+    });
+
+    els.importPreset.addEventListener("click", async () => {
+      const networkId = (els.networkId.value || "default").trim() || "default";
+      const raw = prompt("Paste preset JSON here (copied from another widget):");
+      if (!raw) return;
+      const parsed = safeJsonParse(raw, null);
+      const theme = parsed?.theme;
+      if (!theme || typeof theme !== "object"){
+        await askConfirm("That JSON doesn't look like a preset.", { okText:"OK", cancelText:"Close" });
+        return;
+      }
+      const name = prompt("Name this imported preset:", "Imported preset") || "Imported preset";
+      const ps = await loadPresets(networkId);
+      ps.presets = Array.isArray(ps.presets) ? ps.presets : [];
+      const preset = { id: uid(), name, theme, createdAt: Date.now() };
+      ps.presets.unshift(preset);
+      await savePresets(networkId, ps);
+      refreshPresetSelect(ps.presets);
+      els.presetSelect.value = preset.id;
+    });
+  }
+
+  // -----------------------------
+  // Init
+  // -----------------------------
+  (async function init(){
+    await initBg();
+    await initTheme();
+
+    // initial day load (after userKey is ready)
+    if (!userKey){
+      // fallback (shouldn't happen)
+      userKey = "user_" + Math.random().toString(16).slice(2);
+    }
+
+    savedData = await loadDay(userKey, current);
+    draftData = deepClone(savedData);
+    setDirty(false);
+    renderAll();
+  })();
+
+})();
+</script>
 </body>
 </html>

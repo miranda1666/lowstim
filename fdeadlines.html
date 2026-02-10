@@ -1,0 +1,2107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Deadline Horizon</title>
+  <style>
+    :root{
+      --bg: #ffffff; /* full page background */
+      --panel: rgba(255,255,255,.65);
+      --text: #2b2b2b;
+      --muted: #6f6a63;
+      --line: rgba(43,43,43,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --shadow2: 0 16px 50px rgba(0,0,0,.14);
+      --radius: 18px;
+      --radius2: 14px;
+      --focus: rgba(43,43,43,.18);
+      --horizon: rgba(43,43,43,.16);
+      --dot: rgba(43,43,43,.70);
+      --dotSoft: rgba(43,43,43,.40);
+
+      /* Widget-board background (only behind controls + panel) */
+      --board-tint: #ffffff;
+      --board-tint-a: 0.35;
+      --board-image: none; /* url(...) injected by JS */
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+
+    /* Header */
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .title{
+      display:grid;
+      gap: 6px;
+      min-width: 260px;
+    }
+    .title h1{
+      font-size: clamp(22px, 2.6vw, 32px);
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: -.02em;
+    }
+    .title p{
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 62ch;
+      line-height: 1.4;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn{
+      appearance:none;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.68));
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      font-size: 13px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,.08); border-color: rgba(43,43,43,.18); }
+    .btn:active{ transform: translateY(0px); }
+    .btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .btn.primary{ border-color: rgba(43,43,43,.14); }
+    .btn.danger{ border-color: rgba(160, 60, 60, .20); }
+
+    /* Discreet popovers */
+    .popover{ position: relative; }
+    .bgBtn, .themeBtn{
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.68));
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bgBtn:active, .themeBtn:active{ transform: translateY(1px); }
+
+    .bgDot, .themeDot{
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(43,43,43,.14);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.35);
+    }
+    .themeDot{
+      background: var(--text);
+      box-shadow: 0 0 0 6px rgba(43,43,43,0.10);
+    }
+
+    .bgPanel, .themePanel{
+      position: absolute;
+      top: 50px;
+      right: 0;
+      width: 290px;
+      border-radius: 16px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 18px 40px rgba(0,0,0,.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 12px;
+      display:none;
+      z-index: 60;
+
+      /* scrollable panels */
+      max-height: 70vh;
+      overflow:auto;
+    }
+    .bgPanel.open, .themePanel.open{ display:block; }
+    .bgPanel h3, .themePanel h3{
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      font-weight: 650;
+      color: rgba(43,43,43,.85);
+    }
+    .bgRow, .themeRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .bgRow label, .themeRow label{
+      font-size: 12px;
+      color: var(--muted);
+      padding-left: 0;
+    }
+    input[type="color"].bgColor,
+    input[type="color"].themeColor{
+      width: 34px;
+      height: 26px;
+      border: 1px solid rgba(43,43,43,.14);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"].bgStrength,
+    input[type="range"].themeRange{ width: 140px; }
+    .bgFile{
+      width: 100%;
+      font-size: 12px;
+      color: rgba(43,43,43,.75);
+    }
+    .bgMiniBtn, .themeMiniBtn{
+      width: 100%;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.90);
+      border-radius: 12px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 650;
+      color: rgba(43,43,43,.85);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bgMiniBtn:active, .themeMiniBtn:active{ transform: translateY(1px); }
+    .bgDivider, .themeDivider{
+      height: 1px;
+      background: rgba(43,43,43,.08);
+      margin: 8px 0;
+    }
+
+    /* Widget board (ONLY behind controls + panel) */
+    .widgetBoard{
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(.95);
+      transform: scale(1.02);
+      pointer-events:none;
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 520px at 18% 20%, rgba(255,255,255,0.35), transparent 62%),
+        radial-gradient(700px 460px at 82% 34%, rgba(255,255,255,0.25), transparent 62%),
+        rgba(255,255,255,0.38);
+      background-blend-mode: screen;
+      pointer-events:none;
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      mix-blend-mode: multiply;
+    }
+    .boardContent{
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Controls */
+    .controls{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr .6fr;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    @media (max-width: 860px){
+      .controls{ grid-template-columns: 1fr; }
+      .actions{ width: 100%; justify-content: flex-start; }
+    }
+
+    .field{ position: relative; display:grid; gap: 6px; }
+    label{ font-size: 12px; color: var(--muted); padding-left: 6px; }
+    .input, select{
+      width:100%;
+      padding: 12px 12px 12px 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.75);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    select{ padding-left: 12px; }
+    .input:focus, select:focus{
+      border-color: rgba(43,43,43,.22);
+      box-shadow: 0 0 0 3px rgba(43,43,43,.10);
+    }
+    .icon{
+      position:absolute;
+      left: 12px;
+      top: 36px;
+      width: 16px;
+      height: 16px;
+      opacity: .65;
+      pointer-events:none;
+    }
+
+    /* Horizon panel */
+    .panel{
+      margin-top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+    .panelHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(43,43,43,.08);
+      flex-wrap: wrap;
+    }
+    .meta{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      border: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.65);
+      padding: 6px 10px;
+      border-radius: 999px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    /* Horizon canvas area */
+    .vizWrap{ padding: 14px; }
+    .viz{
+      width: 100%;
+      height: 260px;
+      border-radius: var(--radius2);
+      border: 1px solid rgba(43,43,43,.10);
+      background:
+        radial-gradient(500px 220px at 50% 35%, rgba(255,255,255,.65) 0%, rgba(255,255,255,0) 70%),
+        linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.30) 60%, rgba(255,255,255,.50) 100%);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+    }
+    .viz::before{
+      content:"";
+      position:absolute;
+      left: 8%;
+      right: 8%;
+      top: 62%;
+      height: 1px;
+      background: var(--horizon);
+      opacity: .85;
+      filter: blur(.1px);
+    }
+    .viz::after{
+      content:"";
+      position:absolute;
+      left: 0;
+      right: 0;
+      top: 52%;
+      height: 32%;
+      background: linear-gradient(180deg, rgba(246,244,241,0), rgba(246,244,241,.55));
+      pointer-events:none;
+    }
+
+    /* Dot */
+    .dot{
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      background: var(--dot);
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.10),
+        0 0 0 4px rgba(43,43,43,.06);
+      opacity: 0;
+      animation: fadeIn .35s ease forwards;
+      cursor: pointer;
+    }
+    .dot.soft{
+      background: var(--dotSoft);
+      box-shadow:
+        0 8px 18px rgba(0,0,0,.08),
+        0 0 0 3px rgba(43,43,43,.05);
+    }
+    .dot.urgent{
+      width: 18px;
+      height: 18px;
+      box-shadow:
+        0 12px 28px rgba(0,0,0,.12),
+        0 0 0 6px rgba(43,43,43,.08);
+    }
+    .dot:focus-visible{
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+    @keyframes fadeIn{
+      from{ opacity: 0; transform: translate(-50%, -50%) scale(.92); }
+      to{ opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* Tooltip */
+    .tooltip{
+      position:absolute;
+      min-width: 210px;
+      max-width: 320px;
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(43,43,43,.12);
+      border-radius: 14px;
+      box-shadow: var(--shadow2);
+      padding: 10px 10px 9px;
+      transform: translate(-50%, -110%);
+      pointer-events:none;
+      opacity: 0;
+      transition: opacity .12s ease, transform .12s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+    .tooltip.show{
+      opacity: 1;
+      transform: translate(-50%, -118%);
+    }
+    .ttTitle{
+      margin: 0;
+      font-size: 13px;
+      font-weight: 750;
+      letter-spacing: -.01em;
+      line-height: 1.2;
+    }
+    .ttSub{
+      margin: 4px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .ttChips{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .chip{
+      font-size: 11px;
+      color: rgba(43,43,43,.78);
+      background: rgba(255,255,255,.65);
+      border: 1px solid rgba(43,43,43,.08);
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    /* List */
+    .list{
+      padding: 0 14px 14px;
+      display:grid;
+      gap: 10px;
+    }
+    .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(43,43,43,.10);
+      box-shadow: 0 8px 22px rgba(0,0,0,.06);
+    }
+    .rowLeft{ min-width: 0; display:grid; gap: 4px; }
+    .rowTitle{
+      margin: 0;
+      font-size: 13.5px;
+      font-weight: 720;
+      line-height: 1.2;
+      letter-spacing: -.01em;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 64ch;
+    }
+    .rowMeta{
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.35;
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .smallPill{
+      border: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.65);
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: rgba(43,43,43,.80);
+    }
+    .rowActions{
+      display:flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+    .iconBtn{
+      appearance:none;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.72);
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      cursor: pointer;
+      display:grid;
+      place-items:center;
+      transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+    .iconBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(43,43,43,.18);
+      box-shadow: 0 10px 20px rgba(0,0,0,.08);
+    }
+    .iconBtn:active{ transform: translateY(0); }
+    .iconBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+    .iconBtn svg{ width: 16px; height: 16px; opacity: .75; }
+
+    /* Empty */
+    .empty{
+      padding: 40px 18px 44px;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      gap: 12px;
+      color: var(--muted);
+    }
+    .empty .big{
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.7);
+      display:grid;
+      place-items:center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 12px 30px rgba(0,0,0,.06);
+      font-size: 22px;
+    }
+    .empty h2{ margin: 0; color: var(--text); font-size: 16px; letter-spacing: -.01em; }
+    .empty p{
+      margin: 0;
+      max-width: 60ch;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    /* Modal */
+    .modalBackdrop{
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(20,18,16,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+    .modalBackdrop.show{ display: grid; }
+
+    .modal{
+      width: min(760px, 100%);
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(43,43,43,.14);
+      border-radius: 20px;
+      box-shadow: var(--shadow2);
+      overflow: hidden;
+    }
+    .modalHead{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.72);
+    }
+    .modalHead h3{ margin: 0; font-size: 15px; letter-spacing: -.01em; }
+    .modalBody{
+      padding: 14px 16px 16px;
+      display:grid;
+      gap: 12px;
+    }
+    .formGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 740px){ .formGrid{ grid-template-columns: 1fr; } }
+
+    .input2, .textarea, .select2{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.78);
+      font-size: 14px;
+      color: var(--text);
+      outline:none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    .textarea{ min-height: 88px; resize: vertical; }
+    .input2:focus, .textarea:focus, .select2:focus{
+      border-color: rgba(43,43,43,.22);
+      box-shadow: 0 0 0 3px rgba(43,43,43,.10);
+    }
+    .help{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -6px;
+      line-height: 1.35;
+    }
+
+    .modalFoot{
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px 14px;
+      border-top: 1px solid rgba(43,43,43,.10);
+      background: rgba(255,255,255,.70);
+      flex-wrap: wrap;
+    }
+    .tiny{ font-size: 12px; color: var(--muted); }
+    a.link{
+      color: inherit;
+      text-decoration:none;
+      border-bottom: 1px solid rgba(43,43,43,.22);
+    }
+    a.link:hover{ border-bottom-color: rgba(43,43,43,.45); }
+
+    kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(43,43,43,.14);
+      background: rgba(255,255,255,.7);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    /* Presets UI */
+    .presetName{ width:100%; }
+    .presetArea{
+      width:100%;
+      min-height:84px;
+      font-size:12px;
+      line-height:1.35;
+    }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top:6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">
+        <h1>Deadline Horizon</h1>
+        <p>Deadlines appear as dots on ahorizon. Closer items are larger, clearer, and lower on the line.</p>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="addBtn" type="button" title="Add a deadline">
+          <span aria-hidden="true">＋</span>
+          Add deadline
+        </button>
+        <button class="btn" id="exportBtn" type="button" title="Export deadlines to JSON">
+          <span aria-hidden="true">⤓</span>
+          Export
+        </button>
+        <button class="btn danger" id="clearBtn" type="button" title="Clear all deadlines">
+          <span aria-hidden="true">✕</span>
+          Clear
+        </button>
+
+        <!-- Background popover -->
+        <div class="popover" id="bgPopover">
+          <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+            <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+          </button>
+
+          <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <h3>Background</h3>
+
+            <div class="bgRow">
+              <label for="bgColor">Tint</label>
+              <input class="bgColor" id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="bgRow">
+              <label for="bgStrength">Tint strength</label>
+              <input class="bgStrength" id="bgStrength" type="range" min="0" max="70" value="35" />
+            </div>
+
+            <div class="bgDivider"></div>
+
+            <div class="bgRow" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input class="bgFile" id="bgImage" type="file" accept="image/*" />
+            </div>
+
+            <div class="bgRow">
+              <button class="bgMiniBtn" id="removeImage" type="button">Remove image</button>
+            </div>
+
+            <div class="bgDivider"></div>
+
+            <div class="bgRow">
+              <button class="bgMiniBtn" id="bgApply" type="button">Apply background</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Theme popover -->
+        <div class="popover" id="themePopover">
+          <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+            <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+          </button>
+
+          <div class="themePanel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <h3>Theme</h3>
+
+            <div class="themeRow">
+              <label for="tBg">Page background</label>
+              <input class="themeColor" id="tBg" type="color" value="#ffffff" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tText">Text</label>
+              <input class="themeColor" id="tText" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tMuted">Muted text</label>
+              <input class="themeColor" id="tMuted" type="color" value="#6f6a63" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow">
+              <label for="tPanelHex">Panels</label>
+              <input class="themeColor" id="tPanelHex" type="color" value="#ffffff" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tPanelA">Panel opacity</label>
+              <input class="themeRange" id="tPanelA" type="range" min="0" max="95" value="65" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow">
+              <label for="tLineHex">Borders</label>
+              <input class="themeColor" id="tLineHex" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tLineA">Border opacity</label>
+              <input class="themeRange" id="tLineA" type="range" min="0" max="40" value="12" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow">
+              <label for="tHorizonHex">Horizon line</label>
+              <input class="themeColor" id="tHorizonHex" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tHorizonA">Horizon opacity</label>
+              <input class="themeRange" id="tHorizonA" type="range" min="0" max="60" value="16" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow">
+              <label for="tDotHex">Dots</label>
+              <input class="themeColor" id="tDotHex" type="color" value="#2b2b2b" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tDotA">Dot opacity</label>
+              <input class="themeRange" id="tDotA" type="range" min="0" max="100" value="70" />
+            </div>
+
+            <div class="themeRow">
+              <label for="tDotSoftA">Soft-dot opacity</label>
+              <input class="themeRange" id="tDotSoftA" type="range" min="0" max="100" value="40" />
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow" style="gap:8px;">
+              <button class="themeMiniBtn" id="themeApply" type="button">Apply theme</button>
+            </div>
+
+            <div class="themeRow" style="gap:8px;">
+              <button class="themeMiniBtn" id="resetTheme" type="button">Reset theme</button>
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <h3 style="margin:0 0 6px 0;">Presets</h3>
+
+            <div class="themeRow" style="align-items:flex-start; flex-direction:column; gap:8px;">
+              <input id="presetName" class="presetName" placeholder="Preset name" />
+              <button class="themeMiniBtn" id="presetSave" type="button">Save current as preset</button>
+            </div>
+
+            <div class="themeRow">
+              <label for="presetSelect">Choose</label>
+              <select id="presetSelect" class="select2" style="padding:10px 12px; border-radius:12px; max-width:170px;">
+                <option value="">—</option>
+              </select>
+            </div>
+
+            <div class="themeRow" style="gap:8px;">
+              <button class="themeMiniBtn" id="presetApply" type="button">Apply preset</button>
+            </div>
+
+            <div class="themeRow" style="gap:8px;">
+              <button class="themeMiniBtn" id="presetDelete" type="button">Delete preset</button>
+            </div>
+
+            <div class="themeDivider"></div>
+
+            <div class="themeRow" style="gap:8px;">
+              <button class="themeMiniBtn" id="presetCopy" type="button">Copy preset JSON</button>
+            </div>
+
+            <div class="themeRow" style="align-items:flex-start; flex-direction:column; gap:8px;">
+              <textarea id="presetImport" class="presetArea" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+              <button class="themeMiniBtn" id="presetImportBtn" type="button">Import presets</button>
+              <div class="status" id="presetStatus" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="widgetBoard" id="board">
+      <div class="boardTint" id="boardTint"></div>
+
+      <div class="boardContent">
+        <section class="controls" aria-label="Horizon controls">
+          <div class="field">
+            <label for="search">Search</label>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input class="input" id="search" type="search" placeholder="Title, course, tags…" autocomplete="off"/>
+          </div>
+
+          <div class="field">
+            <label for="tagFilter">Tag filter</label>
+            <select id="tagFilter" aria-label="Tag filter">
+              <option value="">All tags</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="range">Horizon range</label>
+            <select id="range" aria-label="Horizon range">
+              <option value="14">Next 14 days</option>
+              <option value="30" selected>Next 30 days</option>
+              <option value="60">Next 60 days</option>
+              <option value="120">Next 120 days</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="panel" aria-label="Deadline horizon panel">
+          <div class="panelHead">
+            <div class="meta">
+              <span class="pill" id="countPill">0 deadlines</span>
+              <span class="pill" id="tagPill">0 tags</span>
+              <span class="pill" id="hintPill">Tip: hover / tap dots</span>
+            </div>
+            <div class="meta" id="filteredMeta" aria-live="polite"></div>
+          </div>
+
+          <div class="vizWrap">
+            <div class="viz" id="viz" aria-label="Horizon visualization">
+              <div class="tooltip" id="tooltip" role="status" aria-live="polite">
+                <p class="ttTitle" id="ttTitle"></p>
+                <p class="ttSub" id="ttSub"></p>
+                <div class="ttChips" id="ttChips"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="listArea"></div>
+          <!-- removed bottom colour block -->
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="modalTitle">Add deadline</h3>
+        <button class="iconBtn" id="closeModalBtn" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <form class="modalBody" id="deadlineForm">
+        <input type="hidden" id="editId" value="" />
+
+        <div class="formGrid">
+          <div class="field">
+            <label for="dTitle">Title</label>
+            <input class="input2" id="dTitle" required maxlength="90" placeholder="e.g., History essay draft" />
+          </div>
+
+          <div class="field">
+            <label for="dDue">Due date</label>
+            <input class="input2" id="dDue" type="date" required />
+            <div class="help">Time is optional but the visual is date-based by default.</div>
+          </div>
+        </div>
+
+        <div class="formGrid">
+          <div class="field">
+            <label for="dCourse">Course / context</label>
+            <input class="input2" id="dCourse" maxlength="70" placeholder="e.g., PSY101 • Week 6" />
+          </div>
+
+          <div class="field">
+            <label for="dTags">Tags</label>
+            <input class="input2" id="dTags" placeholder="comma-separated (e.g., essay, finals, reading)" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="dNotes">Notes (optional)</label>
+          <textarea class="textarea" id="dNotes" placeholder="What’s the next step? Any constraints?"></textarea>
+        </div>
+
+        <div class="modalFoot">
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" type="button" id="cancelBtn">Cancel</button>
+            <button class="btn primary" type="submit" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+/* --------------------------
+   Safe storage + instance id
+--------------------------- */
+(function(){
+  const mem = Object.create(null);
+
+  function canUseLocalStorage(){
+    try{
+      const k = "__t__" + Math.random().toString(16).slice(2);
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{ return false; }
+  }
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{
+      if(hasLS) return localStorage.getItem(key);
+      return mem[key] ?? null;
+    }catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{
+      if(hasLS) localStorage.setItem(key, value);
+      else mem[key] = String(value);
+    }catch{ mem[key] = String(value); }
+  }
+  function storageRemove(key){
+    try{
+      if(hasLS) localStorage.removeItem(key);
+      else delete mem[key];
+    }catch{ delete mem[key]; }
+  }
+
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+
+  function getWidgetId(){
+    // 1) explicit wid param
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = (sp.get("wid") || "").trim();
+      if(wid) return wid;
+    }catch{}
+
+    // 2) cached per-tab
+    try{
+      const cached = sessionStorage.getItem("deadline_horizon_wid");
+      if(cached) return cached;
+    }catch{}
+
+    // 3) generate and cache
+    const fresh = uid();
+    try{ sessionStorage.setItem("deadline_horizon_wid", fresh); }catch{}
+    return fresh;
+  }
+
+  window.__DH__ = {
+    wid: getWidgetId(),
+    get: storageGet,
+    set: storageSet,
+    remove: storageRemove
+  };
+})();
+
+
+/* --------------------------
+   Main app
+--------------------------- */
+(function(){
+  const WID = window.__DH__?.wid || "default";
+  const LS_KEY = "deadline_horizon_v1__" + WID;
+  const BG_KEY = "deadline_horizon_bg_v1__" + WID;
+  const THEME_KEY = "deadline_horizon_theme_v1__" + WID;
+  const PRESETS_KEY = "deadline_horizon_presets_v1__" + WID;
+
+  const els = {
+    viz: document.getElementById("viz"),
+    tooltip: document.getElementById("tooltip"),
+    ttTitle: document.getElementById("ttTitle"),
+    ttSub: document.getElementById("ttSub"),
+    ttChips: document.getElementById("ttChips"),
+
+    listArea: document.getElementById("listArea"),
+
+    countPill: document.getElementById("countPill"),
+    tagPill: document.getElementById("tagPill"),
+    filteredMeta: document.getElementById("filteredMeta"),
+
+    search: document.getElementById("search"),
+    tagFilter: document.getElementById("tagFilter"),
+    range: document.getElementById("range"),
+
+    addBtn: document.getElementById("addBtn"),
+    exportBtn: document.getElementById("exportBtn"),
+    clearBtn: document.getElementById("clearBtn"),
+
+    modalBackdrop: document.getElementById("modalBackdrop"),
+    closeModalBtn: document.getElementById("closeModalBtn"),
+    cancelBtn: document.getElementById("cancelBtn"),
+
+    deadlineForm: document.getElementById("deadlineForm"),
+    editId: document.getElementById("editId"),
+    modalTitle: document.getElementById("modalTitle"),
+    saveBtn: document.getElementById("saveBtn"),
+
+    dTitle: document.getElementById("dTitle"),
+    dDue: document.getElementById("dDue"),
+    dCourse: document.getElementById("dCourse"),
+    dTags: document.getElementById("dTags"),
+    dNotes: document.getElementById("dNotes"),
+
+    board: document.getElementById("board"),
+    boardTint: document.getElementById("boardTint"),
+
+    // Background popover
+    bgBtn: document.getElementById("bgBtn"),
+    bgPanel: document.getElementById("bgPanel"),
+    bgColor: document.getElementById("bgColor"),
+    bgStrength: document.getElementById("bgStrength"),
+    bgImage: document.getElementById("bgImage"),
+    removeImage: document.getElementById("removeImage"),
+    bgDot: document.getElementById("bgDot"),
+    bgPopover: document.getElementById("bgPopover"),
+    bgApply: document.getElementById("bgApply"),
+
+    // Theme popover
+    themeBtn: document.getElementById("themeBtn"),
+    themePanel: document.getElementById("themePanel"),
+    themeDot: document.getElementById("themeDot"),
+    themePopover: document.getElementById("themePopover"),
+
+    tBg: document.getElementById("tBg"),
+    tText: document.getElementById("tText"),
+    tMuted: document.getElementById("tMuted"),
+    tPanelHex: document.getElementById("tPanelHex"),
+    tPanelA: document.getElementById("tPanelA"),
+    tLineHex: document.getElementById("tLineHex"),
+    tLineA: document.getElementById("tLineA"),
+    tHorizonHex: document.getElementById("tHorizonHex"),
+    tHorizonA: document.getElementById("tHorizonA"),
+    tDotHex: document.getElementById("tDotHex"),
+    tDotA: document.getElementById("tDotA"),
+    tDotSoftA: document.getElementById("tDotSoftA"),
+    resetTheme: document.getElementById("resetTheme"),
+    themeApply: document.getElementById("themeApply"),
+
+    presetName: document.getElementById("presetName"),
+    presetSave: document.getElementById("presetSave"),
+    presetSelect: document.getElementById("presetSelect"),
+    presetApply: document.getElementById("presetApply"),
+    presetDelete: document.getElementById("presetDelete"),
+    presetCopy: document.getElementById("presetCopy"),
+    presetImport: document.getElementById("presetImport"),
+    presetImportBtn: document.getElementById("presetImportBtn"),
+    presetStatus: document.getElementById("presetStatus"),
+  };
+
+  const nowISO = () => new Date().toISOString();
+
+  const startOfToday = () => {
+    const d = new Date();
+    d.setHours(0,0,0,0);
+    return d;
+  };
+
+  const daysBetween = (a, b) => {
+    const ms = 24 * 60 * 60 * 1000;
+    return Math.round((b.getTime() - a.getTime()) / ms);
+  };
+
+  const parseDate = (yyyyMmDd) => {
+    const [y,m,d] = (yyyyMmDd || "").split("-").map(Number);
+    if (!y || !m || !d) return null;
+    const dt = new Date(y, m-1, d);
+    dt.setHours(0,0,0,0);
+    return dt;
+  };
+
+  const formatDate = (dt) => {
+    const opts = { month: "short", day: "numeric" };
+    return dt.toLocaleDateString(undefined, opts);
+  };
+
+  const escapeHtml = (s) =>
+    String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+  const normalizeTags = (raw) => {
+    if (!raw) return [];
+    const parts = raw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    return [...new Set(parts)].slice(0, 14);
+  };
+
+  // ---- robust storage for items ----
+  const loadItems = () => {
+    try{
+      const parsed = JSON.parse(window.__DH__.get(LS_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    }catch{
+      return [];
+    }
+  };
+  const saveItems = (items) => {
+    try{ window.__DH__.set(LS_KEY, JSON.stringify(items)); }catch{}
+  };
+
+  // ---- Colors/helpers (bg + theme) ----
+  const normalizeHex = (hex) => {
+    if (!hex) return "#efe7e1";
+    const s = String(hex).trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+    return "#efe7e1";
+  };
+  const hexToRgb = (hex) => {
+    const h = normalizeHex(hex).slice(1);
+    return {
+      r: parseInt(h.slice(0,2), 16),
+      g: parseInt(h.slice(2,4), 16),
+      b: parseInt(h.slice(4,6), 16),
+    };
+  };
+  const hexToRgba = (hex, a) => {
+    const { r, g, b } = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+
+  const loadJSON = (k) => {
+    try{
+      const raw = window.__DH__.get(k);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  };
+  const saveJSON = (k, v) => {
+    try{ window.__DH__.set(k, JSON.stringify(v)); }catch{}
+  };
+
+  // ---- Background store ----
+  const defaultBg = () => ({ tint: "#efe7e1", strength: 35, imageDataUrl: null });
+
+  const setBoardImage = (dataUrlOrNull) => {
+    document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+  };
+
+  const applyBoardTint = (colorHex, strengthPct) => {
+    const tint = normalizeHex(colorHex);
+    const strength = Number(strengthPct) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+    if(els.bgDot){
+      els.bgDot.style.background = tint;
+      els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.1))}`;
+    }
+
+    if(els.boardTint){
+      els.boardTint.style.background = hexToRgba(tint, strength);
+    }
+  };
+
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+
+  // ---- Theme store ----
+  const DEFAULT_THEME = {
+    bg: "#ffffff",
+    text: "#2b2b2b",
+    muted: "#6f6a63",
+
+    panelHex: "#ffffff",
+    panelA: 0.65,
+
+    lineHex: "#2b2b2b",
+    lineA: 0.12,
+
+    horizonHex: "#2b2b2b",
+    horizonA: 0.16,
+
+    dotHex: "#2b2b2b",
+    dotA: 0.70,
+    dotSoftA: 0.40,
+  };
+
+  const applyTheme = (t) => {
+    const theme = { ...DEFAULT_THEME, ...(t || {}) };
+
+    document.documentElement.style.setProperty("--bg", normalizeHex(theme.bg));
+    document.documentElement.style.setProperty("--text", normalizeHex(theme.text));
+    document.documentElement.style.setProperty("--muted", normalizeHex(theme.muted));
+
+    document.documentElement.style.setProperty("--panel", hexToRgba(theme.panelHex, theme.panelA));
+    document.documentElement.style.setProperty("--line", hexToRgba(theme.lineHex, theme.lineA));
+    document.documentElement.style.setProperty("--horizon", hexToRgba(theme.horizonHex, theme.horizonA));
+    document.documentElement.style.setProperty("--dot", hexToRgba(theme.dotHex, theme.dotA));
+    document.documentElement.style.setProperty("--dotSoft", hexToRgba(theme.dotHex, theme.dotSoftA));
+
+    document.documentElement.style.setProperty("--focus", hexToRgba(theme.text, 0.18));
+
+    if(els.themeDot){
+      els.themeDot.style.background = normalizeHex(theme.text);
+      els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(theme.text, 0.10)}`;
+    }
+
+    // sync UI controls
+    els.tBg.value = normalizeHex(theme.bg);
+    els.tText.value = normalizeHex(theme.text);
+    els.tMuted.value = normalizeHex(theme.muted);
+
+    els.tPanelHex.value = normalizeHex(theme.panelHex);
+    els.tPanelA.value = String(Math.round(theme.panelA * 100));
+
+    els.tLineHex.value = normalizeHex(theme.lineHex);
+    els.tLineA.value = String(Math.round(theme.lineA * 100));
+
+    els.tHorizonHex.value = normalizeHex(theme.horizonHex);
+    els.tHorizonA.value = String(Math.round(theme.horizonA * 100));
+
+    els.tDotHex.value = normalizeHex(theme.dotHex);
+    els.tDotA.value = String(Math.round(theme.dotA * 100));
+    els.tDotSoftA.value = String(Math.round(theme.dotSoftA * 100));
+  };
+
+  const readThemeFromUI = () => ({
+    bg: normalizeHex(els.tBg.value),
+    text: normalizeHex(els.tText.value),
+    muted: normalizeHex(els.tMuted.value),
+
+    panelHex: normalizeHex(els.tPanelHex.value),
+    panelA: Number(els.tPanelA.value) / 100,
+
+    lineHex: normalizeHex(els.tLineHex.value),
+    lineA: Number(els.tLineA.value) / 100,
+
+    horizonHex: normalizeHex(els.tHorizonHex.value),
+    horizonA: Number(els.tHorizonA.value) / 100,
+
+    dotHex: normalizeHex(els.tDotHex.value),
+    dotA: Number(els.tDotA.value) / 100,
+    dotSoftA: Number(els.tDotSoftA.value) / 100,
+  });
+
+  // ---- Presets helpers ----
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+  function setStatus(msg){
+    if(!els.presetStatus) return;
+    els.presetStatus.textContent = msg || "";
+  }
+  function loadPresets(){
+    const list = loadJSON(PRESETS_KEY);
+    return Array.isArray(list) ? list : [];
+  }
+  function savePresets(list){
+    saveJSON(PRESETS_KEY, list);
+  }
+  function refreshPresetSelect(){
+    if(!els.presetSelect) return;
+    const list = loadPresets();
+    const current = els.presetSelect.value;
+    els.presetSelect.innerHTML = `<option value="">—</option>`;
+    for(const p of list){
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled";
+      els.presetSelect.appendChild(opt);
+    }
+    if(current) els.presetSelect.value = current;
+  }
+  async function copyText(text){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch{}
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.style.top = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return !!ok;
+    }catch{
+      return false;
+    }
+  }
+
+  // ---- Confirm ----
+  const askConfirm = (message, { okText="Confirm", cancelText="Cancel", danger=false } = {}) =>
+    new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.style.position = "fixed";
+      wrap.style.inset = "0";
+      wrap.style.zIndex = "9999";
+      wrap.style.display = "grid";
+      wrap.style.placeItems = "center";
+      wrap.style.padding = "18px";
+      wrap.style.background = "rgba(20,18,16,.35)";
+      wrap.style.backdropFilter = "blur(8px)";
+      wrap.style.webkitBackdropFilter = "blur(8px)";
+
+      wrap.innerHTML = `
+        <div style="
+          width:min(520px,100%);
+          background:rgba(255,255,255,.92);
+          border:1px solid rgba(43,43,43,.14);
+          border-radius:20px;
+          box-shadow:0 12px 40px rgba(0,0,0,.12);
+          overflow:hidden;">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(43,43,43,.10);font-weight:650;">
+            Confirm
+          </div>
+          <div style="padding:14px 16px;line-height:1.45;color:rgba(43,43,43,.92);">
+            ${escapeHtml(message)}
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+            padding:12px 16px;border-top:1px solid rgba(43,43,43,.10);">
+            <button class="btn" type="button" id="cnlBtn">${escapeHtml(cancelText)}</button>
+            <button class="btn ${danger ? "danger" : "primary"}" type="button" id="okBtn">${escapeHtml(okText)}</button>
+          </div>
+        </div>
+      `;
+
+      const cleanup = (val) => {
+        document.removeEventListener("keydown", onKey);
+        wrap.remove();
+        resolve(val);
+      };
+
+      const onKey = (e) => { if (e.key === "Escape") cleanup(false); };
+
+      wrap.addEventListener("click", (e) => {
+        if (e.target === wrap) cleanup(false);
+      });
+
+      document.body.appendChild(wrap);
+      document.addEventListener("keydown", onKey);
+
+      const okBtn = wrap.querySelector("#okBtn");
+      const cnlBtn = wrap.querySelector("#cnlBtn");
+
+      cnlBtn.addEventListener("click", () => cleanup(false));
+      okBtn.addEventListener("click", () => cleanup(true));
+
+      setTimeout(() => okBtn.focus(), 0);
+    });
+
+  // ---- App state ----
+  let items = loadItems();
+  let state = { q: "", tag: "", rangeDays: 30 };
+
+  // ---- Filters / layout ----
+  const buildTagOptions = (allItems) => {
+    const tagSet = new Set();
+    allItems.forEach(it => (it.tags || []).forEach(t => tagSet.add(t)));
+    const tags = [...tagSet].sort((a,b) => a.localeCompare(b));
+    const selected = els.tagFilter.value;
+
+    els.tagFilter.innerHTML =
+      `<option value="">All tags</option>` +
+      tags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+
+    if ([...els.tagFilter.options].some(o => o.value === selected)) els.tagFilter.value = selected;
+    els.tagPill.textContent = `${tags.length} tag${tags.length === 1 ? "" : "s"}`;
+  };
+
+  const matches = (it, q) => {
+    if (!q) return true;
+    const hay = [ it.title, it.course, it.notes, ...(it.tags || []) ].join(" ").toLowerCase();
+    return hay.includes(q.toLowerCase());
+  };
+
+  const applyFilters = () => {
+    const q = state.q.trim();
+    const tag = state.tag;
+
+    let out = items.filter(it => matches(it, q));
+    if (tag) out = out.filter(it => (it.tags || []).includes(tag));
+    out.sort((a,b) => (a.due || "").localeCompare(b.due || ""));
+    return out;
+  };
+
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+  const urgency = (daysLeft) => {
+    if (daysLeft <= 0) return 1;
+    const r = state.rangeDays;
+    if (daysLeft >= r) return 0;
+    const t = 1 - (daysLeft / r);
+    return Math.pow(t, 0.65);
+  };
+
+  const layoutDots = (filteredInRange) => {
+    const lanes = [0, 1, 2, 3];
+    const used = [];
+    return filteredInRange.map((it) => {
+      const today = startOfToday();
+      const due = parseDate(it.due);
+      const dLeft = daysBetween(today, due);
+
+      const u = urgency(dLeft);
+      const x = clamp(dLeft / state.rangeDays, 0, 1);
+
+      const yBase = 0.35 + (1 - x) * 0.37;
+      let lane = 0;
+      for (const l of lanes){
+        const ok = used.every(p => Math.abs(p.x - x) > 0.05 || p.lane !== l);
+        if (ok){ lane = l; break; }
+      }
+      used.push({ x, lane });
+      const laneOffset = (lane - 1.5) * 0.03;
+      const y = clamp(yBase + laneOffset, 0.18, 0.86);
+
+      const size = 10 + u * 12;
+      const soft = u < 0.35;
+      const urgent = u > 0.78;
+      const opacity = 0.35 + u * 0.65;
+
+      return { it, x, y, size, soft, urgent, opacity, dLeft };
+    });
+  };
+
+  const clearVizDots = () => {
+    [...els.viz.querySelectorAll(".dot")].forEach(n => n.remove());
+  };
+
+  const showTooltip = (dotEl, payload) => {
+    const { it, dLeft } = payload;
+    const due = parseDate(it.due);
+    const dueText = due ? formatDate(due) : "—";
+
+    let when = "";
+    if (dLeft < 0) when = `${Math.abs(dLeft)} day${Math.abs(dLeft)===1?"":"s"} overdue`;
+    else if (dLeft === 0) when = "due today";
+    else when = `${dLeft} day${dLeft===1?"":"s"} left`;
+
+    els.ttTitle.textContent = it.title || "Untitled";
+    els.ttSub.textContent = `${it.course ? it.course + " · " : ""}${dueText} · ${when}`;
+
+    els.ttChips.innerHTML = `
+      ${(it.tags || []).slice(0, 6).map(t => `<span class="chip">${escapeHtml(t)}</span>`).join("")}
+      ${it.notes ? `<span class="chip">notes</span>` : ""}
+    `.trim();
+
+    const rect = els.viz.getBoundingClientRect();
+    const drect = dotEl.getBoundingClientRect();
+
+    const x = (drect.left + drect.width/2) - rect.left;
+    const y = (drect.top) - rect.top;
+
+    els.tooltip.style.left = `${x}px`;
+    els.tooltip.style.top = `${y}px`;
+    els.tooltip.classList.add("show");
+  };
+
+  const hideTooltip = () => {
+    els.tooltip.classList.remove("show");
+  };
+
+  const renderList = (filteredAll) => {
+    const today = startOfToday();
+
+    const toRow = (it) => {
+      const due = parseDate(it.due);
+      const dLeft = due ? daysBetween(today, due) : null;
+
+      let when = "—";
+      if (dLeft != null){
+        if (dLeft < 0) when = `${Math.abs(dLeft)}d overdue`;
+        else if (dLeft === 0) when = "today";
+        else when = `${dLeft}d left`;
+      }
+
+      const tags = (it.tags || []).slice(0, 4);
+      return `
+        <div class="row">
+          <div class="rowLeft">
+            <p class="rowTitle" title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</p>
+            <p class="rowMeta">
+              <span class="smallPill">${escapeHtml(due ? formatDate(due) : "no date")}</span>
+              <span class="smallPill">${escapeHtml(when)}</span>
+              ${it.course ? `<span class="smallPill">${escapeHtml(it.course)}</span>` : ""}
+              ${tags.map(t => `<span class="smallPill">${escapeHtml(t)}</span>`).join("")}
+            </p>
+          </div>
+          <div class="rowActions">
+            <button class="iconBtn" type="button" aria-label="Edit" title="Edit" id="edit_${it.id}">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 20h4l10.5-10.5a1.8 1.8 0 0 0 0-2.5l-1.5-1.5a1.8 1.8 0 0 0-2.5 0L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M13.5 6.5 17.5 10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="iconBtn" type="button" aria-label="Delete" title="Delete" id="del_${it.id}">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 7l1 14h6l1-14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `;
+    };
+
+    els.listArea.innerHTML = `
+      <div class="list">
+        ${filteredAll.map(toRow).join("")}
+      </div>
+    `;
+
+    filteredAll.forEach(it => {
+      const e = document.getElementById(`edit_${it.id}`);
+      const d = document.getElementById(`del_${it.id}`);
+      if (e) e.addEventListener("click", () => openEditModal(it.id));
+      if (d) d.addEventListener("click", () => deleteItem(it.id));
+    });
+  };
+
+  const renderViz = (filteredAll) => {
+    clearVizDots();
+    hideTooltip();
+
+    const today = startOfToday();
+    const inRange = filteredAll.filter(it => {
+      const due = parseDate(it.due);
+      if (!due) return false;
+      const dLeft = daysBetween(today, due);
+      return dLeft <= state.rangeDays;
+    });
+
+    const dots = layoutDots(inRange);
+    const W = els.viz.clientWidth;
+    const H = els.viz.clientHeight;
+
+    dots.forEach((p) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "dot" + (p.soft ? " soft" : "") + (p.urgent ? " urgent" : "");
+      dot.style.left = `${(0.08 + p.x * 0.84) * W}px`;
+      dot.style.top = `${p.y * H}px`;
+      dot.style.width = `${p.size}px`;
+      dot.style.height = `${p.size}px`;
+      dot.style.opacity = String(p.opacity);
+
+      dot.setAttribute("aria-label", `${p.it.title} due ${p.it.due}`);
+
+      const show = () => showTooltip(dot, p);
+      const hide = () => hideTooltip();
+
+      dot.addEventListener("mouseenter", show);
+      dot.addEventListener("mouseleave", hide);
+
+      dot.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const visible = els.tooltip.classList.contains("show");
+        if (visible && els.ttTitle.textContent === (p.it.title || "")) hide();
+        else show();
+      });
+
+      dot.addEventListener("focus", show);
+      dot.addEventListener("blur", hide);
+
+      els.viz.appendChild(dot);
+    });
+
+    els.viz.addEventListener("click", () => hideTooltip(), { once: true });
+  };
+
+  const render = () => {
+    buildTagOptions(items);
+    const filteredAll = applyFilters();
+
+    els.countPill.textContent = `${items.length} deadline${items.length === 1 ? "" : "s"}`;
+
+    const parts = [];
+    if (state.q) parts.push(`Search: “${state.q}”`);
+    if (state.tag) parts.push(`Tag: ${state.tag}`);
+    parts.push(`Range: ${state.rangeDays}d`);
+    els.filteredMeta.textContent = `${filteredAll.length} shown · ` + parts.join(" · ");
+
+    if (items.length === 0){
+      els.viz.innerHTML = `
+        <div class="tooltip" id="tooltip" style="display:none;"></div>
+        <div class="empty" style="position:absolute; inset:0; display:grid; place-items:center;">
+          <div style="display:grid; gap:12px; place-items:center; padding: 10px;">
+            <div class="big" aria-hidden="true">⋯</div>
+            <h2 style="margin:0;color:var(--text);font-size:16px;letter-spacing:-.01em;">No deadlines yet</h2>
+            <button class="btn primary" type="button" id="emptyAddBtn">＋ Add your first deadline</button>
+          </div>
+        </div>
+      `;
+      document.getElementById("emptyAddBtn").addEventListener("click", openAddModal);
+      els.listArea.innerHTML = "";
+      // rebind tooltip reference
+      els.tooltip = document.getElementById("tooltip");
+      return;
+    }
+
+    if (!els.viz.querySelector(".tooltip")){
+      els.viz.prepend(els.tooltip);
+    }
+
+    renderViz(filteredAll);
+    renderList(filteredAll);
+  };
+
+  const upsert = (payload) => {
+    const idx = items.findIndex(x => x.id === payload.id);
+    if (idx >= 0) items[idx] = payload;
+    else items.unshift(payload);
+    saveItems(items);
+    render();
+  };
+
+  const deleteItem = async (id) => {
+    const it = items.find(x => x.id === id);
+    const name = it ? it.title : "this deadline";
+
+    const ok = await askConfirm(`Delete "${name}"?`, { okText: "Delete", cancelText: "Cancel", danger: true });
+    if (!ok) return;
+
+    items = items.filter(x => x.id !== id);
+    saveItems(items);
+    render();
+  };
+
+  const clearAll = async () => {
+    if (!items.length) return;
+
+    const ok = await askConfirm("Clear all deadlines? This cannot be undone.", { okText: "Yes, clear", cancelText: "Cancel", danger: true });
+    if (!ok) return;
+
+    items = [];
+    saveItems(items);
+    render();
+  };
+
+  const exportJson = () => {
+    const data = JSON.stringify(items, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "deadline-horizon.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  // -------- Modal --------
+  let lastFocusEl = null;
+
+  const openModal = () => {
+    lastFocusEl = document.activeElement;
+    els.modalBackdrop.classList.add("show");
+    setTimeout(() => els.dTitle.focus(), 0);
+    document.addEventListener("keydown", onModalKeydown);
+  };
+
+  const closeModal = () => {
+    els.modalBackdrop.classList.remove("show");
+    document.removeEventListener("keydown", onModalKeydown);
+    if (lastFocusEl && typeof lastFocusEl.focus === "function") lastFocusEl.focus();
+    resetForm();
+  };
+
+  const onModalKeydown = (e) => {
+    if (e.key === "Escape") closeModal();
+
+    if (e.key === "Tab"){
+      const focusables = els.modalBackdrop.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const list = [...focusables].filter(x => !x.disabled && x.offsetParent !== null);
+      if (!list.length) return;
+
+      const first = list[0];
+      const last = list[list.length - 1];
+
+      if (e.shiftKey && document.activeElement === first){
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last){
+        e.preventDefault(); first.focus();
+      }
+    }
+  };
+
+  const resetForm = () => {
+    els.editId.value = "";
+    els.modalTitle.textContent = "Add deadline";
+    els.saveBtn.textContent = "Save";
+
+    els.dTitle.value = "";
+    els.dDue.value = "";
+    els.dCourse.value = "";
+    els.dTags.value = "";
+    els.dNotes.value = "";
+  };
+
+  const openAddModal = () => {
+    resetForm();
+    openModal();
+  };
+
+  const openEditModal = (id) => {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+
+    els.editId.value = it.id;
+    els.modalTitle.textContent = "Edit deadline";
+    els.saveBtn.textContent = "Update";
+
+    els.dTitle.value = it.title || "";
+    els.dDue.value = it.due || "";
+    els.dCourse.value = it.course || "";
+    els.dTags.value = (it.tags || []).join(", ");
+    els.dNotes.value = it.notes || "";
+
+    openModal();
+  };
+
+  // -------- Panels (open/close) --------
+  els.bgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.bgPanel.classList.toggle("open");
+    els.themePanel.classList.remove("open");
+  });
+
+  els.themeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.themePanel.classList.toggle("open");
+    els.bgPanel.classList.remove("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (els.bgPanel.classList.contains("open") && !els.bgPopover.contains(e.target)) els.bgPanel.classList.remove("open");
+    if (els.themePanel.classList.contains("open") && !els.themePopover.contains(e.target)) els.themePanel.classList.remove("open");
+  });
+
+  // -------- Draft + Apply behavior --------
+  let bgDraft = loadJSON(BG_KEY) || defaultBg();
+  let themeDraft = loadJSON(THEME_KEY) || { ...DEFAULT_THEME };
+
+  function syncBgInputs(){
+    els.bgColor.value = bgDraft.tint || "#efe7e1";
+    els.bgStrength.value = String(bgDraft.strength ?? 35);
+  }
+  function syncThemeInputs(){
+    // applyTheme already syncs UI based on theme passed
+    applyTheme(themeDraft);
+  }
+
+  function applyBgDraft(){
+    applyBoardTint(bgDraft.tint, bgDraft.strength);
+    setBoardImage(bgDraft.imageDataUrl || null);
+  }
+
+  // initialize UI + apply saved
+  syncBgInputs();
+  applyBgDraft();
+  syncThemeInputs();
+
+  // Background draft updates
+  els.bgColor.addEventListener("input", () => {
+    bgDraft.tint = els.bgColor.value;
+    applyBgDraft();
+    setStatus("");
+  });
+
+  els.bgStrength.addEventListener("input", () => {
+    bgDraft.strength = Number(els.bgStrength.value);
+    applyBgDraft();
+    setStatus("");
+  });
+
+  els.bgImage.addEventListener("change", async () => {
+    const file = els.bgImage.files && els.bgImage.files[0];
+    if (!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    bgDraft.imageDataUrl = dataUrl;
+    applyBgDraft();
+    setStatus("");
+  });
+
+  els.removeImage.addEventListener("click", () => {
+    bgDraft.imageDataUrl = null;
+    els.bgImage.value = "";
+    applyBgDraft();
+    setStatus("");
+  });
+
+  // Apply background (persist)
+  els.bgApply.addEventListener("click", () => {
+    saveJSON(BG_KEY, bgDraft);
+    setStatus("Background applied.");
+  });
+
+  // Theme draft updates
+  const onThemeDraftChange = () => {
+    themeDraft = readThemeFromUI();
+    applyTheme(themeDraft);
+    setStatus("");
+    render(); // refresh dots/list with new colors
+  };
+
+  [
+    els.tBg, els.tText, els.tMuted,
+    els.tPanelHex, els.tPanelA,
+    els.tLineHex, els.tLineA,
+    els.tHorizonHex, els.tHorizonA,
+    els.tDotHex, els.tDotA, els.tDotSoftA
+  ].forEach(el => el.addEventListener("input", onThemeDraftChange));
+
+  // Apply theme (persist)
+  els.themeApply.addEventListener("click", () => {
+    saveJSON(THEME_KEY, themeDraft);
+    setStatus("Theme applied.");
+  });
+
+  els.resetTheme.addEventListener("click", () => {
+    themeDraft = { ...DEFAULT_THEME };
+    applyTheme(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+    setStatus("Theme reset.");
+    render();
+  });
+
+  // Presets
+  refreshPresetSelect();
+
+  if(els.presetSave){
+    els.presetSave.addEventListener("click", () => {
+      const name = (els.presetName.value || "").trim();
+      if(!name){
+        setStatus("Type a preset name first.");
+        return;
+      }
+      const list = loadPresets();
+      const entry = {
+        id: uid(),
+        name,
+        theme: { ...themeDraft },
+        bg: { ...bgDraft }
+      };
+      list.unshift(entry);
+      savePresets(list);
+      els.presetName.value = "";
+      refreshPresetSelect();
+      els.presetSelect.value = entry.id;
+      setStatus("Preset saved.");
+    });
+  }
+
+  if(els.presetApply){
+    els.presetApply.addEventListener("click", () => {
+      const id = els.presetSelect.value;
+      if(!id){
+        setStatus("Choose a preset first.");
+        return;
+      }
+      const list = loadPresets();
+      const p = list.find(x => x.id === id);
+      if(!p){
+        setStatus("Preset not found.");
+        return;
+      }
+
+      bgDraft = { ...defaultBg(), ...(p.bg || {}) };
+      themeDraft = { ...DEFAULT_THEME, ...(p.theme || {}) };
+
+      syncBgInputs();
+      applyBgDraft();
+      applyTheme(themeDraft);
+
+      saveJSON(BG_KEY, bgDraft);
+      saveJSON(THEME_KEY, themeDraft);
+
+      setStatus("Preset applied.");
+      render();
+    });
+  }
+
+  if(els.presetDelete){
+    els.presetDelete.addEventListener("click", () => {
+      const id = els.presetSelect.value;
+      if(!id){
+        setStatus("Choose a preset first.");
+        return;
+      }
+      let list = loadPresets();
+      const before = list.length;
+      list = list.filter(x => x.id !== id);
+      if(list.length === before){
+        setStatus("Preset not found.");
+        return;
+      }
+      savePresets(list);
+      refreshPresetSelect();
+      els.presetSelect.value = "";
+      setStatus("Preset deleted.");
+    });
+  }
+
+  if(els.presetCopy){
+    els.presetCopy.addEventListener("click", async () => {
+      const list = loadPresets();
+      const payload = JSON.stringify(list, null, 2);
+      const ok = await copyText(payload);
+      setStatus(ok ? "Preset JSON copied." : "Could not copy. You can manually select & copy from the import box.");
+      if(!ok && els.presetImport){
+        els.presetImport.value = payload;
+        els.presetImport.focus();
+        els.presetImport.select();
+      }
+    });
+  }
+
+  if(els.presetImportBtn){
+    els.presetImportBtn.addEventListener("click", () => {
+      const raw = (els.presetImport.value || "").trim();
+      if(!raw){
+        setStatus("Paste preset JSON first.");
+        return;
+      }
+      try{
+        const parsed = JSON.parse(raw);
+        if(!Array.isArray(parsed)){
+          setStatus("That JSON doesn’t look like a preset list.");
+          return;
+        }
+        const cleaned = parsed
+          .filter(Boolean)
+          .map((p)=>({
+            id: String(p.id || uid()),
+            name: String(p.name || "Imported"),
+            theme: { ...DEFAULT_THEME, ...(p.theme || {}) },
+            bg: { ...defaultBg(), ...(p.bg || {}) }
+          }));
+        savePresets(cleaned);
+        refreshPresetSelect();
+        setStatus("Presets imported.");
+      }catch{
+        setStatus("Invalid JSON.");
+      }
+    });
+  }
+
+  // -------- Events --------
+  els.addBtn.addEventListener("click", openAddModal);
+  els.exportBtn.addEventListener("click", exportJson);
+  els.clearBtn.addEventListener("click", clearAll);
+
+  els.closeModalBtn.addEventListener("click", closeModal);
+  els.cancelBtn.addEventListener("click", closeModal);
+  els.modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === els.modalBackdrop) closeModal();
+  });
+
+  els.deadlineForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const title = els.dTitle.value.trim();
+    const due = els.dDue.value;
+    if (!title || !due) return;
+
+    const course = els.dCourse.value.trim();
+    const tags = normalizeTags(els.dTags.value);
+    const notes = els.dNotes.value.trim();
+
+    const id = els.editId.value || (crypto?.randomUUID ? crypto.randomUUID() : uid());
+    const existing = items.find(x => x.id === id);
+
+    const payload = {
+      id,
+      title,
+      due,
+      course,
+      tags,
+      notes,
+      createdAt: existing ? existing.createdAt : nowISO(),
+      updatedAt: nowISO(),
+    };
+
+    upsert(payload);
+    closeModal();
+  });
+
+  els.search.addEventListener("input", () => { state.q = els.search.value; render(); });
+  els.tagFilter.addEventListener("change", () => { state.tag = els.tagFilter.value; render(); });
+  els.range.addEventListener("change", () => {
+    state.rangeDays = Number(els.range.value) || 30;
+    render();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (els.modalBackdrop.classList.contains("show")) return;
+    if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey){
+      const a = document.activeElement;
+      const typing = a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable);
+      if (!typing){
+        e.preventDefault();
+        els.search.focus();
+      }
+    }
+  });
+
+  // initial render
+  render();
+
+  window.addEventListener("resize", () => {
+    clearTimeout(window.__dh_resize);
+    window.__dh_resize = setTimeout(render, 120);
+  });
+})();
+</script>
+</body>
+</html>

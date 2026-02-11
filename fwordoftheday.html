@@ -7,7 +7,6 @@
 
 <style>
   :root{
-    /* ===== THEME TOKENS (editable via Theme panel) ===== */
     --bg: transparent;
     --card: rgba(247,245,240,0.92);
     --stroke:#e2dfd8;
@@ -16,7 +15,6 @@
     --shadow: 0 10px 30px rgba(30,20,10,.06);
     --r:14px;
 
-    /* Board background controls */
     --board-tint:#efe7e1;
     --board-tint-a:0.12;
     --board-image:none;
@@ -24,11 +22,7 @@
 
   *{ box-sizing:border-box; }
 
-  /* ✅ IMPORTANT: allow popovers to extend beyond embed box */
-  html, body{
-    overflow: visible;
-  }
-
+  html, body{ overflow: visible; }
   body{
     margin:0;
     padding:18px;
@@ -37,24 +31,23 @@
     color: var(--ink);
   }
 
-  /* Board wrapper */
-  .widgetBoard{
-    position:relative;
-    border-radius: var(--r);
-    overflow:hidden; /* keep background neat */
-    border:1px solid var(--stroke);
-    box-shadow: var(--shadow);
+  /* ✅ Outer shell must NOT clip popovers */
+  .widgetShell{
+    position: relative;
     max-width: 380px;
-  }
-
-  /* ✅ allow panels to escape the board (so they don’t get cut off) */
-  .boardContent{
-    position:relative;
-    z-index:2;
     overflow: visible;
   }
 
-  .widgetBoard::before{
+  /* ✅ Inner layer handles rounded corners + background clip */
+  .boardClip{
+    position:relative;
+    border-radius: var(--r);
+    overflow:hidden;                  /* keep background clean */
+    border:1px solid var(--stroke);
+    box-shadow: var(--shadow);
+  }
+
+  .boardClip::before{
     content:"";
     position:absolute;
     inset:0;
@@ -76,7 +69,8 @@
     background: rgba(0,0,0,0);
   }
 
-  /* ✅ card stays clipped by board; panels live above it */
+  .boardContent{ position:relative; z-index:2; }
+
   .card{
     background: var(--card);
     border:0;
@@ -138,7 +132,7 @@
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* Settings UI */
+  /* Buttons */
   .settingsWrap{ position:relative; }
   .settingsBtn{
     width:34px; height:34px;
@@ -160,7 +154,6 @@
     background: var(--board-tint);
     box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
   }
-
   .themeDot{
     width:14px; height:14px;
     border-radius:999px;
@@ -169,9 +162,9 @@
     box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
   }
 
-  /* ✅ Popover panel: fixed-position so it never gets cut off by widget bounds */
+  /* ✅ Panels are siblings of boardClip (inside widgetShell) so they can overflow */
   .panel{
-    position: fixed;
+    position:absolute;
     width: 320px;
     border-radius: 16px;
     border: 1px solid var(--stroke);
@@ -181,9 +174,8 @@
     -webkit-backdrop-filter: blur(2px);
     padding: 12px;
     display:none;
-    z-index: 99999;
+    z-index: 9999;
 
-    /* ✅ always scroll internally */
     max-height: min(70vh, 560px);
     overflow: auto;
     overscroll-behavior: contain;
@@ -284,128 +276,128 @@
 
 <body>
 
-  <div class="widgetBoard" id="widgetBoard" aria-label="Word of the Day board">
-    <div class="boardTint" id="boardTint"></div>
+  <div class="widgetShell" id="widgetShell" aria-label="Word of the Day shell">
+    <!-- ✅ Popovers live here (NOT inside boardClip) -->
+    <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+      <div class="panelTitle">Background</div>
 
-    <div class="boardContent">
-      <div class="card">
-        <div class="topRow">
-          <p class="label">Word of the Day</p>
+      <div class="pRow">
+        <label for="bgColor">Tint</label>
+        <input id="bgColor" type="color" value="#efe7e1" />
+      </div>
 
-          <div class="rightControls">
-            <!-- Background -->
-            <div class="settingsWrap" id="bgWrap">
-              <button class="settingsBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
-                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
-              </button>
+      <div class="pRow">
+        <label for="bgStrength">Strength</label>
+        <input id="bgStrength" type="range" min="0" max="70" value="12" />
+      </div>
 
-              <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
-                <div class="panelTitle">Background</div>
+      <div class="pDiv"></div>
 
-                <div class="pRow">
-                  <label for="bgColor">Tint</label>
-                  <input id="bgColor" type="color" value="#efe7e1" />
-                </div>
+      <div class="pRow" style="align-items:flex-start;">
+        <label for="bgImage">Image</label>
+        <input id="bgImage" class="pFile" type="file" accept="image/*" />
+      </div>
 
-                <div class="pRow">
-                  <label for="bgStrength">Strength</label>
-                  <input id="bgStrength" type="range" min="0" max="70" value="12" />
-                </div>
+      <div class="pRow">
+        <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
+      </div>
 
-                <div class="pDiv"></div>
+      <div class="pDiv"></div>
 
-                <div class="pRow" style="align-items:flex-start;">
-                  <label for="bgImage">Image</label>
-                  <input id="bgImage" class="pFile" type="file" accept="image/*" />
-                </div>
+      <button class="miniBtn" id="bgApply" type="button">Apply background</button>
+      <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
 
-                <div class="pRow">
-                  <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
-                </div>
+      <div class="status" id="uiStatus" aria-live="polite"></div>
+    </div>
 
-                <div class="pDiv"></div>
+    <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+      <div class="panelTitle">Theme</div>
 
-                <button class="miniBtn" id="bgApply" type="button">Apply background</button>
-                <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+      <div class="pRow">
+        <label for="tBg">Page bg</label>
+        <input id="tBg" type="color" value="#000000" />
+      </div>
 
-                <div class="status" id="uiStatus" aria-live="polite"></div>
+      <div class="pRow">
+        <label for="tInk">Text</label>
+        <input id="tInk" type="color" value="#2f2f2f" />
+      </div>
+
+      <div class="pRow">
+        <label for="tMuted">Muted</label>
+        <input id="tMuted" type="color" value="#7a7a7a" />
+      </div>
+
+      <div class="pRow">
+        <label for="tStroke">Borders</label>
+        <input id="tStroke" type="color" value="#e2dfd8" />
+      </div>
+
+      <div class="pRow">
+        <label for="tCardA">Card opacity</label>
+        <input id="tCardA" type="range" min="35" max="95" value="92" />
+      </div>
+
+      <div class="pDiv"></div>
+
+      <button id="tApply" class="miniBtn" type="button">Apply theme</button>
+      <button id="tReset" class="miniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+      <div class="pDiv"></div>
+
+      <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
+
+      <input class="presetName" id="presetName" placeholder="Preset name">
+      <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+      <div class="pDiv"></div>
+
+      <select class="presetSelect" id="presetSelect"></select>
+
+      <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+      <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+      <div class="pDiv"></div>
+
+      <button class="miniBtn" id="presetCopy" type="button">Copy preset JSON</button>
+
+      <div class="pDiv"></div>
+
+      <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+      <button class="miniBtn" id="presetImportBtn" type="button" style="margin-top:8px;">Import presets</button>
+
+      <div class="status" id="presetStatus" aria-live="polite"></div>
+    </div>
+
+    <!-- ✅ Clipped board stays separate -->
+    <div class="boardClip" id="boardClip" aria-label="Word of the Day board">
+      <div class="boardTint" id="boardTint"></div>
+
+      <div class="boardContent">
+        <div class="card">
+          <div class="topRow">
+            <p class="label">Word of the Day</p>
+
+            <div class="rightControls">
+              <div class="settingsWrap">
+                <button class="settingsBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                  <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <div class="settingsWrap">
+                <button class="settingsBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                  <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+                </button>
               </div>
             </div>
-
-            <!-- Theme -->
-            <div class="settingsWrap" id="themeWrap">
-              <button class="settingsBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
-                <span class="themeDot" id="themeDot" aria-hidden="true"></span>
-              </button>
-
-              <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
-                <div class="panelTitle">Theme</div>
-
-                <div class="pRow">
-                  <label for="tBg">Page bg</label>
-                  <input id="tBg" type="color" value="#000000" />
-                </div>
-
-                <div class="pRow">
-                  <label for="tInk">Text</label>
-                  <input id="tInk" type="color" value="#2f2f2f" />
-                </div>
-
-                <div class="pRow">
-                  <label for="tMuted">Muted</label>
-                  <input id="tMuted" type="color" value="#7a7a7a" />
-                </div>
-
-                <div class="pRow">
-                  <label for="tStroke">Borders</label>
-                  <input id="tStroke" type="color" value="#e2dfd8" />
-                </div>
-
-                <div class="pRow">
-                  <label for="tCardA">Card opacity</label>
-                  <input id="tCardA" type="range" min="35" max="95" value="92" />
-                </div>
-
-                <div class="pDiv"></div>
-
-                <button id="tApply" class="miniBtn" type="button">Apply theme</button>
-                <button id="tReset" class="miniBtn" type="button" style="margin-top:8px;">Reset theme</button>
-
-                <div class="pDiv"></div>
-
-                <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
-
-                <input class="presetName" id="presetName" placeholder="Preset name">
-
-                <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
-
-                <div class="pDiv"></div>
-
-                <select class="presetSelect" id="presetSelect"></select>
-
-                <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
-                <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
-
-                <div class="pDiv"></div>
-
-                <button class="miniBtn" id="presetCopy" type="button">Copy preset JSON</button>
-
-                <div class="pDiv"></div>
-
-                <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
-                <button class="miniBtn" id="presetImportBtn" type="button" style="margin-top:8px;">Import presets</button>
-
-                <div class="status" id="presetStatus" aria-live="polite"></div>
-              </div>
-            </div>
-
           </div>
-        </div>
 
-        <div class="word" id="word">Loading…</div>
-        <div class="phonetic" id="phonetic"></div>
-        <div class="definition" id="definition"></div>
-        <div class="example" id="example"></div>
+          <div class="word" id="word">Loading…</div>
+          <div class="phonetic" id="phonetic"></div>
+          <div class="definition" id="definition"></div>
+          <div class="example" id="example"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -444,7 +436,7 @@
 })();
 
 /* =========================
-   Small utils
+   Utils
 ========================= */
 (function(){
   function hexToRgba(hex, a){
@@ -499,9 +491,10 @@
 })();
 
 /* =========================
-   Fixed-position panels: open near button and keep in viewport
+   Panel positioning + "grow page" so iframe doesn't cut it off
 ========================= */
 (function(){
+  const shell = document.getElementById("widgetShell");
   const bgBtn = document.getElementById("bgBtn");
   const bgPanel = document.getElementById("bgPanel");
   const themeBtn = document.getElementById("themeBtn");
@@ -512,35 +505,39 @@
       if(!p) return;
       if(p !== except) p.classList.remove("open");
     });
+    // shrink back (optional)
+    document.body.style.paddingBottom = "";
   }
 
   function placePanel(btn, panel){
-    if(!btn || !panel) return;
+    if(!btn || !panel || !shell) return;
+    const shellRect = shell.getBoundingClientRect();
     const r = btn.getBoundingClientRect();
     const pad = 10;
 
-    // default: below + right aligned to button
-    let top = r.bottom + pad;
-    let left = r.right - panel.offsetWidth;
+    // position relative to shell (absolute panel inside shell)
+    let top = (r.bottom - shellRect.top) + pad;
+    let left = (r.right - shellRect.left) - panel.offsetWidth;
 
-    // clamp to viewport
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    left = Math.max(pad, Math.min(vw - panel.offsetWidth - pad, left));
-    top  = Math.max(pad, Math.min(vh - panel.offsetHeight - pad, top));
+    // clamp inside shell width (but allow overflow downward)
+    left = Math.max(pad, Math.min(shell.clientWidth - panel.offsetWidth - pad, left));
 
     panel.style.left = left + "px";
     panel.style.top  = top + "px";
+
+    // ✅ grow document so panel bottom is never cut by iframe height
+    requestAnimationFrame(()=>{
+      const panelRect = panel.getBoundingClientRect();
+      const need = Math.ceil(panelRect.bottom + 24);
+      document.body.style.paddingBottom = Math.max(24, need - window.innerHeight + 24) + "px";
+    });
   }
 
   function openPanel(btn, panel){
     const isOpen = panel.classList.contains("open");
     closeAll(null);
     if(isOpen) return;
-
     panel.classList.add("open");
-    // wait a tick so offsetWidth/Height are correct
     requestAnimationFrame(()=>placePanel(btn, panel));
   }
 
@@ -551,11 +548,6 @@
     if(bgPanel?.classList.contains("open")) placePanel(bgBtn, bgPanel);
     if(themePanel?.classList.contains("open")) placePanel(themeBtn, themePanel);
   });
-
-  window.addEventListener("scroll", ()=>{
-    if(bgPanel?.classList.contains("open")) placePanel(bgBtn, bgPanel);
-    if(themePanel?.classList.contains("open")) placePanel(themeBtn, themePanel);
-  }, true);
 
   document.addEventListener("click",(e)=>{
     const inside =
@@ -570,7 +562,6 @@
 ========================= */
 (function(){
   const { hexToRgba, clamp, normHex, loadJSON, saveJSON } = window.__wotdUtils;
-
   const BG_KEY = "word_of_day_bg_v2";
 
   const boardTintEl = document.getElementById("boardTint");
@@ -587,11 +578,11 @@
   const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageDataUrl:null };
   let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
 
-  function setPresetStatus(msg){
-    const el = document.getElementById("presetStatus");
+  function setStatus(msg){
     const ui = document.getElementById("uiStatus");
-    if(el) el.textContent = msg || "";
     if(ui) ui.textContent = msg || "";
+    const preset = document.getElementById("presetStatus");
+    if(preset && msg) preset.textContent = msg;
   }
 
   function fileToDataUrl(file){
@@ -623,38 +614,25 @@
   bgStrength.value = String(bgDraft.strength);
   applyBgDraft();
 
-  bgColor.addEventListener("input", () => {
-    bgDraft.tint = bgColor.value;
-    applyBgDraft();
-    setPresetStatus("");
-  });
-
-  bgStrength.addEventListener("input", () => {
-    bgDraft.strength = Number(bgStrength.value);
-    applyBgDraft();
-    setPresetStatus("");
-  });
+  bgColor.addEventListener("input", () => { bgDraft.tint = bgColor.value; applyBgDraft(); setStatus(""); });
+  bgStrength.addEventListener("input", () => { bgDraft.strength = Number(bgStrength.value); applyBgDraft(); setStatus(""); });
 
   bgImage.addEventListener("change", async () => {
     const file = bgImage.files && bgImage.files[0];
     if(!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    bgDraft.imageDataUrl = dataUrl;
+    bgDraft.imageDataUrl = await fileToDataUrl(file);
     applyBgDraft();
-    setPresetStatus("");
+    setStatus("");
   });
 
   bgRemove.addEventListener("click", () => {
     bgDraft.imageDataUrl = null;
     bgImage.value = "";
     applyBgDraft();
-    setPresetStatus("");
+    setStatus("");
   });
 
-  bgApply?.addEventListener("click", () => {
-    saveJSON(BG_KEY, bgDraft);
-    setPresetStatus("Background applied.");
-  });
+  bgApply?.addEventListener("click", () => { saveJSON(BG_KEY, bgDraft); setStatus("Background applied."); });
 
   bgReset?.addEventListener("click", () => {
     window.__WOTD_APP__.remove(BG_KEY);
@@ -663,12 +641,12 @@
     bgStrength.value = String(DEFAULT_BG.strength);
     bgImage.value = "";
     applyBgDraft();
-    setPresetStatus("Background reset.");
+    setStatus("Background reset.");
   });
 })();
 
 /* =========================
-   Theme (draft + apply + persistent) + Presets (GLOBAL)
+   Theme + Presets (GLOBAL)
 ========================= */
 (function(){
   const { clamp, normHex, loadJSON, saveJSON, copyText, uid, hexToRgba } = window.__wotdUtils;
@@ -678,13 +656,7 @@
   const BG_KEY = "word_of_day_bg_v2";
   const PRESETS_KEY = "widget_presets_v2";
 
-  const DEFAULTS = {
-    bg: "#000000",
-    ink: "#2f2f2f",
-    muted: "#7a7a7a",
-    stroke: "#e2dfd8",
-    cardA: 92
-  };
+  const DEFAULTS = { bg:"#000000", ink:"#2f2f2f", muted:"#7a7a7a", stroke:"#e2dfd8", cardA:92 };
 
   function setPresetStatus(msg){
     const el = $("presetStatus");
@@ -759,7 +731,6 @@
     setPresetStatus("Theme reset.");
   });
 
-  /* Presets */
   const presetName = $("presetName");
   const presetSelect = $("presetSelect");
   const presetSave = $("presetSave");
@@ -769,13 +740,8 @@
   const presetImport = $("presetImport");
   const presetImportBtn = $("presetImportBtn");
 
-  function loadPresets(){
-    const list = loadJSON(PRESETS_KEY);
-    return Array.isArray(list) ? list : [];
-  }
-  function savePresets(list){
-    saveJSON(PRESETS_KEY, list);
-  }
+  function loadPresets(){ const list = loadJSON(PRESETS_KEY); return Array.isArray(list) ? list : []; }
+  function savePresets(list){ saveJSON(PRESETS_KEY, list); }
   function refreshPresetSelect(){
     const list = loadPresets();
     const cur = presetSelect.value;
@@ -840,8 +806,8 @@
     if(!name){ setPresetStatus("Type a preset name first."); return; }
 
     const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageDataUrl:null };
-
     const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bg } };
+
     const list = loadPresets();
     list.unshift(entry);
     savePresets(list);
@@ -875,7 +841,7 @@
 
   presetCopy?.addEventListener("click", async ()=>{
     const payload = JSON.stringify(loadPresets(), null, 2);
-    const ok = await window.__wotdUtils.copyText(payload);
+    const ok = await copyText(payload);
     if(ok) setPresetStatus("Preset JSON copied.");
     else{
       presetImport.value = payload;
@@ -927,20 +893,13 @@ fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
     const definitionObj = meaning.definitions[0];
 
     document.getElementById("word").textContent = entry.word;
-
-    document.getElementById("phonetic").textContent =
-      entry.phonetic ? `/${entry.phonetic}/` : "";
-
-    document.getElementById("definition").textContent =
-      definitionObj.definition || "";
-
-    document.getElementById("example").textContent =
-      definitionObj.example ? `“${definitionObj.example}”` : "";
+    document.getElementById("phonetic").textContent = entry.phonetic ? `/${entry.phonetic}/` : "";
+    document.getElementById("definition").textContent = definitionObj.definition || "";
+    document.getElementById("example").textContent = definitionObj.example ? `“${definitionObj.example}”` : "";
   })
   .catch(() => {
     document.getElementById("word").textContent = word;
-    document.getElementById("definition").textContent =
-      "Unable to load definition today.";
+    document.getElementById("definition").textContent = "Unable to load definition today.";
   });
 </script>
 

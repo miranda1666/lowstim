@@ -19,6 +19,9 @@
     --board-tint-a:0.12;
     --board-image:none;
 
+    /* ✅ NEW: background image visibility (opacity) */
+    --board-image-a: 0.92;
+
     /* widget-specific */
     --chip: rgba(255,255,255,0.62);
     --chip-hover: rgba(255,255,255,0.78);
@@ -64,6 +67,9 @@
     z-index:0;
     pointer-events:none;
     filter: saturate(1.25) contrast(1.15) brightness(1.05);
+
+    /* ✅ NEW */
+    opacity: var(--board-image-a);
   }
 
   .boardTint{
@@ -449,6 +455,12 @@
         <input id="bgStrength" type="range" min="0" max="70" value="12" />
       </div>
 
+      <!-- ✅ NEW: image visibility -->
+      <div class="pRow">
+        <label for="bgImageA">Image visibility</label>
+        <input id="bgImageA" type="range" min="20" max="100" value="92" />
+      </div>
+
       <div class="pDiv"></div>
 
       <div class="pRow" style="align-items:flex-start;">
@@ -559,7 +571,7 @@
       <div class="twoCol">
         <div>
           <label for="linkTitle" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">Title</label>
-          <input id="linkTitle" class="textInput" placeholder="e.g. Notion" />
+          <input id="linkTitle" class="textInput" placeholder="" />
         </div>
         <div>
           <label for="linkEmoji" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">Icon (emoji)</label>
@@ -605,7 +617,6 @@
           <div class="topRow">
             <div>
               <p class="label">Quick Links</p>
-              <p class="subtle" id="subtitle">Your shortcuts, neatly grouped.</p>
             </div>
 
             <div class="rightControls">
@@ -726,10 +737,8 @@
   function safeUrl(u){
     const s = String(u||"").trim();
     if(!s) return "";
-    // allow http(s) and mailto
     if(/^https?:\/\//i.test(s)) return s;
     if(/^mailto:/i.test(s)) return s;
-    // if they typed domain only, gently fix:
     if(/^[a-z0-9.-]+\.[a-z]{2,}([\/?#].*)?$/i.test(s)) return "https://" + s;
     return s;
   }
@@ -814,15 +823,16 @@
   const boardTintEl = document.getElementById("boardTint");
   const bgColor = document.getElementById("bgColor");
   const bgStrength = document.getElementById("bgStrength");
+  const bgImageA = document.getElementById("bgImageA"); /* ✅ NEW */
   const bgImage = document.getElementById("bgImage");
   const bgRemove = document.getElementById("bgRemove");
   const bgApply = document.getElementById("bgApply");
   const bgReset = document.getElementById("bgReset");
   const bgDot = document.getElementById("bgDot");
 
-  if(!bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+  if(!bgColor || !bgStrength || !bgImageA || !bgImage || !bgRemove || !boardTintEl) return;
 
-  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageDataUrl:null };
+  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null }; /* ✅ NEW imageA */
   let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
 
   function setStatus(msg){
@@ -844,10 +854,12 @@
   function applyBgDraft(){
     const tint = normHex(bgDraft.tint, DEFAULT_BG.tint);
     const strength = clamp(bgDraft.strength, 0, 70) / 100;
+    const imageA = clamp(bgDraft.imageA, 20, 100) / 100; /* ✅ NEW */
 
     document.documentElement.style.setProperty("--board-tint", tint);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
     document.documentElement.style.setProperty("--board-image", bgDraft.imageDataUrl ? `url("${bgDraft.imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-image-a", String(imageA)); /* ✅ NEW */
 
     boardTintEl.style.background = hexToRgba(tint, strength);
 
@@ -859,10 +871,18 @@
 
   bgColor.value = bgDraft.tint;
   bgStrength.value = String(bgDraft.strength);
+  bgImageA.value = String(bgDraft.imageA ?? DEFAULT_BG.imageA); /* ✅ NEW */
   applyBgDraft();
 
   bgColor.addEventListener("input", () => { bgDraft.tint = bgColor.value; applyBgDraft(); setStatus(""); });
   bgStrength.addEventListener("input", () => { bgDraft.strength = Number(bgStrength.value); applyBgDraft(); setStatus(""); });
+
+  /* ✅ NEW */
+  bgImageA.addEventListener("input", () => {
+    bgDraft.imageA = Number(bgImageA.value);
+    applyBgDraft();
+    setStatus("");
+  });
 
   bgImage.addEventListener("change", async () => {
     const file = bgImage.files && bgImage.files[0];
@@ -886,6 +906,7 @@
     bgDraft = Object.assign({}, DEFAULT_BG);
     bgColor.value = DEFAULT_BG.tint;
     bgStrength.value = String(DEFAULT_BG.strength);
+    bgImageA.value = String(DEFAULT_BG.imageA); /* ✅ NEW */
     bgImage.value = "";
     applyBgDraft();
     setStatus("Background reset.");
@@ -1031,14 +1052,17 @@
     saveJSON(THEME_KEY, themeDraft);
 
     const bgSaved = loadJSON(BG_KEY) || {};
-    const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageDataUrl:null }, bgSaved, (p.bg||{}));
+    const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null }, bgSaved, (p.bg||{}));
     saveJSON(BG_KEY, mergedBg);
 
     const tint = normHex(mergedBg.tint, "#efe7e1");
     const strength = clamp(mergedBg.strength, 0, 70) / 100;
+    const imageA = clamp(mergedBg.imageA ?? 92, 20, 100) / 100;
+
     document.documentElement.style.setProperty("--board-tint", tint);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
     document.documentElement.style.setProperty("--board-image", mergedBg.imageDataUrl ? `url("${mergedBg.imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-image-a", String(imageA));
 
     const boardTintEl = document.getElementById("boardTint");
     if(boardTintEl) boardTintEl.style.background = hexToRgba(tint, strength);
@@ -1051,9 +1075,11 @@
 
     const bgColor = document.getElementById("bgColor");
     const bgStrength = document.getElementById("bgStrength");
+    const bgImageAEl = document.getElementById("bgImageA");
     const bgImage = document.getElementById("bgImage");
     if(bgColor) bgColor.value = tint;
     if(bgStrength) bgStrength.value = String(clamp(mergedBg.strength,0,70));
+    if(bgImageAEl) bgImageAEl.value = String(clamp(mergedBg.imageA ?? 92, 20, 100));
     if(bgImage) bgImage.value = "";
 
     setPresetStatus("Preset applied.");
@@ -1065,7 +1091,7 @@
     const name = (presetName.value || "").trim();
     if(!name){ setPresetStatus("Type a preset name first."); return; }
 
-    const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageDataUrl:null };
+    const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null };
     const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bg } };
 
     const list = loadPresets();
@@ -1078,7 +1104,7 @@
     setPresetStatus("Preset saved.");
   });
 
-  presetApply?.addEventListener("click", ()=>{
+  presetApply?./topics? addEventListener("click", ()=>{
     const id = presetSelect.value || "";
     if(!id){ setPresetStatus("Choose a preset first."); return; }
     const p = loadPresets().find(x=>x.id===id);
@@ -1124,528 +1150,6 @@
       setPresetStatus("Invalid JSON.");
     }
   });
-})();
-
-/* =========================
-   Quick Links data (groups + links) — persistent
-========================= */
-(function(){
-  const { loadJSON, saveJSON, copyText, uid, safeUrl } = window.__qlUtils;
-
-  const DATA_KEY = "quick_links_data_v1";
-
-  const DEFAULT_DATA = {
-    groups: [
-      {
-        id: "g_default",
-        name: "Favorites",
-        links: [
-          { id:"l1", title:"Notion", url:"https://notion.so", emoji:"🧠", iconDataUrl:null },
-          { id:"l2", title:"Google", url:"https://google.com", emoji:"🔎", iconDataUrl:null }
-        ]
-      }
-    ]
-  };
-
-  let data = loadJSON(DATA_KEY);
-  if(!data || !data.groups || !Array.isArray(data.groups)){
-    data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-    saveJSON(DATA_KEY, data);
-  }
-
-  const groupsEl = document.getElementById("groups");
-  const emptyEl = document.getElementById("emptyState");
-
-  const manageStatus = document.getElementById("manageStatus");
-  const newGroupName = document.getElementById("newGroupName");
-  const addGroupBtn = document.getElementById("addGroupBtn");
-
-  const linkGroup = document.getElementById("linkGroup");
-  const linkTitle = document.getElementById("linkTitle");
-  const linkEmoji = document.getElementById("linkEmoji");
-  const linkUrl = document.getElementById("linkUrl");
-  const linkIconFile = document.getElementById("linkIconFile");
-  const saveLinkBtn = document.getElementById("saveLinkBtn");
-  const clearLinkFormBtn = document.getElementById("clearLinkFormBtn");
-
-  const manageList = document.getElementById("manageList");
-  const exportBtn = document.getElementById("exportBtn");
-  const importArea = document.getElementById("importArea");
-  const importBtn = document.getElementById("importBtn");
-  const resetLinksBtn = document.getElementById("resetLinksBtn");
-
-  let editing = { groupId:null, linkId:null, pendingIconDataUrl:null };
-
-  function setManageStatus(msg){
-    if(manageStatus) manageStatus.textContent = msg || "";
-  }
-
-  function fileToDataUrl(file){
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
-
-  function persist(){
-    saveJSON(DATA_KEY, data);
-  }
-
-  function getGroup(gid){
-    return data.groups.find(g=>g.id===gid) || null;
-  }
-
-  function render(){
-    if(!groupsEl) return;
-
-    groupsEl.innerHTML = "";
-    let totalLinks = 0;
-
-    for(const g of data.groups){
-      const links = Array.isArray(g.links) ? g.links : [];
-      totalLinks += links.length;
-
-      const wrap = document.createElement("div");
-
-      const head = document.createElement("div");
-      head.className = "groupHead";
-
-      const h = document.createElement("p");
-      h.className = "groupTitle";
-      h.textContent = g.name || "Untitled";
-
-      const c = document.createElement("p");
-      c.className = "groupCount";
-      c.textContent = `${links.length} link${links.length===1?"":"s"}`;
-
-      head.appendChild(h);
-      head.appendChild(c);
-
-      const grid = document.createElement("div");
-      grid.className = "linkGrid";
-
-      for(const l of links){
-        const a = document.createElement("a");
-        a.className = "linkItem";
-        a.href = safeUrl(l.url || "") || "#";
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-
-        if(!safeUrl(l.url || "")){
-          a.addEventListener("click",(e)=>{ e.preventDefault(); });
-        }
-
-        const icon = document.createElement("div");
-        icon.className = "iconWrap";
-        if(l.iconDataUrl){
-          const img = document.createElement("img");
-          img.className = "iconImg";
-          img.src = l.iconDataUrl;
-          img.alt = "";
-          icon.appendChild(img);
-        }else{
-          const span = document.createElement("span");
-          span.className = "iconEmoji";
-          span.textContent = (l.emoji || "").trim() || "•";
-          icon.appendChild(span);
-        }
-
-        const txt = document.createElement("div");
-        txt.className = "linkText";
-
-        const t = document.createElement("p");
-        t.className = "linkTitle";
-        t.textContent = (l.title || "").trim() || "Untitled";
-
-        const u = document.createElement("p");
-        u.className = "linkUrl";
-        const displayUrl = safeUrl(l.url || "");
-        u.textContent = displayUrl ? displayUrl.replace(/^https?:\/\//i,"") : "No URL set";
-
-        txt.appendChild(t);
-        txt.appendChild(u);
-
-        a.appendChild(icon);
-        a.appendChild(txt);
-        grid.appendChild(a);
-      }
-
-      wrap.appendChild(head);
-      wrap.appendChild(grid);
-      groupsEl.appendChild(wrap);
-    }
-
-    if(emptyEl){
-      emptyEl.style.display = totalLinks === 0 ? "block" : "none";
-    }
-
-    renderManage();
-    refreshGroupSelect();
-  }
-
-  function refreshGroupSelect(){
-    if(!linkGroup) return;
-    const cur = linkGroup.value;
-    linkGroup.innerHTML = "";
-    for(const g of data.groups){
-      const opt = document.createElement("option");
-      opt.value = g.id;
-      opt.textContent = g.name || "Untitled";
-      linkGroup.appendChild(opt);
-    }
-    if(cur && data.groups.some(g=>g.id===cur)) linkGroup.value = cur;
-  }
-
-  function clearLinkForm(){
-    editing = { groupId:null, linkId:null, pendingIconDataUrl:null };
-    linkTitle.value = "";
-    linkEmoji.value = "";
-    linkUrl.value = "";
-    linkIconFile.value = "";
-    setManageStatus("");
-  }
-
-  function startEditLink(groupId, linkId){
-    const g = getGroup(groupId);
-    if(!g) return;
-    const l = (g.links||[]).find(x=>x.id===linkId);
-    if(!l) return;
-
-    editing.groupId = groupId;
-    editing.linkId = linkId;
-    editing.pendingIconDataUrl = null;
-
-    linkGroup.value = groupId;
-    linkTitle.value = l.title || "";
-    linkEmoji.value = l.emoji || "";
-    linkUrl.value = l.url || "";
-    linkIconFile.value = "";
-
-    setManageStatus("Editing link. Click “Save link” to apply.");
-  }
-
-  function deleteLink(groupId, linkId){
-    const g = getGroup(groupId);
-    if(!g) return;
-    g.links = (g.links||[]).filter(l=>l.id!==linkId);
-    persist();
-    render();
-    setManageStatus("Link deleted.");
-  }
-
-  function moveLink(groupId, linkId, dir){
-    const g = getGroup(groupId);
-    if(!g) return;
-    const arr = Array.isArray(g.links) ? g.links : [];
-    const idx = arr.findIndex(x=>x.id===linkId);
-    if(idx < 0) return;
-
-    const next = idx + dir;
-    if(next < 0 || next >= arr.length) return;
-
-    const tmp = arr[idx];
-    arr[idx] = arr[next];
-    arr[next] = tmp;
-
-    g.links = arr;
-    persist();
-    render();
-    setManageStatus("Link reordered.");
-  }
-
-  function renameGroup(groupId, newName){
-    const g = getGroup(groupId);
-    if(!g) return;
-    g.name = String(newName||"").trim() || "Untitled";
-    persist();
-    render();
-    setManageStatus("Group renamed.");
-  }
-
-  function deleteGroup(groupId){
-    const before = data.groups.length;
-    data.groups = data.groups.filter(g=>g.id!==groupId);
-    if(data.groups.length===0){
-      data.groups = [{ id: uid(), name:"Favorites", links: [] }];
-    }
-    if(data.groups.length !== before){
-      persist();
-      render();
-      setManageStatus("Group deleted.");
-    }
-  }
-
-  function moveGroup(groupId, dir){
-    const idx = data.groups.findIndex(g=>g.id===groupId);
-    if(idx < 0) return;
-    const next = idx + dir;
-    if(next < 0 || next >= data.groups.length) return;
-    const tmp = data.groups[idx];
-    data.groups[idx] = data.groups[next];
-    data.groups[next] = tmp;
-    persist();
-    render();
-    setManageStatus("Group reordered.");
-  }
-
-  function renderManage(){
-    if(!manageList) return;
-
-    if(!data.groups.length){
-      manageList.innerHTML = `<div class="hint">No groups yet.</div>`;
-      return;
-    }
-
-    const parts = [];
-
-    for(const g of data.groups){
-      const links = Array.isArray(g.links) ? g.links : [];
-      const safeName = escapeHtml(g.name || "Untitled");
-
-      parts.push(`
-        <div style="margin-bottom:12px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
-            <div style="flex:1; min-width:0;">
-              <div style="font-size:11px; letter-spacing:.10em; text-transform:uppercase; color: rgba(106,102,95,0.90); margin-bottom:6px;">
-                Group
-              </div>
-              <input class="textInput" data-action="renameGroup" data-gid="${g.id}" value="${safeName}" />
-            </div>
-            <div style="display:flex; gap:8px; align-items:flex-end;">
-              <button class="tinyBtn" data-action="moveGroupUp" data-gid="${g.id}" title="Move up">↑</button>
-              <button class="tinyBtn" data-action="moveGroupDown" data-gid="${g.id}" title="Move down">↓</button>
-              <button class="tinyBtn danger" data-action="deleteGroup" data-gid="${g.id}" title="Delete group">Delete</button>
-            </div>
-          </div>
-
-          <table class="miniTable" aria-label="Links table">
-            <thead>
-              <tr>
-                <th style="width:44%;">Link</th>
-                <th style="width:36%;">URL</th>
-                <th style="width:20%; text-align:right;">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${links.map(l=>{
-                const title = escapeHtml((l.title||"Untitled"));
-                const url = escapeHtml((l.url||""));
-                return `
-                  <tr>
-                    <td>${title}</td>
-                    <td style="color: rgba(122,122,122,0.92);">${url || "—"}</td>
-                    <td>
-                      <div class="rowBtns">
-                        <button class="tinyBtn" data-action="moveLinkUp" data-gid="${g.id}" data-lid="${l.id}" title="Move up">↑</button>
-                        <button class="tinyBtn" data-action="moveLinkDown" data-gid="${g.id}" data-lid="${l.id}" title="Move down">↓</button>
-                        <button class="tinyBtn" data-action="editLink" data-gid="${g.id}" data-lid="${l.id}">Edit</button>
-                        <button class="tinyBtn danger" data-action="deleteLink" data-gid="${g.id}" data-lid="${l.id}">Del</button>
-                      </div>
-                    </td>
-                  </tr>
-                `;
-              }).join("")}
-              ${links.length===0 ? `<tr><td colspan="3" style="color: rgba(122,122,122,0.92);">No links in this group yet.</td></tr>` : ``}
-            </tbody>
-          </table>
-        </div>
-      `);
-    }
-
-    manageList.innerHTML = parts.join("");
-
-    // attach input handlers for rename fields
-    manageList.querySelectorAll('input[data-action="renameGroup"]').forEach(inp=>{
-      inp.addEventListener("change", ()=>{
-        const gid = inp.getAttribute("data-gid");
-        renameGroup(gid, inp.value);
-      });
-    });
-  }
-
-  function escapeHtml(s){
-    return String(s||"")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  // Manage panel delegation
-  manageList?.addEventListener("click",(e)=>{
-    const btn = e.target.closest("button[data-action]");
-    if(!btn) return;
-
-    const action = btn.getAttribute("data-action");
-    const gid = btn.getAttribute("data-gid");
-    const lid = btn.getAttribute("data-lid");
-
-    if(action==="editLink"){ startEditLink(gid, lid); return; }
-    if(action==="deleteLink"){ deleteLink(gid, lid); return; }
-    if(action==="moveLinkUp"){ moveLink(gid, lid, -1); return; }
-    if(action==="moveLinkDown"){ moveLink(gid, lid, +1); return; }
-    if(action==="deleteGroup"){ deleteGroup(gid); return; }
-    if(action==="moveGroupUp"){ moveGroup(gid, -1); return; }
-    if(action==="moveGroupDown"){ moveGroup(gid, +1); return; }
-  });
-
-  addGroupBtn?.addEventListener("click", ()=>{
-    const name = String(newGroupName.value||"").trim();
-    if(!name){ setManageStatus("Type a group name first."); return; }
-    data.groups.push({ id: uid(), name, links: [] });
-    newGroupName.value = "";
-    persist();
-    render();
-    setManageStatus("Group added.");
-  });
-
-  linkIconFile?.addEventListener("change", async ()=>{
-    const file = linkIconFile.files && linkIconFile.files[0];
-    if(!file){ editing.pendingIconDataUrl = null; return; }
-    editing.pendingIconDataUrl = await fileToDataUrl(file);
-    setManageStatus("Icon image ready — click “Save link” to apply.");
-  });
-
-  saveLinkBtn?.addEventListener("click", ()=>{
-    const gid = linkGroup.value;
-    const g = getGroup(gid);
-    if(!g){ setManageStatus("Please choose a group."); return; }
-
-    const title = String(linkTitle.value||"").trim();
-    const url = String(linkUrl.value||"").trim();
-    const emoji = String(linkEmoji.value||"").trim();
-
-    if(!title){ setManageStatus("Please enter a title."); return; }
-
-    const finalUrl = safeUrl(url);
-
-    const payload = {
-      title,
-      url: finalUrl,
-      emoji: emoji,
-      iconDataUrl: null
-    };
-
-    if(editing.pendingIconDataUrl){
-      payload.iconDataUrl = editing.pendingIconDataUrl;
-    }
-
-    // If editing existing link
-    if(editing.linkId){
-      // if group changed, remove from old and add to new
-      const from = getGroup(editing.groupId) || g;
-      const existing = (from.links||[]).find(l=>l.id===editing.linkId);
-
-      if(existing){
-        // keep old icon if none set and no new upload
-        if(!payload.iconDataUrl){
-          payload.iconDataUrl = existing.iconDataUrl || null;
-        }
-        // keep old emoji if empty and no image
-        if(!payload.emoji && !payload.iconDataUrl){
-          payload.emoji = existing.emoji || "";
-        }
-      }
-
-      if(from.id !== g.id){
-        from.links = (from.links||[]).filter(l=>l.id!==editing.linkId);
-        g.links = Array.isArray(g.links) ? g.links : [];
-        g.links.unshift(Object.assign({ id: editing.linkId }, payload));
-      }else{
-        from.links = Array.isArray(from.links) ? from.links : [];
-        const idx = from.links.findIndex(l=>l.id===editing.linkId);
-        if(idx >= 0){
-          from.links[idx] = Object.assign({ id: editing.linkId }, payload);
-        }else{
-          from.links.unshift(Object.assign({ id: editing.linkId }, payload));
-        }
-      }
-
-      persist();
-      render();
-      clearLinkForm();
-      setManageStatus("Link updated.");
-      return;
-    }
-
-    // Creating new link
-    g.links = Array.isArray(g.links) ? g.links : [];
-    const id = uid();
-    const newLink = Object.assign({ id }, payload);
-
-    // If no uploaded icon, keep emoji as-is (can be empty; display defaults to •)
-    g.links.unshift(newLink);
-
-    persist();
-    render();
-    clearLinkForm();
-    setManageStatus("Link added.");
-  });
-
-  clearLinkFormBtn?.addEventListener("click", ()=>{
-    clearLinkForm();
-    setManageStatus("Form cleared.");
-  });
-
-  exportBtn?.addEventListener("click", async ()=>{
-    const payload = JSON.stringify(data, null, 2);
-    const ok = await copyText(payload);
-    if(ok) setManageStatus("Links JSON copied.");
-    else{
-      importArea.value = payload;
-      importArea.focus(); importArea.select();
-      setManageStatus("Could not copy automatically — JSON placed in the box to copy manually.");
-    }
-  });
-
-  importBtn?.addEventListener("click", ()=>{
-    const raw = String(importArea.value||"").trim();
-    if(!raw){ setManageStatus("Paste links JSON first."); return; }
-
-    try{
-      const parsed = JSON.parse(raw);
-      if(!parsed || !Array.isArray(parsed.groups)){
-        setManageStatus("That JSON doesn’t look like quick links data.");
-        return;
-      }
-
-      // sanitize lightly
-      const clean = {
-        groups: parsed.groups.filter(Boolean).map(g=>({
-          id: String(g.id || uid()),
-          name: String(g.name || "Untitled"),
-          links: Array.isArray(g.links) ? g.links.filter(Boolean).map(l=>({
-            id: String(l.id || uid()),
-            title: String(l.title || "Untitled"),
-            url: String(l.url || ""),
-            emoji: String(l.emoji || ""),
-            iconDataUrl: (typeof l.iconDataUrl === "string" && l.iconDataUrl.startsWith("data:image")) ? l.iconDataUrl : null
-          })) : []
-        }))
-      };
-
-      data = clean;
-      persist();
-      render();
-      setManageStatus("Links imported.");
-    }catch{
-      setManageStatus("Invalid JSON.");
-    }
-  });
-
-  resetLinksBtn?.addEventListener("click", ()=>{
-    data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-    persist();
-    render();
-    clearLinkForm();
-    setManageStatus("Links reset.");
-  });
-
-  // Initial render
-  render();
 })();
 </script>
 

@@ -1,0 +1,1540 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Workout Tracker + Planner</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --cream:#e6d8cc;
+      --stone:#c9beb6;
+      --text:#1f1f1f;
+      --muted:#6b625c;
+
+      --border: rgba(201,190,182,0.85);
+      --borderSoft: rgba(201,190,182,0.55);
+      --creamSoft: rgba(230,216,204,0.20);
+
+      --shadow: 0 10px 26px rgba(0,0,0,0.06);
+      --shadowSoft: 0 3px 10px rgba(0,0,0,0.05);
+
+      --rOuter: 18px;
+      --rInner: 16px;
+      --rPill: 999px;
+
+      --fsKicker: 12px;
+      --fsLabel: 11px;
+      --fsBody: 13px;
+
+      --dayMin: 160px;
+
+      --board-tint: #ffffff;
+      --board-tint-a: 0.30;
+      --board-image: none;
+
+      /* injected theme vars */
+      --card-bg: rgba(255,255,255,0.88);
+      --field-bg: #ffffff;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      padding:26px;
+    }
+
+    .wrap{ max-width:1120px; margin:0 auto; }
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .kicker{
+      font-size:var(--fsKicker);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+      padding-top:4px;
+    }
+    .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      border-radius:var(--rPill);
+      padding:9px 14px;
+      font-size:12px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow: var(--shadowSoft);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .btn.primary{ background:var(--cream); }
+
+    .popover{ position:relative; }
+    .icon-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      background: rgba(255,255,255,0.80);
+      border: 1px solid var(--borderSoft);
+      border-radius: 999px;
+      padding: 6px 10px;
+      box-shadow: var(--shadowSoft);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .bg-btn{
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      border:1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.95);
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+    .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
+    .bg-btn:active{ transform: translateY(0px); }
+
+    .bg-dot{
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
+    }
+
+    .theme-dot{
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(201,190,182,0.75);
+      background: var(--text);
+      box-shadow: 0 0 0 6px rgba(201,190,182,0.25);
+    }
+
+    .panel{
+      position:absolute;
+      top: 46px;
+      right: 0;
+      width: 300px;
+      border-radius: 16px;
+      border: 1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.92);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.10);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px;
+      display:none;
+      z-index: 80;
+
+      /* ✅ mobile-friendly */
+      max-height: min(72vh, 620px);
+      overflow: auto;
+    }
+    .panel.open{ display:block; }
+
+    .panel h2{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(31,31,31,0.72);
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 8px 0;
+    }
+    .row label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    input[type="color"]{
+      width: 36px;
+      height: 28px;
+      border: 1px solid var(--borderSoft);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"]{ width: 150px; }
+    .file{
+      width:100%;
+      font-size: 12px;
+      color: rgba(31,31,31,0.75);
+    }
+    .mini-btn{
+      width: 100%;
+      border: 1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: 11px;
+      color: rgba(31,31,31,0.80);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+    .divider{
+      height: 1px;
+      background: rgba(201,190,182,0.35);
+      margin: 8px 0;
+    }
+    .hintSmall{
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* ✅ Presets UI */
+    .presetName, .presetSelect, .presetArea{
+      width: 100%;
+      border: 1px solid var(--borderSoft);
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: rgba(255,255,255,0.95);
+      color: var(--text);
+      font: inherit;
+      font-size: 12px;
+      outline: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .presetSelect{ height: 36px; }
+    .presetArea{
+      min-height: 92px;
+      resize: vertical;
+      line-height: 1.35;
+      font-size: 12px;
+    }
+    .status{
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+      min-height: 14px;
+    }
+
+    /* Widget board + content */
+    .widgetBoard{
+      position: relative;
+      border-radius: var(--rOuter);
+      overflow: hidden;
+      border: 1px solid var(--borderSoft);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      background: transparent;
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(0.95);
+      transform: scale(1.02);
+      z-index:0;
+    }
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events: none;
+      z-index:0;
+      /* ✅ overlay set by JS */
+      background: rgba(255,255,255,0.30);
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.25fr 0.85fr;
+      gap:14px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card{
+      background: var(--card-bg);
+      border:1px solid var(--border);
+      border-radius:var(--rOuter);
+      box-shadow: none;
+      padding:14px;
+      min-width:0;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .cardHead{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .cardTitle{
+      font-size:14px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0;
+    }
+    .meta{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.04em;
+      white-space:nowrap;
+    }
+
+    .planFrame{
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rInner);
+      padding:12px;
+      background: var(--field-bg);
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    .days{
+      display:grid;
+      grid-auto-flow:column;
+      grid-auto-columns: minmax(var(--dayMin), 1fr);
+      gap:10px;
+      align-items:start;
+      width:max-content;
+      min-width:100%;
+    }
+
+    .day{
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rInner);
+      padding:12px;
+      background: linear-gradient(180deg, var(--creamSoft), rgba(255,255,255,0));
+      min-height:360px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .dayTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .dow{
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .datePill{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rPill);
+      padding:5px 8px;
+      background: var(--field-bg);
+      line-height:1;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    .label{
+      font-size:var(--fsLabel);
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0 0 6px 0;
+    }
+
+    .input{
+      width:100%;
+      border:1px solid var(--border);
+      background: var(--field-bg);
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:var(--fsBody);
+      outline:none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      height:36px;
+    }
+    .input:focus{
+      border-color: rgba(201,190,182,1);
+      box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
+    }
+
+    .planBox{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background: var(--field-bg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      padding:8px 9px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      height:64px;
+    }
+    .planNums{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:12px;
+      line-height:1;
+      color:var(--muted);
+      user-select:none;
+      padding-left:2px;
+      min-width:18px;
+    }
+    .planText{
+      border:0;
+      outline:none;
+      background:transparent;
+      width:100%;
+      font-size:var(--fsBody);
+      color: var(--text);
+    }
+
+    .stack{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .chip{
+      appearance:none;
+      border:1px solid var(--border);
+      background: var(--field-bg);
+      border-radius:var(--rPill);
+      padding:9px 10px;
+      font-size:12px;
+      cursor:pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      user-select:none;
+      text-align:left;
+      height:34px;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--text);
+    }
+    .chip:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+    .chip[data-active="true"]{
+      background:var(--cream);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.08);
+      transform:translateY(-1px);
+    }
+
+    .doneRow{
+      margin-top:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding-top:4px;
+    }
+    .doneLabel{
+      font-size:12px;
+      color:var(--muted);
+      user-select:none;
+    }
+    .toggle{
+      width:40px; height:24px;
+      border-radius:var(--rPill);
+      border:1px solid var(--border);
+      background: var(--field-bg);
+      position:relative;
+      cursor:pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: background 160ms ease;
+      flex:0 0 auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .toggle::after{
+      content:"";
+      position:absolute;
+      top:2px; left:2px;
+      width:20px; height:20px;
+      border-radius:var(--rPill);
+      background:var(--stone);
+      transition: transform 160ms ease, background 160ms ease;
+    }
+    .toggle[data-on="true"]{ background: rgba(230,216,204,0.65); }
+    .toggle[data-on="true"]::after{
+      transform: translateX(16px);
+      background:#b8aea7;
+    }
+
+    /* SUMMARY */
+    .summary{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .box{
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rInner);
+      padding:12px;
+      background: linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0));
+    }
+    .boxTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .boxLabel{
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .big{
+      font-size:26px;
+      font-weight:740;
+      letter-spacing:-0.02em;
+    }
+    .bar{
+      height:10px;
+      border-radius:var(--rPill);
+      background: rgba(201,190,182,0.30);
+      border:1px solid var(--borderSoft);
+      overflow:hidden;
+      margin-bottom:8px;
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: var(--stone);
+      transition: width 220ms ease;
+    }
+    .hint{
+      font-size:12px;
+      color:#7a716a;
+      line-height:1.4;
+      margin:0;
+    }
+    .bullets{
+      margin:8px 0 0 0;
+      padding-left:18px;
+      color:#5e564f;
+      font-size:13px;
+      line-height:1.45;
+    }
+    .todayRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .todayPill{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid var(--borderSoft);
+      border-radius:var(--rPill);
+      padding:5px 8px;
+      background: var(--field-bg);
+      line-height:1;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    @media (max-width: 1040px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div class="kicker">Workout Tracker + Planner</div>
+
+      <div class="btns">
+        <!-- Background settings -->
+        <div class="popover" id="bgPopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <span class="bg-dot" id="bgDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <h2>Background</h2>
+
+            <!-- ✅ apply/reset -->
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label for="bgColor">Tint</label>
+              <input id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="row">
+              <label for="bgStrength">Tint strength</label>
+              <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input id="bgImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="row">
+              <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Theme settings -->
+        <div class="popover" id="themePopover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <h2>Theme</h2>
+
+            <!-- ✅ apply/reset -->
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="resetTheme" type="button" style="margin-top:8px;">Reset theme</button>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tWidgetBg">Widget bg</label><input id="tWidgetBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tCardBg">Card bg</label><input id="tCardBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tFieldBg">Fields bg</label><input id="tFieldBg" type="color" value="#ffffff" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tText">Text</label><input id="tText" type="color" value="#1f1f1f" /></div>
+            <div class="row"><label for="tMuted">Muted text</label><input id="tMuted" type="color" value="#6b625c" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBorder">Borders</label><input id="tBorder" type="color" value="#c9beb6" /></div>
+            <div class="row"><label for="tStone">Accent</label><input id="tStone" type="color" value="#c9beb6" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tCream">Highlight</label><input id="tCream" type="color" value="#e6d8cc" /></div>
+            <div class="row"><label for="tCreamSoft">Highlight soft</label><input id="tCreamSoft" type="color" value="#e6d8cc" /></div>
+
+            <div class="divider"></div>
+
+            <!-- ✅ GLOBAL PRESETS -->
+            <h2 style="margin-top:4px;">Presets</h2>
+
+            <input class="presetName" id="presetName" placeholder="Preset name">
+
+            <button class="mini-btn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+            <div class="divider"></div>
+
+            <select class="presetSelect" id="presetSelect"></select>
+
+            <button class="mini-btn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="presetCopy" type="button">Copy preset JSON</button>
+
+            <div class="divider"></div>
+
+            <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+            <button class="mini-btn" id="presetImportBtn" type="button" style="margin-top:8px;">Import presets</button>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
+
+            <div class="hintSmall"></div>
+          </div>
+        </div>
+
+        <button id="prevWeek" class="btn" type="button">◀ PREV</button>
+        <button id="nextWeek" class="btn" type="button">NEXT ▶</button>
+        <button id="clearWeek" class="btn primary" type="button">CLEAR WEEK</button>
+      </div>
+    </div>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Workout widget board">
+      <div class="boardTint" id="boardTint"></div>
+
+      <div class="grid">
+        <!-- WEEKLY PLAN -->
+        <section class="card" aria-label="Weekly plan">
+          <div class="cardHead">
+            <h2 class="cardTitle">Weekly plan</h2>
+            <div id="weekMeta" class="meta"></div>
+          </div>
+
+          <div class="planFrame">
+            <div id="days" class="days"></div>
+          </div>
+        </section>
+
+        <!-- SUMMARY -->
+        <aside class="card" aria-label="Summary">
+          <div class="cardHead">
+            <h2 class="cardTitle">Summary</h2>
+            <div class="meta">auto updates</div>
+          </div>
+
+          <div class="summary">
+            <div class="box">
+              <div class="boxTop">
+                <div class="boxLabel">Workouts completed</div>
+                <div id="completedVal" class="big">0</div>
+              </div>
+              <div class="bar"><div id="completedBar"></div></div>
+            </div>
+
+            <div class="box">
+              <div class="boxTop">
+                <div class="boxLabel">Planned sessions</div>
+                <div id="plannedVal" class="big">0</div>
+              </div>
+              <div class="bar"><div id="plannedBar"></div></div>
+              <p class="hint">A day counts as planned if it has a workout name.</p>
+            </div>
+
+            <div class="box">
+              <div class="boxTop">
+                <div class="boxLabel">Intensity mix</div>
+                <div id="mixVal" class="big">—</div>
+              </div>
+              <ul id="mixList" class="bullets">
+                <li>Light: 0</li>
+                <li>Moderate: 0</li>
+                <li>Intense: 0</li>
+              </ul>
+            </div>
+
+            <div class="box">
+              <div class="todayRow">
+                <div class="boxLabel">Today’s plan</div>
+                <div id="todayPill" class="todayPill">—</div>
+              </div>
+              <p id="todaySummary" class="hint" style="margin-top:8px;">No plan set for today yet.</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* =========================================================
+       Instance-safe storage + GLOBAL presets (same pattern)
+       - wid: per-widget unique id (URL ?wid=... or session fallback)
+       - per-widget keys include wid so widgets don't overwrite each other
+       - presets stored globally under widget_presets_v2
+    ========================================================= */
+    (function(){
+      const mem = Object.create(null);
+
+      function canUseLocalStorage(){
+        try{
+          const k="__t__"+Math.random().toString(16).slice(2);
+          localStorage.setItem(k,"1");
+          localStorage.removeItem(k);
+          return true;
+        }catch{ return false; }
+      }
+      const hasLS = canUseLocalStorage();
+
+      function storageGet(key){
+        try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+        catch{ return mem[key] ?? null; }
+      }
+      function storageSet(key, value){
+        try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+        catch{ mem[key]=String(value); }
+      }
+      function storageRemove(key){
+        try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+        catch{ delete mem[key]; }
+      }
+      function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+      function getWidgetId(){
+        try{
+          const sp = new URLSearchParams(location.search);
+          const wid = (sp.get("wid") || "").trim();
+          if(wid) return wid;
+        }catch{}
+        try{
+          const cached = sessionStorage.getItem("wtp_wid");
+          if(cached) return cached;
+        }catch{}
+        const fresh = uid();
+        try{ sessionStorage.setItem("wtp_wid", fresh); }catch{}
+        return fresh;
+      }
+
+      window.__WTP_APP__ = { wid: getWidgetId(), get: storageGet, set: storageSet, remove: storageRemove };
+    })();
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const MS_DAY = 86400000;
+      const dowNames = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+
+      const WID = window.__WTP_APP__?.wid || "default";
+
+      function startOfWeek(date){
+        const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const js = d.getDay();
+        const mondayOffset = (js === 0) ? -6 : (1 - js);
+        d.setDate(d.getDate() + mondayOffset);
+        d.setHours(0,0,0,0);
+        return d;
+      }
+      function isoKey(d){
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,"0");
+        const day = String(d.getDate()).padStart(2,"0");
+        return `${y}-${m}-${day}`;
+      }
+      function fmtPill(d){
+        const m = d.toLocaleString(undefined, { month:"short" });
+        return `${d.getDate()} ${m}`;
+      }
+      function fmtRange(ws){
+        const end = new Date(ws.getTime() + 6*MS_DAY);
+        return `${ws.getDate()} ${ws.toLocaleString(undefined,{month:"short"})} — ${end.getDate()} ${end.toLocaleString(undefined,{month:"short"})} · ${ws.getFullYear()}`;
+      }
+
+      /* ---------- helpers ---------- */
+      function clamp(n, min, max){
+        const x = Number(n);
+        if(!Number.isFinite(x)) return min;
+        return Math.max(min, Math.min(max, x));
+      }
+      function normHex(hex, fallback){
+        const s = String(hex || "").trim();
+        return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+      }
+      function hexToRgba(hex, a){
+        const h = String(normHex(hex, "#efe7e1")).replace("#","").trim();
+        const num = parseInt(h || "efe7e1", 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${a})`;
+      }
+      async function copyText(text){
+        try{
+          if(navigator.clipboard && navigator.clipboard.writeText){
+            await navigator.clipboard.writeText(text);
+            return true;
+          }
+        }catch{}
+        try{
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position="fixed";
+          ta.style.left="-9999px";
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          const ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          return !!ok;
+        }catch{ return false; }
+      }
+
+      function loadJSON(key){
+        try{
+          const raw = window.__WTP_APP__.get(key);
+          return raw ? JSON.parse(raw) : null;
+        }catch{ return null; }
+      }
+      function saveJSON(key, val){
+        try{ window.__WTP_APP__.set(key, JSON.stringify(val)); }catch{}
+      }
+
+      /* ---------------------------
+         BACKGROUND SETTINGS (apply/reset, per-widget)
+      ---------------------------- */
+      const BG_KEY = "wk_tracker_bg_v2__" + WID;
+
+      const bgBtn = document.getElementById("bgBtn");
+      const bgPanel = document.getElementById("bgPanel");
+      const bgColor = document.getElementById("bgColor");
+      const bgStrength = document.getElementById("bgStrength");
+      const bgImage = document.getElementById("bgImage");
+      const removeImage = document.getElementById("removeImage");
+      const boardTintEl = document.getElementById("boardTint");
+      const bgDot = document.getElementById("bgDot");
+
+      const bgApply = document.getElementById("bgApply");
+      const bgReset = document.getElementById("bgReset");
+
+      function setBoardImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      }
+      function applyBoardTint(colorHex, strengthPct){
+        const tint = normHex(colorHex, "#efe7e1");
+        const strength = clamp(Number(strengthPct), 0, 70) / 100;
+
+        document.documentElement.style.setProperty("--board-tint", tint);
+        document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+        // overlay (fix: previously blank "background:" in ::after)
+        const overlay = hexToRgba("#ffffff", clamp(strength + 0.08, 0.08, 0.55));
+        let st = document.getElementById("wtp_overlay");
+        if(!st){
+          st = document.createElement("style");
+          st.id = "wtp_overlay";
+          document.head.appendChild(st);
+        }
+        st.textContent = `.widgetBoard::after{ background: ${overlay} !important; }`;
+
+        if (bgDot){
+          bgDot.style.background = tint;
+          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+        }
+        if (boardTintEl){
+          boardTintEl.style.background = hexToRgba(tint, strength);
+        }
+      }
+      function fileToDataUrl(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
+      const DEFAULT_BG = { tint:"#efe7e1", strength:30, imageDataUrl:null };
+
+      // draft state
+      let bgDraft = { ...DEFAULT_BG, ...(loadJSON(BG_KEY) || {}) };
+
+      function syncBgInputs(){
+        bgColor.value = bgDraft.tint;
+        bgStrength.value = String(bgDraft.strength);
+      }
+      function renderBgDraft(){
+        applyBoardTint(bgDraft.tint, bgDraft.strength);
+        setBoardImage(bgDraft.imageDataUrl);
+      }
+
+      syncBgInputs();
+      renderBgDraft();
+
+      bgColor.addEventListener("input", () => {
+        bgDraft.tint = bgColor.value;
+        syncBgInputs();
+        renderBgDraft();
+        saveJSON(BG_KEY, bgDraft);
+        setStatus("");
+      });
+
+      bgStrength.addEventListener("input", () => {
+        bgDraft.strength = Number(bgStrength.value);
+        syncBgInputs();
+        renderBgDraft();
+        saveJSON(BG_KEY, bgDraft);
+        setStatus("");
+      });
+
+      bgImage.addEventListener("change", async () => {
+        const file = bgImage.files && bgImage.files[0];
+        if(!file) return;
+        bgDraft.imageDataUrl = await fileToDataUrl(file);
+        renderBgDraft();
+        saveJSON(BG_KEY, bgDraft);
+        setStatus("");
+      });
+
+      removeImage.addEventListener("click", () => {
+        bgDraft.imageDataUrl = null;
+        bgImage.value = "";
+        renderBgDraft();
+        saveJSON(BG_KEY, bgDraft);
+        setStatus("");
+      });
+
+      bgApply.addEventListener("click", () => {
+        // already persisted; button is intentional UX parity
+        saveJSON(BG_KEY, bgDraft);
+        setStatus("Background applied.");
+      });
+
+      bgReset.addEventListener("click", () => {
+        bgDraft = { ...DEFAULT_BG };
+        bgImage.value = "";
+        syncBgInputs();
+        renderBgDraft();
+        window.__WTP_APP__.remove(BG_KEY);
+        setStatus("Background reset.");
+      });
+
+      /* ---------------------------
+         THEME SETTINGS (apply/reset + presets, per-widget theme, GLOBAL presets)
+      ---------------------------- */
+      const THEME_KEY = "wk_tracker_theme_v2__" + WID;
+
+      const PRESETS_KEY = "widget_presets_v2";
+      const PRESET_NAMESPACE = "workouttracker";
+
+      const themeBtn = document.getElementById("themeBtn");
+      const themePanel = document.getElementById("themePanel");
+      const themeDot = document.getElementById("themeDot");
+
+      const tWidgetBg = document.getElementById("tWidgetBg");
+      const tCardBg   = document.getElementById("tCardBg");
+      const tFieldBg  = document.getElementById("tFieldBg");
+      const tText     = document.getElementById("tText");
+      const tMuted    = document.getElementById("tMuted");
+      const tBorder   = document.getElementById("tBorder");
+      const tStone    = document.getElementById("tStone");
+      const tCream    = document.getElementById("tCream");
+      const tCreamSoft= document.getElementById("tCreamSoft");
+      const resetTheme= document.getElementById("resetTheme");
+      const themeApply = document.getElementById("themeApply");
+
+      const DEFAULT_THEME = {
+        bg: "#ffffff",
+        cardBg: "#ffffff",
+        fieldBg: "#ffffff",
+        text: "#1f1f1f",
+        muted: "#6b625c",
+        borderHex: "#c9beb6",
+        stone: "#c9beb6",
+        cream: "#e6d8cc",
+        creamSoftHex: "#e6d8cc"
+      };
+
+      function applyTheme(t){
+        const theme = { ...DEFAULT_THEME, ...(t || {}) };
+
+        document.documentElement.style.setProperty("--bg", normHex(theme.bg, DEFAULT_THEME.bg));
+        document.documentElement.style.setProperty("--text", normHex(theme.text, DEFAULT_THEME.text));
+        document.documentElement.style.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
+        document.documentElement.style.setProperty("--stone", normHex(theme.stone, DEFAULT_THEME.stone));
+        document.documentElement.style.setProperty("--cream", normHex(theme.cream, DEFAULT_THEME.cream));
+
+        document.documentElement.style.setProperty("--border", hexToRgba(normHex(theme.borderHex, DEFAULT_THEME.borderHex), 0.85));
+        document.documentElement.style.setProperty("--borderSoft", hexToRgba(normHex(theme.borderHex, DEFAULT_THEME.borderHex), 0.55));
+
+        document.documentElement.style.setProperty("--creamSoft", hexToRgba(normHex(theme.creamSoftHex, DEFAULT_THEME.creamSoftHex), 0.20));
+
+        // computed vars
+        document.documentElement.style.setProperty("--card-bg", hexToRgba(normHex(theme.cardBg, DEFAULT_THEME.cardBg), 0.88));
+        document.documentElement.style.setProperty("--field-bg", normHex(theme.fieldBg, DEFAULT_THEME.fieldBg));
+
+        if(themeDot){
+          const borderHex = normHex(theme.borderHex, DEFAULT_THEME.borderHex);
+          themeDot.style.background = normHex(theme.text, DEFAULT_THEME.text);
+          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(borderHex, 0.25)}`;
+          themeDot.style.borderColor = hexToRgba(borderHex, 0.75);
+        }
+
+        return theme;
+      }
+
+      function syncThemeInputs(t){
+        tWidgetBg.value = t.bg;
+        tCardBg.value = t.cardBg;
+        tFieldBg.value = t.fieldBg;
+        tText.value = t.text;
+        tMuted.value = t.muted;
+        tBorder.value = t.borderHex;
+        tStone.value = t.stone;
+        tCream.value = t.cream;
+        tCreamSoft.value = t.creamSoftHex;
+      }
+
+      function readThemeInputs(){
+        return {
+          bg: tWidgetBg.value,
+          cardBg: tCardBg.value,
+          fieldBg: tFieldBg.value,
+          text: tText.value,
+          muted: tMuted.value,
+          borderHex: tBorder.value,
+          stone: tStone.value,
+          cream: tCream.value,
+          creamSoftHex: tCreamSoft.value
+        };
+      }
+
+      // draft state (load saved)
+      let themeDraft = { ...DEFAULT_THEME, ...(loadJSON(THEME_KEY) || {}) };
+      themeDraft = applyTheme(themeDraft);
+      syncThemeInputs(themeDraft);
+
+      function setStatus(msg=""){
+        const el = document.getElementById("presetStatus");
+        if(el) el.textContent = msg;
+      }
+
+      // live preview (no persistence)
+      [
+        tWidgetBg,tCardBg,tFieldBg,tText,tMuted,tBorder,tStone,tCream,tCreamSoft
+      ].forEach(el => {
+        el.addEventListener("input", () => {
+          themeDraft = readThemeInputs();
+          themeDraft = applyTheme(themeDraft);
+          setStatus("");
+        });
+      });
+
+      themeApply.addEventListener("click", () => {
+        themeDraft = readThemeInputs();
+        themeDraft = applyTheme(themeDraft);
+        saveJSON(THEME_KEY, themeDraft);
+        syncThemeInputs(themeDraft);
+        // keep background tint preview consistent
+        applyBoardTint(bgDraft.tint, bgDraft.strength);
+        setStatus("Theme applied.");
+      });
+
+      resetTheme.addEventListener("click", () => {
+        themeDraft = applyTheme(DEFAULT_THEME);
+        syncThemeInputs(themeDraft);
+        window.__WTP_APP__.remove(THEME_KEY);
+        applyBoardTint(bgDraft.tint, bgDraft.strength);
+        setStatus("Theme reset.");
+      });
+
+      /* ---------- GLOBAL PRESETS ---------- */
+      function loadPresets(){
+        const raw = loadJSON(PRESETS_KEY);
+        return Array.isArray(raw) ? raw : [];
+      }
+      function savePresets(list){ saveJSON(PRESETS_KEY, list); }
+
+      function sanitizePresetList(parsed){
+        if(!Array.isArray(parsed)) return null;
+        return parsed.filter(Boolean).map(p => ({
+          id: String(p.id || (Math.random().toString(16).slice(2) + Date.now().toString(16))),
+          name: String(p.name || "Imported"),
+          ns: String(p.ns || PRESET_NAMESPACE),
+          theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
+          bg: (p.bg && typeof p.bg === "object") ? p.bg : {}
+        }));
+      }
+
+      function refreshPresetSelect(){
+        const sel = document.getElementById("presetSelect");
+        if(!sel) return;
+        const list = loadPresets().filter(p => p && p.ns === PRESET_NAMESPACE);
+        const cur = sel.value;
+        sel.innerHTML = `<option value="">—</option>`;
+        for(const p of list){
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name || "Untitled";
+          sel.appendChild(opt);
+        }
+        if(cur) sel.value = cur;
+      }
+
+      function getPresetById(id){
+        return loadPresets().find(p => p && p.ns === PRESET_NAMESPACE && p.id === id) || null;
+      }
+
+      refreshPresetSelect();
+
+      document.getElementById("presetSave")?.addEventListener("click", () => {
+        const name = (document.getElementById("presetName")?.value || "").trim();
+        if(!name){ setStatus("Type a preset name first."); return; }
+        const list = loadPresets();
+        list.unshift({
+          id: (Math.random().toString(16).slice(2) + Date.now().toString(16)),
+          ns: PRESET_NAMESPACE,
+          name,
+          theme: readThemeInputs(),
+          bg: { ...bgDraft }
+        });
+        savePresets(list);
+        document.getElementById("presetName").value = "";
+        refreshPresetSelect();
+        document.getElementById("presetSelect").value = list[0].id;
+        setStatus("Preset saved.");
+      });
+
+      document.getElementById("presetApply")?.addEventListener("click", () => {
+        const id = document.getElementById("presetSelect")?.value || "";
+        if(!id){ setStatus("Choose a preset first."); return; }
+        const p = getPresetById(id);
+        if(!p){ setStatus("Preset not found."); return; }
+
+        // Theme: apply + persist
+        themeDraft = applyTheme({ ...DEFAULT_THEME, ...(p.theme || {}) });
+        saveJSON(THEME_KEY, themeDraft);
+        syncThemeInputs(themeDraft);
+
+        // Background: merge into draft + persist
+        bgDraft = { ...DEFAULT_BG, ...bgDraft, ...(p.bg || {}) };
+        saveJSON(BG_KEY, bgDraft);
+        syncBgInputs();
+        renderBgDraft();
+
+        setStatus("Preset applied.");
+      });
+
+      document.getElementById("presetDelete")?.addEventListener("click", () => {
+        const id = document.getElementById("presetSelect")?.value || "";
+        if(!id){ setStatus("Choose a preset first."); return; }
+        const list = loadPresets();
+        const next = list.filter(p => !(p && p.ns === PRESET_NAMESPACE && p.id === id));
+        if(next.length === list.length){ setStatus("Preset not found."); return; }
+        savePresets(next);
+        refreshPresetSelect();
+        document.getElementById("presetSelect").value = "";
+        setStatus("Preset deleted.");
+      });
+
+      document.getElementById("presetCopy")?.addEventListener("click", async () => {
+        const payload = JSON.stringify(loadPresets(), null, 2);
+        const ok = await copyText(payload);
+        if(ok) setStatus("Preset JSON copied.");
+        else{
+          const box = document.getElementById("presetImport");
+          if(box){
+            box.value = payload;
+            box.focus(); box.select();
+          }
+          setStatus("Could not copy automatically — JSON placed in the box to copy manually.");
+        }
+      });
+
+      document.getElementById("presetImportBtn")?.addEventListener("click", () => {
+        const raw = (document.getElementById("presetImport")?.value || "").trim();
+        if(!raw){ setStatus("Paste preset JSON first."); return; }
+        try{
+          const parsed = JSON.parse(raw);
+          const cleaned = sanitizePresetList(parsed);
+          if(!cleaned){ setStatus("That JSON doesn’t look like a preset list."); return; }
+          savePresets(cleaned);
+          refreshPresetSelect();
+          setStatus("Presets imported.");
+        }catch{
+          setStatus("Invalid JSON.");
+        }
+      });
+
+      /* ---------------------------
+         POPOVER OPEN/CLOSE (both panels)
+      ---------------------------- */
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+        themePanel.classList.remove("open");
+      });
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.toggle("open");
+        bgPanel.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        const bgOpen = bgPanel.classList.contains("open");
+        const thOpen = themePanel.classList.contains("open");
+
+        if(bgOpen){
+          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          if(!inside) bgPanel.classList.remove("open");
+        }
+        if(thOpen){
+          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if(!inside) themePanel.classList.remove("open");
+        }
+      });
+
+      /* ---------------------------
+         WEEK PLANNER (existing) - ✅ per-widget storage
+      ---------------------------- */
+      const STORAGE_PREFIX = "wk_plan_fixed_v2__" + WID + "__";
+      const weekKey = (ws) => STORAGE_PREFIX + isoKey(ws);
+      const defaultDay = () => ({ workout:"", plan:"", intensity:"moderate", done:false });
+
+      function loadWeek(ws){
+        let raw = null;
+        try{ raw = window.__WTP_APP__.get(weekKey(ws)); }catch{}
+        let data = {};
+        if(raw){
+          try { data = JSON.parse(raw) || {}; } catch { data = {}; }
+        }
+        for(let i=0;i<7;i++){
+          const d = new Date(ws.getTime() + i*MS_DAY);
+          const k = isoKey(d);
+          data[k] = { ...defaultDay(), ...(data[k] || {}) };
+        }
+        return data;
+      }
+      function saveWeek(ws, data){
+        try{ window.__WTP_APP__.set(weekKey(ws), JSON.stringify(data)); }catch{}
+      }
+
+      const daysEl = document.getElementById("days");
+      const weekMetaEl = document.getElementById("weekMeta");
+
+      const completedVal = document.getElementById("completedVal");
+      const plannedVal = document.getElementById("plannedVal");
+      const completedBar = document.getElementById("completedBar");
+      const plannedBar = document.getElementById("plannedBar");
+
+      const mixVal = document.getElementById("mixVal");
+      const mixList = document.getElementById("mixList");
+
+      const todayPill = document.getElementById("todayPill");
+      const todaySummary = document.getElementById("todaySummary");
+
+      const prevWeekBtn = document.getElementById("prevWeek");
+      const nextWeekBtn = document.getElementById("nextWeek");
+      const clearWeekBtn = document.getElementById("clearWeek");
+
+      let weekStart = startOfWeek(new Date());
+      let data = loadWeek(weekStart);
+
+      function clampPct(p){ return Math.max(0, Math.min(100, p)); }
+
+      function render(){
+        weekMetaEl.textContent = fmtRange(weekStart);
+        daysEl.innerHTML = "";
+
+        for(let i=0;i<7;i++){
+          const date = new Date(weekStart.getTime() + i*MS_DAY);
+          const key = isoKey(date);
+          const item = data[key];
+
+          const day = document.createElement("div");
+          day.className = "day";
+
+          const top = document.createElement("div");
+          top.className = "dayTop";
+
+          const dow = document.createElement("div");
+          dow.className = "dow";
+          dow.textContent = dowNames[i];
+
+          const dp = document.createElement("div");
+          dp.className = "datePill";
+          dp.textContent = fmtPill(date);
+
+          top.appendChild(dow);
+          top.appendChild(dp);
+          day.appendChild(top);
+
+          // workout
+          const wWrap = document.createElement("div");
+          const wLab = document.createElement("div");
+          wLab.className = "label";
+          wLab.textContent = "Workout";
+          const wInp = document.createElement("input");
+          wInp.className = "input";
+          wInp.type = "text";
+          wInp.placeholder = "e.g.";
+          wInp.value = item.workout;
+          wInp.addEventListener("input", () => {
+            data[key].workout = wInp.value;
+            saveWeek(weekStart, data);
+            updateSummary();
+          });
+          wWrap.appendChild(wLab);
+          wWrap.appendChild(wInp);
+          day.appendChild(wWrap);
+
+          // plan
+          const pWrap = document.createElement("div");
+          const pLab = document.createElement("div");
+          pLab.className = "label";
+          pLab.textContent = "Plan";
+
+          const pBox = document.createElement("div");
+          pBox.className = "planBox";
+
+          const nums = document.createElement("div");
+          nums.className = "planNums";
+
+          const pInp = document.createElement("input");
+          pInp.className = "planText";
+          pInp.type = "text";
+          pInp.placeholder = "Notes…";
+          pInp.value = item.plan;
+          pInp.addEventListener("input", () => {
+            data[key].plan = pInp.value;
+            saveWeek(weekStart, data);
+            updateSummary();
+          });
+
+          pBox.appendChild(nums);
+          pBox.appendChild(pInp);
+
+          pWrap.appendChild(pLab);
+          pWrap.appendChild(pBox);
+          day.appendChild(pWrap);
+
+          // intensity
+          const iWrap = document.createElement("div");
+          const iLab = document.createElement("div");
+          iLab.className = "label";
+          iLab.textContent = "Intensity";
+
+          const stack = document.createElement("div");
+          stack.className = "stack";
+
+          const opts = [
+            { id:"light", label:"Light" },
+            { id:"moderate", label:"Moderate" },
+            { id:"intense", label:"Intense" }
+          ];
+
+          opts.forEach(opt => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "chip";
+            b.textContent = opt.label;
+            b.dataset.active = String(item.intensity === opt.id);
+            b.addEventListener("click", () => {
+              data[key].intensity = opt.id;
+              Array.from(stack.querySelectorAll(".chip")).forEach(x => x.dataset.active = "false");
+              b.dataset.active = "true";
+              saveWeek(weekStart, data);
+              updateSummary();
+            });
+            stack.appendChild(b);
+          });
+
+          iWrap.appendChild(iLab);
+          iWrap.appendChild(stack);
+          day.appendChild(iWrap);
+
+          // done
+          const doneRow = document.createElement("div");
+          doneRow.className = "doneRow";
+
+          const doneLabel = document.createElement("div");
+          doneLabel.className = "doneLabel";
+          doneLabel.textContent = "Done";
+
+          const toggle = document.createElement("div");
+          toggle.className = "toggle";
+          toggle.dataset.on = String(!!item.done);
+          toggle.addEventListener("click", () => {
+            data[key].done = !data[key].done;
+            toggle.dataset.on = String(data[key].done);
+            saveWeek(weekStart, data);
+            updateSummary();
+          });
+
+          doneRow.appendChild(doneLabel);
+          doneRow.appendChild(toggle);
+          day.appendChild(doneRow);
+
+          daysEl.appendChild(day);
+        }
+
+        updateSummary();
+      }
+
+      function updateSummary(){
+        const keys = Object.keys(data);
+        const planned = keys.filter(k => (data[k].workout || "").trim().length > 0);
+        const completed = planned.filter(k => data[k].done);
+
+        plannedVal.textContent = planned.length;
+        completedVal.textContent = completed.length;
+
+        plannedBar.style.width = clampPct((planned.length / 7) * 100) + "%";
+        const denom = planned.length > 0 ? planned.length : 7;
+        completedBar.style.width = clampPct((completed.length / denom) * 100) + "%";
+
+        const mix = { light:0, moderate:0, intense:0 };
+        planned.forEach(k => {
+          const it = (data[k].intensity || "moderate");
+          if(mix[it] !== undefined) mix[it] += 1;
+        });
+
+        mixVal.textContent = planned.length ? `${mix.light}/${mix.moderate}/${mix.intense}` : "—";
+        mixList.innerHTML = `
+          <li>Light: ${mix.light}</li>
+          <li>Moderate: ${mix.moderate}</li>
+          <li>Intense: ${mix.intense}</li>
+        `;
+
+        const today = new Date();
+        const tk = isoKey(today);
+        todayPill.textContent = fmtPill(today);
+
+        const t = data[tk];
+        if(t && (t.workout || "").trim()){
+          const nice = (t.intensity || "moderate").replace(/^\w/, c => c.toUpperCase());
+          const done = t.done ? "Done" : "Planned";
+          const planSnippet = (t.plan || "").trim() ? ` · ${t.plan.trim()}` : "";
+          todaySummary.textContent = `${done}: ${t.workout} · ${nice}${planSnippet}`;
+        } else {
+          todaySummary.textContent = "No plan set for today yet.";
+        }
+      }
+
+      // Week nav
+      prevWeekBtn.addEventListener("click", () => {
+        weekStart = new Date(weekStart.getTime() - 7*MS_DAY);
+        data = loadWeek(weekStart);
+        render();
+      });
+      nextWeekBtn.addEventListener("click", () => {
+        weekStart = new Date(weekStart.getTime() + 7*MS_DAY);
+        data = loadWeek(weekStart);
+        render();
+      });
+      clearWeekBtn.addEventListener("click", () => {
+        try{ window.__WTP_APP__.remove(weekKey(weekStart)); }catch{}
+        data = loadWeek(weekStart);
+        render();
+      });
+
+      render();
+    });
+  </script>
+</body>
+</html>

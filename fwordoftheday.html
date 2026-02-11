@@ -8,7 +8,7 @@
 <style>
   :root{
     --bg: transparent;
-    --card: rgba(247,245,240,0.92);
+    --card: rgba(247,245,240,0.86); /* ✅ slightly less opaque so background shows more */
     --stroke:#e2dfd8;
     --ink:#2f2f2f;
     --muted:#7a7a7a;
@@ -18,6 +18,9 @@
     --board-tint:#efe7e1;
     --board-tint-a:0.12;
     --board-image:none;
+
+    /* ✅ NEW: controls background image visibility */
+    --board-image-a: 0.92;
   }
 
   *{ box-sizing:border-box; }
@@ -59,6 +62,7 @@
     z-index:0;
     pointer-events:none;
     filter: saturate(1.25) contrast(1.15) brightness(1.05);
+    opacity: var(--board-image-a); /* ✅ NEW */
   }
 
   .boardTint{
@@ -291,6 +295,12 @@
         <input id="bgStrength" type="range" min="0" max="70" value="12" />
       </div>
 
+      <!-- ✅ NEW -->
+      <div class="pRow">
+        <label for="bgImageA">Image visibility</label>
+        <input id="bgImageA" type="range" min="20" max="100" value="92" />
+      </div>
+
       <div class="pDiv"></div>
 
       <div class="pRow" style="align-items:flex-start;">
@@ -335,7 +345,7 @@
 
       <div class="pRow">
         <label for="tCardA">Card opacity</label>
-        <input id="tCardA" type="range" min="35" max="95" value="92" />
+        <input id="tCardA" type="range" min="35" max="95" value="86" />
       </div>
 
       <div class="pDiv"></div>
@@ -505,7 +515,6 @@
       if(!p) return;
       if(p !== except) p.classList.remove("open");
     });
-    // shrink back (optional)
     document.body.style.paddingBottom = "";
   }
 
@@ -515,17 +524,13 @@
     const r = btn.getBoundingClientRect();
     const pad = 10;
 
-    // position relative to shell (absolute panel inside shell)
     let top = (r.bottom - shellRect.top) + pad;
     let left = (r.right - shellRect.left) - panel.offsetWidth;
 
-    // clamp inside shell width (but allow overflow downward)
     left = Math.max(pad, Math.min(shell.clientWidth - panel.offsetWidth - pad, left));
-
     panel.style.left = left + "px";
     panel.style.top  = top + "px";
 
-    // ✅ grow document so panel bottom is never cut by iframe height
     requestAnimationFrame(()=>{
       const panelRect = panel.getBoundingClientRect();
       const need = Math.ceil(panelRect.bottom + 24);
@@ -562,20 +567,21 @@
 ========================= */
 (function(){
   const { hexToRgba, clamp, normHex, loadJSON, saveJSON } = window.__wotdUtils;
-  const BG_KEY = "word_of_day_bg_v2";
+  const BG_KEY = "word_of_day_bg_v3"; /* ✅ bumped key so new fields save cleanly */
 
   const boardTintEl = document.getElementById("boardTint");
   const bgColor = document.getElementById("bgColor");
   const bgStrength = document.getElementById("bgStrength");
+  const bgImageA = document.getElementById("bgImageA"); /* ✅ NEW */
   const bgImage = document.getElementById("bgImage");
   const bgRemove = document.getElementById("bgRemove");
   const bgApply = document.getElementById("bgApply");
   const bgReset = document.getElementById("bgReset");
   const bgDot = document.getElementById("bgDot");
 
-  if(!bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+  if(!bgColor || !bgStrength || !bgImageA || !bgImage || !bgRemove || !boardTintEl) return;
 
-  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageDataUrl:null };
+  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null };
   let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
 
   function setStatus(msg){
@@ -597,10 +603,12 @@
   function applyBgDraft(){
     const tint = normHex(bgDraft.tint, DEFAULT_BG.tint);
     const strength = clamp(bgDraft.strength, 0, 70) / 100;
+    const imageA = clamp(bgDraft.imageA ?? DEFAULT_BG.imageA, 20, 100) / 100;
 
     document.documentElement.style.setProperty("--board-tint", tint);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
     document.documentElement.style.setProperty("--board-image", bgDraft.imageDataUrl ? `url("${bgDraft.imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-image-a", String(imageA));
 
     boardTintEl.style.background = hexToRgba(tint, strength);
 
@@ -612,10 +620,12 @@
 
   bgColor.value = bgDraft.tint;
   bgStrength.value = String(bgDraft.strength);
+  bgImageA.value = String(bgDraft.imageA ?? DEFAULT_BG.imageA);
   applyBgDraft();
 
   bgColor.addEventListener("input", () => { bgDraft.tint = bgColor.value; applyBgDraft(); setStatus(""); });
   bgStrength.addEventListener("input", () => { bgDraft.strength = Number(bgStrength.value); applyBgDraft(); setStatus(""); });
+  bgImageA.addEventListener("input", () => { bgDraft.imageA = Number(bgImageA.value); applyBgDraft(); setStatus(""); });
 
   bgImage.addEventListener("change", async () => {
     const file = bgImage.files && bgImage.files[0];
@@ -639,6 +649,7 @@
     bgDraft = Object.assign({}, DEFAULT_BG);
     bgColor.value = DEFAULT_BG.tint;
     bgStrength.value = String(DEFAULT_BG.strength);
+    bgImageA.value = String(DEFAULT_BG.imageA);
     bgImage.value = "";
     applyBgDraft();
     setStatus("Background reset.");
@@ -653,10 +664,10 @@
   const $ = (id)=>document.getElementById(id);
 
   const THEME_KEY = "word_of_day_theme_v2";
-  const BG_KEY = "word_of_day_bg_v2";
+  const BG_KEY = "word_of_day_bg_v3";  /* ✅ match new BG key */
   const PRESETS_KEY = "widget_presets_v2";
 
-  const DEFAULTS = { bg:"#ffffff", ink:"#2f2f2f", muted:"#7a7a7a", stroke:"#e2dfd8", cardA:92 };
+  const DEFAULTS = { bg:"#ffffff", ink:"#2f2f2f", muted:"#7a7a7a", stroke:"#e2dfd8", cardA:86 };
 
   function setPresetStatus(msg){
     const el = $("presetStatus");
@@ -771,14 +782,18 @@
     saveJSON(THEME_KEY, themeDraft);
 
     const bgSaved = loadJSON(BG_KEY) || {};
-    const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageDataUrl:null }, bgSaved, (p.bg||{}));
+    const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null }, bgSaved, (p.bg||{}));
     saveJSON(BG_KEY, mergedBg);
 
+    // apply background immediately (including image visibility)
     const tint = normHex(mergedBg.tint, "#efe7e1");
     const strength = clamp(mergedBg.strength, 0, 70) / 100;
+    const imageA = clamp(mergedBg.imageA ?? 92, 20, 100) / 100;
+
     document.documentElement.style.setProperty("--board-tint", tint);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
     document.documentElement.style.setProperty("--board-image", mergedBg.imageDataUrl ? `url("${mergedBg.imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-image-a", String(imageA));
 
     const boardTintEl = document.getElementById("boardTint");
     if(boardTintEl) boardTintEl.style.background = hexToRgba(tint, strength);
@@ -789,11 +804,14 @@
       bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
     }
 
+    // sync bg panel inputs
     const bgColor = document.getElementById("bgColor");
     const bgStrength = document.getElementById("bgStrength");
+    const bgImageA = document.getElementById("bgImageA");
     const bgImage = document.getElementById("bgImage");
     if(bgColor) bgColor.value = tint;
     if(bgStrength) bgStrength.value = String(clamp(mergedBg.strength,0,70));
+    if(bgImageA) bgImageA.value = String(clamp(mergedBg.imageA ?? 92, 20, 100));
     if(bgImage) bgImage.value = "";
 
     setPresetStatus("Preset applied.");
@@ -805,7 +823,7 @@
     const name = (presetName.value || "").trim();
     if(!name){ setPresetStatus("Type a preset name first."); return; }
 
-    const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageDataUrl:null };
+    const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null };
     const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bg } };
 
     const list = loadPresets();

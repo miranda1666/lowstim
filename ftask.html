@@ -1,0 +1,1400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Energy-Based Task Picker</title>
+  <style>
+    :root{
+      /* ===== THEME TOKENS (editable via Theme panel) ===== */
+      --bg:#ffffff;
+
+      --card: rgba(255,255,255,0.58);
+
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      /* Board background controls */
+      --board-tint:#efe7e1;
+      --board-tint-a:0.12;   /* default lower so images aren’t muted */
+      --board-image:none;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background: var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{ max-width:980px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
+
+    /* Board */
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.01);
+      z-index:0;
+      pointer-events:none;
+
+      /* make image pop */
+      filter: saturate(1.25) contrast(1.15) brightness(1.05);
+    }
+
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+      background: rgba(0,0,0,0); /* set by JS */
+    }
+    .boardContent{ position:relative; z-index:2; }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    button, input, select{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.78);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button{ cursor:pointer; user-select:none; }
+    button.soft{ background: rgba(243,239,233,0.72); }
+    button.primary{ background: rgba(239,231,225,0.80); }
+    button:active{ transform:translateY(1px); }
+
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
+    .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
+    .kpi .box{
+      flex:1; min-width:200px;
+
+      background: rgba(255,255,255,0.70);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .num{ font-weight:750; font-size:16px; }
+    .kpi .lab{ font-size:12px; color:var(--muted); }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke);
+
+      background: rgba(255,255,255,0.72);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .tiny{ font-size:12px; color:var(--muted); }
+
+    .list{ display:flex; flex-direction:column; gap:8px; }
+    .item{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+
+      background: rgba(255,255,255,0.72);
+    }
+    .meta{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .meta b{
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .meta span{ font-size:12px; color:var(--muted); }
+    .right{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+    .tag{
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(243,239,233,0.72);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .smallbtn{ padding:8px 10px; border-radius:12px; }
+    .danger{ border-color:#efc2c2; }
+
+    /* Background / Theme panels */
+    .bgWrap{ position:relative; }
+    .bgBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+      cursor:pointer;
+    }
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+
+    .themeDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--ink);
+      box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
+    }
+
+    .panel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 320px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+
+      background: rgba(255,255,255,0.86);
+
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+
+      /* ✅ never cut off */
+      max-height: min(70vh, 560px);
+      overflow:auto;
+    }
+    .panel.open{ display:block; }
+
+    .panelTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+
+    .pRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .pRow label{ font-size:12px; color:var(--muted); }
+    .pRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .pRow input[type="range"]{ width: 160px; }
+    .pFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+
+    .miniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.90);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+      cursor:pointer;
+    }
+    .miniBtn:active{ transform: translateY(1px); }
+
+    .pDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+    .pHint{ font-size:11px; color:var(--muted); line-height:1.35; margin-top:8px; }
+
+    /* ✅ Presets UI */
+    .presetName{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color: var(--ink);
+      outline:none;
+    }
+    .presetSelect{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color: var(--ink);
+      outline:none;
+      height:38px;
+    }
+    .presetArea{
+      width:100%;
+      min-height: 92px;
+      resize: vertical;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      line-height:1.35;
+      color: var(--ink);
+      outline:none;
+    }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+      min-height: 16px;
+    }
+
+    /* Picker */
+    .picker{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .picked{
+      margin-top:10px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+
+      background: rgba(255,255,255,0.72);
+    }
+    .pickedTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .pickedTitle{
+      font-weight:750;
+      font-size:14px;
+      margin:0;
+      line-height:1.25;
+    }
+
+    /* Internal reset confirm */
+    .confirm{
+      margin-top:10px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+
+      background: rgba(255,255,255,0.72);
+    }
+    .confirmTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .confirmTitle{
+      margin:0;
+      font-weight:750;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    @media (max-width: 720px){
+      .kpi .box{ min-width:160px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Energy Task Picker</h1>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Energy task picker board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+          <div class="title">
+            <div>
+              <h2 style="margin:0;"></h2>
+            </div>
+
+            <div class="row" style="justify-content:flex-end; gap:10px;">
+              <!-- Background settings -->
+              <div class="bgWrap" id="bgWrap">
+                <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                  <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+                  <div class="panelTitle">Background</div>
+
+                  <div class="pRow">
+                    <label for="bgColor">Tint</label>
+                    <input id="bgColor" type="color" value="#efe7e1" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="bgStrength">Strength</label>
+                    <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                  </div>
+
+                  <div class="pDiv"></div>
+
+                  <div class="pRow" style="align-items:flex-start;">
+                    <label for="bgImage">Image</label>
+                    <input id="bgImage" class="pFile" type="file" accept="image/*" />
+                  </div>
+
+                  <div class="pRow">
+                    <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
+                  </div>
+
+                  <div class="pDiv"></div>
+
+                  <!-- ✅ Apply / Reset -->
+                  <button class="miniBtn" id="bgApply" type="button">Apply background</button>
+                  <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+                </div>
+              </div>
+
+              <!-- Theme settings -->
+              <div class="bgWrap" id="themeWrap">
+                <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                  <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+                  <div class="panelTitle">Theme</div>
+
+                  <div class="pRow">
+                    <label for="tBg">Page bg</label>
+                    <input id="tBg" type="color" value="#ffffff" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="tInk">Text</label>
+                    <input id="tInk" type="color" value="#2b2a28" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="tMuted">Muted</label>
+                    <input id="tMuted" type="color" value="#6a665f" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="tStroke">Borders</label>
+                    <input id="tStroke" type="color" value="#e9e4dd" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="tCardA">Card opacity</label>
+                    <input id="tCardA" type="range" min="35" max="95" value="58" />
+                  </div>
+
+                  <div class="pDiv"></div>
+
+                  <!-- ✅ Apply / Reset -->
+                  <button id="tApply" class="miniBtn" type="button">Apply theme</button>
+                  <button id="tReset" class="miniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+                  <div class="pDiv"></div>
+
+                  <!-- ✅ Presets (GLOBAL JSON shared across widgets) -->
+                  <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
+
+                  <input class="presetName" id="presetName" placeholder="Preset name">
+
+                  <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+                  <div class="pDiv"></div>
+
+                  <select class="presetSelect" id="presetSelect"></select>
+
+                  <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+                  <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+                  <div class="pDiv"></div>
+
+                  <button class="miniBtn" id="presetCopy" type="button">Copy preset JSON</button>
+
+                  <div class="pDiv"></div>
+
+                  <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+                  <button class="miniBtn" id="presetImportBtn" type="button" style="margin-top:8px;">Import presets</button>
+
+                  <div class="status" id="presetStatus" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Add task -->
+          <div class="row" aria-label="Add task">
+            <input id="taskText" style="flex:1; min-width:220px;" placeholder="Add a task…" />
+            <span class="pill">
+              Energy
+              <select id="taskEnergy">
+                <option value="low">Low</option>
+                <option value="mid" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </span>
+            <button id="addTask" class="primary" type="button">Add</button>
+            <button id="clearDone" class="soft" type="button">Clear done</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Picker -->
+          <div class="picker" aria-label="Energy picker">
+            <span class="pill">
+              My energy is
+              <select id="currentEnergy">
+                <option value="low">Low</option>
+                <option value="mid" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </span>
+
+            <button id="pickOne" type="button">Pick one for me</button>
+            <button id="shuffle" class="soft" type="button">Surprise me</button>
+            <button id="resetAll" class="danger" type="button">Reset</button>
+          </div>
+
+          <!-- Internal reset confirmation (hidden until needed) -->
+          <div id="resetConfirm" class="confirm" style="display:none;">
+            <div class="confirmTop">
+              <p class="confirmTitle">Reset all tasks?</p>
+              <span class="tiny">This can’t be undone.</span>
+            </div>
+            <div class="row">
+              <button id="resetYes" class="danger" type="button">Yes, reset</button>
+              <button id="resetNo" class="soft" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div id="pickedBox" class="picked" style="display:none;">
+            <div class="pickedTop">
+              <p id="pickedTitle" class="pickedTitle"></p>
+              <span id="pickedTag" class="tag"></span>
+            </div>
+            <div class="row">
+              <button id="markDone" class="primary" type="button">Mark done</button>
+              <button id="pickAnother" class="soft" type="button">Pick another</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- KPIs -->
+          <div class="kpi" aria-label="Summary">
+            <div class="box">
+              <div class="num" id="kTotal">—</div>
+              <div class="lab">Total tasks</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kTodo">—</div>
+              <div class="lab">Remaining</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kDone">—</div>
+              <div class="lab">Done</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- List -->
+          <div class="row" style="justify-content:space-between; align-items:flex-end;">
+            <div class="tiny">Tasks</div>
+            <span class="pill">
+              View
+              <select id="viewFilter">
+                <option value="all" selected>All</option>
+                <option value="todo">To do</option>
+                <option value="done">Done</option>
+              </select>
+            </span>
+          </div>
+
+          <div style="height:10px;"></div>
+          <div class="list" id="taskList"></div>
+
+          <div class="divider"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   Instance-safe storage + GLOBAL presets (same pattern)
+   - wid: per-widget unique id (URL ?wid=... or session fallback)
+   - per-widget keys include wid so widgets don't overwrite each other
+   - presets stored globally under widget_presets_v2
+========================================================= */
+(function(){
+  const mem = Object.create(null);
+
+  function canUseLocalStorage(){
+    try{
+      const k="__t__"+Math.random().toString(16).slice(2);
+      localStorage.setItem(k,"1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{ return false; }
+  }
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+    catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+    catch{ mem[key]=String(value); }
+  }
+  function storageRemove(key){
+    try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+    catch{ delete mem[key]; }
+  }
+
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function getWidgetId(){
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = (sp.get("wid") || "").trim();
+      if(wid) return wid;
+    }catch{}
+    try{
+      const cached = sessionStorage.getItem("etp_wid");
+      if(cached) return cached;
+    }catch{}
+    const fresh = uid();
+    try{ sessionStorage.setItem("etp_wid", fresh); }catch{}
+    return fresh;
+  }
+
+  window.__ETP_APP__ = { wid: getWidgetId(), get: storageGet, set: storageSet, remove: storageRemove };
+})();
+
+const WID = window.__ETP_APP__?.wid || "default";
+const PRESETS_KEY = "widget_presets_v2";
+
+/* =========================
+   Small utils
+========================= */
+(function(){
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function clamp(n,min,max){
+    n = Number(n);
+    if(!Number.isFinite(n)) return min;
+    return Math.max(min, Math.min(max, n));
+  }
+  function normHex(hex, fallback){
+    const s = String(hex||"").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+  }
+  function loadJSON(key){
+    try{
+      const raw = window.__ETP_APP__.get(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  }
+  function saveJSON(key, val){
+    try{ window.__ETP_APP__.set(key, JSON.stringify(val)); }catch{}
+  }
+  async function copyText(text){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch{}
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return !!ok;
+    }catch{ return false; }
+  }
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  window.__etpUtils = { hexToRgba, clamp, normHex, loadJSON, saveJSON, copyText, uid };
+})();
+
+/* =========================
+   Popovers (theme + bg) — mutually exclusive
+========================= */
+(function(){
+  const $ = (id)=>document.getElementById(id);
+
+  const themeBtn = $("themeBtn");
+  const themePanel = $("themePanel");
+  const bgBtn = $("bgBtn");
+  const bgPanel = $("bgPanel");
+
+  function closeAll(except){
+    [themePanel, bgPanel].forEach(p=>{
+      if(!p) return;
+      if(p !== except) p.classList.remove("open");
+    });
+  }
+
+  themeBtn?.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const open = !themePanel.classList.contains("open");
+    closeAll(open ? themePanel : null);
+    themePanel.classList.toggle("open", open);
+  });
+
+  bgBtn?.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const open = !bgPanel.classList.contains("open");
+    closeAll(open ? bgPanel : null);
+    bgPanel.classList.toggle("open", open);
+  });
+
+  document.addEventListener("click",(e)=>{
+    const inside =
+      e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
+      e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+    if(!inside) closeAll(null);
+  });
+})();
+
+/* =========================
+   Background (draft + apply + instance-safe)
+========================= */
+(function(){
+  const { hexToRgba, clamp, normHex, loadJSON, saveJSON } = window.__etpUtils;
+
+  const BG_KEY = "energy_task_picker_bg_v2__" + WID;
+
+  const boardTintEl = document.getElementById("boardTint");
+  const bgColor = document.getElementById("bgColor");
+  const bgStrength = document.getElementById("bgStrength");
+  const bgImage = document.getElementById("bgImage");
+  const bgRemove = document.getElementById("bgRemove");
+  const bgApply = document.getElementById("bgApply");
+  const bgReset = document.getElementById("bgReset");
+  const bgDot = document.getElementById("bgDot");
+
+  if(!bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+
+  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageDataUrl:null };
+  let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function applyBgDraft(){
+    const tint = normHex(bgDraft.tint, DEFAULT_BG.tint);
+    const strength = clamp(bgDraft.strength, 0, 70) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", bgDraft.imageDataUrl ? `url("${bgDraft.imageDataUrl}")` : "none");
+
+    boardTintEl.style.background = hexToRgba(tint, strength);
+
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+    }
+  }
+
+  // init inputs to draft (preview)
+  bgColor.value = bgDraft.tint;
+  bgStrength.value = String(bgDraft.strength);
+  applyBgDraft();
+
+  bgColor.addEventListener("input", () => {
+    bgDraft.tint = bgColor.value;
+    applyBgDraft();
+    setPresetStatus("");
+  });
+
+  bgStrength.addEventListener("input", () => {
+    bgDraft.strength = Number(bgStrength.value);
+    applyBgDraft();
+    setPresetStatus("");
+  });
+
+  bgImage.addEventListener("change", async () => {
+    const file = bgImage.files && bgImage.files[0];
+    if(!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    bgDraft.imageDataUrl = dataUrl;
+    applyBgDraft();
+    setPresetStatus("");
+  });
+
+  bgRemove.addEventListener("click", () => {
+    bgDraft.imageDataUrl = null;
+    bgImage.value = "";
+    applyBgDraft();
+    setPresetStatus("");
+  });
+
+  bgApply?.addEventListener("click", () => {
+    saveJSON(BG_KEY, bgDraft);
+    setPresetStatus("Background applied.");
+  });
+
+  bgReset?.addEventListener("click", () => {
+    window.__ETP_APP__.remove(BG_KEY);
+    bgDraft = Object.assign({}, DEFAULT_BG);
+    bgColor.value = DEFAULT_BG.tint;
+    bgStrength.value = String(DEFAULT_BG.strength);
+    bgImage.value = "";
+    applyBgDraft();
+    setPresetStatus("Background reset.");
+  });
+
+  function setPresetStatus(msg){
+    const el = document.getElementById("presetStatus");
+    if(el) el.textContent = msg || "";
+  }
+})();
+
+/* =========================
+   Theme (draft + apply + instance-safe) + Presets (GLOBAL)
+========================= */
+(function(){
+  const { hexToRgba, clamp, normHex, loadJSON, saveJSON, copyText, uid } = window.__etpUtils;
+  const $ = (id)=>document.getElementById(id);
+
+  const THEME_KEY = "energy_task_picker_theme_v2__" + WID;
+
+  const DEFAULTS = {
+    bg: "#ffffff",
+    ink: "#2b2a28",
+    muted: "#6a665f",
+    stroke: "#e9e4dd",
+    cardA: 58 // %
+  };
+
+  function setPresetStatus(msg){
+    const el = $("presetStatus");
+    if(el) el.textContent = msg || "";
+  }
+
+  function applyTheme(t){
+    const theme = Object.assign({}, DEFAULTS, t || {});
+
+    const bg = normHex(theme.bg, DEFAULTS.bg);
+    const ink = normHex(theme.ink, DEFAULTS.ink);
+    const muted = normHex(theme.muted, DEFAULTS.muted);
+    const stroke = normHex(theme.stroke, DEFAULTS.stroke);
+    const cardA = clamp(theme.cardA, 35, 95);
+
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.setProperty("--ink", ink);
+    document.documentElement.style.setProperty("--muted", muted);
+    document.documentElement.style.setProperty("--stroke", stroke);
+    document.documentElement.style.setProperty("--card", `rgba(255,255,255,${cardA/100})`);
+
+    const themeDot = $("themeDot");
+    if(themeDot){
+      themeDot.style.background = ink;
+      themeDot.style.boxShadow = `0 0 0 6px rgba(243,239,233,${Math.min(0.32, 0.10 + (cardA/300))})`;
+    }
+  }
+
+  function syncInputs(t){
+    const x = Object.assign({}, DEFAULTS, t || {});
+    $("tBg").value = normHex(x.bg, DEFAULTS.bg);
+    $("tInk").value = normHex(x.ink, DEFAULTS.ink);
+    $("tMuted").value = normHex(x.muted, DEFAULTS.muted);
+    $("tStroke").value = normHex(x.stroke, DEFAULTS.stroke);
+    $("tCardA").value = String(clamp(x.cardA,35,95));
+  }
+
+  function readInputs(){
+    return {
+      bg: $("tBg").value,
+      ink: $("tInk").value,
+      muted: $("tMuted").value,
+      stroke: $("tStroke").value,
+      cardA: Number($("tCardA").value)
+    };
+  }
+
+  let themeDraft = Object.assign({}, DEFAULTS, loadJSON(THEME_KEY) || {});
+  applyTheme(themeDraft);
+  syncInputs(themeDraft);
+
+  ["tBg","tInk","tMuted","tStroke","tCardA"].forEach(id=>{
+    const el = $(id);
+    el?.addEventListener("input", ()=>{
+      themeDraft = Object.assign({}, themeDraft, readInputs());
+      applyTheme(themeDraft);
+      setPresetStatus("");
+    });
+  });
+
+  $("tApply")?.addEventListener("click", ()=>{
+    themeDraft = Object.assign({}, themeDraft, readInputs());
+    saveJSON(THEME_KEY, themeDraft);
+    setPresetStatus("Theme applied.");
+  });
+
+  $("tReset")?.addEventListener("click", ()=>{
+    window.__ETP_APP__.remove(THEME_KEY);
+    themeDraft = Object.assign({}, DEFAULTS);
+    applyTheme(themeDraft);
+    syncInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+    setPresetStatus("Theme reset.");
+  });
+
+  /* -------------------------
+     GLOBAL Presets
+     Schema: [{id,name, theme:{...}, bg:{...}}]
+  -------------------------- */
+  const presetName = $("presetName");
+  const presetSelect = $("presetSelect");
+  const presetSave = $("presetSave");
+  const presetApply = $("presetApply");
+  const presetDelete = $("presetDelete");
+  const presetCopy = $("presetCopy");
+  const presetImport = $("presetImport");
+  const presetImportBtn = $("presetImportBtn");
+
+  function loadPresets(){
+    const list = loadJSON(PRESETS_KEY);
+    return Array.isArray(list) ? list : [];
+  }
+  function savePresets(list){
+    saveJSON(PRESETS_KEY, list);
+  }
+  function refreshPresetSelect(){
+    const list = loadPresets();
+    const cur = presetSelect.value;
+    presetSelect.innerHTML = `<option value="">—</option>`;
+    for(const p of list){
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled";
+      presetSelect.appendChild(opt);
+    }
+    if(cur) presetSelect.value = cur;
+  }
+  function sanitizePresetList(parsed){
+    if(!Array.isArray(parsed)) return null;
+    return parsed.filter(Boolean).map(p => ({
+      id: String(p.id || uid()),
+      name: String(p.name || "Imported"),
+      theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
+      bg: (p.bg && typeof p.bg === "object") ? p.bg : {}
+    }));
+  }
+
+  function applyPreset(p){
+    // theme
+    themeDraft = Object.assign({}, themeDraft, p.theme || {});
+    applyTheme(themeDraft);
+    syncInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+
+    // bg
+    const BG_KEY = "energy_task_picker_bg_v2__" + WID;
+    const bgSaved = loadJSON(BG_KEY) || {};
+    const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageDataUrl:null }, bgSaved, (p.bg||{}));
+    saveJSON(BG_KEY, mergedBg);
+
+    // apply bg immediately + sync bg inputs
+    const tint = normHex(mergedBg.tint, "#efe7e1");
+    const strength = clamp(mergedBg.strength, 0, 70) / 100;
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", mergedBg.imageDataUrl ? `url("${mergedBg.imageDataUrl}")` : "none");
+
+    const boardTintEl = document.getElementById("boardTint");
+    boardTintEl.style.background = hexToRgba(tint, strength);
+
+    const bgDot = document.getElementById("bgDot");
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+    }
+
+    const bgColor = document.getElementById("bgColor");
+    const bgStrength = document.getElementById("bgStrength");
+    const bgImage = document.getElementById("bgImage");
+    if(bgColor) bgColor.value = tint;
+    if(bgStrength) bgStrength.value = String(clamp(mergedBg.strength,0,70));
+    if(bgImage) bgImage.value = "";
+
+    setPresetStatus("Preset applied.");
+  }
+
+  refreshPresetSelect();
+
+  presetSave?.addEventListener("click", ()=>{
+    const name = (presetName.value || "").trim();
+    if(!name){ setPresetStatus("Type a preset name first."); return; }
+
+    const BG_KEY = "energy_task_picker_bg_v2__" + WID;
+    const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageDataUrl:null };
+
+    const entry = {
+      id: uid(),
+      name,
+      theme: { ...themeDraft },
+      bg: { ...bg }
+    };
+
+    const list = loadPresets();
+    list.unshift(entry);
+    savePresets(list);
+
+    presetName.value = "";
+    refreshPresetSelect();
+    presetSelect.value = entry.id;
+    setPresetStatus("Preset saved.");
+  });
+
+  presetApply?.addEventListener("click", ()=>{
+    const id = presetSelect.value || "";
+    if(!id){ setPresetStatus("Choose a preset first."); return; }
+    const p = loadPresets().find(x=>x.id===id);
+    if(!p){ setPresetStatus("Preset not found."); return; }
+    applyPreset(p);
+  });
+
+  presetDelete?.addEventListener("click", ()=>{
+    const id = presetSelect.value || "";
+    if(!id){ setPresetStatus("Choose a preset first."); return; }
+    let list = loadPresets();
+    const before = list.length;
+    list = list.filter(x=>x.id!==id);
+    if(list.length===before){ setPresetStatus("Preset not found."); return; }
+    savePresets(list);
+    refreshPresetSelect();
+    presetSelect.value = "";
+    setPresetStatus("Preset deleted.");
+  });
+
+  presetCopy?.addEventListener("click", async ()=>{
+    const payload = JSON.stringify(loadPresets(), null, 2);
+    const ok = await copyText(payload);
+    if(ok) setPresetStatus("Preset JSON copied.");
+    else{
+      presetImport.value = payload;
+      presetImport.focus(); presetImport.select();
+      setPresetStatus("Could not copy automatically — JSON placed in the box to copy manually.");
+    }
+  });
+
+  presetImportBtn?.addEventListener("click", ()=>{
+    const raw = (presetImport.value || "").trim();
+    if(!raw){ setPresetStatus("Paste preset JSON first."); return; }
+    try{
+      const parsed = JSON.parse(raw);
+      const cleaned = sanitizePresetList(parsed);
+      if(!cleaned){ setPresetStatus("That JSON doesn’t look like a preset list."); return; }
+      savePresets(cleaned);
+      refreshPresetSelect();
+      setPresetStatus("Presets imported.");
+    }catch{
+      setPresetStatus("Invalid JSON.");
+    }
+  });
+})();
+
+/* --------------------------
+   Energy task picker module (instance-safe)
+--------------------------- */
+(function(){
+  const KEY = "energy_task_picker_v3__" + WID;
+  const $ = (id)=>document.getElementById(id);
+
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+
+  function defaultState(){
+    return {
+      tasks: [],
+      ui: { energy:"mid", view:"all" },
+      pickedId: null
+    };
+  }
+
+  function load(){
+    try{
+      const raw = window.__ETP_APP__.get(KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw) || {};
+      const base = defaultState();
+      base.tasks = Array.isArray(parsed.tasks) ? parsed.tasks : base.tasks;
+      base.ui = {
+        energy: parsed?.ui?.energy || "mid",
+        view: parsed?.ui?.view || "all"
+      };
+      base.pickedId = parsed?.pickedId || null;
+      return base;
+    }catch{
+      return defaultState();
+    }
+  }
+
+  let state = load();
+
+  function save(){
+    try{ window.__ETP_APP__.set(KEY, JSON.stringify(state)); }catch{}
+  }
+
+  function energyLabel(e){
+    if(e === "low") return "Low";
+    if(e === "high") return "High";
+    return "Medium";
+  }
+
+  function pickFrom(list){
+    if(!list.length) return null;
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function filteredTasks(){
+    let list = [...state.tasks];
+
+    if(state.ui.view === "todo") list = list.filter(t => !t.done);
+    if(state.ui.view === "done") list = list.filter(t => t.done);
+
+    const order = { low: 0, mid: 1, high: 2 };
+    list.sort((a,b) => {
+      if(a.done !== b.done) return a.done ? 1 : -1;
+      if(a.energy !== b.energy) return (order[a.energy] ?? 9) - (order[b.energy] ?? 9);
+      return (b.createdAt||0) - (a.createdAt||0);
+    });
+
+    return list;
+  }
+
+  function renderKPIs(){
+    const total = state.tasks.length;
+    const done = state.tasks.filter(t => t.done).length;
+    const todo = total - done;
+
+    $("kTotal").textContent = String(total);
+    $("kTodo").textContent  = String(todo);
+    $("kDone").textContent  = String(done);
+  }
+
+  function renderPicked(){
+    const box = $("pickedBox");
+    const title = $("pickedTitle");
+    const tag = $("pickedTag");
+    const picked = state.tasks.find(t => t.id === state.pickedId) || null;
+
+    if(!picked){
+      box.style.display = "none";
+      return;
+    }
+
+    box.style.display = "block";
+    title.textContent = picked.text + (picked.done ? " (done)" : "");
+    tag.textContent = energyLabel(picked.energy);
+    tag.className = "tag";
+  }
+
+  function renderList(){
+    const root = $("taskList");
+    const list = filteredTasks();
+    root.innerHTML = "";
+
+    if(list.length === 0){
+      root.innerHTML = `<div class="tiny">No tasks yet. Add one above.</div>`;
+      return;
+    }
+
+    for(const t of list){
+      const el = document.createElement("div");
+      el.className = "item";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const b = document.createElement("b");
+      b.textContent = t.text;
+      if(t.done){
+        b.style.textDecoration = "line-through";
+        b.style.opacity = "0.72";
+      }
+
+      const s = document.createElement("span");
+      s.textContent = `${energyLabel(t.energy)} energy · ${t.done ? "done" : "to do"}`;
+
+      meta.appendChild(b);
+      meta.appendChild(s);
+
+      const right = document.createElement("div");
+      right.className = "right";
+
+      const energyTag = document.createElement("span");
+      energyTag.className = "tag";
+      energyTag.textContent = energyLabel(t.energy);
+
+      const doneBtn = document.createElement("button");
+      doneBtn.type = "button";
+      doneBtn.className = "smallbtn";
+      doneBtn.textContent = t.done ? "Undo" : "Done";
+      doneBtn.addEventListener("click", () => {
+        t.done = !t.done;
+        save();
+        renderAll();
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "smallbtn danger";
+      delBtn.textContent = "✕";
+      delBtn.title = "Remove";
+      delBtn.addEventListener("click", () => {
+        state.tasks = state.tasks.filter(x => x.id !== t.id);
+        if(state.pickedId === t.id) state.pickedId = null;
+        save();
+        renderAll();
+      });
+
+      right.appendChild(energyTag);
+      right.appendChild(doneBtn);
+      right.appendChild(delBtn);
+
+      el.appendChild(meta);
+      el.appendChild(right);
+      root.appendChild(el);
+    }
+  }
+
+  function renderAll(){
+    $("currentEnergy").value = state.ui.energy;
+    $("viewFilter").value = state.ui.view;
+    renderKPIs();
+    renderPicked();
+    renderList();
+    save();
+  }
+
+  function addTask(){
+    const text = ($("taskText").value || "").trim();
+    if(!text) return;
+
+    const energy = $("taskEnergy").value || "mid";
+    state.tasks.unshift({
+      id: uid(),
+      text,
+      energy,
+      done:false,
+      createdAt: Date.now()
+    });
+
+    $("taskText").value = "";
+    $("taskText").focus();
+    renderAll();
+  }
+
+  function pickOne(forcedEnergy){
+    const energy = forcedEnergy || state.ui.energy;
+    const candidates = state.tasks.filter(t => !t.done && t.energy === energy);
+
+    const fallback = state.tasks.filter(t => !t.done);
+    const chosen = pickFrom(candidates.length ? candidates : fallback);
+
+    state.pickedId = chosen ? chosen.id : null;
+    renderAll();
+  }
+
+  function init(){
+    const requiredIds = ["taskText","taskEnergy","addTask","clearDone","currentEnergy","pickOne","shuffle","resetAll","pickedBox","pickedTitle","pickedTag","markDone","pickAnother","kTotal","kTodo","kDone","viewFilter","taskList","resetConfirm","resetYes","resetNo"];
+    for(const id of requiredIds){
+      if(!$(id)) return;
+    }
+
+    const resetConfirm = $("resetConfirm");
+    const resetYes = $("resetYes");
+    const resetNo = $("resetNo");
+
+    function hideResetConfirm(){
+      resetConfirm.style.display = "none";
+    }
+    function showResetConfirm(){
+      resetConfirm.style.display = "block";
+      // close panels if open
+      const bgPanel = document.getElementById("bgPanel");
+      const themePanel = document.getElementById("themePanel");
+      if(bgPanel) bgPanel.classList.remove("open");
+      if(themePanel) themePanel.classList.remove("open");
+    }
+
+    $("addTask").addEventListener("click", addTask);
+    $("taskText").addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){ e.preventDefault(); addTask(); }
+    });
+
+    $("currentEnergy").addEventListener("change", () => {
+      state.ui.energy = $("currentEnergy").value;
+      renderAll();
+    });
+
+    $("viewFilter").addEventListener("change", () => {
+      state.ui.view = $("viewFilter").value;
+      renderAll();
+    });
+
+    $("pickOne").addEventListener("click", () => pickOne());
+
+    $("shuffle").addEventListener("click", () => {
+      const energies = ["low","mid","high"];
+      const forced = energies[Math.floor(Math.random()*energies.length)];
+      state.ui.energy = forced;
+      pickOne(forced);
+    });
+
+    $("pickAnother").addEventListener("click", () => pickOne());
+
+    $("markDone").addEventListener("click", () => {
+      const picked = state.tasks.find(t => t.id === state.pickedId);
+      if(!picked) return;
+      picked.done = true;
+
+      const e = picked.energy;
+      state.pickedId = null;
+      save();
+      renderAll();
+      pickOne(e);
+    });
+
+    $("clearDone").addEventListener("click", () => {
+      state.tasks = state.tasks.filter(t => !t.done);
+      if(state.pickedId && !state.tasks.find(t => t.id === state.pickedId)) state.pickedId = null;
+      save();
+      renderAll();
+    });
+
+    $("resetAll").addEventListener("click", () => {
+      if(resetConfirm.style.display === "block"){
+        hideResetConfirm();
+      }else{
+        showResetConfirm();
+      }
+    });
+
+    resetNo.addEventListener("click", hideResetConfirm);
+
+    resetYes.addEventListener("click", () => {
+      window.__ETP_APP__.remove(KEY);
+      state = defaultState();
+      save();
+      hideResetConfirm();
+      renderAll();
+    });
+
+    renderAll();
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
+})();
+</script>
+</body>
+</html>

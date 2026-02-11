@@ -19,7 +19,7 @@
     --board-tint-a:0.12;
     --board-image:none;
 
-    /* ✅ controls background image visibility */
+    /* controls background image visibility */
     --board-image-a: 0.92;
 
     /* link chips */
@@ -39,14 +39,12 @@
     color: var(--ink);
   }
 
-  /* Outer shell must NOT clip popovers */
   .widgetShell{
     position: relative;
-    max-width: 380px; /* ~ 1/3 notion page */
+    max-width: 380px;
     overflow: visible;
   }
 
-  /* Inner layer handles rounded corners + background clip */
   .boardClip{
     position:relative;
     border-radius: var(--r);
@@ -118,7 +116,6 @@
     line-height: 1.3;
   }
 
-  /* Buttons */
   .settingsWrap{ position:relative; }
   .settingsBtn{
     width:34px; height:34px;
@@ -157,7 +154,6 @@
     box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
   }
 
-  /* Panels */
   .panel{
     position:absolute;
     width: 320px;
@@ -233,7 +229,6 @@
     min-height: 16px;
   }
 
-  /* Inputs */
   .textInput, .selectInput, .presetName, .presetSelect, .presetArea{
     width:100%;
     border:1px solid var(--stroke);
@@ -254,7 +249,6 @@
     overflow: auto;
   }
 
-  /* Display */
   .groups{
     display:flex;
     flex-direction:column;
@@ -368,7 +362,6 @@
     gap: 10px;
   }
 
-  /* Manage list */
   .manageBlock{
     border:1px solid var(--stroke);
     background: rgba(255,255,255,0.92);
@@ -394,7 +387,6 @@
     margin:0;
   }
 
-  /* ✅ IMPORTANT: button styles (so Delete is visible) */
   .rowBtns{
     display:flex;
     gap:8px;
@@ -463,6 +455,14 @@
     overflow:hidden;
     text-overflow: ellipsis;
     max-width: 160px;
+  }
+
+  /* ✅ inline modal (replaces prompt/confirm which are blocked in many Notion iframes) */
+  .inlineModal{
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.92);
+    border-radius: 12px;
+    padding: 10px;
   }
 </style>
 </head>
@@ -620,6 +620,19 @@
 
       <button id="saveLinkBtn" class="miniBtn" type="button" style="margin-top:10px;">Save link</button>
       <button id="clearLinkFormBtn" class="miniBtn" type="button" style="margin-top:8px;">Clear form</button>
+
+      <div class="pDiv"></div>
+
+      <!-- ✅ NEW: inline modal UI (replaces prompt/confirm) -->
+      <div id="inlineModal" class="inlineModal" style="display:none;">
+        <div class="panelTitle" id="inlineModalTitle" style="margin:0 0 10px 0;">Edit</div>
+        <input id="inlineModalInput" class="textInput" placeholder="Type here…" />
+        <div class="twoCol" style="margin-top:10px;">
+          <button id="inlineModalOk" class="miniBtn" type="button">OK</button>
+          <button id="inlineModalCancel" class="miniBtn danger" type="button">Cancel</button>
+        </div>
+        <div class="status" id="inlineModalHint" aria-live="polite"></div>
+      </div>
 
       <div class="pDiv"></div>
 
@@ -793,6 +806,7 @@
 
 /* =========================
    Panel positioning + "grow page" so iframe doesn't cut it off
+   ✅ FIX: stopPropagation so clicks inside panels don't trigger outside-close
 ========================= */
 (function(){
   const shell = document.getElementById("widgetShell");
@@ -802,6 +816,12 @@
   const themePanel = document.getElementById("themePanel");
   const manageBtn = document.getElementById("manageBtn");
   const managePanel = document.getElementById("managePanel");
+
+  // ✅ Prevent inside clicks from triggering the document click closer
+  [bgPanel, themePanel, managePanel].forEach(p=>{
+    p?.addEventListener("click", (e)=> e.stopPropagation());
+    p?.addEventListener("pointerdown", (e)=> e.stopPropagation());
+  });
 
   function closeAll(except){
     [bgPanel, themePanel, managePanel].forEach(p=>{
@@ -1172,12 +1192,19 @@
 
 /* =========================
    Quick Links data + UI
+   ✅ FIXES:
+   - replaces prompt/confirm with inline modal (Notion often blocks modals)
+   - adds safer deep-clone fallback
+   - fixes reset confirmation (also used to be confirm)
 ========================= */
 (function(){
   const { loadJSON, saveJSON, uid, safeUrl, hostFromUrl, fileToDataUrl, copyText } = window.__qlUtils;
   const LINKS_KEY = "quick_links_data_v2";
 
   const $ = (id)=>document.getElementById(id);
+  const deepClone = (obj)=>{
+    try{ return structuredClone(obj); }catch{ return JSON.parse(JSON.stringify(obj)); }
+  };
 
   const groupsEl = $("groups");
   const emptyEl  = $("emptyState");
@@ -1202,14 +1229,22 @@
   const importBtn = $("importBtn");
   const resetLinksBtn = $("resetLinksBtn");
 
+  // ✅ inline modal elements
+  const inlineModal = $("inlineModal");
+  const inlineModalTitle = $("inlineModalTitle");
+  const inlineModalInput = $("inlineModalInput");
+  const inlineModalOk = $("inlineModalOk");
+  const inlineModalCancel = $("inlineModalCancel");
+  const inlineModalHint = $("inlineModalHint");
+
   let editing = { linkId: null };
 
   const DEFAULT_DATA = { groups: [] };
 
   function loadData(){
     const d = loadJSON(LINKS_KEY);
-    if(!d || typeof d !== "object") return structuredClone(DEFAULT_DATA);
-    if(!Array.isArray(d.groups)) return structuredClone(DEFAULT_DATA);
+    if(!d || typeof d !== "object") return deepClone(DEFAULT_DATA);
+    if(!Array.isArray(d.groups)) return deepClone(DEFAULT_DATA);
     return d;
   }
   function saveData(d){ saveJSON(LINKS_KEY, d); }
@@ -1218,7 +1253,47 @@
     if(manageStatus) manageStatus.textContent = msg || "";
   }
 
+  // ✅ Inline modal replaces prompt/confirm (blocked in many Notion iframes)
+  function askInline({ title, value="", placeholder="", okText="OK", hint="" }){
+    return new Promise((resolve)=>{
+      if(!inlineModal) return resolve(null);
+
+      inlineModalTitle.textContent = title || "Edit";
+      inlineModalInput.value = value || "";
+      inlineModalInput.placeholder = placeholder || "";
+      inlineModalOk.textContent = okText || "OK";
+      if(inlineModalHint) inlineModalHint.textContent = hint || "";
+
+      inlineModal.style.display = "block";
+      setTimeout(()=> inlineModalInput.focus(), 0);
+
+      const cleanup = ()=>{
+        inlineModal.style.display = "none";
+        inlineModalOk.onclick = null;
+        inlineModalCancel.onclick = null;
+        document.removeEventListener("keydown", onKey);
+      };
+
+      const onKey = (e)=>{
+        if(e.key === "Escape"){ cleanup(); resolve(null); }
+        if(e.key === "Enter"){ inlineModalOk.click(); }
+      };
+      document.addEventListener("keydown", onKey);
+
+      inlineModalOk.onclick = ()=>{
+        const v = String(inlineModalInput.value || "");
+        cleanup();
+        resolve(v);
+      };
+      inlineModalCancel.onclick = ()=>{
+        cleanup();
+        resolve(null);
+      };
+    });
+  }
+
   function ensureGroupOptions(d){
+    if(!linkGroup) return;
     linkGroup.innerHTML = "";
     if(d.groups.length === 0){
       const opt = document.createElement("option");
@@ -1359,8 +1434,13 @@
       renameBtn.className = "tinyBtn";
       renameBtn.type = "button";
       renameBtn.textContent = "Rename";
-      renameBtn.addEventListener("click", ()=>{
-        const next = prompt("Rename group:", g.name || "");
+      renameBtn.addEventListener("click", async ()=>{
+        const next = await askInline({
+          title: "Rename group",
+          value: g.name || "",
+          placeholder: "e.g. Work",
+          okText: "Rename"
+        });
         if(next === null) return;
         g.name = String(next).trim() || "Untitled";
         saveData(d);
@@ -1368,16 +1448,20 @@
         setManageStatus("Group renamed.");
       });
 
-      /* ✅ DELETE GROUP (works + safe) */
       const delBtn = document.createElement("button");
       delBtn.className = "tinyBtn danger";
       delBtn.type = "button";
       delBtn.textContent = "Delete";
-      delBtn.addEventListener("click", ()=>{
-        const ok = confirm(`Delete group "${g.name || "Untitled"}" and all its links?`);
-        if(!ok) return;
+      delBtn.addEventListener("click", async ()=>{
+        const typed = await askInline({
+          title: `Type DELETE to remove "${g.name || "Untitled"}"`,
+          value: "",
+          placeholder: "DELETE",
+          okText: "Delete",
+          hint: "This deletes the group and all its links."
+        });
+        if(String(typed).trim().toUpperCase() !== "DELETE") return;
 
-        // if you were editing a link from this group, clear the form
         if(editing.linkId){
           const wasEditingHere = (g.links || []).some(l => l.id === editing.linkId);
           if(wasEditingHere) clearForm();
@@ -1469,9 +1553,15 @@
           delBtn.className = "tinyBtn danger";
           delBtn.type = "button";
           delBtn.textContent = "Remove";
-          delBtn.addEventListener("click", ()=>{
-            const ok = confirm(`Remove "${l.title || "this link"}"?`);
-            if(!ok) return;
+          delBtn.addEventListener("click", async ()=>{
+            const typed = await askInline({
+              title: `Type REMOVE to delete "${l.title || "this link"}"`,
+              value: "",
+              placeholder: "REMOVE",
+              okText: "Remove"
+            });
+            if(String(typed).trim().toUpperCase() !== "REMOVE") return;
+
             g.links = (g.links || []).filter(x=>x.id!==l.id);
             saveData(d);
             syncAll();
@@ -1516,9 +1606,7 @@
     setManageStatus("Group added.");
   });
 
-  clearLinkFormBtn.addEventListener("click", ()=>{
-    clearForm();
-  });
+  clearLinkFormBtn.addEventListener("click", ()=>{ clearForm(); });
 
   saveLinkBtn.addEventListener("click", async ()=>{
     const d = loadData();
@@ -1548,26 +1636,22 @@
     }
 
     if(editing.linkId){
-      // update existing (find anywhere)
       for(const gg of d.groups){
         const idx = (gg.links || []).findIndex(x=>x.id===editing.linkId);
         if(idx !== -1){
           const prev = gg.links[idx];
 
-          // if moved group, remove from old & add to new
           if(gg.id !== g.id){
             gg.links.splice(idx,1);
             g.links = g.links || [];
             g.links.unshift(prev);
           }
 
-          // update fields
           const target = (g.links || []).find(x=>x.id===editing.linkId) || prev;
           target.title = title;
           target.emoji = emoji;
           target.url = url;
 
-          // only replace icon image if user selected a new file
           if(iconImageDataUrl){
             target.iconImageDataUrl = iconImageDataUrl;
           }
@@ -1584,7 +1668,6 @@
       return;
     }
 
-    // create new
     const link = {
       id: uid(),
       title,
@@ -1647,9 +1730,17 @@
     }
   });
 
-  resetLinksBtn.addEventListener("click", ()=>{
-    const ok = confirm("Reset all groups and links? This cannot be undone.");
-    if(!ok) return;
+  // ✅ reset confirmation fixed (was confirm())
+  resetLinksBtn.addEventListener("click", async ()=>{
+    const typed = await askInline({
+      title: "Type RESET to clear all groups and links",
+      value: "",
+      placeholder: "RESET",
+      okText: "Reset",
+      hint: "This cannot be undone."
+    });
+    if(String(typed).trim().toUpperCase() !== "RESET") return;
+
     window.__QL_APP__.remove(LINKS_KEY);
     clearForm();
     syncAll();

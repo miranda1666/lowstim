@@ -8,7 +8,7 @@
 <style>
   :root{
     /* ===== THEME TOKENS (editable via Theme panel) ===== */
-    --bg: transparent;                 /* Notion-friendly default */
+    --bg: transparent;
     --card: rgba(247,245,240,0.92);
     --stroke:#e2dfd8;
     --ink:#2f2f2f;
@@ -24,6 +24,11 @@
 
   *{ box-sizing:border-box; }
 
+  /* ✅ IMPORTANT: allow popovers to extend beyond embed box */
+  html, body{
+    overflow: visible;
+  }
+
   body{
     margin:0;
     padding:18px;
@@ -36,10 +41,17 @@
   .widgetBoard{
     position:relative;
     border-radius: var(--r);
-    overflow:hidden;
+    overflow:hidden; /* keep background neat */
     border:1px solid var(--stroke);
     box-shadow: var(--shadow);
     max-width: 380px;
+  }
+
+  /* ✅ allow panels to escape the board (so they don’t get cut off) */
+  .boardContent{
+    position:relative;
+    z-index:2;
+    overflow: visible;
   }
 
   .widgetBoard::before{
@@ -61,10 +73,10 @@
     inset:0;
     pointer-events:none;
     z-index:1;
-    background: rgba(0,0,0,0); /* set by JS */
+    background: rgba(0,0,0,0);
   }
-  .boardContent{ position:relative; z-index:2; }
 
+  /* ✅ card stays clipped by board; panels live above it */
   .card{
     background: var(--card);
     border:0;
@@ -157,10 +169,9 @@
     box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
   }
 
+  /* ✅ Popover panel: fixed-position so it never gets cut off by widget bounds */
   .panel{
-    position:absolute;
-    top: 44px;
-    right: 0;
+    position: fixed;
     width: 320px;
     border-radius: 16px;
     border: 1px solid var(--stroke);
@@ -170,17 +181,14 @@
     -webkit-backdrop-filter: blur(2px);
     padding: 12px;
     display:none;
-    z-index: 50;
+    z-index: 99999;
 
-    /* ✅ BOTH vertical + horizontal scrollbars if needed */
+    /* ✅ always scroll internally */
     max-height: min(70vh, 560px);
     overflow: auto;
+    overscroll-behavior: contain;
   }
   .panel.open{ display:block; }
-
-  /* Force scrollbars to be possible even if the browser is “smart” about it */
-  .panel{ overscroll-behavior: contain; }
-  .panel *{ max-width: 100%; }
 
   .panelTitle{
     margin:0 0 10px 0;
@@ -232,7 +240,7 @@
     min-height: 16px;
   }
 
-  /* ✅ Presets UI (copied from your reference) */
+  /* Presets UI */
   .presetName{
     width:100%;
     border:1px solid var(--stroke);
@@ -266,10 +274,7 @@
     line-height:1.35;
     color: var(--ink);
     outline:none;
-  }
 
-  /* Optional: make sure long JSON can force horizontal scroll if needed */
-  .presetArea{
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     white-space: pre;
     overflow: auto;
@@ -288,7 +293,7 @@
           <p class="label">Word of the Day</p>
 
           <div class="rightControls">
-            <!-- Background settings -->
+            <!-- Background -->
             <div class="settingsWrap" id="bgWrap">
               <button class="settingsBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
                 <span class="bgDot" id="bgDot" aria-hidden="true"></span>
@@ -327,7 +332,7 @@
               </div>
             </div>
 
-            <!-- Theme settings -->
+            <!-- Theme -->
             <div class="settingsWrap" id="themeWrap">
               <button class="settingsBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
                 <span class="themeDot" id="themeDot" aria-hidden="true"></span>
@@ -368,7 +373,6 @@
 
                 <div class="pDiv"></div>
 
-                <!-- ✅ Presets (GLOBAL JSON shared across widgets) -->
                 <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
 
                 <input class="presetName" id="presetName" placeholder="Preset name">
@@ -409,7 +413,6 @@
 <script>
 /* =========================================================
    Storage (persists across reload/reopen/app close)
-   - Uses localStorage when available.
 ========================================================= */
 (function(){
   const mem = Object.create(null);
@@ -496,7 +499,7 @@
 })();
 
 /* =========================
-   Popovers — mutually exclusive (bg + theme)
+   Fixed-position panels: open near button and keep in viewport
 ========================= */
 (function(){
   const bgBtn = document.getElementById("bgBtn");
@@ -511,19 +514,48 @@
     });
   }
 
-  bgBtn?.addEventListener("click", (e)=>{
-    e.stopPropagation();
-    const open = !bgPanel.classList.contains("open");
-    closeAll(open ? bgPanel : null);
-    bgPanel.classList.toggle("open", open);
+  function placePanel(btn, panel){
+    if(!btn || !panel) return;
+    const r = btn.getBoundingClientRect();
+    const pad = 10;
+
+    // default: below + right aligned to button
+    let top = r.bottom + pad;
+    let left = r.right - panel.offsetWidth;
+
+    // clamp to viewport
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    left = Math.max(pad, Math.min(vw - panel.offsetWidth - pad, left));
+    top  = Math.max(pad, Math.min(vh - panel.offsetHeight - pad, top));
+
+    panel.style.left = left + "px";
+    panel.style.top  = top + "px";
+  }
+
+  function openPanel(btn, panel){
+    const isOpen = panel.classList.contains("open");
+    closeAll(null);
+    if(isOpen) return;
+
+    panel.classList.add("open");
+    // wait a tick so offsetWidth/Height are correct
+    requestAnimationFrame(()=>placePanel(btn, panel));
+  }
+
+  bgBtn?.addEventListener("click",(e)=>{ e.stopPropagation(); openPanel(bgBtn, bgPanel); });
+  themeBtn?.addEventListener("click",(e)=>{ e.stopPropagation(); openPanel(themeBtn, themePanel); });
+
+  window.addEventListener("resize", ()=>{
+    if(bgPanel?.classList.contains("open")) placePanel(bgBtn, bgPanel);
+    if(themePanel?.classList.contains("open")) placePanel(themeBtn, themePanel);
   });
 
-  themeBtn?.addEventListener("click", (e)=>{
-    e.stopPropagation();
-    const open = !themePanel.classList.contains("open");
-    closeAll(open ? themePanel : null);
-    themePanel.classList.toggle("open", open);
-  });
+  window.addEventListener("scroll", ()=>{
+    if(bgPanel?.classList.contains("open")) placePanel(bgBtn, bgPanel);
+    if(themePanel?.classList.contains("open")) placePanel(themeBtn, themePanel);
+  }, true);
 
   document.addEventListener("click",(e)=>{
     const inside =
@@ -644,7 +676,7 @@
 
   const THEME_KEY = "word_of_day_theme_v2";
   const BG_KEY = "word_of_day_bg_v2";
-  const PRESETS_KEY = "widget_presets_v2"; /* same global key as your reference */
+  const PRESETS_KEY = "widget_presets_v2";
 
   const DEFAULTS = {
     bg: "#000000",
@@ -727,10 +759,7 @@
     setPresetStatus("Theme reset.");
   });
 
-  /* -------------------------
-     GLOBAL Presets
-     Schema: [{id,name, theme:{...}, bg:{...}}]
-  -------------------------- */
+  /* Presets */
   const presetName = $("presetName");
   const presetSelect = $("presetSelect");
   const presetSave = $("presetSave");
@@ -770,18 +799,15 @@
   }
 
   function applyPreset(p){
-    /* theme */
     themeDraft = Object.assign({}, themeDraft, p.theme || {});
     applyTheme(themeDraft);
     syncInputs(themeDraft);
     saveJSON(THEME_KEY, themeDraft);
 
-    /* bg */
     const bgSaved = loadJSON(BG_KEY) || {};
     const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageDataUrl:null }, bgSaved, (p.bg||{}));
     saveJSON(BG_KEY, mergedBg);
 
-    /* apply bg immediately + sync bg inputs */
     const tint = normHex(mergedBg.tint, "#efe7e1");
     const strength = clamp(mergedBg.strength, 0, 70) / 100;
     document.documentElement.style.setProperty("--board-tint", tint);
@@ -815,13 +841,7 @@
 
     const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageDataUrl:null };
 
-    const entry = {
-      id: uid(),
-      name,
-      theme: { ...themeDraft },
-      bg: { ...bg }
-    };
-
+    const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bg } };
     const list = loadPresets();
     list.unshift(entry);
     savePresets(list);
@@ -855,7 +875,7 @@
 
   presetCopy?.addEventListener("click", async ()=>{
     const payload = JSON.stringify(loadPresets(), null, 2);
-    const ok = await copyText(payload);
+    const ok = await window.__wotdUtils.copyText(payload);
     if(ok) setPresetStatus("Preset JSON copied.");
     else{
       presetImport.value = payload;

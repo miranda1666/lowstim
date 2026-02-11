@@ -64,7 +64,7 @@
     pointer-events:none;
 
     /* a bit punchier so images show through */
-    filter: saturate(1.45) contrast(1.35) brightness(1.12);
+    filter: saturate(1.25) contrast(1.15) brightness(1.05);
 
     opacity: var(--board-image-a);
   }
@@ -87,8 +87,8 @@
     color: var(--ink);
 
     /* keep it subtle so image doesn't disappear */
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
   }
 
   .topRow{
@@ -178,8 +178,8 @@
     border: 1px solid var(--stroke);
     background: rgba(255,255,255,0.86);
     box-shadow: 0 18px 40px rgba(30,20,10,.12);
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     padding: 12px;
     display:none;
     z-index: 9999;

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Word of the Day</title>
+
+<style>
+  :root{
+    /* ===== THEME TOKENS ===== */
+    --bg: transparent;                 /* keep page transparent for Notion embeds */
+    --card: rgba(247,245,240,0.92);
+    --stroke:#e2dfd8;
+    --ink:#2f2f2f;
+    --muted:#7a7a7a;
+    --shadow: 0 10px 30px rgba(30,20,10,.06);
+    --r:14px;
+
+    /* ===== BOARD BACKGROUND CONTROLS ===== */
+    --board-tint:#efe7e1;
+    --board-tint-a:0.12;
+    --board-image:none;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    padding:18px;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  /* Board wrapper (background image + tint behind the card) */
+  .widgetBoard{
+    position:relative;
+    border-radius: var(--r);
+    overflow:hidden;
+    border:1px solid var(--stroke);
+    box-shadow: var(--shadow);
+    max-width: 380px;
+  }
+
+  .widgetBoard::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image: var(--board-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: scale(1.01);
+    z-index:0;
+    pointer-events:none;
+    filter: saturate(1.25) contrast(1.15) brightness(1.05);
+  }
+
+  .boardTint{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background: rgba(0,0,0,0); /* set by JS */
+  }
+  .boardContent{ position:relative; z-index:2; }
+
+  .card{
+    background: var(--card);
+    border:0;
+    border-radius:0;
+    padding: 22px;
+    color: var(--ink);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .topRow{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom: 10px;
+  }
+
+  .rightControls{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+  }
+
+  .label{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .word{
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 10px 0 4px;
+    animation: fadeIn 0.8s ease;
+  }
+  .phonetic{
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .definition{
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+    color: rgba(47,47,47,0.92);
+    animation: slideUp 0.6s ease;
+  }
+  .example{
+    font-size: 14px;
+    color: rgba(47,47,47,0.78);
+    font-style: italic;
+    border-left: 3px solid rgba(214,210,200,0.9);
+    padding-left: 10px;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Settings UI (background + theme) */
+  .settingsWrap{ position:relative; }
+  .settingsBtn{
+    width:34px; height:34px;
+    border-radius:999px;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.92);
+    padding:0;
+    display:grid;
+    place-items:center;
+    box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bgDot{
+    width:14px; height:14px;
+    border-radius:999px;
+    border:1px solid rgba(233,228,221,0.95);
+    background: var(--board-tint);
+    box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+  }
+
+  .themeDot{
+    width:14px; height:14px;
+    border-radius:999px;
+    border:1px solid rgba(233,228,221,0.95);
+    background: var(--ink);
+    box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
+  }
+
+  .panel{
+    position:absolute;
+    top: 44px;
+    right: 0;
+    width: 320px;
+    border-radius: 16px;
+    border: 1px solid var(--stroke);
+    background: rgba(255,255,255,0.86);
+    box-shadow: 0 18px 40px rgba(30,20,10,.12);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    padding: 12px;
+    display:none;
+    z-index: 50;
+
+    /* ✅ vertical scroll bar if needed */
+    max-height: min(70vh, 560px);
+    overflow: auto;
+  }
+  .panel.open{ display:block; }
+
+  .panelTitle{
+    margin:0 0 10px 0;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color: rgba(43,42,40,0.72);
+  }
+  .pRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding: 7px 0;
+  }
+  .pRow label{ font-size:12px; color: rgba(106,102,95,1); }
+  .pRow input[type="color"]{
+    width:36px; height:28px;
+    border-radius:10px;
+    padding:0;
+    border:1px solid var(--stroke);
+    background: transparent;
+    cursor:pointer;
+  }
+  .pRow input[type="range"]{ width: 160px; }
+  .pFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+
+  .miniBtn{
+    width:100%;
+    border-radius:12px;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.90);
+    padding:9px 10px;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    font-size:11px;
+    color: rgba(43,42,40,0.82);
+    box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    cursor:pointer;
+  }
+  .miniBtn:active{ transform: translateY(1px); }
+  .pDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+  .status{
+    font-size:12px;
+    color: rgba(106,102,95,1);
+    margin-top: 6px;
+    min-height: 16px;
+  }
+</style>
+</head>
+
+<body>
+
+  <div class="widgetBoard" id="widgetBoard" aria-label="Word of the Day board">
+    <div class="boardTint" id="boardTint"></div>
+
+    <div class="boardContent">
+      <div class="card">
+        <div class="topRow">
+          <p class="label">Word of the Day</p>
+
+          <div class="rightControls">
+            <!-- Background settings -->
+            <div class="settingsWrap" id="bgWrap">
+              <button class="settingsBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+                <div class="panelTitle">Background</div>
+
+                <div class="pRow">
+                  <label for="bgColor">Tint</label>
+                  <input id="bgColor" type="color" value="#efe7e1" />
+                </div>
+
+                <div class="pRow">
+                  <label for="bgStrength">Strength</label>
+                  <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                </div>
+
+                <div class="pDiv"></div>
+
+                <div class="pRow" style="align-items:flex-start;">
+                  <label for="bgImage">Image</label>
+                  <input id="bgImage" class="pFile" type="file" accept="image/*" />
+                </div>
+
+                <div class="pRow">
+                  <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
+                </div>
+
+                <div class="pDiv"></div>
+
+                <button class="miniBtn" id="bgApply" type="button">Apply background</button>
+                <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+                <div class="status" id="uiStatus" aria-live="polite"></div>
+              </div>
+            </div>
+
+            <!-- Theme settings -->
+            <div class="settingsWrap" id="themeWrap">
+              <button class="settingsBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+              </button>
+
+              <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+                <div class="panelTitle">Theme</div>
+
+                <div class="pRow">
+                  <label for="tBg">Page bg</label>
+                  <input id="tBg" type="color" value="#000000" />
+                </div>
+
+                <div class="pRow">
+                  <label for="tInk">Text</label>
+                  <input id="tInk" type="color" value="#2f2f2f" />
+                </div>
+
+                <div class="pRow">
+                  <label for="tMuted">Muted</label>
+                  <input id="tMuted" type="color" value="#7a7a7a" />
+                </div>
+
+                <div class="pRow">
+                  <label for="tStroke">Borders</label>
+                  <input id="tStroke" type="color" value="#e2dfd8" />
+                </div>
+
+                <div class="pRow">
+                  <label for="tCardA">Card opacity</label>
+                  <input id="tCardA" type="range" min="35" max="95" value="92" />
+                </div>
+
+                <div class="pDiv"></div>
+
+                <button id="tApply" class="miniBtn" type="button">Apply theme</button>
+                <button id="tReset" class="miniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+                <div class="status" id="themeStatus" aria-live="polite"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="word" id="word">Loading…</div>
+        <div class="phonetic" id="phonetic"></div>
+        <div class="definition" id="definition"></div>
+        <div class="example" id="example"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   Storage (persists across reload/reopen/app close)
+   - Uses localStorage when available.
+========================================================= */
+(function(){
+  const mem = Object.create(null);
+
+  function canUseLocalStorage(){
+    try{
+      const k="__wotd__"+Math.random().toString(16).slice(2);
+      localStorage.setItem(k,"1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{ return false; }
+  }
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+    catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+    catch{ mem[key]=String(value); }
+  }
+  function storageRemove(key){
+    try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+    catch{ delete mem[key]; }
+  }
+
+  window.__WOTD_APP__ = { get: storageGet, set: storageSet, remove: storageRemove };
+})();
+
+/* =========================
+   Small utils
+========================= */
+(function(){
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function clamp(n,min,max){
+    n = Number(n);
+    if(!Number.isFinite(n)) return min;
+    return Math.max(min, Math.min(max, n));
+  }
+  function normHex(hex, fallback){
+    const s = String(hex||"").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+  }
+  function loadJSON(key){
+    try{
+      const raw = window.__WOTD_APP__.get(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  }
+  function saveJSON(key, val){
+    try{ window.__WOTD_APP__.set(key, JSON.stringify(val)); }catch{}
+  }
+  window.__wotdUtils = { hexToRgba, clamp, normHex, loadJSON, saveJSON };
+})();
+
+/* =========================
+   Popovers — mutually exclusive (bg + theme)
+========================= */
+(function(){
+  const bgBtn = document.getElementById("bgBtn");
+  const bgPanel = document.getElementById("bgPanel");
+  const themeBtn = document.getElementById("themeBtn");
+  const themePanel = document.getElementById("themePanel");
+
+  function closeAll(except){
+    [bgPanel, themePanel].forEach(p=>{
+      if(!p) return;
+      if(p !== except) p.classList.remove("open");
+    });
+  }
+
+  bgBtn?.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const open = !bgPanel.classList.contains("open");
+    closeAll(open ? bgPanel : null);
+    bgPanel.classList.toggle("open", open);
+  });
+
+  themeBtn?.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const open = !themePanel.classList.contains("open");
+    closeAll(open ? themePanel : null);
+    themePanel.classList.toggle("open", open);
+  });
+
+  document.addEventListener("click",(e)=>{
+    const inside =
+      e.target.closest("#bgPanel") || e.target.closest("#bgBtn") ||
+      e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+    if(!inside) closeAll(null);
+  });
+})();
+
+/* =========================
+   Background (draft + apply + persistent)
+========================= */
+(function(){
+  const { hexToRgba, clamp, normHex, loadJSON, saveJSON } = window.__wotdUtils;
+
+  const BG_KEY = "word_of_day_bg_v2";
+
+  const boardTintEl = document.getElementById("boardTint");
+  const bgColor = document.getElementById("bgColor");
+  const bgStrength = document.getElementById("bgStrength");
+  const bgImage = document.getElementById("bgImage");
+  const bgRemove = document.getElementById("bgRemove");
+  const bgApply = document.getElementById("bgApply");
+  const bgReset = document.getElementById("bgReset");
+  const bgDot = document.getElementById("bgDot");
+  const uiStatus = document.getElementById("uiStatus");
+
+  if(!bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+
+  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageDataUrl:null };
+  let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+
+  function setStatus(msg){
+    if(uiStatus) uiStatus.textContent = msg || "";
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function applyBgDraft(){
+    const tint = normHex(bgDraft.tint, DEFAULT_BG.tint);
+    const strength = clamp(bgDraft.strength, 0, 70) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", bgDraft.imageDataUrl ? `url("${bgDraft.imageDataUrl}")` : "none");
+
+    boardTintEl.style.background = hexToRgba(tint, strength);
+
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+    }
+  }
+
+  // init from saved
+  bgColor.value = bgDraft.tint;
+  bgStrength.value = String(bgDraft.strength);
+  applyBgDraft();
+
+  bgColor.addEventListener("input", () => {
+    bgDraft.tint = bgColor.value;
+    applyBgDraft();
+    setStatus("");
+  });
+
+  bgStrength.addEventListener("input", () => {
+    bgDraft.strength = Number(bgStrength.value);
+    applyBgDraft();
+    setStatus("");
+  });
+
+  bgImage.addEventListener("change", async () => {
+    const file = bgImage.files && bgImage.files[0];
+    if(!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    bgDraft.imageDataUrl = dataUrl;
+    applyBgDraft();
+    setStatus("");
+  });
+
+  bgRemove.addEventListener("click", () => {
+    bgDraft.imageDataUrl = null;
+    bgImage.value = "";
+    applyBgDraft();
+    setStatus("");
+  });
+
+  bgApply?.addEventListener("click", () => {
+    saveJSON(BG_KEY, bgDraft);
+    setStatus("Background applied.");
+  });
+
+  bgReset?.addEventListener("click", () => {
+    window.__WOTD_APP__.remove(BG_KEY);
+    bgDraft = Object.assign({}, DEFAULT_BG);
+    bgColor.value = DEFAULT_BG.tint;
+    bgStrength.value = String(DEFAULT_BG.strength);
+    bgImage.value = "";
+    applyBgDraft();
+    setStatus("Background reset.");
+  });
+})();
+
+/* =========================
+   Theme (draft + apply + persistent)
+========================= */
+(function(){
+  const { clamp, normHex, loadJSON, saveJSON } = window.__wotdUtils;
+
+  const THEME_KEY = "word_of_day_theme_v2";
+
+  const DEFAULTS = {
+    bg: "#000000",     /* kept as input default, but we apply transparent unless you change it */
+    ink: "#2f2f2f",
+    muted: "#7a7a7a",
+    stroke: "#e2dfd8",
+    cardA: 92
+  };
+
+  const tBg = document.getElementById("tBg");
+  const tInk = document.getElementById("tInk");
+  const tMuted = document.getElementById("tMuted");
+  const tStroke = document.getElementById("tStroke");
+  const tCardA = document.getElementById("tCardA");
+  const tApply = document.getElementById("tApply");
+  const tReset = document.getElementById("tReset");
+  const themeDot = document.getElementById("themeDot");
+  const themeStatus = document.getElementById("themeStatus");
+
+  if(!tBg || !tInk || !tMuted || !tStroke || !tCardA) return;
+
+  function setStatus(msg){
+    if(themeStatus) themeStatus.textContent = msg || "";
+  }
+
+  function applyTheme(t){
+    const theme = Object.assign({}, DEFAULTS, t || {});
+    const bg = normHex(theme.bg, DEFAULTS.bg);
+    const ink = normHex(theme.ink, DEFAULTS.ink);
+    const muted = normHex(theme.muted, DEFAULTS.muted);
+    const stroke = normHex(theme.stroke, DEFAULTS.stroke);
+    const cardA = clamp(theme.cardA, 35, 95);
+
+    /* If you truly want non-transparent page bg, set it here via the panel. */
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.setProperty("--ink", ink);
+    document.documentElement.style.setProperty("--muted", muted);
+    document.documentElement.style.setProperty("--stroke", stroke);
+    document.documentElement.style.setProperty("--card", `rgba(247,245,240,${cardA/100})`);
+
+    if(themeDot){
+      themeDot.style.background = ink;
+      themeDot.style.boxShadow = `0 0 0 6px rgba(243,239,233,${Math.min(0.32, 0.10 + (cardA/300))})`;
+    }
+  }
+
+  function syncInputs(t){
+    const x = Object.assign({}, DEFAULTS, t || {});
+    tBg.value = normHex(x.bg, DEFAULTS.bg);
+    tInk.value = normHex(x.ink, DEFAULTS.ink);
+    tMuted.value = normHex(x.muted, DEFAULTS.muted);
+    tStroke.value = normHex(x.stroke, DEFAULTS.stroke);
+    tCardA.value = String(clamp(x.cardA,35,95));
+  }
+
+  function readInputs(){
+    return {
+      bg: tBg.value,
+      ink: tInk.value,
+      muted: tMuted.value,
+      stroke: tStroke.value,
+      cardA: Number(tCardA.value)
+    };
+  }
+
+  let themeDraft = Object.assign({}, DEFAULTS, loadJSON(THEME_KEY) || {});
+  applyTheme(themeDraft);
+  syncInputs(themeDraft);
+
+  [tBg,tInk,tMuted,tStroke,tCardA].forEach(el=>{
+    el.addEventListener("input", ()=>{
+      themeDraft = Object.assign({}, themeDraft, readInputs());
+      applyTheme(themeDraft);
+      setStatus("");
+    });
+  });
+
+  tApply?.addEventListener("click", ()=>{
+    themeDraft = Object.assign({}, themeDraft, readInputs());
+    saveJSON(THEME_KEY, themeDraft);
+    setStatus("Theme applied.");
+  });
+
+  tReset?.addEventListener("click", ()=>{
+    window.__WOTD_APP__.remove(THEME_KEY);
+    themeDraft = Object.assign({}, DEFAULTS);
+    applyTheme(themeDraft);
+    syncInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+    setStatus("Theme reset.");
+  });
+})();
+
+/* =========================
+   Word of the Day (unchanged logic)
+========================= */
+const fallbackWords = [
+  "serendipity", "resilient", "ephemeral", "luminous",
+  "eloquent", "solace", "clarity", "intentional",
+  "ubiquitous", "magnanimous", "ineffable", "obfuscate",
+  "quixotic", "perfunctory", "alacrity", "pulchritude",
+  "redolent", "recalcitrant", "obstreperous", "sagacious",
+  "inscrutable", "mellifluous", "perspicacious", "capricious",
+  "vicissitude", "ameliorate", "ephemeral", "fastidious",
+  "equanimity", "iconoclast", "loquacious", "nefarious",
+  "obfuscate", "panacea", "pugnacious", "recondite",
+  "salubrious", "trenchant", "vituperative", "winsome"
+];
+
+const today = Math.floor(Date.now() / 86400000);
+const word = fallbackWords[today % fallbackWords.length];
+
+fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+  .then(res => res.json())
+  .then(data => {
+    const entry = data[0];
+    const meaning = entry.meanings[0];
+    const definitionObj = meaning.definitions[0];
+
+    document.getElementById("word").textContent = entry.word;
+
+    document.getElementById("phonetic").textContent =
+      entry.phonetic ? `/${entry.phonetic}/` : "";
+
+    document.getElementById("definition").textContent =
+      definitionObj.definition || "";
+
+    document.getElementById("example").textContent =
+      definitionObj.example ? `“${definitionObj.example}”` : "";
+  })
+  .catch(() => {
+    document.getElementById("word").textContent = word;
+    document.getElementById("definition").textContent =
+      "Unable to load definition today.";
+  });
+</script>
+
+</body>
+</html>

@@ -19,6 +19,10 @@
       --radius2: 14px;
       --focus: rgba(43,43,43,.18);
 
+      /* NEW: preset-friendly panel/field backgrounds */
+      --panel-bg: rgba(255,255,255,.92);
+      --field-bg: rgba(255,255,255,.75);
+
       /* Widget-board background (only behind controls + shelf) */
       --board-tint: #ffffff;
       --board-tint-a: 0.35;
@@ -143,16 +147,20 @@
       position: absolute;
       top: 50px;
       right: 0;
-      width: 260px;
+      width: 310px; /* wider so presets fit */
       border-radius: 16px;
       border: 1px solid rgba(43,43,43,.12);
-      background: rgba(255,255,255,.92);
+      background: var(--panel-bg);
       box-shadow: 0 18px 40px rgba(0,0,0,.12);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       padding: 12px;
       display:none;
       z-index: 60;
+
+      /* ✅ ensure all controls visible */
+      max-height: calc(100vh - 140px);
+      overflow: auto;
     }
     .bgPanel.open{ display:block; }
     .bgPanel h3{
@@ -205,6 +213,34 @@
       height: 1px;
       background: rgba(43,43,43,.08);
       margin: 8px 0;
+    }
+
+    /* Presets UI (Theme panel) */
+    .presetName{
+      width:100%;
+      border:1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.95);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color: var(--text);
+    }
+    .presetArea{
+      width:100%;
+      min-height: 92px;
+      resize: vertical;
+      border:1px solid rgba(43,43,43,.12);
+      background: rgba(255,255,255,.95);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      line-height:1.35;
+      color: var(--text);
+    }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
     }
 
     /* Widget board */
@@ -282,7 +318,7 @@
       padding: 12px 12px 12px 40px;
       border-radius: 14px;
       border: 1px solid rgba(43,43,43,.12);
-      background: rgba(255,255,255,.75);
+      background: var(--field-bg);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
       font-size: 14px;
       color: var(--text);
@@ -474,6 +510,9 @@
     }
     .iconBtn svg{ width: 16px; height: 16px; opacity: .75; }
 
+    /* ✅ REMOVED the bottom colour block: .lip is no longer used */
+    .lip{ display:none; }
+
     .empty{
       padding: 46px 18px 50px;
       display: grid;
@@ -626,15 +665,7 @@
 
         <!-- Background settings -->
         <div class="popover" id="bgPopover">
-          <button
-            class="bgBtn"
-            id="bgBtn"
-            type="button"
-            aria-label="Background settings"
-            aria-controls="bgPanel"
-            aria-expanded="false"
-            title="Background settings"
-          >
+          <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
             <span class="bgDot" id="bgDot" aria-hidden="true"></span>
           </button>
 
@@ -661,20 +692,20 @@
             <div class="bgRow">
               <button class="bgMiniBtn" id="removeImage" type="button">Remove image</button>
             </div>
+
+            <div class="bgDivider"></div>
+
+            <!-- ✅ apply/reset so nothing changes unless user clicks -->
+            <button class="bgMiniBtn" id="applyBg" type="button">Apply background</button>
+            <button class="bgMiniBtn" id="resetBg" type="button" style="margin-top:8px;">Reset background</button>
+
+            <div class="status" id="settingsStatusBg" aria-live="polite"></div>
           </div>
         </div>
 
         <!-- Theme settings -->
         <div class="popover" id="themePopover">
-          <button
-            class="bgBtn"
-            id="themeBtn"
-            type="button"
-            aria-label="Theme settings"
-            aria-controls="themePanel"
-            aria-expanded="false"
-            title="Theme settings"
-          >
+          <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
             <span class="themeDot" id="themeDot" aria-hidden="true"></span>
           </button>
 
@@ -708,8 +739,38 @@
 
             <div class="bgDivider"></div>
 
+            <!-- ✅ apply/reset so nothing changes unless user clicks -->
+            <button class="bgMiniBtn" id="applyTheme" type="button">Apply theme</button>
+            <button class="bgMiniBtn" id="resetTheme" type="button" style="margin-top:8px;">Reset theme</button>
+
+            <div class="bgDivider"></div>
+
+            <!-- ✅ Presets (GLOBAL JSON that works across widgets) -->
+            <div style="font-size:13px;font-weight:650;color:rgba(43,43,43,.85);margin: 0 0 6px 0;">Presets (works across widgets)</div>
+
+            <div class="bgRow" style="flex-direction:column; align-items:stretch; gap:10px;">
+              <input class="presetName" id="presetName" placeholder="Preset name" />
+              <button class="bgMiniBtn" id="presetSave" type="button">Save current as preset</button>
+            </div>
+
             <div class="bgRow">
-              <button class="bgMiniBtn" id="resetTheme" type="button">Reset theme</button>
+              <label style="font-size:12px;color:var(--muted);">Choose</label>
+              <select id="presetSelect" style="width:140px;height:34px;border-radius:12px;border:1px solid rgba(43,43,43,.12);background:rgba(255,255,255,.9);padding:0 10px;color:var(--text);">
+                <option value="">—</option>
+              </select>
+            </div>
+
+            <button class="bgMiniBtn" id="presetApply" type="button">Apply preset</button>
+            <button class="bgMiniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+            <div class="bgDivider"></div>
+
+            <button class="bgMiniBtn" id="presetCopy" type="button">Copy preset JSON</button>
+
+            <div class="bgRow" style="flex-direction:column; align-items:stretch; gap:10px;">
+              <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+              <button class="bgMiniBtn" id="presetImportBtn" type="button">Import presets</button>
+              <div class="status" id="settingsStatusTheme" aria-live="polite"></div>
             </div>
           </div>
         </div>
@@ -829,9 +890,72 @@
   </div>
 
   <script>
-  const LS_KEY = "resource_vault_v1";
-  const BG_KEY = "resource_vault_bg_v1";
-  const THEME_KEY = "resource_vault_theme_v1";
+  /* =========================================================
+    ✅ Per-user persistence + per-embed instance keys
+    - By default: stored per browser/device (localStorage)
+    - To make multiple embeds unique in Notion: append ?wid=YOUR_ID to the GitHub Pages URL.
+      Example: https://you.github.io/resource-vault/?wid=vault1
+  ========================================================= */
+
+  /* ========================= Safe storage + widget instance id ========================= */
+  (function(){
+    const mem = Object.create(null);
+
+    function canUseLocalStorage(){
+      try{
+        const k="__t__"+Math.random().toString(16).slice(2);
+        localStorage.setItem(k,"1");
+        localStorage.removeItem(k);
+        return true;
+      }catch{
+        return false;
+      }
+    }
+
+    const hasLS = canUseLocalStorage();
+
+    function storageGet(key){
+      try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+      catch{ return mem[key] ?? null; }
+    }
+    function storageSet(key, value){
+      try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+      catch{ mem[key]=String(value); }
+    }
+    function storageRemove(key){
+      try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+      catch{ delete mem[key]; }
+    }
+    function uid(){
+      return Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+    function getWidgetId(){
+      try{
+        const sp = new URLSearchParams(location.search);
+        const wid = (sp.get("wid") || "").trim();
+        if(wid) return wid;
+      }catch{}
+      try{
+        const cached = sessionStorage.getItem("resource_vault_wid");
+        if(cached) return cached;
+      }catch{}
+      const fresh = uid();
+      try{ sessionStorage.setItem("resource_vault_wid", fresh); }catch{}
+      return fresh;
+    }
+
+    window.__RV__ = { wid: getWidgetId(), get: storageGet, set: storageSet, remove: storageRemove };
+  })();
+
+  const WID = window.__RV__?.wid || "default";
+
+  /* GLOBAL presets shared across widgets */
+  const PRESETS_KEY = "widget_presets_v2";
+
+  /* Per-widget keys (unique by wid) */
+  const LS_KEY    = "resource_vault_v2__" + WID;
+  const BG_KEY    = "resource_vault_bg_v2__" + WID;
+  const THEME_KEY = "resource_vault_theme_v2__" + WID;
 
   const els = {
     contentArea: document.getElementById("contentArea"),
@@ -871,6 +995,9 @@
     removeImage: document.getElementById("removeImage"),
     bgDot: document.getElementById("bgDot"),
     bgPopover: document.getElementById("bgPopover"),
+    applyBg: document.getElementById("applyBg"),
+    resetBg: document.getElementById("resetBg"),
+    settingsStatusBg: document.getElementById("settingsStatusBg"),
 
     themeBtn: document.getElementById("themeBtn"),
     themePanel: document.getElementById("themePanel"),
@@ -881,11 +1008,31 @@
     tMuted: document.getElementById("tMuted"),
     tLine: document.getElementById("tLine"),
     tPanelAlpha: document.getElementById("tPanelAlpha"),
+    applyTheme: document.getElementById("applyTheme"),
     resetTheme: document.getElementById("resetTheme"),
+
+    presetName: document.getElementById("presetName"),
+    presetSave: document.getElementById("presetSave"),
+    presetSelect: document.getElementById("presetSelect"),
+    presetApply: document.getElementById("presetApply"),
+    presetDelete: document.getElementById("presetDelete"),
+    presetCopy: document.getElementById("presetCopy"),
+    presetImport: document.getElementById("presetImport"),
+    presetImportBtn: document.getElementById("presetImportBtn"),
+    settingsStatusTheme: document.getElementById("settingsStatusTheme"),
   };
 
   const typeIcon = (type) => {
-    const map = { link:"↗", paper:"⟡", lecture:"▷", dataset:"▦", book:"⌁", tool:"✶", note:"✎", other:"◻" };
+    const map = {
+      link: "↗",
+      paper: "⟡",
+      lecture: "▷",
+      dataset: "▦",
+      book: "⌁",
+      tool: "✶",
+      note: "✎",
+      other: "◻"
+    };
     return map[type] || "◻";
   };
 
@@ -897,13 +1044,11 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
 
-  // Safer: allow only http/https (and mailto if you want)
   const safeUrl = (url) => {
     try {
       if (!url) return "";
       const u = new URL(url);
-      const ok = u.protocol === "http:" || u.protocol === "https:"; // || u.protocol === "mailto:";
-      return ok ? u.toString() : "";
+      return u.toString();
     } catch {
       return "";
     }
@@ -917,48 +1062,60 @@
 
   const nowISO = () => new Date().toISOString();
 
-  const makeId = () => {
-    try { return crypto.randomUUID(); } catch { return "id_" + Math.random().toString(16).slice(2) + "_" + Date.now(); }
-  };
+  /* =============== JSON helpers =============== */
+  function loadJSON(key){
+    try{
+      const raw = window.__RV__.get(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch{
+      return null;
+    }
+  }
+  function saveJSON(key, val){
+    try{ window.__RV__.set(key, JSON.stringify(val)); }catch{}
+  }
+  function removeKey(key){
+    try{ window.__RV__.remove(key); }catch{}
+  }
 
-  // ---------- Storage ----------
-  const safeParse = (raw) => {
-    try { return JSON.parse(raw); } catch { return null; }
-  };
+  /* =============== Clipboard helper (fallback-safe) =============== */
+  async function copyText(text){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch{}
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return !!ok;
+    }catch{
+      return false;
+    }
+  }
 
-  const save = (items) => {
-    const data = JSON.stringify(items);
-    try { localStorage.setItem(LS_KEY, data); return; } catch {}
-    try { sessionStorage.setItem(LS_KEY, data); return; } catch {}
-    console.warn("Storage unavailable in this embed.");
-  };
-
-  const load = () => {
-    try { const raw = localStorage.getItem(LS_KEY); if (raw) return safeParse(raw) || []; } catch {}
-    try { const raw = sessionStorage.getItem(LS_KEY); if (raw) return safeParse(raw) || []; } catch {}
-    return [];
-  };
-
-  const loadBg = () => {
-    try { const raw = localStorage.getItem(BG_KEY); return raw ? safeParse(raw) : null; }
-    catch { return null; }
-  };
-  const saveBg = (bg) => { try { localStorage.setItem(BG_KEY, JSON.stringify(bg)); } catch {} };
-
-  const loadTheme = () => {
-    try { const raw = localStorage.getItem(THEME_KEY); return raw ? safeParse(raw) : null; }
-    catch { return null; }
-  };
-  const saveTheme = (t) => { try { localStorage.setItem(THEME_KEY, JSON.stringify(t)); } catch {} };
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+  function safeUUID(){
+    try{ if(crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID(); }catch{}
+    return uid();
+  }
 
   const normalizeHex = (hex, fallback = "#efe7e1") => {
-    if (!hex) return fallback;
-    const s = String(hex).trim();
-    if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
-    return fallback;
+    const s = String(hex || "").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
   };
   const hexToRgb = (hex) => {
-    const h = normalizeHex(hex).slice(1);
+    const h = normalizeHex(hex, "#ffffff").slice(1);
     return { r: parseInt(h.slice(0,2), 16), g: parseInt(h.slice(2,4), 16), b: parseInt(h.slice(4,6), 16) };
   };
   const hexToRgba = (hex, a) => {
@@ -966,44 +1123,7 @@
     return `rgba(${r},${g},${b},${a})`;
   };
 
-  const setBoardImage = (dataUrlOrNull) => {
-    document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-  };
-
-  const applyBoardTint = (colorHex, strengthPct) => {
-    const tint = normalizeHex(colorHex);
-    const strength = Number(strengthPct) / 100;
-
-    document.documentElement.style.setProperty("--board-tint", tint);
-    document.documentElement.style.setProperty("--board-tint-a", String(strength));
-
-    els.bgDot.style.background = tint;
-    els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.1))}`;
-
-    els.boardTint.style.background = hexToRgba(tint, strength);
-  };
-
-  const fileToDataUrl = (file) =>
-    new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-
-  const applyBgFromStore = () => {
-    const bg = loadBg();
-    const tint = bg?.tint ?? "#efe7e1";
-    const strength = bg?.strength ?? 35;
-
-    els.bgColor.value = tint;
-    els.bgStrength.value = String(strength);
-
-    applyBoardTint(tint, strength);
-    setBoardImage(bg?.imageDataUrl ?? null);
-  };
-
-  // ---------- Theme ----------
+  /* ========================= Theme (draft + apply only) ========================= */
   const DEFAULT_THEME = {
     bg: "#ffffff",
     text: "#2b2b2b",
@@ -1012,9 +1132,11 @@
     panelAlpha: 65, // 35–98
   };
 
-  const applyTheme = (t) => {
-    const theme = { ...DEFAULT_THEME, ...(t || {}) };
+  let themeApplied = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
+  let themeDraft   = Object.assign({}, themeApplied);
 
+  function applyThemeToCSS(t){
+    const theme = Object.assign({}, DEFAULT_THEME, t || {});
     const bg = normalizeHex(theme.bg, DEFAULT_THEME.bg);
     const text = normalizeHex(theme.text, DEFAULT_THEME.text);
     const muted = normalizeHex(theme.muted, DEFAULT_THEME.muted);
@@ -1026,24 +1148,152 @@
     document.documentElement.style.setProperty("--muted", muted);
     document.documentElement.style.setProperty("--line", hexToRgba(line, 0.40));
     document.documentElement.style.setProperty("--focus", hexToRgba(text, 0.22));
+
     document.documentElement.style.setProperty("--panel", `rgba(255,255,255,${panelA})`);
     document.documentElement.style.setProperty("--panel2", `rgba(255,255,255,${Math.min(0.98, panelA + 0.17)})`);
 
-    els.tBg.value = bg;
-    els.tText.value = text;
-    els.tMuted.value = muted;
-    els.tLine.value = line;
-    els.tPanelAlpha.value = String(Math.round(panelA * 100));
+    document.documentElement.style.setProperty("--panel-bg", `rgba(255,255,255,${Math.min(0.98, panelA + 0.27)})`);
+    document.documentElement.style.setProperty("--field-bg", `rgba(255,255,255,${Math.min(0.92, panelA + 0.10)})`);
 
     els.themeDot.style.background = text;
     els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(muted, 0.18)}`;
+  }
+
+  function syncThemeInputs(t){
+    els.tBg.value = normalizeHex(t.bg, DEFAULT_THEME.bg);
+    els.tText.value = normalizeHex(t.text, DEFAULT_THEME.text);
+    els.tMuted.value = normalizeHex(t.muted, DEFAULT_THEME.muted);
+    els.tLine.value = normalizeHex(t.line, DEFAULT_THEME.line);
+    els.tPanelAlpha.value = String(Math.max(35, Math.min(98, Number(t.panelAlpha) || DEFAULT_THEME.panelAlpha)));
+  }
+
+  function readThemeInputs(){
+    return {
+      bg: els.tBg.value,
+      text: els.tText.value,
+      muted: els.tMuted.value,
+      line: els.tLine.value,
+      panelAlpha: Number(els.tPanelAlpha.value),
+    };
+  }
+
+  /* ========================= Background (draft + apply only) ========================= */
+  const DEFAULT_BG = { tint: "#efe7e1", strength: 35, imageDataUrl: null };
+  let bgApplied = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+  let bgDraft   = Object.assign({}, bgApplied);
+
+  const setBoardImage = (dataUrlOrNull) => {
+    document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
   };
 
-  const applyThemeFromStore = () => {
-    applyTheme(loadTheme() || DEFAULT_THEME);
+  function applyBoardTint(colorHex, strengthPct){
+    const tint = normalizeHex(colorHex, DEFAULT_BG.tint);
+    const strength = Math.max(0, Math.min(70, Number(strengthPct) || 0)) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+    els.bgDot.style.background = tint;
+    els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.1))}`;
+    els.boardTint.style.background = hexToRgba(tint, strength);
+  }
+
+  function applyBgToCSS(bg){
+    const x = Object.assign({}, DEFAULT_BG, bg || {});
+    applyBoardTint(x.tint, x.strength);
+    setBoardImage(x.imageDataUrl || null);
+  }
+
+  function syncBgInputs(bg){
+    els.bgColor.value = normalizeHex(bg.tint, DEFAULT_BG.tint);
+    els.bgStrength.value = String(Math.max(0, Math.min(70, Number(bg.strength) || DEFAULT_BG.strength)));
+    // do not set file input value (browser blocks it)
+  }
+
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+
+  /* ========================= Presets (GLOBAL) ========================= */
+  function statusTheme(msg){ if(els.settingsStatusTheme) els.settingsStatusTheme.textContent = msg || ""; }
+  function statusBg(msg){ if(els.settingsStatusBg) els.settingsStatusBg.textContent = msg || ""; }
+
+  function loadPresets(){
+    const list = loadJSON(PRESETS_KEY);
+    return Array.isArray(list) ? list : [];
+  }
+  function savePresets(list){
+    saveJSON(PRESETS_KEY, list);
+  }
+  function refreshPresetSelect(){
+    const list = loadPresets();
+    const cur = els.presetSelect.value;
+    els.presetSelect.innerHTML = `<option value="">—</option>`;
+    for(const p of list){
+      const opt = document.createElement("option");
+      opt.value = String(p.id || "");
+      opt.textContent = String(p.name || "Untitled");
+      els.presetSelect.appendChild(opt);
+    }
+    if(cur) els.presetSelect.value = cur;
+  }
+
+  function sanitizePresetList(parsed){
+    if(!Array.isArray(parsed)) return null;
+    return parsed.filter(Boolean).map(p => ({
+      id: String(p.id || uid()),
+      name: String(p.name || "Imported"),
+      theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
+      bg: (p.bg && typeof p.bg === "object") ? p.bg : {},
+    }));
+  }
+
+  function applyPresetToThisWidget(p){
+    const th = p.theme || {};
+    const bg = p.bg || {};
+
+    // accept either "theme.{bg,text,muted,line,panelAlpha}" or generic-ish alt keys
+    const themeMuseum = { bg: th.bg, text: th.text, muted: th.muted, line: th.line, panelAlpha: th.panelAlpha };
+    const themeGeneric = { bg: th.pageBg, text: th.ink, muted: th.muted, line: th.stroke, panelAlpha: th.panelAlpha };
+
+    themeDraft = Object.assign({}, DEFAULT_THEME, themeGeneric, themeMuseum);
+    themeApplied = Object.assign({}, themeDraft);
+
+    bgDraft = Object.assign({}, DEFAULT_BG, bg);
+    bgApplied = Object.assign({}, bgDraft);
+
+    // Apply + persist immediately (explicit action)
+    applyThemeToCSS(themeApplied);
+    saveJSON(THEME_KEY, themeApplied);
+    syncThemeInputs(themeDraft);
+
+    applyBgToCSS(bgApplied);
+    saveJSON(BG_KEY, bgApplied);
+    syncBgInputs(bgDraft);
+
+    statusTheme("Preset applied.");
+    statusBg("");
+  }
+
+  /* ========================= Data storage (items) ========================= */
+  const saveItems = (items) => {
+    const data = JSON.stringify(items);
+    try { window.__RV__.set(LS_KEY, data); } catch {}
+  };
+  const loadItems = () => {
+    try{
+      const raw = window.__RV__.get(LS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch{
+      return [];
+    }
   };
 
-  let items = load();
+  let items = loadItems();
 
   // UI state
   let state = { q: "", tag: "", sort: "updated_desc" };
@@ -1091,7 +1341,6 @@
       };
 
       const onKey = (e) => { if (e.key === "Escape") cleanup(false); };
-
       wrap.addEventListener("click", (e) => { if (e.target === wrap) cleanup(false); });
 
       document.body.appendChild(wrap);
@@ -1260,7 +1509,7 @@
     const idx = items.findIndex(x => x.id === payload.id);
     if (idx >= 0) items[idx] = payload;
     else items.unshift(payload);
-    save(items);
+    saveItems(items);
     render();
   };
 
@@ -1272,7 +1521,7 @@
     if (!ok) return;
 
     items = items.filter(x => x.id !== id);
-    save(items);
+    saveItems(items);
     render();
   };
 
@@ -1287,7 +1536,7 @@
     if (!ok) return;
 
     items = [];
-    save(items);
+    saveItems(items);
     render();
   };
 
@@ -1389,7 +1638,7 @@
     const description = els.rDesc.value.trim();
     if (!title) return;
 
-    const id = els.editId.value || makeId();
+    const id = els.editId.value || safeUUID();
     const existing = items.find(x => x.id === id);
 
     const payload = {
@@ -1418,102 +1667,226 @@
     }
   });
 
-  // -------- Popover helpers (bg/theme) --------
-  const setPopoverOpen = (btn, panel, open) => {
-    panel.classList.toggle("open", open);
-    btn.setAttribute("aria-expanded", open ? "true" : "false");
-  };
+  /* ========================= Panels (close siblings) ========================= */
+  els.bgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.themePanel.classList.remove("open");
+    els.bgPanel.classList.toggle("open");
+    statusBg("");
+  });
 
-  const togglePopover = (btn, panel) => {
-    const next = !panel.classList.contains("open");
-    setPopoverOpen(btn, panel, next);
-  };
-
-  const closeAllPopovers = () => {
-    setPopoverOpen(els.bgBtn, els.bgPanel, false);
-    setPopoverOpen(els.themeBtn, els.themePanel, false);
-  };
-
-  els.bgBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePopover(els.bgBtn, els.bgPanel); });
-  els.themeBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePopover(els.themeBtn, els.themePanel); });
+  els.themeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    els.bgPanel.classList.remove("open");
+    els.themePanel.classList.toggle("open");
+    statusTheme("");
+  });
 
   document.addEventListener("click", (e) => {
-    if (els.bgPanel.classList.contains("open") && !els.bgPopover.contains(e.target)) setPopoverOpen(els.bgBtn, els.bgPanel, false);
-    if (els.themePanel.classList.contains("open") && !els.themePopover.contains(e.target)) setPopoverOpen(els.themeBtn, els.themePanel, false);
+    if (els.bgPanel.classList.contains("open") && !els.bgPopover.contains(e.target)) els.bgPanel.classList.remove("open");
+    if (els.themePanel.classList.contains("open") && !els.themePopover.contains(e.target)) els.themePanel.classList.remove("open");
   });
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeAllPopovers();
-  });
+  window.addEventListener("scroll", () => {
+    els.bgPanel.classList.remove("open");
+    els.themePanel.classList.remove("open");
+  }, { passive:true });
 
-  // -------- Background controls --------
+  /* ========================= Background draft events (NO APPLY = NO CHANGE) ========================= */
   els.bgColor.addEventListener("input", () => {
-    applyBoardTint(els.bgColor.value, els.bgStrength.value);
-    const bg = loadBg() || {};
-    bg.tint = els.bgColor.value;
-    bg.strength = Number(els.bgStrength.value);
-    saveBg(bg);
+    bgDraft.tint = els.bgColor.value;
+    statusBg("");
   });
 
   els.bgStrength.addEventListener("input", () => {
-    applyBoardTint(els.bgColor.value, els.bgStrength.value);
-    const bg = loadBg() || {};
-    bg.tint = els.bgColor.value;
-    bg.strength = Number(els.bgStrength.value);
-    saveBg(bg);
+    bgDraft.strength = Number(els.bgStrength.value);
+    statusBg("");
   });
 
   els.bgImage.addEventListener("change", async () => {
     const file = els.bgImage.files && els.bgImage.files[0];
     if (!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    setBoardImage(dataUrl);
-
-    const bg = loadBg() || {};
-    bg.imageDataUrl = dataUrl;
-    bg.tint = els.bgColor.value;
-    bg.strength = Number(els.bgStrength.value);
-    saveBg(bg);
+    try{
+      const dataUrl = await fileToDataUrl(file);
+      bgDraft.imageDataUrl = dataUrl;
+      statusBg("");
+    }catch{
+      statusBg("Could not read that image.");
+    }
   });
 
+  // Clear is explicit (allowed to change immediately)
   els.removeImage.addEventListener("click", () => {
-    setBoardImage(null);
+    bgDraft.imageDataUrl = null;
     els.bgImage.value = "";
-    const bg = loadBg() || {};
-    bg.imageDataUrl = null;
-    bg.tint = els.bgColor.value;
-    bg.strength = Number(els.bgStrength.value);
-    saveBg(bg);
+
+    bgApplied = Object.assign({}, bgDraft);
+    applyBgToCSS(bgApplied);
+    saveJSON(BG_KEY, bgApplied);
+
+    statusBg("Image removed.");
   });
 
-  // -------- Theme controls --------
-  const persistThemeFromInputs = () => {
-    const t = {
-      bg: els.tBg.value,
-      text: els.tText.value,
-      muted: els.tMuted.value,
-      line: els.tLine.value,
-      panelAlpha: Number(els.tPanelAlpha.value),
-    };
-    applyTheme(t);
-    saveTheme(t);
-  };
+  els.applyBg.addEventListener("click", () => {
+    bgApplied = Object.assign({}, DEFAULT_BG, bgDraft);
+    applyBgToCSS(bgApplied);
+    saveJSON(BG_KEY, bgApplied);
+    syncBgInputs(bgApplied);
+    statusBg("Background applied.");
+  });
 
-  els.tBg.addEventListener("input", persistThemeFromInputs);
-  els.tText.addEventListener("input", persistThemeFromInputs);
-  els.tMuted.addEventListener("input", persistThemeFromInputs);
-  els.tLine.addEventListener("input", persistThemeFromInputs);
-  els.tPanelAlpha.addEventListener("input", persistThemeFromInputs);
+  els.resetBg.addEventListener("click", () => {
+    bgDraft = Object.assign({}, DEFAULT_BG);
+    bgApplied = Object.assign({}, DEFAULT_BG);
+    syncBgInputs(bgDraft);
+    applyBgToCSS(bgApplied);
+    saveJSON(BG_KEY, bgApplied);
+    statusBg("Background reset.");
+  });
+
+  /* ========================= Theme draft events (NO APPLY = NO CHANGE) ========================= */
+  [els.tBg, els.tText, els.tMuted, els.tLine, els.tPanelAlpha].forEach(el => {
+    el.addEventListener("input", () => {
+      themeDraft = Object.assign({}, themeDraft, readThemeInputs());
+      statusTheme("");
+    });
+  });
+
+  els.applyTheme.addEventListener("click", () => {
+    themeDraft = Object.assign({}, themeDraft, readThemeInputs());
+    themeApplied = Object.assign({}, DEFAULT_THEME, themeDraft);
+
+    applyThemeToCSS(themeApplied);
+    saveJSON(THEME_KEY, themeApplied);
+
+    // keep panel bg/field bg consistent with applied opacity
+    syncThemeInputs(themeApplied);
+
+    statusTheme("Theme applied.");
+  });
 
   els.resetTheme.addEventListener("click", () => {
-    saveTheme(DEFAULT_THEME);
-    applyTheme(DEFAULT_THEME);
+    themeDraft = Object.assign({}, DEFAULT_THEME);
+    themeApplied = Object.assign({}, DEFAULT_THEME);
+
+    syncThemeInputs(themeDraft);
+    applyThemeToCSS(themeApplied);
+    saveJSON(THEME_KEY, themeApplied);
+
+    statusTheme("Theme reset.");
   });
 
-  // Initial render
-  applyThemeFromStore();   // base page colors
-  applyBgFromStore();      // board tint/image
-  render();
+  /* ========================= Presets UI ========================= */
+  els.presetSave.addEventListener("click", () => {
+    const name = (els.presetName.value || "").trim();
+    if(!name){
+      statusTheme("Type a preset name first.");
+      return;
+    }
+
+    // Capture current drafts (not auto-applied)
+    themeDraft = Object.assign({}, themeDraft, readThemeInputs());
+    bgDraft.tint = els.bgColor.value;
+    bgDraft.strength = Number(els.bgStrength.value);
+
+    const list = loadPresets();
+    const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bgDraft } };
+    list.unshift(entry);
+    savePresets(list);
+
+    els.presetName.value = "";
+    refreshPresetSelect();
+    els.presetSelect.value = entry.id;
+
+    statusTheme("Preset saved.");
+  });
+
+  els.presetApply.addEventListener("click", () => {
+    const id = els.presetSelect.value;
+    if(!id){
+      statusTheme("Choose a preset first.");
+      return;
+    }
+    const p = loadPresets().find(x => String(x.id) === String(id));
+    if(!p){
+      statusTheme("Preset not found.");
+      return;
+    }
+    applyPresetToThisWidget(p);
+  });
+
+  els.presetDelete.addEventListener("click", () => {
+    const id = els.presetSelect.value;
+    if(!id){
+      statusTheme("Choose a preset first.");
+      return;
+    }
+    let list = loadPresets();
+    const before = list.length;
+    list = list.filter(x => String(x.id) !== String(id));
+    if(list.length === before){
+      statusTheme("Preset not found.");
+      return;
+    }
+    savePresets(list);
+    refreshPresetSelect();
+    els.presetSelect.value = "";
+    statusTheme("Preset deleted.");
+  });
+
+  els.presetCopy.addEventListener("click", async () => {
+    const payload = JSON.stringify(loadPresets(), null, 2);
+    const ok = await copyText(payload);
+    if(ok){
+      statusTheme("Preset JSON copied.");
+    }else{
+      els.presetImport.value = payload;
+      els.presetImport.focus();
+      els.presetImport.select();
+      statusTheme("Could not copy automatically — JSON placed in the box to copy manually.");
+    }
+  });
+
+  els.presetImportBtn.addEventListener("click", () => {
+    const raw = (els.presetImport.value || "").trim();
+    if(!raw){
+      statusTheme("Paste preset JSON first.");
+      return;
+    }
+    try{
+      const parsed = JSON.parse(raw);
+      const cleaned = sanitizePresetList(parsed);
+      if(!cleaned){
+        statusTheme("That JSON doesn’t look like a preset list.");
+        return;
+      }
+      savePresets(cleaned);
+      refreshPresetSelect();
+      statusTheme("Presets imported.");
+    }catch{
+      statusTheme("Invalid JSON.");
+    }
+  });
+
+  /* ========================= Boot ========================= */
+  function boot(){
+    // Load applied settings
+    themeApplied = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
+    themeDraft = Object.assign({}, themeApplied);
+    syncThemeInputs(themeDraft);
+    applyThemeToCSS(themeApplied);
+
+    bgApplied = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+    bgDraft = Object.assign({}, bgApplied);
+    syncBgInputs(bgDraft);
+    applyBgToCSS(bgApplied);
+
+    refreshPresetSelect();
+    render();
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
   </script>
 </body>
 </html>

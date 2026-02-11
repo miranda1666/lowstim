@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Time Check</title>
+  <style>
+    :root{
+      /* ===== THEME TOKENS (editable via Theme panel) ===== */
+      --bg:#ffffff;
+
+      /* UI surface */
+      --card: rgba(255,255,255,0.58);
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --r:18px;
+
+      /* Board background controls */
+      --board-tint:#efe7e1;
+      --board-tint-a:0.12;
+      --board-image:none;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background: var(--bg);
+      padding:28px 18px;
+    }
+    .wrap{ max-width:980px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
+
+    /* Board */
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+    .widgetBoard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.01);
+      z-index:0;
+      pointer-events:none;
+      filter: saturate(1.25) contrast(1.15) brightness(1.05);
+    }
+    .boardTint{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+    }
+    .boardContent{ position:relative; z-index:2; }
+
+    .card{
+      background:var(--card);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      padding:14px;
+
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button, input, select, textarea{
+      font:inherit;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.78);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    textarea{
+      width:100%;
+      min-height: 92px;
+      resize: vertical;
+      line-height:1.35;
+    }
+    button{ cursor:pointer; user-select:none; }
+    button.soft{ background: rgba(243,239,233,0.72); }
+    button.primary{ background: rgba(239,231,225,0.80); }
+    button:active{ transform:translateY(1px); }
+
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
+    .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
+    .kpi .box{
+      flex:1; min-width:200px;
+      background: rgba(255,255,255,0.70);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .num{ font-weight:750; font-size:16px; }
+    .kpi .lab{ font-size:12px; color:var(--muted); }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.72);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .tiny{ font-size:12px; color:var(--muted); }
+    .danger{ border-color:#efc2c2; }
+
+    .results{
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+      background: rgba(255,255,255,0.72);
+    }
+    .resTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .resTitle{
+      margin:0;
+      font-weight:750;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    .bgWrap{ position:relative; margin-left:auto; }
+    .bgBtn{
+      width:34px; height:34px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      padding:0;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    }
+    .bgDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    }
+
+    /* ✅ shared popover panel (theme + bg) — never cut off */
+    .panel{
+      position:absolute;
+      top: 44px;
+      right: 0;
+      width: 290px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.90);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      padding: 12px;
+      display:none;
+      z-index: 50;
+
+      max-height: min(70vh, 560px);
+      overflow:auto;
+    }
+    .panel.open{ display:block; }
+
+    .panelTitle{
+      margin:0 0 10px 0;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(43,42,40,0.72);
+    }
+    .pRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 7px 0;
+    }
+    .pRow label{ font-size:12px; color:var(--muted); }
+    .pRow input[type="color"]{
+      width:36px; height:28px;
+      border-radius:10px;
+      padding:0;
+      border:1px solid var(--stroke);
+      background: transparent;
+      cursor:pointer;
+    }
+    .pRow input[type="range"]{ width: 160px; }
+    .pFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .miniBtn{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.90);
+      padding:9px 10px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:11px;
+      color: rgba(43,42,40,0.82);
+      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+      cursor:pointer;
+      user-select:none;
+    }
+    .miniBtn:active{ transform:translateY(1px); }
+    .pDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    /* ✅ Presets UI */
+    .presetName{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color: var(--ink);
+      outline:none;
+    }
+    .presetSelect{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color: var(--ink);
+      outline:none;
+      height:38px;
+    }
+    .presetArea{
+      width:100%;
+      min-height: 92px;
+      resize: vertical;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.92);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      line-height:1.35;
+      color: var(--ink);
+      outline:none;
+    }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+      min-height: 16px;
+    }
+
+    /* Internal reset confirm */
+    .confirm{
+      margin-top:10px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px;
+      background: rgba(255,255,255,0.72);
+    }
+    .confirmTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .confirmTitle{
+      margin:0;
+      font-weight:750;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    @media (max-width: 720px){
+      .kpi .box{ min-width:160px; }
+    }
+
+    .themeDot{
+      width:14px; height:14px;
+      border-radius:999px;
+      border:1px solid rgba(233,228,221,0.95);
+      background: var(--ink);
+      box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Time Check</h1>
+    <div class="hint">Overhead: small interruptions, getting set up, and wrap-up</div>
+
+    <div class="widgetBoard" id="widgetBoard" aria-label="Time reality check board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+          <div class="title">
+            <div><h2 style="margin:0;"></h2></div>
+
+            <!-- Top-right controls -->
+            <div class="row" style="justify-content:flex-end; gap:10px;">
+              <!-- Background settings -->
+              <div class="bgWrap" id="bgWrap">
+                <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                  <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+                  <div class="panelTitle">Background</div>
+
+                  <div class="pRow">
+                    <label for="bgColor">Tint</label>
+                    <input id="bgColor" type="color" value="#efe7e1" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="bgStrength">Strength</label>
+                    <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                  </div>
+
+                  <div class="pDiv"></div>
+
+                  <div class="pRow" style="align-items:flex-start;">
+                    <label for="bgImage">Image</label>
+                    <input id="bgImage" class="pFile" type="file" accept="image/*" />
+                  </div>
+
+                  <div class="pRow">
+                    <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
+                  </div>
+
+                  <div class="pDiv"></div>
+
+                  <!-- ✅ apply/reset -->
+                  <button id="bgApply" class="miniBtn" type="button">Apply background</button>
+                  <button id="bgReset" class="miniBtn" type="button" style="margin-top:8px;">Reset background</button>
+                </div>
+              </div>
+
+              <!-- Theme settings -->
+              <div class="bgWrap" id="themeWrap">
+                <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                  <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+                </button>
+
+                <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+                  <div class="panelTitle">Theme</div>
+
+                  <div class="pRow">
+                    <label for="tBg">Page bg</label>
+                    <input id="tBg" type="color" value="#ffffff" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="tInk">Text</label>
+                    <input id="tInk" type="color" value="#2b2a28" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="tMuted">Muted</label>
+                    <input id="tMuted" type="color" value="#6a665f" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="tStroke">Borders</label>
+                    <input id="tStroke" type="color" value="#e9e4dd" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="tCardA">Card opacity</label>
+                    <input id="tCardA" type="range" min="35" max="95" value="58" />
+                  </div>
+
+                  <div class="pDiv"></div>
+
+                  <!-- ✅ apply/reset -->
+                  <button id="tApply" class="miniBtn" type="button">Apply theme</button>
+                  <button id="tReset" class="miniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+                  <div class="pDiv"></div>
+
+                  <!-- ✅ Presets (GLOBAL JSON shared across widgets) -->
+                  <div class="panelTitle" style="margin-top:0;">Presets</div>
+
+                  <input class="presetName" id="presetName" placeholder="Preset name">
+
+                  <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+                  <div class="pDiv"></div>
+
+                  <select class="presetSelect" id="presetSelect"></select>
+
+                  <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+                  <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+                  <div class="pDiv"></div>
+
+                  <button class="miniBtn" id="presetCopy" type="button">Copy preset JSON</button>
+
+                  <div class="pDiv"></div>
+
+                  <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+                  <button class="miniBtn" id="presetImportBtn" type="button" style="margin-top:8px;">Import presets</button>
+
+                  <div class="status" id="presetStatus" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" aria-label="Input">
+            <input id="taskName" style="flex:1; min-width:240px;" placeholder="What are you doing?" />
+            <input id="estimateMin" type="number" min="1" step="1" style="width:160px;" placeholder="Estimate (min)" />
+
+            <span class="pill">
+              Overhead
+              <select id="overhead">
+                <option value="1.15">Light (+15%)</option>
+                <option value="1.30" selected>Normal (+30%)</option>
+                <option value="1.50">Heavy (+50%)</option>
+                <option value="2.00">Chaotic (×2)</option>
+              </select>
+            </span>
+
+            <button id="calcBtn" class="primary" type="button">Reality check</button>
+            <button id="saveBtn" class="soft" type="button">Save</button>
+            <button id="resetBtn" class="danger" type="button">Reset</button>
+          </div>
+
+          <div id="resetConfirm" class="confirm" style="display:none;">
+            <div class="confirmTop">
+              <p class="confirmTitle">Reset history?</p>
+              <span class="tiny">This can’t be undone.</span>
+            </div>
+            <div class="row">
+              <button id="resetYes" class="danger" type="button">Yes, reset</button>
+              <button id="resetNo" class="soft" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="kpi" aria-label="Summary">
+            <div class="box">
+              <div class="num" id="kEst">—</div>
+              <div class="lab">Your estimate</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kReal">—</div>
+              <div class="lab">Reality time</div>
+            </div>
+            <div class="box">
+              <div class="num" id="kDiff">—</div>
+              <div class="lab">Extra overhead</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="results" aria-label="Explanation">
+            <div class="resTop">
+              <p class="resTitle" id="resTitle">No check yet.</p>
+              <span class="pill"><span class="tiny" id="resPill">—</span></span>
+            </div>
+            <div class="tiny" id="resText">Enter a task + estimate, then click “Reality check”.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" style="justify-content:space-between; align-items:flex-end;">
+            <div class="tiny">Saved checks</div>
+            <span class="pill">
+              View
+              <select id="viewFilter">
+                <option value="all" selected>All</option>
+                <option value="today">Today</option>
+              </select>
+            </span>
+          </div>
+
+          <div style="height:10px;"></div>
+          <div id="history"></div>
+
+          <div class="divider"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   Instance-safe storage + GLOBAL presets (same pattern)
+   - wid: per-widget unique id (URL ?wid=... or session fallback)
+   - per-widget keys include wid so widgets don't overwrite each other
+   - presets stored globally under widget_presets_v2
+========================================================= */
+(function(){
+  const mem = Object.create(null);
+
+  function canUseLocalStorage(){
+    try{
+      const k="__t__"+Math.random().toString(16).slice(2);
+      localStorage.setItem(k,"1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{ return false; }
+  }
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+    catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+    catch{ mem[key]=String(value); }
+  }
+  function storageRemove(key){
+    try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+    catch{ delete mem[key]; }
+  }
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function getWidgetId(){
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = (sp.get("wid") || "").trim();
+      if(wid) return wid;
+    }catch{}
+    try{
+      const cached = sessionStorage.getItem("tc_wid");
+      if(cached) return cached;
+    }catch{}
+    const fresh = uid();
+    try{ sessionStorage.setItem("tc_wid", fresh); }catch{}
+    return fresh;
+  }
+
+  window.__TC_APP__ = { wid: getWidgetId(), get: storageGet, set: storageSet, remove: storageRemove };
+})();
+
+const WID = window.__TC_APP__?.wid || "default";
+
+/* ✅ per-widget keys */
+const KEY = "time_reality_check_v2__" + WID;
+const BG_KEY = "time_reality_check_bg_v2__" + WID;
+const THEME_KEY = "time_check_theme_v2__" + WID;
+
+/* ✅ GLOBAL presets */
+const PRESETS_KEY = "widget_presets_v2";
+const PRESET_NAMESPACE = "timecheck";
+
+/* ---------- helpers ---------- */
+const $ = (id)=>document.getElementById(id);
+
+function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
+
+function normalizeHex(hex, fallback){
+  const s = String(hex || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+}
+
+function loadJSON(key){
+  try{
+    const raw = window.__TC_APP__.get(key);
+    return raw ? JSON.parse(raw) : null;
+  }catch{ return null; }
+}
+function saveJSON(key, val){
+  try{ window.__TC_APP__.set(key, JSON.stringify(val)); }catch{}
+}
+
+async function copyText(text){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch{}
+  try{
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position="fixed";
+    ta.style.left="-9999px";
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return !!ok;
+  }catch{ return false; }
+}
+
+function setStatus(msg=""){ const el = $("presetStatus"); if(el) el.textContent = msg; }
+
+/* --------------------------
+   Presets (GLOBAL) — namespaced
+   Each item: {id,name, ns, theme, bg}
+--------------------------- */
+function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+function loadPresets(){
+  const raw = loadJSON(PRESETS_KEY);
+  return Array.isArray(raw) ? raw : [];
+}
+function savePresets(list){ saveJSON(PRESETS_KEY, list); }
+
+function sanitizePresetList(parsed){
+  if(!Array.isArray(parsed)) return null;
+  return parsed.filter(Boolean).map(p => ({
+    id: String(p.id || uid()),
+    name: String(p.name || "Imported"),
+    ns: String(p.ns || PRESET_NAMESPACE),
+    theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
+    bg: (p.bg && typeof p.bg === "object") ? p.bg : {}
+  }));
+}
+
+function getPresetById(id){
+  return loadPresets().find(p => p && p.ns === PRESET_NAMESPACE && p.id === id) || null;
+}
+
+function refreshPresetSelect(){
+  const sel = $("presetSelect");
+  if(!sel) return;
+  const list = loadPresets().filter(p => p && p.ns === PRESET_NAMESPACE);
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">—</option>`;
+  for(const p of list){
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name || "Untitled";
+    sel.appendChild(opt);
+  }
+  if(cur) sel.value = cur;
+}
+
+/* --------------------------
+   Theme module (draft + apply + presets)
+--------------------------- */
+const DEFAULTS = {
+  bg: "#ffffff",
+  ink: "#2b2a28",
+  muted: "#6a665f",
+  stroke: "#e9e4dd",
+  cardA: 58, // %
+};
+
+let themeDraft = Object.assign({}, DEFAULTS, loadJSON(THEME_KEY) || {});
+
+function applyTheme(t, { persist=false } = {}){
+  const theme = { ...DEFAULTS, ...(t || {}) };
+
+  const bg = normalizeHex(theme.bg, DEFAULTS.bg);
+  const ink = normalizeHex(theme.ink, DEFAULTS.ink);
+  const muted = normalizeHex(theme.muted, DEFAULTS.muted);
+  const stroke = normalizeHex(theme.stroke, DEFAULTS.stroke);
+  const cardA = clamp(Number(theme.cardA), 35, 95);
+
+  document.documentElement.style.setProperty("--bg", bg);
+  document.documentElement.style.setProperty("--ink", ink);
+  document.documentElement.style.setProperty("--muted", muted);
+  document.documentElement.style.setProperty("--stroke", stroke);
+  document.documentElement.style.setProperty("--card", `rgba(255,255,255,${cardA/100})`);
+
+  const dot = $("themeDot");
+  if(dot){
+    dot.style.background = ink;
+    dot.style.boxShadow = `0 0 0 6px rgba(243,239,233,${Math.min(0.32, 0.10 + (cardA/300))})`;
+  }
+
+  // sync UI
+  if($("tBg")) $("tBg").value = bg;
+  if($("tInk")) $("tInk").value = ink;
+  if($("tMuted")) $("tMuted").value = muted;
+  if($("tStroke")) $("tStroke").value = stroke;
+  if($("tCardA")) $("tCardA").value = String(cardA);
+
+  const out = { bg, ink, muted, stroke, cardA };
+  if(persist) saveJSON(THEME_KEY, out);
+  return out;
+}
+
+function readThemeUi(){
+  return {
+    bg: $("tBg").value,
+    ink: $("tInk").value,
+    muted: $("tMuted").value,
+    stroke: $("tStroke").value,
+    cardA: Number($("tCardA").value),
+  };
+}
+
+/* --------------------------
+   Background module (draft + apply)
+--------------------------- */
+function hexToRgba(hex, a){
+  const h = String(hex || "").replace("#","").trim();
+  const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+  const num = parseInt(full || "efe7e1", 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function fileToDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageDataUrl:null };
+let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+
+function applyBgDraft(){
+  const tint = bgDraft.tint || DEFAULT_BG.tint;
+  const strength = clamp(Number(bgDraft.strength || 0), 0, 70) / 100;
+
+  document.documentElement.style.setProperty("--board-tint", tint);
+  document.documentElement.style.setProperty("--board-tint-a", String(strength));
+  document.documentElement.style.setProperty("--board-image", bgDraft.imageDataUrl ? `url("${bgDraft.imageDataUrl}")` : "none");
+
+  const boardTintEl = $("boardTint");
+  if(boardTintEl) boardTintEl.style.background = hexToRgba(tint, strength);
+
+  const bgDot = $("bgDot");
+  if(bgDot){
+    bgDot.style.background = tint;
+    bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+  }
+
+  if($("bgColor")) $("bgColor").value = tint;
+  if($("bgStrength")) $("bgStrength").value = String(clamp(Number(bgDraft.strength), 0, 70));
+}
+
+/* --------------------------
+   Popovers: mutually exclusive
+--------------------------- */
+function closeAll(except){
+  const bgPanel = $("bgPanel");
+  const themePanel = $("themePanel");
+  [bgPanel, themePanel].forEach(p=>{
+    if(!p) return;
+    if(p !== except) p.classList.remove("open");
+  });
+}
+
+/* --------------------------
+   Time reality check module
+--------------------------- */
+function defaultState(){
+  return { last:null, history:[], view:"all" };
+}
+
+function load(){
+  try{
+    const raw = window.__TC_APP__.get(KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw) || {};
+    const base = defaultState();
+    base.last = parsed.last || null;
+    base.history = Array.isArray(parsed.history) ? parsed.history : [];
+    base.view = parsed.view || "all";
+    return base;
+  }catch{
+    return defaultState();
+  }
+}
+
+let state = load();
+
+function save(){
+  try{ window.__TC_APP__.set(KEY, JSON.stringify(state)); }catch{}
+}
+
+function fmtMinutes(m){
+  const n = Math.max(0, Math.round(Number(m)||0));
+  if(n < 60) return `${n} min`;
+  const h = Math.floor(n / 60);
+  const r = n % 60;
+  return r ? `${h}h ${r}m` : `${h}h`;
+}
+
+function todayKey(ts){
+  const d = new Date(ts);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+function overheadLabel(mult){
+  const m = Number(mult);
+  if(m === 1.15) return "Light (+15%)";
+  if(m === 1.30) return "Normal (+30%)";
+  if(m === 1.50) return "Heavy (+50%)";
+  if(m === 2.00) return "Chaotic (×2)";
+  return `×${m.toFixed(2)}`;
+}
+
+function compute(){
+  const task = ($("taskName").value || "").trim();
+  const estMin = Number($("estimateMin").value);
+  const mult = Number($("overhead").value);
+
+  if(!task){
+    $("resTitle").textContent = "Add a task name.";
+    $("resText").textContent = "Example: “Email replies” or “Write outline.”";
+    return null;
+  }
+  if(!isFinite(estMin) || estMin <= 0){
+    $("resTitle").textContent = "Add a valid estimate.";
+    $("resText").textContent = "Use minutes, like 15, 30, 45…";
+    return null;
+  }
+
+  const realMin = Math.max(1, Math.round(estMin * mult));
+  const extra = Math.max(0, realMin - Math.round(estMin));
+
+  const result = {
+    task,
+    estMin: Math.round(estMin),
+    mult,
+    realMin,
+    extraMin: extra,
+    at: Date.now()
+  };
+
+  state.last = result;
+  save();
+  render();
+  return result;
+}
+
+function renderKPIs(){
+  if(!state.last){
+    $("kEst").textContent = "—";
+    $("kReal").textContent = "—";
+    $("kDiff").textContent = "—";
+    return;
+  }
+  $("kEst").textContent = fmtMinutes(state.last.estMin);
+  $("kReal").textContent = fmtMinutes(state.last.realMin);
+  $("kDiff").textContent = `+${fmtMinutes(state.last.extraMin)}`;
+}
+
+function renderResult(){
+  if(!state.last){
+    $("resTitle").textContent = "No check yet.";
+    $("resPill").textContent = "—";
+    $("resText").textContent = "Enter a task + estimate, then click “Reality check”.";
+    return;
+  }
+
+  const r = state.last;
+  $("resTitle").textContent = r.task;
+  $("resPill").textContent = overheadLabel(r.mult);
+
+  const lines = [
+    `You estimated ${fmtMinutes(r.estMin)}.`,
+    `Reality time: ${fmtMinutes(r.realMin)} (adds ${fmtMinutes(r.extraMin)} overhead).`,
+  ];
+  $("resText").textContent = lines.join(" ");
+}
+
+function renderHistory(){
+  const root = $("history");
+  root.innerHTML = "";
+
+  const list = [...state.history];
+  const renderList = (arr)=>{
+    if(arr.length === 0){
+      root.innerHTML = `<div class="tiny">Nothing saved yet.</div>`;
+      return;
+    }
+
+    for(const r of arr){
+      const box = document.createElement("div");
+      box.className = "results";
+      box.style.marginBottom = "8px";
+
+      const top = document.createElement("div");
+      top.className = "resTop";
+
+      const title = document.createElement("p");
+      title.className = "resTitle";
+      title.textContent = r.task;
+
+      const pill = document.createElement("span");
+      pill.className = "pill";
+      pill.innerHTML = `<span class="tiny">${overheadLabel(r.mult)}</span>`;
+
+      top.appendChild(title);
+      top.appendChild(pill);
+
+      const meta = document.createElement("div");
+      meta.className = "tiny";
+      meta.textContent = `${fmtMinutes(r.estMin)} → ${fmtMinutes(r.realMin)} (${fmtMinutes(r.extraMin)} overhead) · ${new Date(r.at).toLocaleString()}`;
+
+      const actions = document.createElement("div");
+      actions.className = "row";
+      actions.style.marginTop = "10px";
+
+      const useBtn = document.createElement("button");
+      useBtn.type = "button";
+      useBtn.className = "soft";
+      useBtn.textContent = "Use again";
+      useBtn.addEventListener("click", () => {
+        $("taskName").value = r.task;
+        $("estimateMin").value = String(r.estMin);
+        $("overhead").value = String(r.mult);
+        state.last = Object.assign({}, r, { at: Date.now() });
+        save();
+        render();
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "danger";
+      delBtn.textContent = "Remove";
+      delBtn.addEventListener("click", () => {
+        state.history = state.history.filter(x => x !== r);
+        save();
+        render();
+      });
+
+      actions.appendChild(useBtn);
+      actions.appendChild(delBtn);
+
+      box.appendChild(top);
+      box.appendChild(meta);
+      box.appendChild(actions);
+      root.appendChild(box);
+    }
+  };
+
+  if(state.view === "today"){
+    const today = todayKey(Date.now());
+    renderList(list.filter(x => todayKey(x.at) === today));
+  }else{
+    renderList(list);
+  }
+}
+
+function render(){
+  $("viewFilter").value = state.view;
+  renderKPIs();
+  renderResult();
+  renderHistory();
+  save();
+}
+
+/* --------------------------
+   Init
+--------------------------- */
+function init(){
+  const required = ["taskName","estimateMin","overhead","calcBtn","saveBtn","resetBtn","resetConfirm","resetYes","resetNo","kEst","kReal","kDiff","resTitle","resPill","resText","viewFilter","history","bgBtn","bgPanel","themeBtn","themePanel","tBg","tInk","tMuted","tStroke","tCardA","tApply","tReset","bgColor","bgStrength","bgImage","bgRemove","bgApply","bgReset","presetName","presetSave","presetSelect","presetApply","presetDelete","presetCopy","presetImport","presetImportBtn","presetStatus"];
+  for(const id of required){ if(!$(id)) return; }
+
+  /* boot theme + bg (preview only) */
+  themeDraft = applyTheme(themeDraft, { persist:false });
+  applyBgDraft();
+  refreshPresetSelect();
+
+  /* popovers */
+  $("bgBtn").addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const p = $("bgPanel");
+    const open = !p.classList.contains("open");
+    closeAll(open ? p : null);
+    p.classList.toggle("open", open);
+  });
+
+  $("themeBtn").addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const p = $("themePanel");
+    const open = !p.classList.contains("open");
+    closeAll(open ? p : null);
+    p.classList.toggle("open", open);
+  });
+
+  document.addEventListener("click", (e)=>{
+    const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn") || e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+    if(!inside) closeAll(null);
+  });
+
+  /* theme preview (draft) */
+  const onThemeInput = ()=>{
+    themeDraft = Object.assign({}, themeDraft, readThemeUi());
+    applyTheme(themeDraft, { persist:false });
+    setStatus("");
+  };
+  $("tBg").addEventListener("input", onThemeInput);
+  $("tInk").addEventListener("input", onThemeInput);
+  $("tMuted").addEventListener("input", onThemeInput);
+  $("tStroke").addEventListener("input", onThemeInput);
+  $("tCardA").addEventListener("input", onThemeInput);
+
+  $("tApply").addEventListener("click", ()=>{
+    themeDraft = Object.assign({}, themeDraft, readThemeUi());
+    themeDraft = applyTheme(themeDraft, { persist:true });
+    setStatus("Theme applied.");
+  });
+
+  $("tReset").addEventListener("click", ()=>{
+    themeDraft = Object.assign({}, DEFAULTS);
+    applyTheme(themeDraft, { persist:true });
+    setStatus("Theme reset.");
+  });
+
+  /* bg preview (draft) */
+  $("bgColor").addEventListener("input", ()=>{
+    bgDraft.tint = $("bgColor").value;
+    applyBgDraft();
+    setStatus("");
+  });
+  $("bgStrength").addEventListener("input", ()=>{
+    bgDraft.strength = Number($("bgStrength").value);
+    applyBgDraft();
+    setStatus("");
+  });
+  $("bgImage").addEventListener("change", async ()=>{
+    const file = $("bgImage").files && $("bgImage").files[0];
+    if(!file) return;
+    bgDraft.imageDataUrl = await fileToDataUrl(file);
+    applyBgDraft();
+    setStatus("");
+  });
+  $("bgRemove").addEventListener("click", ()=>{
+    bgDraft.imageDataUrl = null;
+    $("bgImage").value = "";
+    applyBgDraft();
+    setStatus("");
+  });
+  $("bgApply").addEventListener("click", ()=>{
+    saveJSON(BG_KEY, bgDraft);
+    setStatus("Background applied.");
+  });
+  $("bgReset").addEventListener("click", ()=>{
+    window.__TC_APP__.remove(BG_KEY);
+    bgDraft = Object.assign({}, DEFAULT_BG);
+    $("bgImage").value = "";
+    applyBgDraft();
+    saveJSON(BG_KEY, bgDraft);
+    setStatus("Background reset.");
+  });
+
+  /* presets (theme + bg) */
+  const currentPresetPayload = ()=>({
+    id: uid(),
+    ns: PRESET_NAMESPACE,
+    name: ($("presetName").value || "").trim() || "Untitled",
+    theme: { ...themeDraft },
+    bg: { ...bgDraft }
+  });
+
+  $("presetSave").addEventListener("click", ()=>{
+    const name = ($("presetName").value || "").trim();
+    if(!name){ setStatus("Type a preset name first."); return; }
+    const list = loadPresets();
+    list.unshift({ ...currentPresetPayload(), name });
+    savePresets(list);
+    $("presetName").value = "";
+    refreshPresetSelect();
+    $("presetSelect").value = list[0].id;
+    setStatus("Preset saved.");
+  });
+
+  $("presetApply").addEventListener("click", ()=>{
+    const id = $("presetSelect").value || "";
+    if(!id){ setStatus("Choose a preset first."); return; }
+    const p = getPresetById(id);
+    if(!p){ setStatus("Preset not found."); return; }
+
+    themeDraft = Object.assign({}, themeDraft, p.theme || {});
+    themeDraft = applyTheme(themeDraft, { persist:true });
+
+    bgDraft = Object.assign({}, bgDraft, p.bg || {});
+    applyBgDraft();
+    saveJSON(BG_KEY, bgDraft);
+
+    setStatus("Preset applied.");
+  });
+
+  $("presetDelete").addEventListener("click", ()=>{
+    const id = $("presetSelect").value || "";
+    if(!id){ setStatus("Choose a preset first."); return; }
+    const list = loadPresets();
+    const next = list.filter(p => !(p && p.ns === PRESET_NAMESPACE && p.id === id));
+    if(next.length === list.length){ setStatus("Preset not found."); return; }
+    savePresets(next);
+    refreshPresetSelect();
+    $("presetSelect").value = "";
+    setStatus("Preset deleted.");
+  });
+
+  $("presetCopy").addEventListener("click", async ()=>{
+    const payload = JSON.stringify(loadPresets(), null, 2);
+    const ok = await copyText(payload);
+    if(ok) setStatus("Preset JSON copied.");
+    else{
+      $("presetImport").value = payload;
+      $("presetImport").focus(); $("presetImport").select();
+      setStatus("Could not copy automatically — JSON placed in the box to copy manually.");
+    }
+  });
+
+  $("presetImportBtn").addEventListener("click", ()=>{
+    const raw = ($("presetImport").value || "").trim();
+    if(!raw){ setStatus("Paste preset JSON first."); return; }
+    try{
+      const parsed = JSON.parse(raw);
+      const cleaned = sanitizePresetList(parsed);
+      if(!cleaned){ setStatus("That JSON doesn’t look like a preset list."); return; }
+      savePresets(cleaned);
+      refreshPresetSelect();
+      setStatus("Presets imported.");
+    }catch{
+      setStatus("Invalid JSON.");
+    }
+  });
+
+  /* calculator + history */
+  const resetConfirm = $("resetConfirm");
+  const hideResetConfirm = ()=> resetConfirm.style.display = "none";
+  const showResetConfirm = ()=>{
+    resetConfirm.style.display = "block";
+    closeAll(null);
+  };
+
+  $("calcBtn").addEventListener("click", compute);
+
+  $("saveBtn").addEventListener("click", ()=>{
+    if(!state.last){ compute(); }
+    if(!state.last) return;
+    state.history.unshift(state.last);
+    save();
+    render();
+  });
+
+  $("viewFilter").addEventListener("change", ()=>{
+    state.view = $("viewFilter").value;
+    render();
+  });
+
+  $("resetBtn").addEventListener("click", ()=>{
+    if(resetConfirm.style.display === "block") hideResetConfirm();
+    else showResetConfirm();
+  });
+
+  $("resetNo").addEventListener("click", hideResetConfirm);
+
+  $("resetYes").addEventListener("click", ()=>{
+    window.__TC_APP__.remove(KEY);
+    state = defaultState();
+    hideResetConfirm();
+    render();
+  });
+
+  render();
+}
+
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", init);
+}else{
+  init();
+}
+</script>
+</body>
+</html>

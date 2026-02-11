@@ -1,0 +1,1710 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weekly Overview</title>
+  <style>
+    :root{
+      --app-bg: #ffffff;
+
+      --ink: #2b2b2b;
+      --muted: #7a7a7a;
+
+      --border-rgb: 30,30,30;
+      --border-a: 0.10;
+      --border: rgba(var(--border-rgb), var(--border-a));
+      --shadow: 0 12px 34px rgba(20, 20, 20, 0.08);
+
+      --surface-a: 0.78; /* pills */
+      --panel-a: 0.92;
+
+      --btn-a: 0.92;
+      --btn-border-a: 0.10;
+      --btn-ink: rgba(43,43,43,0.72);
+
+      --accent: #cbb8ae; /* drives selection ring + theme dot */
+
+      /* overlay (single; no radials) */
+      --overlay-base: #ffffff;
+      --overlay-a: 0.34;
+
+      /* Board background */
+      --board-tint: #efe7e1;
+      --board-tint-a: 0.30;
+      --board-image: none;
+
+      /* Day cards + blocks + inputs */
+      --day-bg: #ffffff;
+      --day-bg-a: 0.94;
+
+      --block-bg: #ffffff;
+      --block-bg-a: 0.72;
+
+      --input-bg: #ffffff;
+      --input-bg-a: 0.96;
+
+      /* TASK: full box fill strength (strong default) */
+      --task-tint-a: 0.90;
+
+      /* =========================
+         LAYOUT / SCALE
+      ========================= */
+      --board-radius: 26px;
+      --radius: 20px;
+
+      --page-max: 1320px;
+      --gap: 16px;
+      --pad: 18px;
+
+      --day-min-h: 390px;
+
+      --h1: 20px;
+      --sub: 14px;
+
+      --label: 12px;
+      --text: 15px;
+
+      --input-pad: 14px 14px;
+      --input-radius: 14px;
+
+      --row-radius: 16px;
+
+      --header-pad: 14px 16px;
+
+      --chip-pad: 8px 12px;
+
+      --focus-min-h: 64px;
+      --task-min-h: 64px;
+      --max-lines: 4;
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--ink);
+      background: var(--app-bg);
+    }
+
+    .wrap{
+      max-width: var(--page-max);
+      margin: 26px auto;
+      padding: 18px;
+    }
+
+    .titlebar{
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .title{
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 260px;
+    }
+
+    h1{
+      margin: 0;
+      font-size: var(--h1);
+      font-weight: 750;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle{
+      font-size: var(--sub);
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .controls{
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .icon-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255, var(--surface-a));
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: var(--chip-pad);
+      box-shadow: 0 8px 22px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+
+    .bg-btn, .nav-btn, .theme-btn{
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
+      background: rgba(255,255,255, var(--btn-a));
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--btn-ink);
+      font-weight: 900;
+      line-height: 1;
+    }
+    .bg-btn:active, .nav-btn:active, .theme-btn:active{ transform: translateY(1px); }
+
+    .bg-dot, .theme-dot{
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), 0.14);
+      background: var(--board-tint);
+      box-shadow: 0 0 0 7px rgba(239,231,225,0.30);
+    }
+    .theme-dot{
+      background: var(--accent);
+      box-shadow: 0 0 0 7px rgba(203,184,174,0.22);
+    }
+
+    .popover{ position: relative; }
+
+    .panel{
+      position: absolute;
+      top: 48px;
+      right: 0;
+      width: 380px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255, var(--panel-a));
+      box-shadow: 0 22px 50px rgba(20,20,20,0.12);
+      backdrop-filter: blur(2px);
+      padding: 14px;
+      display: none;
+      z-index: 50;
+
+      /* ✅ keep usable on small screens */
+      max-height: min(72vh, 620px);
+      overflow: auto;
+    }
+    .panel.open{ display: block; }
+
+    .panelTitle{
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(43,43,43,0.70);
+    }
+
+    .row{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 0;
+    }
+    .row label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="color"]{
+      width: 36px;
+      height: 28px;
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      border-radius: 10px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input[type="range"]{ width: 170px; }
+
+    .file{
+      width: 100%;
+      font-size: 12px;
+      color: rgba(43,43,43,0.75);
+    }
+
+    .mini-btn{
+      width: 100%;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.92);
+      border-radius: 14px;
+      padding: 11px 12px;
+      cursor: pointer;
+      font-weight: 750;
+      color: rgba(43,43,43,0.86);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .mini-btn:active{ transform: translateY(1px); }
+
+    .divider{
+      height: 1px;
+      background: rgba(var(--border-rgb), 0.08);
+      margin: 10px 0;
+    }
+
+    .week-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: var(--chip-pad);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255, var(--surface-a));
+      box-shadow: 0 8px 22px rgba(20,20,20,0.06);
+      backdrop-filter: blur(2px);
+    }
+
+    .week-label{
+      font-size: 13px;
+      color: rgba(43,43,43,0.80);
+      min-width: 170px;
+      text-align: center;
+      user-select: none;
+      font-weight: 650;
+      letter-spacing: 0.1px;
+    }
+
+    /* ✅ Presets UI */
+    .presetName, .presetSelect, .presetArea{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: 14px;
+      padding: 11px 12px;
+      background: rgba(255,255,255,0.92);
+      color: var(--ink);
+      font: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+    .presetSelect{ height: 40px; }
+    .presetArea{
+      min-height: 96px;
+      resize: vertical;
+      line-height: 1.35;
+      font-size: 12px;
+    }
+    .status{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      min-height: 16px;
+    }
+
+    /* Board */
+    .board{
+      border: 1px solid var(--border);
+      border-radius: var(--board-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      background: none;
+    }
+
+    .board::before{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(1.02) contrast(1.03);
+      transform: scale(1.02);
+    }
+
+    .board::after{
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: rgba(255,255,255,0.34); /* overridden by JS */
+    }
+
+    .board-tint{
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+
+    .board-content{
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(2px);
+    }
+
+    /* Grid */
+    .grid{
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(290px, 1fr);
+      gap: var(--gap);
+      padding: var(--pad);
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (min-width: 1200px){
+      .grid{
+        grid-auto-flow: initial;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        overflow-x: visible;
+        scroll-snap-type: none;
+      }
+    }
+
+    .day{
+      background: rgba(255,255,255, var(--day-bg-a));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 10px 26px rgba(20,20,20,0.06);
+      min-height: var(--day-min-h);
+      display: flex;
+      flex-direction: column;
+      scroll-snap-align: start;
+      position: relative;
+    }
+
+    .day.selected{
+      outline: 4px solid rgba(0,0,0,0); /* set by JS */
+      outline-offset: 3px;
+    }
+
+    .day-header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--header-pad);
+      border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92));
+    }
+
+    .day-title{
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .day-name{
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 0.15px;
+    }
+    .day-date{
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .day-color{
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.70);
+      backdrop-filter: blur(2px);
+
+      opacity: 0;
+      transform: translateY(-2px);
+      pointer-events: none;
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    .day:hover .day-color,
+    .day:focus-within .day-color,
+    .day.selected .day-color{
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .dayColorInput{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .day-color::before{
+      content:"";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(var(--border-rgb), 0.16);
+      background: var(--swatch, var(--accent));
+      box-shadow: 0 0 0 6px rgba(0,0,0,0.06);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .day-body{
+      padding: 14px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .block{
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px dashed rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255, var(--block-bg-a));
+    }
+
+    .block .label{
+      font-size: var(--label);
+      color: var(--muted);
+      margin-bottom: 10px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    textarea{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: var(--input-radius);
+      padding: var(--input-pad);
+      outline: none;
+      background: rgba(255,255,255, var(--input-bg-a));
+      color: var(--ink);
+      font-size: var(--text);
+      line-height: 1.35;
+      resize: none;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    textarea:focus{
+      border-color: rgba(var(--border-rgb), 0.18);
+      box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
+    }
+
+    .focusInput{
+      min-height: var(--focus-min-h);
+      max-height: calc(var(--max-lines) * 1.35em + 28px);
+    }
+
+    .tasks{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      min-height: 190px;
+    }
+
+    .tasks .label{
+      font-size: var(--label);
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .taskList{
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .task-row{
+      display: grid;
+      grid-template-columns: 1fr 44px;
+      align-items: stretch;
+      border-radius: var(--row-radius);
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(20,20,20,0.06);
+    }
+
+    .task-row .taskInput{
+      border: none;
+      border-radius: 0;
+      background: transparent !important;
+      box-shadow: none;
+      min-height: var(--task-min-h);
+      max-height: calc(var(--max-lines) * 1.35em + 28px);
+    }
+    .task-row .taskInput:focus{
+      border: none;
+      box-shadow: none;
+      outline: none;
+    }
+
+    .icon-btn{
+      width: 44px;
+      border: none;
+      border-left: 1px solid rgba(var(--border-rgb), 0.12);
+      background: transparent !important;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: rgba(43,43,43,0.78);
+      -webkit-tap-highlight-color: transparent;
+      font-weight: 900;
+      font-size: 18px;
+    }
+    .icon-btn:active{ transform: translateY(1px); }
+
+    .add-btn{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.90);
+      border-radius: 16px;
+      padding: 12px 12px;
+      cursor: pointer;
+      color: rgba(43,43,43,0.88);
+      font-weight: 800;
+      -webkit-tap-highlight-color: transparent;
+      font-size: 14px;
+      letter-spacing: 0.1px;
+    }
+    .add-btn:active{ transform: translateY(1px); }
+
+    .footer-note{
+      padding: 0 var(--pad) var(--pad);
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      background: rgba(255,255,255,0.75);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="titlebar">
+      <div class="title"></div>
+
+      <div class="controls">
+        <div class="week-pill" aria-label="Week navigation">
+          <button class="nav-btn" id="prevWeek" type="button" aria-label="Previous week" title="Previous week">‹</button>
+          <div class="week-label" id="weekLabel">Week</div>
+          <button class="nav-btn" id="nextWeek" type="button" aria-label="Next week" title="Next week">›</button>
+        </div>
+
+        <!-- THEME -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="theme-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <span class="theme-dot" id="themeDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+            <div class="panelTitle">Theme</div>
+
+            <!-- ✅ apply/reset -->
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="themeReset" type="button" style="margin-top:10px;">Reset theme</button>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
+            <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
+            <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e" /></div>
+            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tSurfaceA">Pills opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="78" /></div>
+            <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="92" /></div>
+            <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10" /></div>
+            <div class="row"><label for="tBtnInk">Btn icon/text</label><input id="tBtnInk" type="color" value="#2b2b2b" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tOverlayBase">Overlay color</label><input id="tOverlayBase" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="34" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tDayBg">Day card bg</label><input id="tDayBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDayBgA">Day card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="94" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tBlockBg">Block bg</label><input id="tBlockBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tBlockBgA">Block opacity</label><input id="tBlockBgA" type="range" min="55" max="100" value="72" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInputBgA">Input opacity</label><input id="tInputBgA" type="range" min="60" max="100" value="96" /></div>
+
+            <div class="divider"></div>
+
+            <div class="row"><label for="tTaskTintA">Task color fill</label><input id="tTaskTintA" type="range" min="10" max="100" value="90" /></div>
+
+            <div class="divider"></div>
+
+            <!-- ✅ GLOBAL PRESETS -->
+            <div class="panelTitle" style="margin-top:6px;">Presets</div>
+
+            <input class="presetName" id="presetName" placeholder="Preset name">
+
+            <button class="mini-btn" id="presetSave" type="button" style="margin-top:10px;">Save current as preset</button>
+
+            <div class="divider"></div>
+
+            <select class="presetSelect" id="presetSelect"></select>
+
+            <button class="mini-btn" id="presetApply" type="button" style="margin-top:10px;">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button" style="margin-top:10px;">Delete preset</button>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="presetCopy" type="button">Copy preset JSON</button>
+
+            <div class="divider"></div>
+
+            <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+            <button class="mini-btn" id="presetImportBtn" type="button" style="margin-top:10px;">Import presets</button>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- BACKGROUND -->
+        <div class="popover">
+          <div class="icon-pill">
+            <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <span class="bg-dot" id="bgDot" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+            <div class="panelTitle">Background</div>
+
+            <!-- ✅ apply/reset -->
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:10px;">Reset background</button>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label for="bgColor">Tint</label>
+              <input id="bgColor" type="color" value="#efe7e1" />
+            </div>
+
+            <div class="row">
+              <label for="bgStrength">Tint strength</label>
+              <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row" style="align-items:flex-start;">
+              <label for="bgImage">Image</label>
+              <input id="bgImage" class="file" type="file" accept="image/*" />
+            </div>
+
+            <div class="row">
+              <button class="mini-btn" id="removeImage" type="button">Remove image</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="board-tint" id="boardTint"></div>
+
+      <div class="board-content">
+        <div class="grid" id="grid"></div>
+
+        <div class="footer-note">
+          <div><span class="kbd">Enter</span> adds a new task</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       Instance-safe storage + GLOBAL presets (same pattern)
+       - wid: per-widget unique id (URL ?wid=... or session fallback)
+       - per-widget keys include wid so widgets don't overwrite each other
+       - presets stored globally under widget_presets_v2
+    ========================================================= */
+    (function(){
+      const mem = Object.create(null);
+
+      function canUseLocalStorage(){
+        try{
+          const k="__t__"+Math.random().toString(16).slice(2);
+          localStorage.setItem(k,"1");
+          localStorage.removeItem(k);
+          return true;
+        }catch{ return false; }
+      }
+      const hasLS = canUseLocalStorage();
+
+      function storageGet(key){
+        try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+        catch{ return mem[key] ?? null; }
+      }
+      function storageSet(key, value){
+        try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+        catch{ mem[key]=String(value); }
+      }
+      function storageRemove(key){
+        try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+        catch{ delete mem[key]; }
+      }
+      function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+      function getWidgetId(){
+        try{
+          const sp = new URLSearchParams(location.search);
+          const wid = (sp.get("wid") || "").trim();
+          if(wid) return wid;
+        }catch{}
+        try{
+          const cached = sessionStorage.getItem("wo_wid");
+          if(cached) return cached;
+        }catch{}
+        const fresh = uid();
+        try{ sessionStorage.setItem("wo_wid", fresh); }catch{}
+        return fresh;
+      }
+
+      window.__WO_APP__ = { wid: getWidgetId(), get: storageGet, set: storageSet, remove: storageRemove };
+    })();
+
+    (function(){
+      const WID = window.__WO_APP__?.wid || "default";
+
+      /* ✅ per-widget keys (safe) */
+      const STORAGE_KEY = "weekly_overview_v6__" + WID;
+      const THEME_KEY   = "weekly_overview_theme_v6__" + WID;
+      const BG_KEY      = "weekly_overview_bg_v6__" + WID;
+
+      /* ✅ GLOBAL presets */
+      const PRESETS_KEY = "widget_presets_v2";
+      const PRESET_NAMESPACE = "weeklyoverview";
+
+      const $ = (sel, root=document) => root.querySelector(sel);
+      const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+      function clamp(n, min, max){
+        const x = Number(n);
+        if(!Number.isFinite(x)) return min;
+        return Math.max(min, Math.min(max, x));
+      }
+
+      function normHex(hex, fallback){
+        const s = String(hex || "").trim();
+        return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+      }
+
+      function hexToRgbTuple(hex){
+        const h = normHex(hex, "#ffffff").slice(1);
+        const r = parseInt(h.slice(0,2), 16);
+        const g = parseInt(h.slice(2,4), 16);
+        const b = parseInt(h.slice(4,6), 16);
+        return `${r},${g},${b}`;
+      }
+
+      function hexToRgba(hex, a){
+        const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+        return `rgba(${r},${g},${b},${a})`;
+      }
+
+      function formatShortDate(d){
+        return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      }
+
+      function toISODate(d){
+        const x = new Date(d);
+        x.setHours(0,0,0,0);
+        return x.toISOString().slice(0,10);
+      }
+
+      function mondayOfWeek(date){
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = (day === 0 ? -6 : 1) - day;
+        d.setDate(d.getDate() + diff);
+        d.setHours(0,0,0,0);
+        return d;
+      }
+
+      function addDays(d, n){
+        const x = new Date(d);
+        x.setDate(x.getDate() + n);
+        return x;
+      }
+
+      function weekIdFromDate(date){
+        return toISODate(mondayOfWeek(date));
+      }
+
+      function prettyWeekLabel(weekId){
+        const mon = new Date(weekId + "T00:00:00");
+        const sun = addDays(mon, 6);
+        const opts = { month: "short", day: "numeric" };
+        const left = mon.toLocaleDateString(undefined, opts);
+        const right = sun.toLocaleDateString(undefined, opts);
+        return `${left} – ${right}`;
+      }
+
+      /* ---------- JSON helpers (instance-safe) ---------- */
+      function loadJSON(key){
+        try{
+          const raw = window.__WO_APP__.get(key);
+          return raw ? JSON.parse(raw) : null;
+        }catch{ return null; }
+      }
+      function saveJSON(key, val){
+        try{ window.__WO_APP__.set(key, JSON.stringify(val)); }catch{}
+      }
+      async function copyText(text){
+        try{
+          if(navigator.clipboard && navigator.clipboard.writeText){
+            await navigator.clipboard.writeText(text);
+            return true;
+          }
+        }catch{}
+        try{
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position="fixed";
+          ta.style.left="-9999px";
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          const ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          return !!ok;
+        }catch{ return false; }
+      }
+      function setStatus(msg=""){ const el = document.getElementById("presetStatus"); if(el) el.textContent = msg; }
+
+      /* ============================
+         Theme (draft + apply)
+      ============================ */
+      const DEFAULT_THEME = {
+        appBg: "#ffffff",
+        ink: "#2b2b2b",
+        muted: "#7a7a7a",
+        accent: "#cbb8ae",
+
+        borderColor: "#1e1e1e",
+        borderA: 0.10,
+
+        surfaceA: 0.78,
+        panelA: 0.92,
+
+        btnA: 0.92,
+        btnBorderA: 0.10,
+        btnInk: "#2b2b2b",
+
+        overlayBase: "#ffffff",
+        overlayA: 0.34,
+
+        dayBg: "#ffffff",
+        dayBgA: 0.94,
+
+        blockBg: "#ffffff",
+        blockBgA: 0.72,
+
+        inputBg: "#ffffff",
+        inputBgA: 0.96,
+
+        taskTintA: 0.90
+      };
+
+      function setSelectionRingFromAccent(accentHex){
+        const accent = normHex(accentHex, DEFAULT_THEME.accent);
+        let st = document.getElementById("accentRingStyle");
+        if(!st){
+          st = document.createElement("style");
+          st.id = "accentRingStyle";
+          document.head.appendChild(st);
+        }
+        st.textContent = `
+          .day.selected{
+            outline-color: ${hexToRgba(accent, 0.62)} !important;
+            box-shadow: 0 0 0 1px ${hexToRgba(accent, 0.22)} inset;
+          }
+        `;
+      }
+
+      function themeApply(t, { persist=false } = {}){
+        const theme = Object.assign({}, DEFAULT_THEME, t || {});
+        const r = document.documentElement.style;
+
+        r.setProperty("--app-bg", normHex(theme.appBg, DEFAULT_THEME.appBg));
+        r.setProperty("--ink", normHex(theme.ink, DEFAULT_THEME.ink));
+        r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
+        r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
+
+        r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
+        r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
+
+        r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
+        r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
+
+        r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
+        r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
+        r.setProperty("--btn-ink", hexToRgba(normHex(theme.btnInk, "#2b2b2b"), 0.72));
+
+        r.setProperty("--day-bg", normHex(theme.dayBg, DEFAULT_THEME.dayBg));
+        r.setProperty("--day-bg-a", String(clamp(theme.dayBgA, 0.70, 1.00)));
+
+        r.setProperty("--block-bg", normHex(theme.blockBg, DEFAULT_THEME.blockBg));
+        r.setProperty("--block-bg-a", String(clamp(theme.blockBgA, 0.55, 1.00)));
+
+        r.setProperty("--input-bg", normHex(theme.inputBg, DEFAULT_THEME.inputBg));
+        r.setProperty("--input-bg-a", String(clamp(theme.inputBgA, 0.60, 1.00)));
+
+        r.setProperty("--task-tint-a", String(clamp(theme.taskTintA, 0.10, 1.00)));
+
+        const dot = document.getElementById("themeDot");
+        if(dot){
+          const accent = normHex(theme.accent, DEFAULT_THEME.accent);
+          dot.style.background = accent;
+          dot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
+        }
+
+        setSelectionRingFromAccent(theme.accent);
+
+        const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
+        const overlayA = clamp(theme.overlayA, 0.00, 0.70);
+        const css = hexToRgba(overlayBase, overlayA);
+
+        let st = document.getElementById("overlayStyle");
+        if(!st){
+          st = document.createElement("style");
+          st.id = "overlayStyle";
+          document.head.appendChild(st);
+        }
+        st.textContent = `.board::after{ background: ${css} !important; }`;
+
+        let st2 = document.getElementById("surfaceStyle");
+        if(!st2){
+          st2 = document.createElement("style");
+          st2.id = "surfaceStyle";
+          document.head.appendChild(st2);
+        }
+        st2.textContent = `
+          .day{ background: ${hexToRgba(normHex(theme.dayBg, "#ffffff"), clamp(theme.dayBgA,0.70,1.00))} !important; }
+          .block{ background: ${hexToRgba(normHex(theme.blockBg, "#ffffff"), clamp(theme.blockBgA,0.55,1.00))} !important; }
+          textarea{ background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important; }
+          .task-row .taskInput{ background: transparent !important; }
+        `;
+
+        if(persist) saveJSON(THEME_KEY, theme);
+        return theme;
+      }
+
+      function themeSyncInputs(t){
+        const theme = Object.assign({}, DEFAULT_THEME, t || {});
+        const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
+
+        set("tAppBg", theme.appBg);
+        set("tInk", theme.ink);
+        set("tMuted", theme.muted);
+        set("tAccent", theme.accent);
+
+        set("tBorderColor", theme.borderColor);
+        set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+
+        set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
+        set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+
+        set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
+        set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+        set("tBtnInk", theme.btnInk);
+
+        set("tOverlayBase", theme.overlayBase);
+        set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
+
+        set("tDayBg", theme.dayBg);
+        set("tDayBgA", Math.round(clamp(theme.dayBgA, 0.70, 1.00) * 100));
+
+        set("tBlockBg", theme.blockBg);
+        set("tBlockBgA", Math.round(clamp(theme.blockBgA, 0.55, 1.00) * 100));
+
+        set("tInputBg", theme.inputBg);
+        set("tInputBgA", Math.round(clamp(theme.inputBgA, 0.60, 1.00) * 100));
+
+        set("tTaskTintA", Math.round(clamp(theme.taskTintA, 0.10, 1.00) * 100));
+      }
+
+      function themeReadFromInputs(){
+        const g = (id)=>document.getElementById(id);
+        return {
+          appBg: g("tAppBg")?.value,
+          ink: g("tInk")?.value,
+          muted: g("tMuted")?.value,
+          accent: g("tAccent")?.value,
+
+          borderColor: g("tBorderColor")?.value,
+          borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
+
+          surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
+          panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
+
+          btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
+          btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
+          btnInk: g("tBtnInk")?.value,
+
+          overlayBase: g("tOverlayBase")?.value,
+          overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
+
+          dayBg: g("tDayBg")?.value,
+          dayBgA: clamp(Number(g("tDayBgA")?.value)/100, 0.70, 1.00),
+
+          blockBg: g("tBlockBg")?.value,
+          blockBgA: clamp(Number(g("tBlockBgA")?.value)/100, 0.55, 1.00),
+
+          inputBg: g("tInputBg")?.value,
+          inputBgA: clamp(Number(g("tInputBgA")?.value)/100, 0.60, 1.00),
+
+          taskTintA: clamp(Number(g("tTaskTintA")?.value)/100, 0.10, 1.00),
+        };
+      }
+
+      function initThemeUI(){
+        const themeBtn = $("#themeBtn");
+        const themePanel = $("#themePanel");
+        const themeReset = $("#themeReset");
+        const themeApplyBtn = $("#themeApply");
+        if(!themeBtn || !themePanel || !themeReset || !themeApplyBtn) return;
+
+        themeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          themePanel.classList.toggle("open");
+          $("#bgPanel")?.classList.remove("open");
+        });
+
+        document.addEventListener("click", (e) => {
+          if(!themePanel.classList.contains("open")) return;
+          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if(!inside) themePanel.classList.remove("open");
+        });
+
+        const saved = loadJSON(THEME_KEY) || DEFAULT_THEME;
+        let themeDraft = themeApply(saved, { persist:false });
+        themeSyncInputs(themeDraft);
+
+        const ids = [
+          "tAppBg","tInk","tMuted","tAccent",
+          "tBorderColor","tBorderA",
+          "tSurfaceA","tPanelA",
+          "tBtnA","tBtnBorderA","tBtnInk",
+          "tOverlayBase","tOverlayA",
+          "tDayBg","tDayBgA",
+          "tBlockBg","tBlockBgA",
+          "tInputBg","tInputBgA",
+          "tTaskTintA"
+        ];
+
+        ids.forEach(id => {
+          const el = document.getElementById(id);
+          if(!el) return;
+          el.addEventListener("input", () => {
+            themeDraft = themeReadFromInputs();
+            themeApply(themeDraft, { persist:false });
+            applyTaskFillsForAllDays();
+            syncDayPickerSwatches();
+            setStatus("");
+          });
+        });
+
+        themeApplyBtn.addEventListener("click", () => {
+          themeDraft = themeReadFromInputs();
+          themeDraft = themeApply(themeDraft, { persist:true });
+          themeSyncInputs(themeDraft);
+          applyTaskFillsForAllDays();
+          syncDayPickerSwatches();
+          setStatus("Theme applied.");
+        });
+
+        themeReset.addEventListener("click", () => {
+          window.__WO_APP__.remove(THEME_KEY);
+          themeDraft = themeApply(DEFAULT_THEME, { persist:true });
+          themeSyncInputs(themeDraft);
+          applyTaskFillsForAllDays();
+          syncDayPickerSwatches();
+          setStatus("Theme reset.");
+        });
+      }
+
+      /* ============================
+         Store (weeks)
+      ============================ */
+      function loadStore(){
+        const s = loadJSON(STORAGE_KEY);
+        return (s && typeof s === "object") ? s : { weeks: {} };
+      }
+      function saveStore(store){
+        saveJSON(STORAGE_KEY, store);
+      }
+
+      /* ============================
+         Week UI
+      ============================ */
+      const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+      const defaultDayColors = ["#d9c6bd","#d6d0c8","#cdd5d0","#c9d7dd","#d1cde2","#e3d4d2","#d9d9e2"];
+      const grid = $("#grid");
+
+      let selectedDayId = "day-0";
+      let activeWeekId = weekIdFromDate(new Date());
+      let store = loadStore();
+
+      function setDayHeaderTint(dayEl, color){
+        const header = dayEl.querySelector(".day-header");
+        header.style.background =
+          `linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92)),
+           radial-gradient(180px 110px at 16% 28%, ${hexToRgba(color, 0.22)}, transparent 72%)`;
+      }
+
+      function taskRowHTML(value=""){
+        const safe = (value ?? "")
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;");
+        return `
+          <div class="task-row">
+            <textarea class="taskInput" placeholder="Task…">${safe}</textarea>
+            <button class="icon-btn removeTask" type="button" aria-label="Remove task" title="Remove">×</button>
+          </div>
+        `;
+      }
+
+      function ensureWeekData(weekId){
+        if (!store.weeks[weekId]){
+          store.weeks[weekId] = {
+            days: dayNames.map((_, i) => ({
+              color: defaultDayColors[i],
+              focus: "",
+              tasks: [""]
+            })),
+            background: {
+              tint: "#efe7e1",
+              strength: 30,
+              imageDataUrl: null
+            }
+          };
+          saveStore(store);
+        }
+        return store.weeks[weekId];
+      }
+
+      function applyTaskFill(dayEl){
+        const color = dayEl.dataset.color || "#cbb8ae";
+        const taskTintA = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--task-tint-a")) || 0.90;
+        dayEl.querySelectorAll(".task-row").forEach(row => {
+          row.style.background = hexToRgba(color, clamp(taskTintA, 0.10, 1.00));
+        });
+      }
+      function applyTaskFillsForAllDays(){ $$(".day").forEach(applyTaskFill); }
+
+      function syncDayPickerSwatches(){
+        $$(".day").forEach(dayEl => {
+          const color = dayEl.dataset.color || "#cbb8ae";
+          const box = dayEl.querySelector(".day-color");
+          if(box){
+            box.style.setProperty("--swatch", color);
+            box.style.borderColor = hexToRgba(color, 0.25);
+          }
+        });
+      }
+
+      function buildWeek(weekId){
+        activeWeekId = weekId;
+        const weekData = ensureWeekData(weekId);
+
+        $("#weekLabel").textContent = prettyWeekLabel(weekId);
+
+        const monday = new Date(weekId + "T00:00:00");
+        grid.innerHTML = "";
+
+        dayNames.forEach((name, i) => {
+          const date = addDays(monday, i);
+          const dayData = weekData.days[i];
+          const color = dayData.color || defaultDayColors[i];
+
+          const day = document.createElement("section");
+          day.className = "day";
+          day.dataset.dayId = `day-${i}`;
+          day.dataset.color = color;
+
+          const tasks = (Array.isArray(dayData.tasks) && dayData.tasks.length) ? dayData.tasks : [""];
+          const tasksHtml = tasks.map(t => taskRowHTML(t)).join("");
+
+          day.innerHTML = `
+            <div class="day-header">
+              <div class="day-title">
+                <div class="day-name">${name}</div>
+                <div class="day-date">${formatShortDate(date)}</div>
+              </div>
+              <div class="day-color" title="Change day color">
+                <input class="dayColorInput" type="color" value="${color}" aria-label="Set day color"/>
+              </div>
+            </div>
+
+            <div class="day-body">
+              <div class="block">
+                <div class="label">Focus</div>
+                <textarea class="focusInput" placeholder="One main thing…">${(dayData.focus ?? "")
+                  .replaceAll("&","&amp;")
+                  .replaceAll("<","&lt;")
+                  .replaceAll(">","&gt;")}</textarea>
+              </div>
+
+              <div class="tasks">
+                <div class="label">Tasks</div>
+                <div class="taskList">${tasksHtml}</div>
+                <button class="add-btn addTask" type="button">+ Add task</button>
+              </div>
+            </div>
+          `;
+
+          grid.appendChild(day);
+          setDayHeaderTint(day, color);
+          applyTaskFill(day);
+        });
+
+        selectDay(selectedDayId);
+        applyBackgroundFromWeek(weekData.background);
+        syncDayPickerSwatches();
+      }
+
+      function selectDay(dayId){
+        selectedDayId = dayId;
+        $$(".day").forEach(d => d.classList.toggle("selected", d.dataset.dayId === dayId));
+      }
+
+      function snapshotWeekToStore(){
+        const weekData = ensureWeekData(activeWeekId);
+
+        $$(".day").forEach((dayEl, i) => {
+          const color = dayEl.dataset.color || defaultDayColors[i];
+          const focus = dayEl.querySelector(".focusInput")?.value ?? "";
+          const tasks = Array.from(dayEl.querySelectorAll(".taskInput")).map(t => t.value);
+
+          weekData.days[i] = {
+            color,
+            focus,
+            tasks: tasks.length ? tasks : [""]
+          };
+        });
+
+        store.weeks[activeWeekId] = weekData;
+        saveStore(store);
+      }
+
+      /* ============================
+         Background (draft + apply) - per week
+      ============================ */
+      const boardTint = $("#boardTint");
+      const bgBtn = $("#bgBtn");
+      const bgPanel = $("#bgPanel");
+      const bgColor = $("#bgColor");
+      const bgStrength = $("#bgStrength");
+      const bgImage = $("#bgImage");
+      const removeImage = $("#removeImage");
+      const bgDot = $("#bgDot");
+
+      const bgApply = $("#bgApply");
+      const bgReset = $("#bgReset");
+
+      function setBoardImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      }
+
+      function applyBoardTint(colorHex, strengthPct){
+        const tint = normHex(colorHex, "#efe7e1");
+        const strength = clamp(Number(strengthPct)/100, 0, 0.70);
+
+        document.documentElement.style.setProperty("--board-tint", tint);
+        document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+        if(bgDot){
+          bgDot.style.background = tint;
+          bgDot.style.boxShadow = `0 0 0 7px ${hexToRgba(tint, Math.min(0.30, strength + 0.10))}`;
+        }
+        boardTint.style.background = hexToRgba(tint, strength);
+      }
+
+      function applyBackgroundFromWeek(bg){
+        const tint = bg?.tint ?? "#efe7e1";
+        const strength = bg?.strength ?? 30;
+
+        bgColor.value = tint;
+        bgStrength.value = String(strength);
+
+        applyBoardTint(tint, strength);
+        setBoardImage(bg?.imageDataUrl ?? null);
+      }
+
+      function fileToDataUrl(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+        $("#themePanel")?.classList.remove("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!bgPanel.classList.contains("open")) return;
+        const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+        if (!inside) bgPanel.classList.remove("open");
+      });
+
+      /* ✅ draft state, stored per week under BG_KEY + activeWeekId */
+      function bgKeyForWeek(weekId){ return BG_KEY + "__" + weekId; }
+
+      let bgDraft = loadJSON(bgKeyForWeek(activeWeekId)) || null;
+
+      function ensureBgDraft(){
+        const weekData = ensureWeekData(activeWeekId);
+        const base = weekData.background || { tint:"#efe7e1", strength:30, imageDataUrl:null };
+        if(!bgDraft) bgDraft = { ...base };
+      }
+
+      function refreshBgDraftFromWeek(){
+        bgDraft = loadJSON(bgKeyForWeek(activeWeekId)) || null;
+        ensureBgDraft();
+        bgColor.value = bgDraft.tint || "#efe7e1";
+        bgStrength.value = String(bgDraft.strength ?? 30);
+        applyBoardTint(bgColor.value, bgStrength.value);
+        setBoardImage(bgDraft.imageDataUrl || null);
+      }
+
+      bgColor.addEventListener("input", () => {
+        ensureBgDraft();
+        bgDraft.tint = bgColor.value;
+        applyBoardTint(bgDraft.tint, bgStrength.value);
+        saveJSON(bgKeyForWeek(activeWeekId), bgDraft);
+        setStatus("");
+      });
+
+      bgStrength.addEventListener("input", () => {
+        ensureBgDraft();
+        bgDraft.strength = Number(bgStrength.value);
+        applyBoardTint(bgColor.value, bgDraft.strength);
+        saveJSON(bgKeyForWeek(activeWeekId), bgDraft);
+        setStatus("");
+      });
+
+      bgImage.addEventListener("change", async () => {
+        const file = bgImage.files && bgImage.files[0];
+        if (!file) return;
+        ensureBgDraft();
+        bgDraft.imageDataUrl = await fileToDataUrl(file);
+        setBoardImage(bgDraft.imageDataUrl);
+        saveJSON(bgKeyForWeek(activeWeekId), bgDraft);
+        setStatus("");
+      });
+
+      removeImage.addEventListener("click", () => {
+        ensureBgDraft();
+        bgDraft.imageDataUrl = null;
+        setBoardImage(null);
+        bgImage.value = "";
+        saveJSON(bgKeyForWeek(activeWeekId), bgDraft);
+        setStatus("");
+      });
+
+      bgApply.addEventListener("click", () => {
+        ensureBgDraft();
+        const weekData = ensureWeekData(activeWeekId);
+        weekData.background = { ...weekData.background, ...bgDraft };
+        store.weeks[activeWeekId] = weekData;
+        saveStore(store);
+        setStatus("Background applied.");
+      });
+
+      bgReset.addEventListener("click", () => {
+        window.__WO_APP__.remove(bgKeyForWeek(activeWeekId));
+        const weekData = ensureWeekData(activeWeekId);
+        weekData.background = { tint:"#efe7e1", strength:30, imageDataUrl:null };
+        store.weeks[activeWeekId] = weekData;
+        saveStore(store);
+        bgDraft = null;
+        refreshBgDraftFromWeek();
+        setStatus("Background reset.");
+      });
+
+      /* ============================
+         Presets (GLOBAL)
+      ============================ */
+      function loadPresets(){
+        const raw = loadJSON(PRESETS_KEY);
+        return Array.isArray(raw) ? raw : [];
+      }
+      function savePresets(list){ saveJSON(PRESETS_KEY, list); }
+
+      function sanitizePresetList(parsed){
+        if(!Array.isArray(parsed)) return null;
+        return parsed.filter(Boolean).map(p => ({
+          id: String(p.id || (Math.random().toString(16).slice(2) + Date.now().toString(16))),
+          name: String(p.name || "Imported"),
+          ns: String(p.ns || PRESET_NAMESPACE),
+          theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
+          bg: (p.bg && typeof p.bg === "object") ? p.bg : {}
+        }));
+      }
+
+      function getPresetById(id){
+        return loadPresets().find(p => p && p.ns === PRESET_NAMESPACE && p.id === id) || null;
+      }
+
+      function refreshPresetSelect(){
+        const sel = document.getElementById("presetSelect");
+        if(!sel) return;
+        const list = loadPresets().filter(p => p && p.ns === PRESET_NAMESPACE);
+        const cur = sel.value;
+        sel.innerHTML = `<option value="">—</option>`;
+        for(const p of list){
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name || "Untitled";
+          sel.appendChild(opt);
+        }
+        if(cur) sel.value = cur;
+      }
+
+      function currentPresetPayload(){
+        const theme = themeReadFromInputs(); // current draft UI
+        ensureBgDraft();
+        return {
+          id: (Math.random().toString(16).slice(2) + Date.now().toString(16)),
+          ns: PRESET_NAMESPACE,
+          name: (document.getElementById("presetName")?.value || "").trim() || "Untitled",
+          theme,
+          bg: { ...bgDraft }
+        };
+      }
+
+      refreshPresetSelect();
+
+      document.getElementById("presetSave")?.addEventListener("click", () => {
+        const name = (document.getElementById("presetName")?.value || "").trim();
+        if(!name){ setStatus("Type a preset name first."); return; }
+        const list = loadPresets();
+        const payload = currentPresetPayload();
+        payload.name = name;
+        list.unshift(payload);
+        savePresets(list);
+        document.getElementById("presetName").value = "";
+        refreshPresetSelect();
+        document.getElementById("presetSelect").value = payload.id;
+        setStatus("Preset saved.");
+      });
+
+      document.getElementById("presetApply")?.addEventListener("click", () => {
+        const id = document.getElementById("presetSelect")?.value || "";
+        if(!id){ setStatus("Choose a preset first."); return; }
+        const p = getPresetById(id);
+        if(!p){ setStatus("Preset not found."); return; }
+
+        const nextTheme = themeApply(p.theme || {}, { persist:true });
+        themeSyncInputs(nextTheme);
+        applyTaskFillsForAllDays();
+        syncDayPickerSwatches();
+
+        ensureBgDraft();
+        bgDraft = { ...bgDraft, ...(p.bg || {}) };
+        saveJSON(bgKeyForWeek(activeWeekId), bgDraft);
+        refreshBgDraftFromWeek();
+
+        setStatus("Preset applied.");
+      });
+
+      document.getElementById("presetDelete")?.addEventListener("click", () => {
+        const id = document.getElementById("presetSelect")?.value || "";
+        if(!id){ setStatus("Choose a preset first."); return; }
+        const list = loadPresets();
+        const next = list.filter(p => !(p && p.ns === PRESET_NAMESPACE && p.id === id));
+        if(next.length === list.length){ setStatus("Preset not found."); return; }
+        savePresets(next);
+        refreshPresetSelect();
+        document.getElementById("presetSelect").value = "";
+        setStatus("Preset deleted.");
+      });
+
+      document.getElementById("presetCopy")?.addEventListener("click", async () => {
+        const payload = JSON.stringify(loadPresets(), null, 2);
+        const ok = await copyText(payload);
+        if(ok) setStatus("Preset JSON copied.");
+        else{
+          const box = document.getElementById("presetImport");
+          if(box){
+            box.value = payload;
+            box.focus(); box.select();
+          }
+          setStatus("Could not copy automatically — JSON placed in the box to copy manually.");
+        }
+      });
+
+      document.getElementById("presetImportBtn")?.addEventListener("click", () => {
+        const raw = (document.getElementById("presetImport")?.value || "").trim();
+        if(!raw){ setStatus("Paste preset JSON first."); return; }
+        try{
+          const parsed = JSON.parse(raw);
+          const cleaned = sanitizePresetList(parsed);
+          if(!cleaned){ setStatus("That JSON doesn’t look like a preset list."); return; }
+          savePresets(cleaned);
+          refreshPresetSelect();
+          setStatus("Presets imported.");
+        }catch{
+          setStatus("Invalid JSON.");
+        }
+      });
+
+      /* ============================
+         Week navigation
+      ============================ */
+      $("#prevWeek").addEventListener("click", () => {
+        snapshotWeekToStore();
+        const mon = new Date(activeWeekId + "T00:00:00");
+        buildWeek(toISODate(addDays(mon, -7)));
+        refreshBgDraftFromWeek();
+      });
+
+      $("#nextWeek").addEventListener("click", () => {
+        snapshotWeekToStore();
+        const mon = new Date(activeWeekId + "T00:00:00");
+        buildWeek(toISODate(addDays(mon, 7)));
+        refreshBgDraftFromWeek();
+      });
+
+      /* ============================
+         Interactions + autosave
+      ============================ */
+      grid.addEventListener("click", (e) => {
+        if (e.target.closest("input, button, textarea")) return;
+        const day = e.target.closest(".day");
+        if (day) selectDay(day.dataset.dayId);
+      });
+
+      grid.addEventListener("input", (e) => {
+        if (e.target.classList.contains("dayColorInput")){
+          const day = e.target.closest(".day");
+          const color = e.target.value;
+          day.dataset.color = color;
+          setDayHeaderTint(day, color);
+          applyTaskFill(day);
+          snapshotWeekToStore();
+          syncDayPickerSwatches();
+          return;
+        }
+        if (e.target.classList.contains("focusInput") || e.target.classList.contains("taskInput")){
+          snapshotWeekToStore();
+        }
+      });
+
+      grid.addEventListener("click", (e) => {
+        const addBtn = e.target.closest(".addTask");
+        if (addBtn){
+          const day = addBtn.closest(".day");
+          addTask(day, true);
+          snapshotWeekToStore();
+          return;
+        }
+
+        const rmBtn = e.target.closest(".removeTask");
+        if (rmBtn){
+          const day = rmBtn.closest(".day");
+          const row = rmBtn.closest(".task-row");
+          const list = day.querySelector(".taskList");
+          row.remove();
+          if (!list.querySelector(".task-row")) addTask(day, false);
+          applyTaskFill(day);
+          snapshotWeekToStore();
+          return;
+        }
+      });
+
+      function addTask(dayEl, focusNew = true){
+        const list = dayEl.querySelector(".taskList");
+        const wrap = document.createElement("div");
+        wrap.innerHTML = taskRowHTML("");
+        const row = wrap.firstElementChild;
+        list.appendChild(row);
+
+        applyTaskFill(dayEl);
+
+        if (focusNew){
+          row.querySelector(".taskInput").focus({ preventScroll: false });
+        }
+      }
+
+      grid.addEventListener("keydown", (e) => {
+        if (e.target.classList && e.target.classList.contains("taskInput")){
+          if (e.key === "Enter" && !e.shiftKey){
+            e.preventDefault();
+            addTask(e.target.closest(".day"), true);
+            snapshotWeekToStore();
+          }
+        }
+      });
+
+      window.addEventListener("beforeunload", () => snapshotWeekToStore());
+
+      /* ============================
+         Boot
+      ============================ */
+      initThemeUI();
+      buildWeek(activeWeekId);
+      refreshBgDraftFromWeek();
+    })();
+  </script>
+</body>
+</html>

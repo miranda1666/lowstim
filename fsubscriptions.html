@@ -40,18 +40,13 @@
     h1{margin:0; font-size:18px}
     .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
 
-    /* ✅ Board wrapper was missing in your HTML; keep styles but also add the element in markup below */
-.widgetBoard{
-  position:relative;
-  border-radius: var(--r);
-
-  /* IMPORTANT: prevents the Theme/Background panels from being cut off */
-  overflow: visible;
-
-  border:1px solid var(--stroke);
-  box-shadow: var(--shadow);
-}
-
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -70,12 +65,11 @@
       inset:0;
       pointer-events:none;
       z-index:0;
-      /* optional overlay */
+      /* set by JS (overlay) if you ever want it; left blank intentionally */
     }
     .boardTint{
       position:absolute;
       inset:0;
-      border-radius: inherit;
       pointer-events:none;
       z-index:1;
     }
@@ -199,7 +193,7 @@
       position:absolute;
       top: 44px;
       right: 0;
-      width: 300px;
+      width: 320px;
       border-radius: 16px;
       border: 1px solid var(--stroke);
       background: rgba(255,255,255,0.92);
@@ -210,18 +204,10 @@
       display:none;
       z-index: 50;
 
-      max-height: calc(100dvh - 140px);
-overflow: auto;
--webkit-overflow-scrolling: touch;
-overscroll-behavior: contain;
-padding-bottom: 18px;
-z-index: 9999;
+      /* ✅ never cut off */
+      max-height: min(70vh, 560px);
+      overflow:auto;
     }
-
-    @supports not (height: 100dvh){
-  .panel{ max-height: calc(100vh - 140px); }
-}
-
     .panel.open{ display:block; }
 
     .panelTitle{
@@ -251,6 +237,7 @@ z-index: 9999;
     }
     .pRow input[type="range"]{ width: 160px; }
     .pFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+
     .miniBtn{
       width:100%;
       border-radius:12px;
@@ -265,9 +252,11 @@ z-index: 9999;
       box-shadow: 0 2px 8px rgba(30,20,10,.06);
       cursor:pointer;
     }
+    .miniBtn:active{ transform: translateY(1px); }
+
     .pDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
 
-    /* ✅ Presets UI (same idea as the previous widget) */
+    /* ✅ Presets UI */
     .presetName{
       width:100%;
       border:1px solid var(--stroke);
@@ -315,11 +304,9 @@ z-index: 9999;
   <div class="wrap">
     <h1>Subscriptions</h1>
 
-    <!-- ✅ board wrapper restored -->
-    <div class="widgetBoard" id="board">
-<div class="widgetBoard">
-  <div class="boardTint" id="boardTint"></div>
-  <div class="boardContent">
+    <div class="widgetBoard">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
         <section class="card">
           <div class="title">
             <h2>Add a subscription</h2>
@@ -358,7 +345,7 @@ z-index: 9999;
 
                   <div class="pDiv"></div>
 
-                  <!-- ✅ Apply / Reset (no auto-saving on every change) -->
+                  <!-- ✅ Apply / Reset -->
                   <button class="miniBtn" id="themeApply" type="button">Apply theme</button>
                   <button class="miniBtn" id="themeReset" type="button" style="margin-top:8px;">Reset theme</button>
 
@@ -479,11 +466,10 @@ z-index: 9999;
       </div>
     </div>
   </div>
-  </div>
 
 <script>
 /* =========================================================
-   Instance-safe storage + GLOBAL presets (same as your other code)
+   Instance-safe storage + GLOBAL presets (same pattern)
    - wid: per-widget unique id (URL ?wid=... or session fallback)
    - per-widget keys include wid so widgets don't overwrite each other
    - presets stored globally under widget_presets_v2
@@ -596,10 +582,12 @@ const PRESETS_KEY = "widget_presets_v2";
    Popovers (theme + bg)
 ========================= */
 (function(){
-  const themeBtn = document.getElementById("themeBtn");
-  const themePanel = document.getElementById("themePanel");
-  const bgBtn = document.getElementById("bgBtn");
-  const bgPanel = document.getElementById("bgPanel");
+  const $ = (id)=>document.getElementById(id);
+
+  const themeBtn = $("themeBtn");
+  const themePanel = $("themePanel");
+  const bgBtn = $("bgBtn");
+  const bgPanel = $("bgPanel");
 
   function closeAll(except){
     [themePanel, bgPanel].forEach(p=>{
@@ -631,7 +619,7 @@ const PRESETS_KEY = "widget_presets_v2";
 })();
 
 /* =========================
-   Background (draft + apply)
+   Background (draft + apply + instance-safe)
 ========================= */
 (function(){
   const { hexToRgba, clamp, normHex, loadJSON, saveJSON } = window.__subsUtils;
@@ -643,8 +631,8 @@ const PRESETS_KEY = "widget_presets_v2";
   const bgStrength = document.getElementById("bgStrength");
   const bgImage = document.getElementById("bgImage");
   const bgRemove = document.getElementById("bgRemove");
-  const bgReset = document.getElementById("bgReset");
   const bgApply = document.getElementById("bgApply");
+  const bgReset = document.getElementById("bgReset");
   const bgDot = document.getElementById("bgDot");
 
   if(!bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
@@ -677,7 +665,6 @@ const PRESETS_KEY = "widget_presets_v2";
     }
   }
 
-  // initial
   bgColor.value = bgDraft.tint;
   bgStrength.value = String(bgDraft.strength);
   applyBgDraft();
@@ -724,10 +711,15 @@ const PRESETS_KEY = "widget_presets_v2";
     applyBgDraft();
     setPresetStatus("Background reset.");
   });
+
+  function setPresetStatus(msg){
+    const el = document.getElementById("presetStatus");
+    if(el) el.textContent = msg || "";
+  }
 })();
 
 /* =========================
-   Theme (draft + apply) + Presets (GLOBAL)
+   Theme (draft + apply + instance-safe) + Presets (GLOBAL)
 ========================= */
 (function(){
   const { hexToRgba, clamp, normHex, loadJSON, saveJSON, copyText, uid } = window.__subsUtils;
@@ -754,10 +746,9 @@ const PRESETS_KEY = "widget_presets_v2";
   };
 
   function setPresetStatus(msg){
-    const el = document.getElementById("presetStatus");
+    const el = $("presetStatus");
     if(el) el.textContent = msg || "";
   }
-  window.setPresetStatus = setPresetStatus; // used by bg module
 
   function applyTheme(t){
     const x = Object.assign({}, DEFAULT_THEME, t || {});
@@ -784,9 +775,9 @@ const PRESETS_KEY = "widget_presets_v2";
 
     const dot = $("themeDot");
     if(dot){
-      const a = normHex(x.accent, DEFAULT_THEME.accent);
-      dot.style.background = a;
-      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(a, 0.25)}`;
+      const acc = normHex(x.accent, DEFAULT_THEME.accent);
+      dot.style.background = acc;
+      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(acc, 0.25)}`;
     }
   }
 
@@ -829,7 +820,7 @@ const PRESETS_KEY = "widget_presets_v2";
     };
   }
 
-  // draft theme
+  // Draft (preview) state
   let themeDraft = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
   applyTheme(themeDraft);
   syncInputs(themeDraft);
@@ -839,12 +830,11 @@ const PRESETS_KEY = "widget_presets_v2";
     const el = $(id);
     el?.addEventListener("input", ()=>{
       themeDraft = Object.assign({}, themeDraft, readInputs());
-      applyTheme(themeDraft);      // preview
+      applyTheme(themeDraft);
       setPresetStatus("");
     });
   });
 
-  // apply/reset
   $("themeApply")?.addEventListener("click", ()=>{
     themeDraft = Object.assign({}, themeDraft, readInputs());
     saveJSON(THEME_KEY, themeDraft);
@@ -856,13 +846,23 @@ const PRESETS_KEY = "widget_presets_v2";
     themeDraft = Object.assign({}, DEFAULT_THEME);
     applyTheme(themeDraft);
     syncInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
     setPresetStatus("Theme reset.");
   });
 
-  /* ===== Presets (GLOBAL JSON) =====
+  /* -------------------------
+     GLOBAL Presets
      Schema: [{id,name, theme:{...}, bg:{...}}]
-     Apply supports generic keys OR subscriptions keys
-  */
+  -------------------------- */
+  const presetName = $("presetName");
+  const presetSelect = $("presetSelect");
+  const presetSave = $("presetSave");
+  const presetApply = $("presetApply");
+  const presetDelete = $("presetDelete");
+  const presetCopy = $("presetCopy");
+  const presetImport = $("presetImport");
+  const presetImportBtn = $("presetImportBtn");
+
   function loadPresets(){
     const list = loadJSON(PRESETS_KEY);
     return Array.isArray(list) ? list : [];
@@ -871,18 +871,16 @@ const PRESETS_KEY = "widget_presets_v2";
     saveJSON(PRESETS_KEY, list);
   }
   function refreshPresetSelect(){
-    const sel = $("presetSelect");
-    if(!sel) return;
     const list = loadPresets();
-    const cur = sel.value;
-    sel.innerHTML = `<option value="">—</option>`;
+    const cur = presetSelect.value;
+    presetSelect.innerHTML = `<option value="">—</option>`;
     for(const p of list){
       const opt = document.createElement("option");
       opt.value = p.id;
       opt.textContent = p.name || "Untitled";
-      sel.appendChild(opt);
+      presetSelect.appendChild(opt);
     }
-    if(cur) sel.value = cur;
+    if(cur) presetSelect.value = cur;
   }
   function sanitizePresetList(parsed){
     if(!Array.isArray(parsed)) return null;
@@ -895,100 +893,80 @@ const PRESETS_KEY = "widget_presets_v2";
   }
 
   function applyPreset(p){
-    const th = p.theme || {};
-    const bg = p.bg || {};
-
-    // accept either generic OR this widget's theme keys
-    const themeFromWidget = {
-      bg: th.bg,
-      ink: th.ink,
-      muted: th.muted,
-      accent: th.accent,
-      stroke: th.stroke,
-      soft: th.soft,
-      itemBg: th.itemBg,
-      inputBg: th.inputBg,
-      card: th.card,
-      cardA: th.cardA,
-      radius: th.radius,
-      shadow: th.shadow
-    };
-
-    themeDraft = Object.assign({}, themeDraft, themeFromWidget);
+    // theme
+    themeDraft = Object.assign({}, themeDraft, p.theme || {});
     applyTheme(themeDraft);
     syncInputs(themeDraft);
     saveJSON(THEME_KEY, themeDraft);
 
-    // bgDraft lives in bg module; we can still persist + reflect via CSS vars
-    // just store the BG key if present in preset, and update CSS vars directly here:
+    // bg
     const BG_KEY = "subscriptions_bg_v2__" + WID;
-    const currentBg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:30, imageDataUrl:null };
-    const nextBg = Object.assign({}, currentBg, bg);
-    saveJSON(BG_KEY, nextBg);
+    const bgSaved = loadJSON(BG_KEY) || {};
+    const mergedBg = Object.assign({ tint:"#efe7e1", strength:30, imageDataUrl:null }, bgSaved, (p.bg||{}));
+    saveJSON(BG_KEY, mergedBg);
 
-    // apply to CSS now
-    const tint = normHex(nextBg.tint, "#efe7e1");
-    const strength = clamp(nextBg.strength, 0, 70) / 100;
+    // force background module to re-read (simple: reload page state vars)
+    // We'll also apply immediately:
+    const boardTintEl = document.getElementById("boardTint");
+    const bgDot = document.getElementById("bgDot");
+    const tint = normHex(mergedBg.tint, "#efe7e1");
+    const strength = clamp(mergedBg.strength, 0, 70) / 100;
     document.documentElement.style.setProperty("--board-tint", tint);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
-    document.documentElement.style.setProperty("--board-image", nextBg.imageDataUrl ? `url("${nextBg.imageDataUrl}")` : "none");
-    const boardTintEl = document.getElementById("boardTint");
-    if(boardTintEl) boardTintEl.style.background = hexToRgba(tint, strength);
-    const bgDot = document.getElementById("bgDot");
+    document.documentElement.style.setProperty("--board-image", mergedBg.imageDataUrl ? `url("${mergedBg.imageDataUrl}")` : "none");
+    boardTintEl.style.background = hexToRgba(tint, strength);
     if(bgDot){
       bgDot.style.background = tint;
       bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
     }
 
-    // sync bg inputs if they exist
+    // sync bg inputs
     const bgColor = document.getElementById("bgColor");
     const bgStrength = document.getElementById("bgStrength");
     const bgImage = document.getElementById("bgImage");
     if(bgColor) bgColor.value = tint;
-    if(bgStrength) bgStrength.value = String(clamp(nextBg.strength,0,70));
-    if(bgImage && !nextBg.imageDataUrl) bgImage.value = "";
+    if(bgStrength) bgStrength.value = String(clamp(mergedBg.strength,0,70));
+    if(bgImage) bgImage.value = "";
 
     setPresetStatus("Preset applied.");
   }
 
-  // init presets UI
   refreshPresetSelect();
 
-  $("presetSave")?.addEventListener("click", ()=>{
-    const name = ($("presetName")?.value || "").trim();
+  presetSave?.addEventListener("click", ()=>{
+    const name = (presetName.value || "").trim();
     if(!name){ setPresetStatus("Type a preset name first."); return; }
 
-    // gather current bg draft from storage
     const BG_KEY = "subscriptions_bg_v2__" + WID;
-    const bgState = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:30, imageDataUrl:null };
+    const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:30, imageDataUrl:null };
 
     const entry = {
       id: uid(),
       name,
       theme: { ...themeDraft },
-      bg: { ...bgState }
+      bg: { ...bg }
     };
 
     const list = loadPresets();
     list.unshift(entry);
     savePresets(list);
 
-    $("presetName").value = "";
+    presetName.value = "";
     refreshPresetSelect();
-    $("presetSelect").value = entry.id;
+    presetSelect.value = entry.id;
     setPresetStatus("Preset saved.");
   });
 
-  $("presetApply")?.addEventListener("click", ()=>{
-    const id = $("presetSelect")?.value || "";
+  presetApply?.addEventListener("click", ()=>{
+    const id = presetSelect.value || "";
     if(!id){ setPresetStatus("Choose a preset first."); return; }
     const p = loadPresets().find(x=>x.id===id);
     if(!p){ setPresetStatus("Preset not found."); return; }
     applyPreset(p);
   });
 
-  $("presetDelete")?.addEventListener("click", ()=>{
-    const id = $("presetSelect")?.value || "";
+  presetDelete?.addEventListener("click", ()=>{
+    const id = presetSelect.value || "";
     if(!id){ setPresetStatus("Choose a preset first."); return; }
     let list = loadPresets();
     const before = list.length;
@@ -996,24 +974,23 @@ const PRESETS_KEY = "widget_presets_v2";
     if(list.length===before){ setPresetStatus("Preset not found."); return; }
     savePresets(list);
     refreshPresetSelect();
-    $("presetSelect").value = "";
+    presetSelect.value = "";
     setPresetStatus("Preset deleted.");
   });
 
-  $("presetCopy")?.addEventListener("click", async ()=>{
+  presetCopy?.addEventListener("click", async ()=>{
     const payload = JSON.stringify(loadPresets(), null, 2);
     const ok = await copyText(payload);
     if(ok) setPresetStatus("Preset JSON copied.");
     else{
-      const ta = $("presetImport");
-      ta.value = payload;
-      ta.focus(); ta.select();
+      presetImport.value = payload;
+      presetImport.focus(); presetImport.select();
       setPresetStatus("Could not copy automatically — JSON placed in the box to copy manually.");
     }
   });
 
-  $("presetImportBtn")?.addEventListener("click", ()=>{
-    const raw = ($("presetImport")?.value || "").trim();
+  presetImportBtn?.addEventListener("click", ()=>{
+    const raw = (presetImport.value || "").trim();
     if(!raw){ setPresetStatus("Paste preset JSON first."); return; }
     try{
       const parsed = JSON.parse(raw);
@@ -1029,11 +1006,11 @@ const PRESETS_KEY = "widget_presets_v2";
 })();
 
 /* =========================
-   Your subscriptions tracker logic (instance-safe keys; otherwise unchanged)
+   Subscriptions tracker logic (instance-safe keys)
 ========================= */
 (function(){
-  const KEY = "subscriptions_tracker_v1__" + WID;
-  const CUR_KEY = "subscriptions_currency_pref_v1__" + WID;
+  const KEY = "subscriptions_tracker_v2__" + WID;
+  const CUR_KEY = "subscriptions_currency_pref_v2__" + WID;
   const $ = (id)=>document.getElementById(id);
 
   const REGION_TO_CURRENCY = {

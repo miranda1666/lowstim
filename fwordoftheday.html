@@ -9,7 +9,7 @@
   :root{
     --bg: transparent;
 
-    /* ✅ IMPORTANT: card is now controlled by a real alpha variable */
+    /* card alpha (0..1) */
     --card-a: 0.92;
 
     --stroke:#e2dfd8;
@@ -22,7 +22,7 @@
     --board-tint-a:0.12;
     --board-image:none;
 
-    /* ✅ NEW: background image visibility */
+    /* background image visibility (0..1) */
     --board-image-a: 0.92;
   }
 
@@ -63,10 +63,9 @@
     z-index:0;
     pointer-events:none;
 
-    /* keep your aesthetic, but make image a little punchier */
+    /* a bit punchier so images show through */
     filter: saturate(1.45) contrast(1.35) brightness(1.12);
 
-    /* ✅ NEW: actual image opacity control */
     opacity: var(--board-image-a);
   }
 
@@ -81,12 +80,13 @@
   .boardContent{ position:relative; z-index:2; }
 
   .card{
-    /* ✅ IMPORTANT: card now uses alpha variable so image can show */
     background: rgba(247,245,240,var(--card-a));
     border:0;
     border-radius:0;
     padding: 22px;
     color: var(--ink);
+
+    /* keep it subtle so image doesn't disappear */
     backdrop-filter: blur(0.5px);
     -webkit-backdrop-filter: blur(0.5px);
   }
@@ -284,6 +284,7 @@
 <body>
 
   <div class="widgetShell" id="widgetShell" aria-label="Word of the Day shell">
+    <!-- Background panel -->
     <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
       <div class="panelTitle">Background</div>
 
@@ -297,7 +298,6 @@
         <input id="bgStrength" type="range" min="0" max="70" value="12" />
       </div>
 
-      <!-- ✅ NEW -->
       <div class="pRow">
         <label for="bgImageA">Image visibility</label>
         <input id="bgImageA" type="range" min="20" max="100" value="92" />
@@ -322,6 +322,7 @@
       <div class="status" id="uiStatus" aria-live="polite"></div>
     </div>
 
+    <!-- Theme panel -->
     <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
       <div class="panelTitle">Theme</div>
 
@@ -345,7 +346,6 @@
         <input id="tStroke" type="color" value="#e2dfd8" />
       </div>
 
-      <!-- ✅ UPDATED: this now truly affects the card transparency -->
       <div class="pRow">
         <label for="tCardA">Card opacity</label>
         <input id="tCardA" type="range" min="20" max="95" value="92" />
@@ -382,6 +382,7 @@
       <div class="status" id="presetStatus" aria-live="polite"></div>
     </div>
 
+    <!-- Board -->
     <div class="boardClip" id="boardClip" aria-label="Word of the Day board">
       <div class="boardTint" id="boardTint"></div>
 
@@ -569,14 +570,12 @@
 ========================= */
 (function(){
   const { hexToRgba, clamp, normHex, loadJSON, saveJSON } = window.__wotdUtils;
-
-  /* ✅ keep your existing key so previous saved data still works */
   const BG_KEY = "word_of_day_bg_v2";
 
   const boardTintEl = document.getElementById("boardTint");
   const bgColor = document.getElementById("bgColor");
   const bgStrength = document.getElementById("bgStrength");
-  const bgImageA = document.getElementById("bgImageA"); /* ✅ NEW */
+  const bgImageA = document.getElementById("bgImageA");
   const bgImage = document.getElementById("bgImage");
   const bgRemove = document.getElementById("bgRemove");
   const bgApply = document.getElementById("bgApply");
@@ -606,8 +605,14 @@
 
   function applyBgDraft(){
     const tint = normHex(bgDraft.tint, DEFAULT_BG.tint);
-    const strength = clamp(bgDraft.strength, 0, 70) / 100;
-    const strength = bgDraft.imageDataUrl ? (baseStrength * 0.25) : baseStrength;
+
+    const baseStrength = clamp(bgDraft.strength, 0, 70) / 100;
+
+    /* ✅ MAIN VISIBILITY FIX: if image exists, reduce tint overlay so image can show */
+    const strength = bgDraft.imageDataUrl
+      ? Math.max(0.04, baseStrength * 0.25)
+      : baseStrength;
+
     const imageA = clamp(bgDraft.imageA ?? DEFAULT_BG.imageA, 20, 100) / 100;
 
     document.documentElement.style.setProperty("--board-tint", tint);
@@ -668,12 +673,10 @@
   const { clamp, normHex, loadJSON, saveJSON, copyText, uid } = window.__wotdUtils;
   const $ = (id)=>document.getElementById(id);
 
-  /* ✅ keep your existing theme key so nothing breaks */
   const THEME_KEY = "word_of_day_theme_v2";
   const BG_KEY = "word_of_day_bg_v2";
   const PRESETS_KEY = "widget_presets_v2";
 
-  /* cardA now controls --card-a (real transparency) */
   const DEFAULTS = { bg:"#ffffff", ink:"#2f2f2f", muted:"#7a7a7a", stroke:"#e2dfd8", cardA:92 };
 
   function setPresetStatus(msg){
@@ -694,7 +697,7 @@
     document.documentElement.style.setProperty("--muted", muted);
     document.documentElement.style.setProperty("--stroke", stroke);
 
-    /* ✅ IMPORTANT */
+    /* ✅ card transparency actually updates */
     document.documentElement.style.setProperty("--card-a", String(cardA/100));
 
     const themeDot = $("themeDot");
@@ -787,18 +790,45 @@
   }
 
   function applyPreset(p){
+    /* theme */
     themeDraft = Object.assign({}, themeDraft, p.theme || {});
     applyTheme(themeDraft);
     syncInputs(themeDraft);
     saveJSON(THEME_KEY, themeDraft);
 
-    const bgSaved = loadJSON(BG_KEY) || {};
-    const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null }, bgSaved, (p.bg||{}));
+    /* background */
+    const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null }, loadJSON(BG_KEY) || {}, (p.bg||{}));
     saveJSON(BG_KEY, mergedBg);
 
-    // Re-apply bg immediately
+    // Re-apply bg immediately (same logic as bg module)
+    const tint = String(mergedBg.tint || "#efe7e1");
+    const baseStrength = (Number(mergedBg.strength) || 12) / 100;
+    const strength = mergedBg.imageDataUrl ? Math.max(0.04, baseStrength * 0.25) : baseStrength;
+    const imageA = Math.max(0.20, Math.min(1, (Number(mergedBg.imageA) || 92) / 100));
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
     document.documentElement.style.setProperty("--board-image", mergedBg.imageDataUrl ? `url("${mergedBg.imageDataUrl}")` : "none");
-    document.documentElement.style.setProperty("--board-image-a", String(clamp(mergedBg.imageA ?? 92, 20, 100)/100));
+    document.documentElement.style.setProperty("--board-image-a", String(imageA));
+
+    const boardTintEl = document.getElementById("boardTint");
+    if(boardTintEl) boardTintEl.style.background = window.__wotdUtils.hexToRgba(tint, strength);
+
+    const bgDot = document.getElementById("bgDot");
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${window.__wotdUtils.hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+    }
+
+    // sync bg inputs so UI matches
+    const bgColor = document.getElementById("bgColor");
+    const bgStrengthEl = document.getElementById("bgStrength");
+    const bgImageAEl = document.getElementById("bgImageA");
+    const bgImage = document.getElementById("bgImage");
+    if(bgColor) bgColor.value = tint;
+    if(bgStrengthEl) bgStrengthEl.value = String(Math.max(0, Math.min(70, Number(mergedBg.strength) || 12)));
+    if(bgImageAEl) bgImageAEl.value = String(Math.max(20, Math.min(100, Number(mergedBg.imageA) || 92)));
+    if(bgImage) bgImage.value = "";
 
     setPresetStatus("Preset applied.");
   }

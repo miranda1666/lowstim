@@ -9,8 +9,8 @@
   :root{
     --bg: transparent;
 
-    /* ✅ NEW: true card alpha (so background image can actually show) */
-    --card-a: 0.72; /* try 0.55–0.75 for strong image visibility */
+    /* ✅ IMPORTANT: card is now controlled by a real alpha variable */
+    --card-a: 0.92;
 
     --stroke:#e2dfd8;
     --ink:#2f2f2f;
@@ -22,7 +22,7 @@
     --board-tint-a:0.12;
     --board-image:none;
 
-    /* ✅ Image opacity control */
+    /* ✅ NEW: background image visibility */
     --board-image-a: 0.92;
   }
 
@@ -63,9 +63,10 @@
     z-index:0;
     pointer-events:none;
 
-    /* ✅ slight boost so images show clearer through glass */
-    filter: saturate(1.35) contrast(1.20) brightness(1.02);
+    /* keep your aesthetic, but make image a little punchier */
+    filter: saturate(1.25) contrast(1.15) brightness(1.05);
 
+    /* ✅ NEW: actual image opacity control */
     opacity: var(--board-image-a);
   }
 
@@ -80,7 +81,7 @@
   .boardContent{ position:relative; z-index:2; }
 
   .card{
-    /* ✅ IMPORTANT: card is now truly transparent-adjustable */
+    /* ✅ IMPORTANT: card now uses alpha variable so image can show */
     background: rgba(247,245,240,var(--card-a));
     border:0;
     border-radius:0;
@@ -296,6 +297,7 @@
         <input id="bgStrength" type="range" min="0" max="70" value="12" />
       </div>
 
+      <!-- ✅ NEW -->
       <div class="pRow">
         <label for="bgImageA">Image visibility</label>
         <input id="bgImageA" type="range" min="20" max="100" value="92" />
@@ -343,10 +345,10 @@
         <input id="tStroke" type="color" value="#e2dfd8" />
       </div>
 
-      <!-- ✅ UPDATED: this now controls real card transparency -->
+      <!-- ✅ UPDATED: this now truly affects the card transparency -->
       <div class="pRow">
         <label for="tCardA">Card opacity</label>
-        <input id="tCardA" type="range" min="20" max="95" value="72" />
+        <input id="tCardA" type="range" min="20" max="95" value="92" />
       </div>
 
       <div class="pDiv"></div>
@@ -567,12 +569,14 @@
 ========================= */
 (function(){
   const { hexToRgba, clamp, normHex, loadJSON, saveJSON } = window.__wotdUtils;
-  const BG_KEY = "word_of_day_bg_v3";
+
+  /* ✅ keep your existing key so previous saved data still works */
+  const BG_KEY = "word_of_day_bg_v2";
 
   const boardTintEl = document.getElementById("boardTint");
   const bgColor = document.getElementById("bgColor");
   const bgStrength = document.getElementById("bgStrength");
-  const bgImageA = document.getElementById("bgImageA");
+  const bgImageA = document.getElementById("bgImageA"); /* ✅ NEW */
   const bgImage = document.getElementById("bgImage");
   const bgRemove = document.getElementById("bgRemove");
   const bgApply = document.getElementById("bgApply");
@@ -663,12 +667,13 @@
   const { clamp, normHex, loadJSON, saveJSON, copyText, uid } = window.__wotdUtils;
   const $ = (id)=>document.getElementById(id);
 
-  const THEME_KEY = "word_of_day_theme_v3";
-  const BG_KEY = "word_of_day_bg_v3";
+  /* ✅ keep your existing theme key so nothing breaks */
+  const THEME_KEY = "word_of_day_theme_v2";
+  const BG_KEY = "word_of_day_bg_v2";
   const PRESETS_KEY = "widget_presets_v2";
 
-  /* ✅ UPDATED: cardA now maps to --card-a */
-  const DEFAULTS = { bg:"#ffffff", ink:"#2f2f2f", muted:"#7a7a7a", stroke:"#e2dfd8", cardA:72 };
+  /* cardA now controls --card-a (real transparency) */
+  const DEFAULTS = { bg:"#ffffff", ink:"#2f2f2f", muted:"#7a7a7a", stroke:"#e2dfd8", cardA:92 };
 
   function setPresetStatus(msg){
     const el = $("presetStatus");
@@ -688,7 +693,7 @@
     document.documentElement.style.setProperty("--muted", muted);
     document.documentElement.style.setProperty("--stroke", stroke);
 
-    /* ✅ This is the important part */
+    /* ✅ IMPORTANT */
     document.documentElement.style.setProperty("--card-a", String(cardA/100));
 
     const themeDot = $("themeDot");
@@ -756,6 +761,7 @@
 
   function loadPresets(){ const list = loadJSON(PRESETS_KEY); return Array.isArray(list) ? list : []; }
   function savePresets(list){ saveJSON(PRESETS_KEY, list); }
+
   function refreshPresetSelect(){
     const list = loadPresets();
     const cur = presetSelect.value;
@@ -768,6 +774,7 @@
     }
     if(cur) presetSelect.value = cur;
   }
+
   function sanitizePresetList(parsed){
     if(!Array.isArray(parsed)) return null;
     return parsed.filter(Boolean).map(p => ({
@@ -778,33 +785,20 @@
     }));
   }
 
-  async function copyText(text){
-    try{
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        await navigator.clipboard.writeText(text);
-        return true;
-      }
-    }catch{}
-    try{
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.focus(); ta.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      return !!ok;
-    }catch{ return false; }
-  }
-
   function applyPreset(p){
     themeDraft = Object.assign({}, themeDraft, p.theme || {});
     applyTheme(themeDraft);
     syncInputs(themeDraft);
     saveJSON(THEME_KEY, themeDraft);
 
-    // keep your background preset merging behaviour minimal here
+    const bgSaved = loadJSON(BG_KEY) || {};
+    const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null }, bgSaved, (p.bg||{}));
+    saveJSON(BG_KEY, mergedBg);
+
+    // Re-apply bg immediately
+    document.documentElement.style.setProperty("--board-image", mergedBg.imageDataUrl ? `url("${mergedBg.imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-image-a", String(clamp(mergedBg.imageA ?? 92, 20, 100)/100));
+
     setPresetStatus("Preset applied.");
   }
 
@@ -814,7 +808,8 @@
     const name = (presetName.value || "").trim();
     if(!name){ setPresetStatus("Type a preset name first."); return; }
 
-    const entry = { id: uid(), name, theme: { ...themeDraft }, bg: loadJSON(BG_KEY) || {} };
+    const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null };
+    const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bg } };
 
     const list = loadPresets();
     list.unshift(entry);

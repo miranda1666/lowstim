@@ -19,13 +19,13 @@
     --board-tint-a:0.12;
     --board-image:none;
 
-    /* ✅ NEW: background image visibility (opacity) */
+    /* ✅ NEW: controls background image visibility */
     --board-image-a: 0.92;
 
-    /* widget-specific */
+    /* link chips */
     --chip: rgba(255,255,255,0.62);
     --chip-hover: rgba(255,255,255,0.78);
-    --focus: rgba(47,47,47,0.12);
+    --focus: rgba(47,47,47,0.10);
   }
 
   *{ box-sizing:border-box; }
@@ -42,7 +42,7 @@
   /* ✅ Outer shell must NOT clip popovers */
   .widgetShell{
     position: relative;
-    max-width: 380px; /* ~ 1/3 Notion page vibe */
+    max-width: 380px; /* ~ 1/3 notion page */
     overflow: visible;
   }
 
@@ -67,9 +67,7 @@
     z-index:0;
     pointer-events:none;
     filter: saturate(1.25) contrast(1.15) brightness(1.05);
-
-    /* ✅ NEW */
-    opacity: var(--board-image-a);
+    opacity: var(--board-image-a); /* ✅ NEW */
   }
 
   .boardTint{
@@ -86,7 +84,7 @@
     background: var(--card);
     border:0;
     border-radius:0;
-    padding: 20px 20px 18px;
+    padding: 20px;
     color: var(--ink);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
@@ -97,9 +95,8 @@
     align-items:flex-start;
     justify-content:space-between;
     gap:10px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
-
   .rightControls{
     display:flex;
     gap:10px;
@@ -114,11 +111,11 @@
     margin: 0;
     line-height: 1.2;
   }
-
   .subtle{
     font-size: 12px;
-    color: rgba(47,47,47,0.72);
+    color: rgba(47,47,47,0.70);
     margin: 6px 0 0;
+    line-height: 1.3;
   }
 
   /* Buttons */
@@ -156,7 +153,7 @@
     width:14px; height:14px;
     border-radius:6px;
     border:1px solid rgba(233,228,221,0.95);
-    background: rgba(47,47,47,0.12);
+    background: rgba(47,47,47,0.14);
     box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
   }
 
@@ -236,12 +233,8 @@
     min-height: 16px;
   }
 
-  /* Presets UI */
-  .presetName,
-  .presetSelect,
-  .presetArea,
-  .textInput,
-  .selectInput{
+  /* Inputs */
+  .textInput, .selectInput, .presetName, .presetSelect, .presetArea{
     width:100%;
     border:1px solid var(--stroke);
     background: rgba(255,255,255,0.96);
@@ -251,7 +244,7 @@
     color: var(--ink);
     outline:none;
   }
-  .presetSelect, .selectInput{ height:38px; padding: 8px 12px; }
+  .selectInput, .presetSelect{ height:38px; padding: 8px 12px; }
   .presetArea{
     min-height: 92px;
     resize: vertical;
@@ -267,14 +260,13 @@
     margin: 6px 0 0;
   }
 
-  /* Links display */
+  /* Display */
   .groups{
     display:flex;
     flex-direction:column;
     gap: 12px;
-    margin-top: 6px;
+    margin-top: 8px;
   }
-
   .groupHead{
     display:flex;
     align-items:baseline;
@@ -282,14 +274,12 @@
     gap:10px;
     margin-bottom: 6px;
   }
-
   .groupTitle{
     font-size: 13px;
     font-weight: 650;
     color: rgba(47,47,47,0.90);
     margin: 0;
   }
-
   .groupCount{
     font-size: 11px;
     color: rgba(122,122,122,0.92);
@@ -378,42 +368,46 @@
     background: rgba(255,255,255,0.55);
   }
 
-  /* Manage panel table */
-  .miniTable{
-    width:100%;
-    border-collapse:separate;
-    border-spacing:0;
-    overflow:hidden;
-    border-radius: 12px;
-    border:1px solid var(--stroke);
-    background: rgba(255,255,255,0.92);
-  }
-  .miniTable td, .miniTable th{
-    padding: 10px 10px;
-    border-bottom:1px solid rgba(226,223,216,0.75);
-    vertical-align: middle;
-    font-size: 12px;
-    color: rgba(47,47,47,0.88);
-  }
-  .miniTable tr:last-child td{ border-bottom:0; }
-  .miniTable th{
-    text-align:left;
-    font-size: 11px;
-    letter-spacing:.10em;
-    text-transform: uppercase;
-    color: rgba(106,102,95,0.90);
-    background: rgba(247,245,240,0.78);
+  .twoCol{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
+  /* Manage list */
+  .manageBlock{
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.92);
+    border-radius: 12px;
+    overflow:hidden;
+    margin-top: 8px;
+  }
+  .manageGroupHead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding: 10px 10px;
+    border-bottom:1px solid rgba(226,223,216,0.70);
+    background: rgba(247,245,240,0.70);
+  }
+  .manageGroupName{
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing:.10em;
+    text-transform: uppercase;
+    color: rgba(106,102,95,0.92);
+    margin:0;
+  }
   .rowBtns{
     display:flex;
     gap:8px;
-    justify-content:flex-end;
+    align-items:center;
   }
   .tinyBtn{
     border-radius:10px;
     border:1px solid rgba(226,223,216,0.95);
-    background: rgba(255,255,255,0.90);
+    background: rgba(255,255,255,0.92);
     padding: 7px 8px;
     font-size: 11px;
     font-weight: 700;
@@ -427,17 +421,54 @@
     border-color: rgba(205,88,88,0.35);
     color: rgba(140,42,42,0.86);
   }
-
-  .twoCol{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+  .manageLinks{
+    padding: 10px;
+    display:flex;
+    flex-direction:column;
+    gap: 8px;
+  }
+  .manageLinkRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border:1px solid rgba(226,223,216,0.75);
+    background: rgba(255,255,255,0.85);
+    border-radius: 12px;
+    padding: 8px 8px;
+  }
+  .manageLinkMeta{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+  }
+  .manageLinkTxt{
+    min-width:0;
+  }
+  .manageLinkTxt .t1{
+    font-size: 12px;
+    font-weight: 650;
+    color: rgba(47,47,47,0.90);
+    margin:0;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+  .manageLinkTxt .t2{
+    font-size: 11px;
+    color: rgba(122,122,122,0.92);
+    margin: 2px 0 0;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
   }
 </style>
 </head>
 
 <body>
-
   <div class="widgetShell" id="widgetShell" aria-label="Quick Links shell">
     <!-- ✅ Popovers live here (NOT inside boardClip) -->
 
@@ -455,7 +486,7 @@
         <input id="bgStrength" type="range" min="0" max="70" value="12" />
       </div>
 
-      <!-- ✅ NEW: image visibility -->
+      <!-- ✅ NEW -->
       <div class="pRow">
         <label for="bgImageA">Image visibility</label>
         <input id="bgImageA" type="range" min="20" max="100" value="92" />
@@ -545,10 +576,11 @@
       <div class="status" id="presetStatus" aria-live="polite"></div>
     </div>
 
-    <!-- Manage Links panel -->
+    <!-- Manage panel -->
     <div class="panel" id="managePanel" role="dialog" aria-label="Manage quick links">
       <div class="panelTitle">Quick Links</div>
 
+      <div class="panelTitle" style="margin:0 0 10px 0;">Groups</div>
       <div class="pRow" style="align-items:flex-start;">
         <div style="flex:1;">
           <label for="newGroupName" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">New group</label>
@@ -571,7 +603,7 @@
       <div class="twoCol">
         <div>
           <label for="linkTitle" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">Title</label>
-          <input id="linkTitle" class="textInput" placeholder="" />
+          <input id="linkTitle" class="textInput" placeholder="e.g. Gmail" />
         </div>
         <div>
           <label for="linkEmoji" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">Icon (emoji)</label>
@@ -589,18 +621,17 @@
         <input id="linkIconFile" class="pFile" type="file" accept="image/*" />
       </div>
 
-      <div class="pRow" style="gap:10px; margin-top:8px;">
-        <button id="saveLinkBtn" class="miniBtn" type="button" style="flex:1;">Save link</button>
-      </div>
+      <button id="saveLinkBtn" class="miniBtn" type="button" style="margin-top:10px;">Save link</button>
       <button id="clearLinkFormBtn" class="miniBtn" type="button" style="margin-top:8px;">Clear form</button>
 
       <div class="pDiv"></div>
 
-      <div class="panelTitle" style="margin:0 0 10px 0;">Your groups & links</div>
+      <div class="panelTitle" style="margin:0 0 10px 0;">Your setup</div>
       <div id="manageList"></div>
 
       <div class="pDiv"></div>
-      <button id="exportBtn" class="miniBtn" type="button">Copy all links JSON</button>
+
+      <button id="exportBtn" class="miniBtn" type="button">Copy links JSON</button>
       <textarea class="presetArea" id="importArea" placeholder='Paste links JSON here, then click "Import links".'></textarea>
       <button id="importBtn" class="miniBtn" type="button" style="margin-top:8px;">Import links</button>
       <button id="resetLinksBtn" class="miniBtn danger" type="button" style="margin-top:8px;">Reset links</button>
@@ -608,10 +639,9 @@
       <div class="status" id="manageStatus" aria-live="polite"></div>
     </div>
 
-    <!-- ✅ Clipped board stays separate -->
+    <!-- Board -->
     <div class="boardClip" id="boardClip" aria-label="Quick Links board">
       <div class="boardTint" id="boardTint"></div>
-
       <div class="boardContent">
         <div class="card">
           <div class="topRow">
@@ -625,13 +655,11 @@
                   <span class="manageDot" aria-hidden="true"></span>
                 </button>
               </div>
-
               <div class="settingsWrap">
                 <button class="settingsBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
                   <span class="bgDot" id="bgDot" aria-hidden="true"></span>
                 </button>
               </div>
-
               <div class="settingsWrap">
                 <button class="settingsBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
                   <span class="themeDot" id="themeDot" aria-hidden="true"></span>
@@ -644,6 +672,7 @@
           <div id="emptyState" class="emptyState" style="display:none;">
             No links yet. Click the <b>first</b> button in the top-right to add groups and links.
           </div>
+
         </div>
       </div>
     </div>
@@ -743,7 +772,25 @@
     return s;
   }
 
-  window.__qlUtils = { hexToRgba, clamp, normHex, loadJSON, saveJSON, copyText, uid, safeUrl };
+  function hostFromUrl(u){
+    try{
+      const url = new URL(u);
+      return url.host.replace(/^www\./,"");
+    }catch{
+      return String(u||"").replace(/^https?:\/\//i,"").replace(/^www\./,"").split("/")[0] || "";
+    }
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  window.__qlUtils = { hexToRgba, clamp, normHex, loadJSON, saveJSON, copyText, uid, safeUrl, hostFromUrl, fileToDataUrl };
 })();
 
 /* =========================
@@ -817,7 +864,7 @@
    Background (draft + apply + persistent)
 ========================= */
 (function(){
-  const { hexToRgba, clamp, normHex, loadJSON, saveJSON } = window.__qlUtils;
+  const { hexToRgba, clamp, normHex, loadJSON, saveJSON, fileToDataUrl } = window.__qlUtils;
   const BG_KEY = "quick_links_bg_v2";
 
   const boardTintEl = document.getElementById("boardTint");
@@ -832,34 +879,23 @@
 
   if(!bgColor || !bgStrength || !bgImageA || !bgImage || !bgRemove || !boardTintEl) return;
 
-  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null }; /* ✅ NEW imageA */
+  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null };
   let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
 
   function setStatus(msg){
     const ui = document.getElementById("uiStatus");
     if(ui) ui.textContent = msg || "";
-    const preset = document.getElementById("presetStatus");
-    if(preset && msg) preset.textContent = msg;
-  }
-
-  function fileToDataUrl(file){
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
   }
 
   function applyBgDraft(){
     const tint = normHex(bgDraft.tint, DEFAULT_BG.tint);
     const strength = clamp(bgDraft.strength, 0, 70) / 100;
-    const imageA = clamp(bgDraft.imageA, 20, 100) / 100; /* ✅ NEW */
+    const imageA = clamp(bgDraft.imageA ?? DEFAULT_BG.imageA, 20, 100) / 100;
 
     document.documentElement.style.setProperty("--board-tint", tint);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
     document.documentElement.style.setProperty("--board-image", bgDraft.imageDataUrl ? `url("${bgDraft.imageDataUrl}")` : "none");
-    document.documentElement.style.setProperty("--board-image-a", String(imageA)); /* ✅ NEW */
+    document.documentElement.style.setProperty("--board-image-a", String(imageA));
 
     boardTintEl.style.background = hexToRgba(tint, strength);
 
@@ -871,18 +907,12 @@
 
   bgColor.value = bgDraft.tint;
   bgStrength.value = String(bgDraft.strength);
-  bgImageA.value = String(bgDraft.imageA ?? DEFAULT_BG.imageA); /* ✅ NEW */
+  bgImageA.value = String(bgDraft.imageA ?? DEFAULT_BG.imageA);
   applyBgDraft();
 
   bgColor.addEventListener("input", () => { bgDraft.tint = bgColor.value; applyBgDraft(); setStatus(""); });
   bgStrength.addEventListener("input", () => { bgDraft.strength = Number(bgStrength.value); applyBgDraft(); setStatus(""); });
-
-  /* ✅ NEW */
-  bgImageA.addEventListener("input", () => {
-    bgDraft.imageA = Number(bgImageA.value);
-    applyBgDraft();
-    setStatus("");
-  });
+  bgImageA.addEventListener("input", () => { bgDraft.imageA = Number(bgImageA.value); applyBgDraft(); setStatus(""); });
 
   bgImage.addEventListener("change", async () => {
     const file = bgImage.files && bgImage.files[0];
@@ -906,7 +936,7 @@
     bgDraft = Object.assign({}, DEFAULT_BG);
     bgColor.value = DEFAULT_BG.tint;
     bgStrength.value = String(DEFAULT_BG.strength);
-    bgImageA.value = String(DEFAULT_BG.imageA); /* ✅ NEW */
+    bgImageA.value = String(DEFAULT_BG.imageA);
     bgImage.value = "";
     applyBgDraft();
     setStatus("Background reset.");
@@ -924,14 +954,7 @@
   const BG_KEY = "quick_links_bg_v2";
   const PRESETS_KEY = "quick_links_presets_v2";
 
-  const DEFAULTS = {
-    bg:"#ffffff",
-    ink:"#2f2f2f",
-    muted:"#7a7a7a",
-    stroke:"#e2dfd8",
-    cardA:92,
-    chipA:62
-  };
+  const DEFAULTS = { bg:"#ffffff", ink:"#2f2f2f", muted:"#7a7a7a", stroke:"#e2dfd8", cardA:92, chipA:62 };
 
   function setPresetStatus(msg){
     const el = $("presetStatus");
@@ -1074,11 +1097,11 @@
     }
 
     const bgColor = document.getElementById("bgColor");
-    const bgStrength = document.getElementById("bgStrength");
+    const bgStrengthEl = document.getElementById("bgStrength");
     const bgImageAEl = document.getElementById("bgImageA");
     const bgImage = document.getElementById("bgImage");
     if(bgColor) bgColor.value = tint;
-    if(bgStrength) bgStrength.value = String(clamp(mergedBg.strength,0,70));
+    if(bgStrengthEl) bgStrengthEl.value = String(clamp(mergedBg.strength,0,70));
     if(bgImageAEl) bgImageAEl.value = String(clamp(mergedBg.imageA ?? 92, 20, 100));
     if(bgImage) bgImage.value = "";
 
@@ -1090,21 +1113,18 @@
   presetSave?.addEventListener("click", ()=>{
     const name = (presetName.value || "").trim();
     if(!name){ setPresetStatus("Type a preset name first."); return; }
-
     const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null };
     const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bg } };
-
     const list = loadPresets();
     list.unshift(entry);
     savePresets(list);
-
     presetName.value = "";
     refreshPresetSelect();
     presetSelect.value = entry.id;
     setPresetStatus("Preset saved.");
   });
 
-  presetApply?./topics? addEventListener("click", ()=>{
+  presetApply?.addEventListener("click", ()=>{
     const id = presetSelect.value || "";
     if(!id){ setPresetStatus("Choose a preset first."); return; }
     const p = loadPresets().find(x=>x.id===id);
@@ -1151,7 +1171,493 @@
     }
   });
 })();
-</script>
 
+/* =========================
+   Quick Links data + UI
+========================= */
+(function(){
+  const { loadJSON, saveJSON, uid, safeUrl, hostFromUrl, fileToDataUrl, copyText } = window.__qlUtils;
+  const LINKS_KEY = "quick_links_data_v2";
+
+  const $ = (id)=>document.getElementById(id);
+
+  const groupsEl = $("groups");
+  const emptyEl  = $("emptyState");
+  const subtitle = $("subtitle");
+
+  const newGroupName = $("newGroupName");
+  const addGroupBtn = $("addGroupBtn");
+
+  const linkGroup = $("linkGroup");
+  const linkTitle = $("linkTitle");
+  const linkEmoji = $("linkEmoji");
+  const linkUrl   = $("linkUrl");
+  const linkIconFile = $("linkIconFile");
+  const saveLinkBtn = $("saveLinkBtn");
+  const clearLinkFormBtn = $("clearLinkFormBtn");
+
+  const manageList = $("manageList");
+  const manageStatus = $("manageStatus");
+
+  const exportBtn = $("exportBtn");
+  const importArea = $("importArea");
+  const importBtn = $("importBtn");
+  const resetLinksBtn = $("resetLinksBtn");
+
+  let editing = { linkId: null };
+
+  const DEFAULT_DATA = { groups: [] }; // ✅ no default Notion link
+
+  function loadData(){
+    const d = loadJSON(LINKS_KEY);
+    if(!d || typeof d !== "object") return structuredClone(DEFAULT_DATA);
+    if(!Array.isArray(d.groups)) return structuredClone(DEFAULT_DATA);
+    return d;
+  }
+  function saveData(d){ saveJSON(LINKS_KEY, d); }
+
+  function setManageStatus(msg){
+    if(manageStatus) manageStatus.textContent = msg || "";
+  }
+
+  function ensureGroupOptions(d){
+    linkGroup.innerHTML = "";
+    if(d.groups.length === 0){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "— Create a group first —";
+      linkGroup.appendChild(opt);
+      linkGroup.disabled = true;
+      return;
+    }
+    linkGroup.disabled = false;
+    for(const g of d.groups){
+      const opt = document.createElement("option");
+      opt.value = g.id;
+      opt.textContent = g.name || "Untitled";
+      linkGroup.appendChild(opt);
+    }
+  }
+
+  function clearForm(){
+    editing.linkId = null;
+    linkTitle.value = "";
+    linkEmoji.value = "";
+    linkUrl.value = "";
+    linkIconFile.value = "";
+    saveLinkBtn.textContent = "Save link";
+    setManageStatus("");
+  }
+
+  function renderBoard(d){
+    groupsEl.innerHTML = "";
+    const totalLinks = d.groups.reduce((n,g)=> n + (Array.isArray(g.links)?g.links.length:0), 0);
+
+    if(totalLinks === 0){
+      emptyEl.style.display = "block";
+      subtitle.textContent = "Click the first button to add links.";
+      return;
+    }
+    emptyEl.style.display = "none";
+    subtitle.textContent = "Your shortcuts, neatly grouped.";
+
+    for(const g of d.groups){
+      const links = Array.isArray(g.links) ? g.links : [];
+      if(links.length === 0) continue;
+
+      const wrap = document.createElement("div");
+
+      const head = document.createElement("div");
+      head.className = "groupHead";
+
+      const title = document.createElement("p");
+      title.className = "groupTitle";
+      title.textContent = g.name || "Untitled";
+
+      const count = document.createElement("p");
+      count.className = "groupCount";
+      count.textContent = links.length + " links";
+
+      head.appendChild(title);
+      head.appendChild(count);
+
+      const grid = document.createElement("div");
+      grid.className = "linkGrid";
+
+      for(const l of links){
+        const a = document.createElement("a");
+        a.className = "linkItem";
+        a.href = l.url || "#";
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+
+        const icon = document.createElement("div");
+        icon.className = "iconWrap";
+
+        if(l.iconImageDataUrl){
+          const img = document.createElement("img");
+          img.className = "iconImg";
+          img.src = l.iconImageDataUrl;
+          img.alt = "";
+          icon.appendChild(img);
+        }else{
+          const span = document.createElement("span");
+          span.className = "iconEmoji";
+          span.textContent = (l.emoji && String(l.emoji).trim()) ? String(l.emoji).trim() : "↗";
+          icon.appendChild(span);
+        }
+
+        const txt = document.createElement("div");
+        txt.className = "linkText";
+
+        const t1 = document.createElement("p");
+        t1.className = "linkTitle";
+        t1.textContent = l.title || hostFromUrl(l.url) || "Link";
+
+        const t2 = document.createElement("p");
+        t2.className = "linkUrl";
+        t2.textContent = hostFromUrl(l.url);
+
+        txt.appendChild(t1);
+        txt.appendChild(t2);
+
+        a.appendChild(icon);
+        a.appendChild(txt);
+        grid.appendChild(a);
+      }
+
+      wrap.appendChild(head);
+      wrap.appendChild(grid);
+      groupsEl.appendChild(wrap);
+    }
+  }
+
+  function renderManage(d){
+    manageList.innerHTML = "";
+
+    if(d.groups.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "emptyState";
+      empty.textContent = "No groups yet. Add a group above, then add links to it.";
+      manageList.appendChild(empty);
+      return;
+    }
+
+    for(const g of d.groups){
+      const block = document.createElement("div");
+      block.className = "manageBlock";
+
+      const head = document.createElement("div");
+      head.className = "manageGroupHead";
+
+      const name = document.createElement("p");
+      name.className = "manageGroupName";
+      name.textContent = g.name || "UNTITLED";
+
+      const btns = document.createElement("div");
+      btns.className = "rowBtns";
+
+      const renameBtn = document.createElement("button");
+      renameBtn.className = "tinyBtn";
+      renameBtn.type = "button";
+      renameBtn.textContent = "Rename";
+      renameBtn.addEventListener("click", ()=>{
+        const next = prompt("Rename group:", g.name || "");
+        if(next === null) return;
+        g.name = String(next).trim() || "Untitled";
+        saveData(d);
+        syncAll();
+        setManageStatus("Group renamed.");
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "tinyBtn danger";
+      delBtn.type = "button";
+      delBtn.textContent = "Delete";
+      delBtn.addEventListener("click", ()=>{
+        const ok = confirm(`Delete group "${g.name || "Untitled"}" and all its links?`);
+        if(!ok) return;
+        d.groups = d.groups.filter(x=>x.id!==g.id);
+        saveData(d);
+        syncAll();
+        setManageStatus("Group deleted.");
+      });
+
+      btns.appendChild(renameBtn);
+      btns.appendChild(delBtn);
+
+      head.appendChild(name);
+      head.appendChild(btns);
+
+      const linksWrap = document.createElement("div");
+      linksWrap.className = "manageLinks";
+
+      const links = Array.isArray(g.links) ? g.links : [];
+      if(links.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "emptyState";
+        empty.style.marginTop = "0";
+        empty.textContent = "No links in this group yet.";
+        linksWrap.appendChild(empty);
+      }else{
+        for(const l of links){
+          const row = document.createElement("div");
+          row.className = "manageLinkRow";
+
+          const meta = document.createElement("div");
+          meta.className = "manageLinkMeta";
+
+          const icon = document.createElement("div");
+          icon.className = "iconWrap";
+          if(l.iconImageDataUrl){
+            const img = document.createElement("img");
+            img.className = "iconImg";
+            img.src = l.iconImageDataUrl;
+            img.alt = "";
+            icon.appendChild(img);
+          }else{
+            const sp = document.createElement("span");
+            sp.className = "iconEmoji";
+            sp.textContent = (l.emoji && String(l.emoji).trim()) ? String(l.emoji).trim() : "↗";
+            icon.appendChild(sp);
+          }
+
+          const txt = document.createElement("div");
+          txt.className = "manageLinkTxt";
+          const t1 = document.createElement("p");
+          t1.className = "t1";
+          t1.textContent = l.title || hostFromUrl(l.url) || "Link";
+          const t2 = document.createElement("p");
+          t2.className = "t2";
+          t2.textContent = hostFromUrl(l.url);
+
+          txt.appendChild(t1);
+          txt.appendChild(t2);
+
+          meta.appendChild(icon);
+          meta.appendChild(txt);
+
+          const btns = document.createElement("div");
+          btns.className = "rowBtns";
+
+          const editBtn = document.createElement("button");
+          editBtn.className = "tinyBtn";
+          editBtn.type = "button";
+          editBtn.textContent = "Edit";
+          editBtn.addEventListener("click", ()=>{
+            editing.linkId = l.id;
+
+            ensureGroupOptions(d);
+            linkGroup.value = g.id;
+
+            linkTitle.value = l.title || "";
+            linkEmoji.value = l.emoji || "";
+            linkUrl.value = l.url || "";
+            linkIconFile.value = "";
+
+            saveLinkBtn.textContent = "Update link";
+            setManageStatus("Editing link — make changes then click Update link.");
+          });
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "tinyBtn danger";
+          delBtn.type = "button";
+          delBtn.textContent = "Remove";
+          delBtn.addEventListener("click", ()=>{
+            const ok = confirm(`Remove "${l.title || "this link"}"?`);
+            if(!ok) return;
+            g.links = (g.links || []).filter(x=>x.id!==l.id);
+            saveData(d);
+            syncAll();
+            setManageStatus("Link removed.");
+            if(editing.linkId === l.id) clearForm();
+          });
+
+          btns.appendChild(editBtn);
+          btns.appendChild(delBtn);
+
+          row.appendChild(meta);
+          row.appendChild(btns);
+
+          linksWrap.appendChild(row);
+        }
+      }
+
+      block.appendChild(head);
+      block.appendChild(linksWrap);
+      manageList.appendChild(block);
+    }
+  }
+
+  function syncAll(){
+    const d = loadData();
+    ensureGroupOptions(d);
+    renderBoard(d);
+    renderManage(d);
+  }
+
+  /* Events */
+  addGroupBtn.addEventListener("click", ()=>{
+    const name = String(newGroupName.value || "").trim();
+    if(!name){ setManageStatus("Type a group name first."); return; }
+
+    const d = loadData();
+    d.groups.unshift({ id: uid(), name, links: [] });
+    saveData(d);
+
+    newGroupName.value = "";
+    syncAll();
+    setManageStatus("Group added.");
+  });
+
+  clearLinkFormBtn.addEventListener("click", ()=>{
+    clearForm();
+  });
+
+  saveLinkBtn.addEventListener("click", async ()=>{
+    const d = loadData();
+    if(d.groups.length === 0){
+      setManageStatus("Create a group first.");
+      return;
+    }
+
+    const groupId = linkGroup.value || "";
+    const g = d.groups.find(x=>x.id===groupId);
+    if(!g){ setManageStatus("Select a valid group."); return; }
+
+    const title = String(linkTitle.value || "").trim();
+    const emoji = String(linkEmoji.value || "").trim();
+    const url = safeUrl(linkUrl.value || "");
+
+    if(!url){
+      setManageStatus("Please enter a URL.");
+      return;
+    }
+
+    let iconImageDataUrl = null;
+    const file = linkIconFile.files && linkIconFile.files[0];
+    if(file){
+      try{ iconImageDataUrl = await fileToDataUrl(file); }
+      catch{ iconImageDataUrl = null; }
+    }
+
+    if(editing.linkId){
+      // update existing (find anywhere)
+      for(const gg of d.groups){
+        const idx = (gg.links || []).findIndex(x=>x.id===editing.linkId);
+        if(idx !== -1){
+          const prev = gg.links[idx];
+
+          // if moved group, remove from old & add to new
+          if(gg.id !== g.id){
+            gg.links.splice(idx,1);
+            g.links = g.links || [];
+            g.links.unshift(prev);
+          }
+
+          // update fields
+          const target = (g.links || []).find(x=>x.id===editing.linkId) || prev;
+          target.title = title;
+          target.emoji = emoji;
+          target.url = url;
+
+          // only replace icon image if user selected a new file
+          if(iconImageDataUrl){
+            target.iconImageDataUrl = iconImageDataUrl;
+          }
+
+          // if user typed emoji and did NOT upload a new image, allow emoji change
+          if(!iconImageDataUrl && emoji){
+            // keep existing icon image unless they cleared emoji? we’ll just keep image if present
+            // (still allows emoji fallback if no icon image)
+          }
+
+          saveData(d);
+          syncAll();
+          setManageStatus("Link updated.");
+          clearForm();
+          return;
+        }
+      }
+      setManageStatus("Could not find link to update.");
+      editing.linkId = null;
+      return;
+    }
+
+    // create new
+    const link = {
+      id: uid(),
+      title,
+      emoji,
+      url,
+      iconImageDataUrl: iconImageDataUrl || null
+    };
+
+    g.links = g.links || [];
+    g.links.unshift(link);
+
+    saveData(d);
+    syncAll();
+    setManageStatus("Link saved.");
+    clearForm();
+  });
+
+  exportBtn.addEventListener("click", async ()=>{
+    const d = loadData();
+    const payload = JSON.stringify(d, null, 2);
+    const ok = await copyText(payload);
+    if(ok) setManageStatus("Links JSON copied.");
+    else{
+      importArea.value = payload;
+      importArea.focus(); importArea.select();
+      setManageStatus("Could not copy automatically — JSON placed in the box to copy manually.");
+    }
+  });
+
+  importBtn.addEventListener("click", ()=>{
+    const raw = String(importArea.value || "").trim();
+    if(!raw){ setManageStatus("Paste links JSON first."); return; }
+    try{
+      const parsed = JSON.parse(raw);
+      if(!parsed || typeof parsed !== "object" || !Array.isArray(parsed.groups)){
+        setManageStatus("That JSON doesn’t look like link data.");
+        return;
+      }
+      // light sanitize
+      const cleaned = {
+        groups: parsed.groups.filter(Boolean).map(g=>({
+          id: String(g.id || uid()),
+          name: String(g.name || "Untitled"),
+          links: Array.isArray(g.links) ? g.links.filter(Boolean).map(l=>({
+            id: String(l.id || uid()),
+            title: String(l.title || ""),
+            emoji: String(l.emoji || ""),
+            url: safeUrl(l.url || ""),
+            iconImageDataUrl: l.iconImageDataUrl ? String(l.iconImageDataUrl) : null
+          })).filter(l=>!!l.url) : []
+        }))
+      };
+      saveData(cleaned);
+      importArea.value = "";
+      syncAll();
+      setManageStatus("Links imported.");
+    }catch{
+      setManageStatus("Invalid JSON.");
+    }
+  });
+
+  resetLinksBtn.addEventListener("click", ()=>{
+    const ok = confirm("Reset all groups and links? This cannot be undone.");
+    if(!ok) return;
+    window.__QL_APP__.remove(LINKS_KEY);
+    clearForm();
+    syncAll();
+    setManageStatus("Links reset.");
+  });
+
+  // initial render
+  syncAll();
+})();
+</script>
 </body>
 </html>

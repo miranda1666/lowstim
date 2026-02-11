@@ -41,13 +41,17 @@
     .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
 
     /* ✅ Board wrapper was missing in your HTML; keep styles but also add the element in markup below */
-    .widgetBoard{
-      position:relative;
-      border-radius: var(--r);
-      overflow:hidden;
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
-    }
+.widgetBoard{
+  position:relative;
+  border-radius: var(--r);
+
+  /* IMPORTANT: prevents the Theme/Background panels from being cut off */
+  overflow: visible;
+
+  border:1px solid var(--stroke);
+  box-shadow: var(--shadow);
+}
+
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -71,6 +75,7 @@
     .boardTint{
       position:absolute;
       inset:0;
+      border-radius: inherit;
       pointer-events:none;
       z-index:1;
     }
@@ -205,9 +210,18 @@
       display:none;
       z-index: 50;
 
-      max-height: min(70vh, 520px);
-      overflow:auto;
+      max-height: calc(100dvh - 140px);
+overflow: auto;
+-webkit-overflow-scrolling: touch;
+overscroll-behavior: contain;
+padding-bottom: 18px;
+z-index: 9999;
     }
+
+    @supports not (height: 100dvh){
+  .panel{ max-height: calc(100vh - 140px); }
+}
+
     .panel.open{ display:block; }
 
     .panelTitle{
@@ -303,8 +317,9 @@
 
     <!-- ✅ board wrapper restored -->
     <div class="widgetBoard" id="board">
-      <div class="boardTint" id="boardTint"></div>
-      <div class="boardContent">
+<div class="widgetBoard">
+  <div class="boardTint" id="boardTint"></div>
+  <div class="boardContent">
         <section class="card">
           <div class="title">
             <h2>Add a subscription</h2>
@@ -463,6 +478,7 @@
         </section>
       </div>
     </div>
+  </div>
   </div>
 
 <script>

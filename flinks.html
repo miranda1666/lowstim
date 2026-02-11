@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quick Links</title>
+
+<style>
+  :root{
+    --bg: transparent;
+    --card: rgba(247,245,240,0.92);
+    --stroke:#e2dfd8;
+    --ink:#2f2f2f;
+    --muted:#7a7a7a;
+    --shadow: 0 10px 30px rgba(30,20,10,.06);
+    --r:14px;
+
+    --board-tint:#efe7e1;
+    --board-tint-a:0.12;
+    --board-image:none;
+
+    /* widget-specific */
+    --chip: rgba(255,255,255,0.62);
+    --chip-hover: rgba(255,255,255,0.78);
+    --focus: rgba(47,47,47,0.12);
+  }
+
+  *{ box-sizing:border-box; }
+  html, body{ overflow: visible; }
+
+  body{
+    margin:0;
+    padding:18px;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  /* ✅ Outer shell must NOT clip popovers */
+  .widgetShell{
+    position: relative;
+    max-width: 380px; /* ~ 1/3 Notion page vibe */
+    overflow: visible;
+  }
+
+  /* ✅ Inner layer handles rounded corners + background clip */
+  .boardClip{
+    position:relative;
+    border-radius: var(--r);
+    overflow:hidden;
+    border:1px solid var(--stroke);
+    box-shadow: var(--shadow);
+  }
+
+  .boardClip::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image: var(--board-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: scale(1.01);
+    z-index:0;
+    pointer-events:none;
+    filter: saturate(1.25) contrast(1.15) brightness(1.05);
+  }
+
+  .boardTint{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background: rgba(0,0,0,0);
+  }
+
+  .boardContent{ position:relative; z-index:2; }
+
+  .card{
+    background: var(--card);
+    border:0;
+    border-radius:0;
+    padding: 20px 20px 18px;
+    color: var(--ink);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .topRow{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom: 12px;
+  }
+
+  .rightControls{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+  }
+
+  .label{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .subtle{
+    font-size: 12px;
+    color: rgba(47,47,47,0.72);
+    margin: 6px 0 0;
+  }
+
+  /* Buttons */
+  .settingsWrap{ position:relative; }
+  .settingsBtn{
+    width:34px; height:34px;
+    border-radius:999px;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.92);
+    padding:0;
+    display:grid;
+    place-items:center;
+    box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .settingsBtn:active{ transform: translateY(1px); }
+  .settingsBtn:focus{ outline:none; box-shadow: 0 0 0 4px var(--focus), 0 3px 12px rgba(30,20,10,.08); }
+
+  .bgDot{
+    width:14px; height:14px;
+    border-radius:999px;
+    border:1px solid rgba(233,228,221,0.95);
+    background: var(--board-tint);
+    box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+  }
+  .themeDot{
+    width:14px; height:14px;
+    border-radius:999px;
+    border:1px solid rgba(233,228,221,0.95);
+    background: var(--ink);
+    box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
+  }
+  .manageDot{
+    width:14px; height:14px;
+    border-radius:6px;
+    border:1px solid rgba(233,228,221,0.95);
+    background: rgba(47,47,47,0.12);
+    box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
+  }
+
+  /* ✅ Panels are siblings of boardClip (inside widgetShell) so they can overflow */
+  .panel{
+    position:absolute;
+    width: 320px;
+    border-radius: 16px;
+    border: 1px solid var(--stroke);
+    background: rgba(255,255,255,0.86);
+    box-shadow: 0 18px 40px rgba(30,20,10,.12);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    padding: 12px;
+    display:none;
+    z-index: 9999;
+
+    max-height: min(70vh, 560px);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .panel.open{ display:block; }
+
+  .panelTitle{
+    margin:0 0 10px 0;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color: rgba(43,42,40,0.72);
+  }
+
+  .pRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding: 7px 0;
+  }
+  .pRow label{ font-size:12px; color: rgba(106,102,95,1); }
+  .pRow input[type="color"]{
+    width:36px; height:28px;
+    border-radius:10px;
+    padding:0;
+    border:1px solid var(--stroke);
+    background: transparent;
+    cursor:pointer;
+  }
+  .pRow input[type="range"]{ width: 160px; }
+  .pFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+
+  .miniBtn{
+    width:100%;
+    border-radius:12px;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.90);
+    padding:9px 10px;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    font-size:11px;
+    color: rgba(43,42,40,0.82);
+    box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    cursor:pointer;
+  }
+  .miniBtn:active{ transform: translateY(1px); }
+  .miniBtn.danger{
+    border-color: rgba(205,88,88,0.35);
+    color: rgba(140,42,42,0.88);
+  }
+
+  .pDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+  .status{
+    font-size:12px;
+    color: rgba(106,102,95,1);
+    margin-top: 6px;
+    min-height: 16px;
+  }
+
+  /* Presets UI */
+  .presetName,
+  .presetSelect,
+  .presetArea,
+  .textInput,
+  .selectInput{
+    width:100%;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.96);
+    border-radius:12px;
+    padding:10px 12px;
+    font-size:12px;
+    color: var(--ink);
+    outline:none;
+  }
+  .presetSelect, .selectInput{ height:38px; padding: 8px 12px; }
+  .presetArea{
+    min-height: 92px;
+    resize: vertical;
+    line-height:1.35;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    white-space: pre;
+    overflow: auto;
+  }
+  .hint{
+    font-size: 11px;
+    color: rgba(106,102,95,0.85);
+    line-height: 1.35;
+    margin: 6px 0 0;
+  }
+
+  /* Links display */
+  .groups{
+    display:flex;
+    flex-direction:column;
+    gap: 12px;
+    margin-top: 6px;
+  }
+
+  .groupHead{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom: 6px;
+  }
+
+  .groupTitle{
+    font-size: 13px;
+    font-weight: 650;
+    color: rgba(47,47,47,0.90);
+    margin: 0;
+  }
+
+  .groupCount{
+    font-size: 11px;
+    color: rgba(122,122,122,0.92);
+    margin: 0;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .linkGrid{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .linkItem{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(226,223,216,0.85);
+    background: var(--chip);
+    text-decoration:none;
+    color: var(--ink);
+    transition: transform .08s ease, background .12s ease;
+  }
+  .linkItem:hover{ background: var(--chip-hover); }
+  .linkItem:active{ transform: translateY(1px); }
+  .linkItem:focus{ outline:none; box-shadow: 0 0 0 4px var(--focus); }
+
+  .iconWrap{
+    width: 26px; height: 26px;
+    border-radius: 9px;
+    border: 1px solid rgba(226,223,216,0.95);
+    background: rgba(255,255,255,0.80);
+    display:grid;
+    place-items:center;
+    flex: 0 0 auto;
+    overflow:hidden;
+  }
+  .iconEmoji{
+    font-size: 15px;
+    line-height: 1;
+    transform: translateY(0.5px);
+  }
+  .iconImg{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display:block;
+  }
+
+  .linkText{
+    display:flex;
+    flex-direction:column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .linkTitle{
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: rgba(47,47,47,0.92);
+  }
+  .linkUrl{
+    font-size: 11px;
+    margin: 0;
+    color: rgba(122,122,122,0.92);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .emptyState{
+    margin-top: 10px;
+    border: 1px dashed rgba(226,223,216,0.95);
+    border-radius: 12px;
+    padding: 12px;
+    color: rgba(106,102,95,0.90);
+    font-size: 12px;
+    line-height: 1.4;
+    background: rgba(255,255,255,0.55);
+  }
+
+  /* Manage panel table */
+  .miniTable{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    overflow:hidden;
+    border-radius: 12px;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.92);
+  }
+  .miniTable td, .miniTable th{
+    padding: 10px 10px;
+    border-bottom:1px solid rgba(226,223,216,0.75);
+    vertical-align: middle;
+    font-size: 12px;
+    color: rgba(47,47,47,0.88);
+  }
+  .miniTable tr:last-child td{ border-bottom:0; }
+  .miniTable th{
+    text-align:left;
+    font-size: 11px;
+    letter-spacing:.10em;
+    text-transform: uppercase;
+    color: rgba(106,102,95,0.90);
+    background: rgba(247,245,240,0.78);
+  }
+
+  .rowBtns{
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+  }
+  .tinyBtn{
+    border-radius:10px;
+    border:1px solid rgba(226,223,216,0.95);
+    background: rgba(255,255,255,0.90);
+    padding: 7px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing:.06em;
+    text-transform: uppercase;
+    cursor:pointer;
+    color: rgba(43,42,40,0.78);
+  }
+  .tinyBtn:active{ transform: translateY(1px); }
+  .tinyBtn.danger{
+    border-color: rgba(205,88,88,0.35);
+    color: rgba(140,42,42,0.86);
+  }
+
+  .twoCol{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+</style>
+</head>
+
+<body>
+
+  <div class="widgetShell" id="widgetShell" aria-label="Quick Links shell">
+    <!-- ✅ Popovers live here (NOT inside boardClip) -->
+
+    <!-- Background panel -->
+    <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+      <div class="panelTitle">Background</div>
+
+      <div class="pRow">
+        <label for="bgColor">Tint</label>
+        <input id="bgColor" type="color" value="#efe7e1" />
+      </div>
+
+      <div class="pRow">
+        <label for="bgStrength">Strength</label>
+        <input id="bgStrength" type="range" min="0" max="70" value="12" />
+      </div>
+
+      <div class="pDiv"></div>
+
+      <div class="pRow" style="align-items:flex-start;">
+        <label for="bgImage">Image</label>
+        <input id="bgImage" class="pFile" type="file" accept="image/*" />
+      </div>
+
+      <div class="pRow">
+        <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
+      </div>
+
+      <div class="pDiv"></div>
+
+      <button class="miniBtn" id="bgApply" type="button">Apply background</button>
+      <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+      <div class="status" id="uiStatus" aria-live="polite"></div>
+    </div>
+
+    <!-- Theme panel -->
+    <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+      <div class="panelTitle">Theme</div>
+
+      <div class="pRow">
+        <label for="tBg">Page bg</label>
+        <input id="tBg" type="color" value="#ffffff" />
+      </div>
+
+      <div class="pRow">
+        <label for="tInk">Text</label>
+        <input id="tInk" type="color" value="#2f2f2f" />
+      </div>
+
+      <div class="pRow">
+        <label for="tMuted">Muted</label>
+        <input id="tMuted" type="color" value="#7a7a7a" />
+      </div>
+
+      <div class="pRow">
+        <label for="tStroke">Borders</label>
+        <input id="tStroke" type="color" value="#e2dfd8" />
+      </div>
+
+      <div class="pRow">
+        <label for="tCardA">Card opacity</label>
+        <input id="tCardA" type="range" min="35" max="95" value="92" />
+      </div>
+
+      <div class="pRow">
+        <label for="tChipA">Link opacity</label>
+        <input id="tChipA" type="range" min="35" max="95" value="62" />
+      </div>
+
+      <div class="pDiv"></div>
+
+      <button id="tApply" class="miniBtn" type="button">Apply theme</button>
+      <button id="tReset" class="miniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+      <div class="pDiv"></div>
+
+      <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
+
+      <input class="presetName" id="presetName" placeholder="Preset name">
+      <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+      <div class="pDiv"></div>
+
+      <select class="presetSelect" id="presetSelect"></select>
+
+      <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+      <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+      <div class="pDiv"></div>
+
+      <button class="miniBtn" id="presetCopy" type="button">Copy preset JSON</button>
+
+      <div class="pDiv"></div>
+
+      <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+      <button class="miniBtn" id="presetImportBtn" type="button" style="margin-top:8px;">Import presets</button>
+
+      <div class="status" id="presetStatus" aria-live="polite"></div>
+    </div>
+
+    <!-- Manage Links panel -->
+    <div class="panel" id="managePanel" role="dialog" aria-label="Manage quick links">
+      <div class="panelTitle">Quick Links</div>
+
+      <div class="pRow" style="align-items:flex-start;">
+        <div style="flex:1;">
+          <label for="newGroupName" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">New group</label>
+          <input id="newGroupName" class="textInput" placeholder="e.g. Work" />
+        </div>
+      </div>
+      <button id="addGroupBtn" class="miniBtn" type="button">Add group</button>
+
+      <div class="pDiv"></div>
+
+      <div class="panelTitle" style="margin:0 0 10px 0;">Add / edit link</div>
+
+      <div class="pRow" style="align-items:flex-start;">
+        <div style="flex:1;">
+          <label for="linkGroup" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">Group</label>
+          <select id="linkGroup" class="selectInput"></select>
+        </div>
+      </div>
+
+      <div class="twoCol">
+        <div>
+          <label for="linkTitle" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">Title</label>
+          <input id="linkTitle" class="textInput" placeholder="e.g. Notion" />
+        </div>
+        <div>
+          <label for="linkEmoji" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">Icon (emoji)</label>
+          <input id="linkEmoji" class="textInput" placeholder="" maxlength="6" />
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label for="linkUrl" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">URL</label>
+        <input id="linkUrl" class="textInput" placeholder="https://example.com" />
+      </div>
+
+      <div style="margin-top:10px;">
+        <label for="linkIconFile" style="display:block; font-size:12px; color: rgba(106,102,95,1); margin-bottom:6px;">Icon (image)</label>
+        <input id="linkIconFile" class="pFile" type="file" accept="image/*" />
+      </div>
+
+      <div class="pRow" style="gap:10px; margin-top:8px;">
+        <button id="saveLinkBtn" class="miniBtn" type="button" style="flex:1;">Save link</button>
+      </div>
+      <button id="clearLinkFormBtn" class="miniBtn" type="button" style="margin-top:8px;">Clear form</button>
+
+      <div class="pDiv"></div>
+
+      <div class="panelTitle" style="margin:0 0 10px 0;">Your groups & links</div>
+      <div id="manageList"></div>
+
+      <div class="pDiv"></div>
+      <button id="exportBtn" class="miniBtn" type="button">Copy all links JSON</button>
+      <textarea class="presetArea" id="importArea" placeholder='Paste links JSON here, then click "Import links".'></textarea>
+      <button id="importBtn" class="miniBtn" type="button" style="margin-top:8px;">Import links</button>
+      <button id="resetLinksBtn" class="miniBtn danger" type="button" style="margin-top:8px;">Reset links</button>
+
+      <div class="status" id="manageStatus" aria-live="polite"></div>
+    </div>
+
+    <!-- ✅ Clipped board stays separate -->
+    <div class="boardClip" id="boardClip" aria-label="Quick Links board">
+      <div class="boardTint" id="boardTint"></div>
+
+      <div class="boardContent">
+        <div class="card">
+          <div class="topRow">
+            <div>
+              <p class="label">Quick Links</p>
+              <p class="subtle" id="subtitle">Your shortcuts, neatly grouped.</p>
+            </div>
+
+            <div class="rightControls">
+              <div class="settingsWrap">
+                <button class="settingsBtn" id="manageBtn" type="button" aria-label="Manage links" title="Manage links">
+                  <span class="manageDot" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <div class="settingsWrap">
+                <button class="settingsBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                  <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <div class="settingsWrap">
+                <button class="settingsBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                  <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="groups" class="groups" aria-label="Groups list"></div>
+          <div id="emptyState" class="emptyState" style="display:none;">
+            No links yet. Click the <b>first</b> button in the top-right to add groups and links.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   Storage (persists across reload/reopen/app close)
+========================================================= */
+(function(){
+  const mem = Object.create(null);
+
+  function canUseLocalStorage(){
+    try{
+      const k="__ql__"+Math.random().toString(16).slice(2);
+      localStorage.setItem(k,"1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{ return false; }
+  }
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+    catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+    catch{ mem[key]=String(value); }
+  }
+  function storageRemove(key){
+    try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+    catch{ delete mem[key]; }
+  }
+
+  window.__QL_APP__ = { get: storageGet, set: storageSet, remove: storageRemove };
+})();
+
+/* =========================
+   Utils
+========================= */
+(function(){
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function clamp(n,min,max){
+    n = Number(n);
+    if(!Number.isFinite(n)) return min;
+    return Math.max(min, Math.min(max, n));
+  }
+  function normHex(hex, fallback){
+    const s = String(hex||"").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+  }
+  function loadJSON(key){
+    try{
+      const raw = window.__QL_APP__.get(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  }
+  function saveJSON(key, val){
+    try{ window.__QL_APP__.set(key, JSON.stringify(val)); }catch{}
+  }
+  async function copyText(text){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch{}
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return !!ok;
+    }catch{ return false; }
+  }
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+  function safeUrl(u){
+    const s = String(u||"").trim();
+    if(!s) return "";
+    // allow http(s) and mailto
+    if(/^https?:\/\//i.test(s)) return s;
+    if(/^mailto:/i.test(s)) return s;
+    // if they typed domain only, gently fix:
+    if(/^[a-z0-9.-]+\.[a-z]{2,}([\/?#].*)?$/i.test(s)) return "https://" + s;
+    return s;
+  }
+
+  window.__qlUtils = { hexToRgba, clamp, normHex, loadJSON, saveJSON, copyText, uid, safeUrl };
+})();
+
+/* =========================
+   Panel positioning + "grow page" so iframe doesn't cut it off
+========================= */
+(function(){
+  const shell = document.getElementById("widgetShell");
+  const bgBtn = document.getElementById("bgBtn");
+  const bgPanel = document.getElementById("bgPanel");
+  const themeBtn = document.getElementById("themeBtn");
+  const themePanel = document.getElementById("themePanel");
+  const manageBtn = document.getElementById("manageBtn");
+  const managePanel = document.getElementById("managePanel");
+
+  function closeAll(except){
+    [bgPanel, themePanel, managePanel].forEach(p=>{
+      if(!p) return;
+      if(p !== except) p.classList.remove("open");
+    });
+    document.body.style.paddingBottom = "";
+  }
+
+  function placePanel(btn, panel){
+    if(!btn || !panel || !shell) return;
+    const shellRect = shell.getBoundingClientRect();
+    const r = btn.getBoundingClientRect();
+    const pad = 10;
+
+    let top = (r.bottom - shellRect.top) + pad;
+    let left = (r.right - shellRect.left) - panel.offsetWidth;
+
+    left = Math.max(pad, Math.min(shell.clientWidth - panel.offsetWidth - pad, left));
+    panel.style.left = left + "px";
+    panel.style.top  = top + "px";
+
+    requestAnimationFrame(()=>{
+      const panelRect = panel.getBoundingClientRect();
+      const need = Math.ceil(panelRect.bottom + 24);
+      document.body.style.paddingBottom = Math.max(24, need - window.innerHeight + 24) + "px";
+    });
+  }
+
+  function openPanel(btn, panel){
+    const isOpen = panel.classList.contains("open");
+    closeAll(null);
+    if(isOpen) return;
+    panel.classList.add("open");
+    requestAnimationFrame(()=>placePanel(btn, panel));
+  }
+
+  bgBtn?.addEventListener("click",(e)=>{ e.stopPropagation(); openPanel(bgBtn, bgPanel); });
+  themeBtn?.addEventListener("click",(e)=>{ e.stopPropagation(); openPanel(themeBtn, themePanel); });
+  manageBtn?.addEventListener("click",(e)=>{ e.stopPropagation(); openPanel(manageBtn, managePanel); });
+
+  window.addEventListener("resize", ()=>{
+    if(bgPanel?.classList.contains("open")) placePanel(bgBtn, bgPanel);
+    if(themePanel?.classList.contains("open")) placePanel(themeBtn, themePanel);
+    if(managePanel?.classList.contains("open")) placePanel(manageBtn, managePanel);
+  });
+
+  document.addEventListener("click",(e)=>{
+    const inside =
+      e.target.closest("#bgPanel") || e.target.closest("#bgBtn") ||
+      e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
+      e.target.closest("#managePanel") || e.target.closest("#manageBtn");
+    if(!inside) closeAll(null);
+  });
+})();
+
+/* =========================
+   Background (draft + apply + persistent)
+========================= */
+(function(){
+  const { hexToRgba, clamp, normHex, loadJSON, saveJSON } = window.__qlUtils;
+  const BG_KEY = "quick_links_bg_v2";
+
+  const boardTintEl = document.getElementById("boardTint");
+  const bgColor = document.getElementById("bgColor");
+  const bgStrength = document.getElementById("bgStrength");
+  const bgImage = document.getElementById("bgImage");
+  const bgRemove = document.getElementById("bgRemove");
+  const bgApply = document.getElementById("bgApply");
+  const bgReset = document.getElementById("bgReset");
+  const bgDot = document.getElementById("bgDot");
+
+  if(!bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
+
+  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageDataUrl:null };
+  let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+
+  function setStatus(msg){
+    const ui = document.getElementById("uiStatus");
+    if(ui) ui.textContent = msg || "";
+    const preset = document.getElementById("presetStatus");
+    if(preset && msg) preset.textContent = msg;
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function applyBgDraft(){
+    const tint = normHex(bgDraft.tint, DEFAULT_BG.tint);
+    const strength = clamp(bgDraft.strength, 0, 70) / 100;
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", bgDraft.imageDataUrl ? `url("${bgDraft.imageDataUrl}")` : "none");
+
+    boardTintEl.style.background = hexToRgba(tint, strength);
+
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+    }
+  }
+
+  bgColor.value = bgDraft.tint;
+  bgStrength.value = String(bgDraft.strength);
+  applyBgDraft();
+
+  bgColor.addEventListener("input", () => { bgDraft.tint = bgColor.value; applyBgDraft(); setStatus(""); });
+  bgStrength.addEventListener("input", () => { bgDraft.strength = Number(bgStrength.value); applyBgDraft(); setStatus(""); });
+
+  bgImage.addEventListener("change", async () => {
+    const file = bgImage.files && bgImage.files[0];
+    if(!file) return;
+    bgDraft.imageDataUrl = await fileToDataUrl(file);
+    applyBgDraft();
+    setStatus("");
+  });
+
+  bgRemove.addEventListener("click", () => {
+    bgDraft.imageDataUrl = null;
+    bgImage.value = "";
+    applyBgDraft();
+    setStatus("");
+  });
+
+  bgApply?.addEventListener("click", () => { saveJSON(BG_KEY, bgDraft); setStatus("Background applied."); });
+
+  bgReset?.addEventListener("click", () => {
+    window.__QL_APP__.remove(BG_KEY);
+    bgDraft = Object.assign({}, DEFAULT_BG);
+    bgColor.value = DEFAULT_BG.tint;
+    bgStrength.value = String(DEFAULT_BG.strength);
+    bgImage.value = "";
+    applyBgDraft();
+    setStatus("Background reset.");
+  });
+})();
+
+/* =========================
+   Theme + Presets (GLOBAL)
+========================= */
+(function(){
+  const { clamp, normHex, loadJSON, saveJSON, copyText, uid, hexToRgba } = window.__qlUtils;
+  const $ = (id)=>document.getElementById(id);
+
+  const THEME_KEY = "quick_links_theme_v2";
+  const BG_KEY = "quick_links_bg_v2";
+  const PRESETS_KEY = "quick_links_presets_v2";
+
+  const DEFAULTS = {
+    bg:"#ffffff",
+    ink:"#2f2f2f",
+    muted:"#7a7a7a",
+    stroke:"#e2dfd8",
+    cardA:92,
+    chipA:62
+  };
+
+  function setPresetStatus(msg){
+    const el = $("presetStatus");
+    if(el) el.textContent = msg || "";
+  }
+
+  function applyTheme(t){
+    const theme = Object.assign({}, DEFAULTS, t || {});
+    const bg = normHex(theme.bg, DEFAULTS.bg);
+    const ink = normHex(theme.ink, DEFAULTS.ink);
+    const muted = normHex(theme.muted, DEFAULTS.muted);
+    const stroke = normHex(theme.stroke, DEFAULTS.stroke);
+    const cardA = clamp(theme.cardA, 35, 95);
+    const chipA = clamp(theme.chipA, 35, 95);
+
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.setProperty("--ink", ink);
+    document.documentElement.style.setProperty("--muted", muted);
+    document.documentElement.style.setProperty("--stroke", stroke);
+    document.documentElement.style.setProperty("--card", `rgba(247,245,240,${cardA/100})`);
+    document.documentElement.style.setProperty("--chip", `rgba(255,255,255,${chipA/100})`);
+    document.documentElement.style.setProperty("--chip-hover", `rgba(255,255,255,${Math.min(0.95, (chipA+16)/100)})`);
+    document.documentElement.style.setProperty("--focus", hexToRgba(ink, 0.10));
+
+    const themeDot = $("themeDot");
+    if(themeDot){
+      themeDot.style.background = ink;
+      themeDot.style.boxShadow = `0 0 0 6px rgba(243,239,233,${Math.min(0.32, 0.10 + (cardA/300))})`;
+    }
+  }
+
+  function syncInputs(t){
+    const x = Object.assign({}, DEFAULTS, t || {});
+    $("tBg").value = normHex(x.bg, DEFAULTS.bg);
+    $("tInk").value = normHex(x.ink, DEFAULTS.ink);
+    $("tMuted").value = normHex(x.muted, DEFAULTS.muted);
+    $("tStroke").value = normHex(x.stroke, DEFAULTS.stroke);
+    $("tCardA").value = String(clamp(x.cardA,35,95));
+    $("tChipA").value = String(clamp(x.chipA,35,95));
+  }
+
+  function readInputs(){
+    return {
+      bg: $("tBg").value,
+      ink: $("tInk").value,
+      muted: $("tMuted").value,
+      stroke: $("tStroke").value,
+      cardA: Number($("tCardA").value),
+      chipA: Number($("tChipA").value)
+    };
+  }
+
+  let themeDraft = Object.assign({}, DEFAULTS, loadJSON(THEME_KEY) || {});
+  applyTheme(themeDraft);
+  syncInputs(themeDraft);
+
+  ["tBg","tInk","tMuted","tStroke","tCardA","tChipA"].forEach(id=>{
+    const el = $(id);
+    el?.addEventListener("input", ()=>{
+      themeDraft = Object.assign({}, themeDraft, readInputs());
+      applyTheme(themeDraft);
+      setPresetStatus("");
+    });
+  });
+
+  $("tApply")?.addEventListener("click", ()=>{
+    themeDraft = Object.assign({}, themeDraft, readInputs());
+    saveJSON(THEME_KEY, themeDraft);
+    setPresetStatus("Theme applied.");
+  });
+
+  $("tReset")?.addEventListener("click", ()=>{
+    window.__QL_APP__.remove(THEME_KEY);
+    themeDraft = Object.assign({}, DEFAULTS);
+    applyTheme(themeDraft);
+    syncInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+    setPresetStatus("Theme reset.");
+  });
+
+  const presetName = $("presetName");
+  const presetSelect = $("presetSelect");
+  const presetSave = $("presetSave");
+  const presetApply = $("presetApply");
+  const presetDelete = $("presetDelete");
+  const presetCopy = $("presetCopy");
+  const presetImport = $("presetImport");
+  const presetImportBtn = $("presetImportBtn");
+
+  function loadPresets(){ const list = loadJSON(PRESETS_KEY); return Array.isArray(list) ? list : []; }
+  function savePresets(list){ saveJSON(PRESETS_KEY, list); }
+  function refreshPresetSelect(){
+    const list = loadPresets();
+    const cur = presetSelect.value;
+    presetSelect.innerHTML = `<option value="">—</option>`;
+    for(const p of list){
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled";
+      presetSelect.appendChild(opt);
+    }
+    if(cur) presetSelect.value = cur;
+  }
+  function sanitizePresetList(parsed){
+    if(!Array.isArray(parsed)) return null;
+    return parsed.filter(Boolean).map(p => ({
+      id: String(p.id || uid()),
+      name: String(p.name || "Imported"),
+      theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
+      bg: (p.bg && typeof p.bg === "object") ? p.bg : {}
+    }));
+  }
+
+  function applyPreset(p){
+    themeDraft = Object.assign({}, themeDraft, p.theme || {});
+    applyTheme(themeDraft);
+    syncInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+
+    const bgSaved = loadJSON(BG_KEY) || {};
+    const mergedBg = Object.assign({ tint:"#efe7e1", strength:12, imageDataUrl:null }, bgSaved, (p.bg||{}));
+    saveJSON(BG_KEY, mergedBg);
+
+    const tint = normHex(mergedBg.tint, "#efe7e1");
+    const strength = clamp(mergedBg.strength, 0, 70) / 100;
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", mergedBg.imageDataUrl ? `url("${mergedBg.imageDataUrl}")` : "none");
+
+    const boardTintEl = document.getElementById("boardTint");
+    if(boardTintEl) boardTintEl.style.background = hexToRgba(tint, strength);
+
+    const bgDot = document.getElementById("bgDot");
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+    }
+
+    const bgColor = document.getElementById("bgColor");
+    const bgStrength = document.getElementById("bgStrength");
+    const bgImage = document.getElementById("bgImage");
+    if(bgColor) bgColor.value = tint;
+    if(bgStrength) bgStrength.value = String(clamp(mergedBg.strength,0,70));
+    if(bgImage) bgImage.value = "";
+
+    setPresetStatus("Preset applied.");
+  }
+
+  refreshPresetSelect();
+
+  presetSave?.addEventListener("click", ()=>{
+    const name = (presetName.value || "").trim();
+    if(!name){ setPresetStatus("Type a preset name first."); return; }
+
+    const bg = loadJSON(BG_KEY) || { tint:"#efe7e1", strength:12, imageDataUrl:null };
+    const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bg } };
+
+    const list = loadPresets();
+    list.unshift(entry);
+    savePresets(list);
+
+    presetName.value = "";
+    refreshPresetSelect();
+    presetSelect.value = entry.id;
+    setPresetStatus("Preset saved.");
+  });
+
+  presetApply?.addEventListener("click", ()=>{
+    const id = presetSelect.value || "";
+    if(!id){ setPresetStatus("Choose a preset first."); return; }
+    const p = loadPresets().find(x=>x.id===id);
+    if(!p){ setPresetStatus("Preset not found."); return; }
+    applyPreset(p);
+  });
+
+  presetDelete?.addEventListener("click", ()=>{
+    const id = presetSelect.value || "";
+    if(!id){ setPresetStatus("Choose a preset first."); return; }
+    let list = loadPresets();
+    const before = list.length;
+    list = list.filter(x=>x.id!==id);
+    if(list.length===before){ setPresetStatus("Preset not found."); return; }
+    savePresets(list);
+    refreshPresetSelect();
+    presetSelect.value = "";
+    setPresetStatus("Preset deleted.");
+  });
+
+  presetCopy?.addEventListener("click", async ()=>{
+    const payload = JSON.stringify(loadPresets(), null, 2);
+    const ok = await copyText(payload);
+    if(ok) setPresetStatus("Preset JSON copied.");
+    else{
+      presetImport.value = payload;
+      presetImport.focus(); presetImport.select();
+      setPresetStatus("Could not copy automatically — JSON placed in the box to copy manually.");
+    }
+  });
+
+  presetImportBtn?.addEventListener("click", ()=>{
+    const raw = (presetImport.value || "").trim();
+    if(!raw){ setPresetStatus("Paste preset JSON first."); return; }
+    try{
+      const parsed = JSON.parse(raw);
+      const cleaned = sanitizePresetList(parsed);
+      if(!cleaned){ setPresetStatus("That JSON doesn’t look like a preset list."); return; }
+      savePresets(cleaned);
+      refreshPresetSelect();
+      setPresetStatus("Presets imported.");
+    }catch{
+      setPresetStatus("Invalid JSON.");
+    }
+  });
+})();
+
+/* =========================
+   Quick Links data (groups + links) — persistent
+========================= */
+(function(){
+  const { loadJSON, saveJSON, copyText, uid, safeUrl } = window.__qlUtils;
+
+  const DATA_KEY = "quick_links_data_v1";
+
+  const DEFAULT_DATA = {
+    groups: [
+      {
+        id: "g_default",
+        name: "Favorites",
+        links: [
+          { id:"l1", title:"Notion", url:"https://notion.so", emoji:"🧠", iconDataUrl:null },
+          { id:"l2", title:"Google", url:"https://google.com", emoji:"🔎", iconDataUrl:null }
+        ]
+      }
+    ]
+  };
+
+  let data = loadJSON(DATA_KEY);
+  if(!data || !data.groups || !Array.isArray(data.groups)){
+    data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    saveJSON(DATA_KEY, data);
+  }
+
+  const groupsEl = document.getElementById("groups");
+  const emptyEl = document.getElementById("emptyState");
+
+  const manageStatus = document.getElementById("manageStatus");
+  const newGroupName = document.getElementById("newGroupName");
+  const addGroupBtn = document.getElementById("addGroupBtn");
+
+  const linkGroup = document.getElementById("linkGroup");
+  const linkTitle = document.getElementById("linkTitle");
+  const linkEmoji = document.getElementById("linkEmoji");
+  const linkUrl = document.getElementById("linkUrl");
+  const linkIconFile = document.getElementById("linkIconFile");
+  const saveLinkBtn = document.getElementById("saveLinkBtn");
+  const clearLinkFormBtn = document.getElementById("clearLinkFormBtn");
+
+  const manageList = document.getElementById("manageList");
+  const exportBtn = document.getElementById("exportBtn");
+  const importArea = document.getElementById("importArea");
+  const importBtn = document.getElementById("importBtn");
+  const resetLinksBtn = document.getElementById("resetLinksBtn");
+
+  let editing = { groupId:null, linkId:null, pendingIconDataUrl:null };
+
+  function setManageStatus(msg){
+    if(manageStatus) manageStatus.textContent = msg || "";
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function persist(){
+    saveJSON(DATA_KEY, data);
+  }
+
+  function getGroup(gid){
+    return data.groups.find(g=>g.id===gid) || null;
+  }
+
+  function render(){
+    if(!groupsEl) return;
+
+    groupsEl.innerHTML = "";
+    let totalLinks = 0;
+
+    for(const g of data.groups){
+      const links = Array.isArray(g.links) ? g.links : [];
+      totalLinks += links.length;
+
+      const wrap = document.createElement("div");
+
+      const head = document.createElement("div");
+      head.className = "groupHead";
+
+      const h = document.createElement("p");
+      h.className = "groupTitle";
+      h.textContent = g.name || "Untitled";
+
+      const c = document.createElement("p");
+      c.className = "groupCount";
+      c.textContent = `${links.length} link${links.length===1?"":"s"}`;
+
+      head.appendChild(h);
+      head.appendChild(c);
+
+      const grid = document.createElement("div");
+      grid.className = "linkGrid";
+
+      for(const l of links){
+        const a = document.createElement("a");
+        a.className = "linkItem";
+        a.href = safeUrl(l.url || "") || "#";
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+
+        if(!safeUrl(l.url || "")){
+          a.addEventListener("click",(e)=>{ e.preventDefault(); });
+        }
+
+        const icon = document.createElement("div");
+        icon.className = "iconWrap";
+        if(l.iconDataUrl){
+          const img = document.createElement("img");
+          img.className = "iconImg";
+          img.src = l.iconDataUrl;
+          img.alt = "";
+          icon.appendChild(img);
+        }else{
+          const span = document.createElement("span");
+          span.className = "iconEmoji";
+          span.textContent = (l.emoji || "").trim() || "•";
+          icon.appendChild(span);
+        }
+
+        const txt = document.createElement("div");
+        txt.className = "linkText";
+
+        const t = document.createElement("p");
+        t.className = "linkTitle";
+        t.textContent = (l.title || "").trim() || "Untitled";
+
+        const u = document.createElement("p");
+        u.className = "linkUrl";
+        const displayUrl = safeUrl(l.url || "");
+        u.textContent = displayUrl ? displayUrl.replace(/^https?:\/\//i,"") : "No URL set";
+
+        txt.appendChild(t);
+        txt.appendChild(u);
+
+        a.appendChild(icon);
+        a.appendChild(txt);
+        grid.appendChild(a);
+      }
+
+      wrap.appendChild(head);
+      wrap.appendChild(grid);
+      groupsEl.appendChild(wrap);
+    }
+
+    if(emptyEl){
+      emptyEl.style.display = totalLinks === 0 ? "block" : "none";
+    }
+
+    renderManage();
+    refreshGroupSelect();
+  }
+
+  function refreshGroupSelect(){
+    if(!linkGroup) return;
+    const cur = linkGroup.value;
+    linkGroup.innerHTML = "";
+    for(const g of data.groups){
+      const opt = document.createElement("option");
+      opt.value = g.id;
+      opt.textContent = g.name || "Untitled";
+      linkGroup.appendChild(opt);
+    }
+    if(cur && data.groups.some(g=>g.id===cur)) linkGroup.value = cur;
+  }
+
+  function clearLinkForm(){
+    editing = { groupId:null, linkId:null, pendingIconDataUrl:null };
+    linkTitle.value = "";
+    linkEmoji.value = "";
+    linkUrl.value = "";
+    linkIconFile.value = "";
+    setManageStatus("");
+  }
+
+  function startEditLink(groupId, linkId){
+    const g = getGroup(groupId);
+    if(!g) return;
+    const l = (g.links||[]).find(x=>x.id===linkId);
+    if(!l) return;
+
+    editing.groupId = groupId;
+    editing.linkId = linkId;
+    editing.pendingIconDataUrl = null;
+
+    linkGroup.value = groupId;
+    linkTitle.value = l.title || "";
+    linkEmoji.value = l.emoji || "";
+    linkUrl.value = l.url || "";
+    linkIconFile.value = "";
+
+    setManageStatus("Editing link. Click “Save link” to apply.");
+  }
+
+  function deleteLink(groupId, linkId){
+    const g = getGroup(groupId);
+    if(!g) return;
+    g.links = (g.links||[]).filter(l=>l.id!==linkId);
+    persist();
+    render();
+    setManageStatus("Link deleted.");
+  }
+
+  function moveLink(groupId, linkId, dir){
+    const g = getGroup(groupId);
+    if(!g) return;
+    const arr = Array.isArray(g.links) ? g.links : [];
+    const idx = arr.findIndex(x=>x.id===linkId);
+    if(idx < 0) return;
+
+    const next = idx + dir;
+    if(next < 0 || next >= arr.length) return;
+
+    const tmp = arr[idx];
+    arr[idx] = arr[next];
+    arr[next] = tmp;
+
+    g.links = arr;
+    persist();
+    render();
+    setManageStatus("Link reordered.");
+  }
+
+  function renameGroup(groupId, newName){
+    const g = getGroup(groupId);
+    if(!g) return;
+    g.name = String(newName||"").trim() || "Untitled";
+    persist();
+    render();
+    setManageStatus("Group renamed.");
+  }
+
+  function deleteGroup(groupId){
+    const before = data.groups.length;
+    data.groups = data.groups.filter(g=>g.id!==groupId);
+    if(data.groups.length===0){
+      data.groups = [{ id: uid(), name:"Favorites", links: [] }];
+    }
+    if(data.groups.length !== before){
+      persist();
+      render();
+      setManageStatus("Group deleted.");
+    }
+  }
+
+  function moveGroup(groupId, dir){
+    const idx = data.groups.findIndex(g=>g.id===groupId);
+    if(idx < 0) return;
+    const next = idx + dir;
+    if(next < 0 || next >= data.groups.length) return;
+    const tmp = data.groups[idx];
+    data.groups[idx] = data.groups[next];
+    data.groups[next] = tmp;
+    persist();
+    render();
+    setManageStatus("Group reordered.");
+  }
+
+  function renderManage(){
+    if(!manageList) return;
+
+    if(!data.groups.length){
+      manageList.innerHTML = `<div class="hint">No groups yet.</div>`;
+      return;
+    }
+
+    const parts = [];
+
+    for(const g of data.groups){
+      const links = Array.isArray(g.links) ? g.links : [];
+      const safeName = escapeHtml(g.name || "Untitled");
+
+      parts.push(`
+        <div style="margin-bottom:12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:11px; letter-spacing:.10em; text-transform:uppercase; color: rgba(106,102,95,0.90); margin-bottom:6px;">
+                Group
+              </div>
+              <input class="textInput" data-action="renameGroup" data-gid="${g.id}" value="${safeName}" />
+            </div>
+            <div style="display:flex; gap:8px; align-items:flex-end;">
+              <button class="tinyBtn" data-action="moveGroupUp" data-gid="${g.id}" title="Move up">↑</button>
+              <button class="tinyBtn" data-action="moveGroupDown" data-gid="${g.id}" title="Move down">↓</button>
+              <button class="tinyBtn danger" data-action="deleteGroup" data-gid="${g.id}" title="Delete group">Delete</button>
+            </div>
+          </div>
+
+          <table class="miniTable" aria-label="Links table">
+            <thead>
+              <tr>
+                <th style="width:44%;">Link</th>
+                <th style="width:36%;">URL</th>
+                <th style="width:20%; text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${links.map(l=>{
+                const title = escapeHtml((l.title||"Untitled"));
+                const url = escapeHtml((l.url||""));
+                return `
+                  <tr>
+                    <td>${title}</td>
+                    <td style="color: rgba(122,122,122,0.92);">${url || "—"}</td>
+                    <td>
+                      <div class="rowBtns">
+                        <button class="tinyBtn" data-action="moveLinkUp" data-gid="${g.id}" data-lid="${l.id}" title="Move up">↑</button>
+                        <button class="tinyBtn" data-action="moveLinkDown" data-gid="${g.id}" data-lid="${l.id}" title="Move down">↓</button>
+                        <button class="tinyBtn" data-action="editLink" data-gid="${g.id}" data-lid="${l.id}">Edit</button>
+                        <button class="tinyBtn danger" data-action="deleteLink" data-gid="${g.id}" data-lid="${l.id}">Del</button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join("")}
+              ${links.length===0 ? `<tr><td colspan="3" style="color: rgba(122,122,122,0.92);">No links in this group yet.</td></tr>` : ``}
+            </tbody>
+          </table>
+        </div>
+      `);
+    }
+
+    manageList.innerHTML = parts.join("");
+
+    // attach input handlers for rename fields
+    manageList.querySelectorAll('input[data-action="renameGroup"]').forEach(inp=>{
+      inp.addEventListener("change", ()=>{
+        const gid = inp.getAttribute("data-gid");
+        renameGroup(gid, inp.value);
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s||"")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // Manage panel delegation
+  manageList?.addEventListener("click",(e)=>{
+    const btn = e.target.closest("button[data-action]");
+    if(!btn) return;
+
+    const action = btn.getAttribute("data-action");
+    const gid = btn.getAttribute("data-gid");
+    const lid = btn.getAttribute("data-lid");
+
+    if(action==="editLink"){ startEditLink(gid, lid); return; }
+    if(action==="deleteLink"){ deleteLink(gid, lid); return; }
+    if(action==="moveLinkUp"){ moveLink(gid, lid, -1); return; }
+    if(action==="moveLinkDown"){ moveLink(gid, lid, +1); return; }
+    if(action==="deleteGroup"){ deleteGroup(gid); return; }
+    if(action==="moveGroupUp"){ moveGroup(gid, -1); return; }
+    if(action==="moveGroupDown"){ moveGroup(gid, +1); return; }
+  });
+
+  addGroupBtn?.addEventListener("click", ()=>{
+    const name = String(newGroupName.value||"").trim();
+    if(!name){ setManageStatus("Type a group name first."); return; }
+    data.groups.push({ id: uid(), name, links: [] });
+    newGroupName.value = "";
+    persist();
+    render();
+    setManageStatus("Group added.");
+  });
+
+  linkIconFile?.addEventListener("change", async ()=>{
+    const file = linkIconFile.files && linkIconFile.files[0];
+    if(!file){ editing.pendingIconDataUrl = null; return; }
+    editing.pendingIconDataUrl = await fileToDataUrl(file);
+    setManageStatus("Icon image ready — click “Save link” to apply.");
+  });
+
+  saveLinkBtn?.addEventListener("click", ()=>{
+    const gid = linkGroup.value;
+    const g = getGroup(gid);
+    if(!g){ setManageStatus("Please choose a group."); return; }
+
+    const title = String(linkTitle.value||"").trim();
+    const url = String(linkUrl.value||"").trim();
+    const emoji = String(linkEmoji.value||"").trim();
+
+    if(!title){ setManageStatus("Please enter a title."); return; }
+
+    const finalUrl = safeUrl(url);
+
+    const payload = {
+      title,
+      url: finalUrl,
+      emoji: emoji,
+      iconDataUrl: null
+    };
+
+    if(editing.pendingIconDataUrl){
+      payload.iconDataUrl = editing.pendingIconDataUrl;
+    }
+
+    // If editing existing link
+    if(editing.linkId){
+      // if group changed, remove from old and add to new
+      const from = getGroup(editing.groupId) || g;
+      const existing = (from.links||[]).find(l=>l.id===editing.linkId);
+
+      if(existing){
+        // keep old icon if none set and no new upload
+        if(!payload.iconDataUrl){
+          payload.iconDataUrl = existing.iconDataUrl || null;
+        }
+        // keep old emoji if empty and no image
+        if(!payload.emoji && !payload.iconDataUrl){
+          payload.emoji = existing.emoji || "";
+        }
+      }
+
+      if(from.id !== g.id){
+        from.links = (from.links||[]).filter(l=>l.id!==editing.linkId);
+        g.links = Array.isArray(g.links) ? g.links : [];
+        g.links.unshift(Object.assign({ id: editing.linkId }, payload));
+      }else{
+        from.links = Array.isArray(from.links) ? from.links : [];
+        const idx = from.links.findIndex(l=>l.id===editing.linkId);
+        if(idx >= 0){
+          from.links[idx] = Object.assign({ id: editing.linkId }, payload);
+        }else{
+          from.links.unshift(Object.assign({ id: editing.linkId }, payload));
+        }
+      }
+
+      persist();
+      render();
+      clearLinkForm();
+      setManageStatus("Link updated.");
+      return;
+    }
+
+    // Creating new link
+    g.links = Array.isArray(g.links) ? g.links : [];
+    const id = uid();
+    const newLink = Object.assign({ id }, payload);
+
+    // If no uploaded icon, keep emoji as-is (can be empty; display defaults to •)
+    g.links.unshift(newLink);
+
+    persist();
+    render();
+    clearLinkForm();
+    setManageStatus("Link added.");
+  });
+
+  clearLinkFormBtn?.addEventListener("click", ()=>{
+    clearLinkForm();
+    setManageStatus("Form cleared.");
+  });
+
+  exportBtn?.addEventListener("click", async ()=>{
+    const payload = JSON.stringify(data, null, 2);
+    const ok = await copyText(payload);
+    if(ok) setManageStatus("Links JSON copied.");
+    else{
+      importArea.value = payload;
+      importArea.focus(); importArea.select();
+      setManageStatus("Could not copy automatically — JSON placed in the box to copy manually.");
+    }
+  });
+
+  importBtn?.addEventListener("click", ()=>{
+    const raw = String(importArea.value||"").trim();
+    if(!raw){ setManageStatus("Paste links JSON first."); return; }
+
+    try{
+      const parsed = JSON.parse(raw);
+      if(!parsed || !Array.isArray(parsed.groups)){
+        setManageStatus("That JSON doesn’t look like quick links data.");
+        return;
+      }
+
+      // sanitize lightly
+      const clean = {
+        groups: parsed.groups.filter(Boolean).map(g=>({
+          id: String(g.id || uid()),
+          name: String(g.name || "Untitled"),
+          links: Array.isArray(g.links) ? g.links.filter(Boolean).map(l=>({
+            id: String(l.id || uid()),
+            title: String(l.title || "Untitled"),
+            url: String(l.url || ""),
+            emoji: String(l.emoji || ""),
+            iconDataUrl: (typeof l.iconDataUrl === "string" && l.iconDataUrl.startsWith("data:image")) ? l.iconDataUrl : null
+          })) : []
+        }))
+      };
+
+      data = clean;
+      persist();
+      render();
+      setManageStatus("Links imported.");
+    }catch{
+      setManageStatus("Invalid JSON.");
+    }
+  });
+
+  resetLinksBtn?.addEventListener("click", ()=>{
+    data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    persist();
+    render();
+    clearLinkForm();
+    setManageStatus("Links reset.");
+  });
+
+  // Initial render
+  render();
+})();
+</script>
+
+</body>
+</html>

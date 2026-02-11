@@ -123,25 +123,22 @@
 
     .popover{ position: relative; }
 
-    /* ✅ FIXED: panels now scroll + don't get cut off */
     .panel{
       position: absolute;
       top: 44px;
       right: 0;
-      width: 310px;
+      width: 330px;
       border-radius: 16px;
       border: 1px solid var(--border);
       background: rgba(var(--panel-bg-rgb, 255,255,255), var(--panel-a));
       box-shadow: 0 18px 40px rgba(20,20,20,0.10);
       backdrop-filter: blur(2px);
 
-      padding: 12px 12px 20px; /* extra bottom space */
+      padding: 12px 12px 20px;
       display: none;
 
-      /* IMPORTANT: keep it above everything */
       z-index: 9999;
 
-      /* IMPORTANT: make it scroll inside Notion */
       max-height: calc(100dvh - 140px);
       overflow: auto;
       -webkit-overflow-scrolling: touch;
@@ -149,7 +146,6 @@
     }
     .panel.open{ display: block; }
 
-    /* fallback if dvh isn't supported */
     @supports not (height: 100dvh){
       .panel{ max-height: calc(100vh - 140px); }
     }
@@ -205,6 +201,7 @@
       color: rgba(43,43,43,0.85);
       -webkit-tap-highlight-color: transparent;
       margin-top: 8px;
+      user-select: none;
     }
     .mini-btn:active{ transform: translateY(1px); }
 
@@ -212,6 +209,33 @@
       height: 1px;
       background: rgba(var(--border-rgb), 0.08);
       margin: 8px 0;
+    }
+
+    /* ✅ presets ui */
+    .presetName, .presetSelect, .presetArea{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: rgba(255,255,255,0.90);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      outline: none;
+      box-shadow: 0 2px 8px rgba(20,20,20,0.05);
+    }
+    .presetSelect{ height: 36px; }
+    .presetArea{
+      min-height: 92px;
+      resize: vertical;
+      line-height: 1.35;
+      font-size: 12px;
+    }
+    .status{
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+      min-height: 14px;
     }
 
     .month-pill{
@@ -233,19 +257,15 @@
       user-select: none;
     }
 
-    /* ✅ FIXED: board no longer clips the popovers */
     .board{
       border: 1px solid var(--border);
       border-radius: var(--board-radius);
       box-shadow: var(--shadow);
-
-      overflow: visible; /* IMPORTANT: was hidden */
-
+      overflow: visible;
       position: relative;
       background: none;
     }
 
-    /* keep rounded corners on background layers */
     .board::before,
     .board::after,
     .board-tint{
@@ -264,7 +284,6 @@
       transform: scale(1.02);
     }
 
-    /* overlay gets injected via JS */
     .board::after{
       content: "";
       position: absolute;
@@ -503,6 +522,12 @@
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
             <div class="panelTitle">Theme</div>
 
+            <!-- ✅ apply/reset -->
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+
+            <div class="divider"></div>
+
             <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
             <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
@@ -554,7 +579,34 @@
 
             <div class="divider"></div>
 
-            <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+            <!-- ✅ GLOBAL PRESETS -->
+            <div class="panelTitle" style="margin-top: 4px;">Presets</div>
+
+            <input class="presetName" id="presetName" placeholder="Preset name">
+
+            <button class="mini-btn" id="presetSave" type="button">Save current as preset</button>
+
+            <div class="divider"></div>
+
+            <select class="presetSelect" id="presetSelect"></select>
+
+            <button class="mini-btn" id="presetApply" type="button">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button">Delete preset</button>
+
+            <div class="divider"></div>
+
+            <button class="mini-btn" id="presetCopy" type="button">Copy preset JSON</button>
+
+            <div class="divider"></div>
+
+            <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+            <button class="mini-btn" id="presetImportBtn" type="button">Import presets</button>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
+
+            <div class="divider"></div>
+
+            <!-- (kept) JSON export/import for this widget's data -->
             <button class="mini-btn" id="exportSettings" type="button">Export settings JSON</button>
             <button class="mini-btn" id="importSettings" type="button">Import settings JSON</button>
             <input id="importFile" type="file" accept="application/json" style="display:none" />
@@ -571,6 +623,12 @@
 
           <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
             <div class="panelTitle">Background</div>
+
+            <!-- ✅ apply/reset -->
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button">Reset background</button>
+
+            <div class="divider"></div>
 
             <div class="row">
               <label for="bgColor">Tint</label>
@@ -625,25 +683,62 @@
   </div>
 
   <script>
+    /* =========================================================
+       Instance-safe storage + GLOBAL presets
+       - wid: per-widget unique id (URL ?wid=... or session fallback)
+       - per-widget keys include wid so widgets don't overwrite each other
+       - presets stored globally under widget_presets_v2
+    ========================================================= */
+    (function(){
+      const mem = Object.create(null);
+
+      function canUseLocalStorage(){
+        try{
+          const k="__t__"+Math.random().toString(16).slice(2);
+          localStorage.setItem(k,"1");
+          localStorage.removeItem(k);
+          return true;
+        }catch{ return false; }
+      }
+      const hasLS = canUseLocalStorage();
+
+      function storageGetAny(key){
+        try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+        catch{ return mem[key] ?? null; }
+      }
+      function storageSetAny(key, value){
+        try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+        catch{ mem[key]=String(value); }
+      }
+      function storageRemoveAny(key){
+        try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+        catch{ delete mem[key]; }
+      }
+
+      function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+      function getWidgetId(){
+        try{
+          const sp = new URLSearchParams(location.search);
+          const wid = (sp.get("wid") || "").trim();
+          if(wid) return wid;
+        }catch{}
+        try{
+          const cached = sessionStorage.getItem("mp_wid");
+          if(cached) return cached;
+        }catch{}
+        const fresh = uid();
+        try{ sessionStorage.setItem("mp_wid", fresh); }catch{}
+        return fresh;
+      }
+
+      window.__MP_APP__ = { wid: getWidgetId(), get: storageGetAny, set: storageSetAny, remove: storageRemoveAny };
+    })();
+
     /* =========================
        Robust helpers
     ========================== */
     function safeJSONParse(s){ try{ return JSON.parse(s); }catch{ return null; } }
-
-    function storageGet(key){
-      try{ const v = localStorage.getItem(key); if(v != null) return v; }catch{}
-      try{ const v = sessionStorage.getItem(key); if(v != null) return v; }catch{}
-      return null;
-    }
-    function storageSet(key, val){
-      try{ localStorage.setItem(key, val); return true; }catch{}
-      try{ sessionStorage.setItem(key, val); return true; }catch{}
-      return false;
-    }
-    function storageRemove(key){
-      try{ localStorage.removeItem(key); }catch{}
-      try{ sessionStorage.removeItem(key); }catch{}
-    }
 
     function clamp(n, min, max){
       const x = Number(n);
@@ -679,6 +774,26 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+    }
+
+    async function copyText(text){
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      }catch{}
+      try{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position="fixed";
+        ta.style.left="-9999px";
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return !!ok;
+      }catch{ return false; }
     }
 
     function pad2(n){ return String(n).padStart(2,"0"); }
@@ -725,13 +840,19 @@
     }
 
     /* =========================
-       Keys
+       Keys (✅ per-widget)
     ========================== */
-    const STORAGE_KEY = "monthly_planner_v2_day_goals";
-    const THEME_KEY   = "monthly_planner_theme_v2";
+    const WID = window.__MP_APP__?.wid || "default";
 
-    // universal bundle key (reusable approach)
-    const SETTINGS_BUNDLE_KEY = "widget_settings_monthly_planner_v1";
+    const STORAGE_KEY = "monthly_planner_v3_day_goals__" + WID;
+    const THEME_KEY   = "monthly_planner_theme_v3__" + WID;
+
+    // GLOBAL presets for all widgets
+    const PRESETS_KEY = "widget_presets_v2";
+    const PRESET_NAMESPACE = "monthlyplanner";
+
+    // universal bundle key kept (and made per-widget)
+    const SETTINGS_BUNDLE_KEY = "widget_settings_monthly_planner_v1__" + WID;
 
     const DEFAULT_THEME = {
       appBg: "#ffffff",
@@ -773,11 +894,14 @@
     };
 
     function themeLoad(){
-      const raw = storageGet(THEME_KEY);
+      const raw = window.__MP_APP__.get(THEME_KEY);
       return raw ? safeJSONParse(raw) : null;
     }
     function themeSave(t){
-      storageSet(THEME_KEY, JSON.stringify(t));
+      window.__MP_APP__.set(THEME_KEY, JSON.stringify(t));
+    }
+    function themeClear(){
+      window.__MP_APP__.remove(THEME_KEY);
     }
 
     function themeApply(t){
@@ -822,18 +946,15 @@
       r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
       r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
 
-      // IMPORTANT: btn-ink must be rgba in CSS (your buttons use color: var(--btn-ink))
       const btnInkHex = normHex(theme.btnInk, DEFAULT_THEME.btnInk);
       r.setProperty("--btn-ink", hexToRgba(btnInkHex, 0.70));
 
-      // Theme dot
       const dot = document.getElementById("themeDot");
       if(dot){
         dot.style.background = accent;
         dot.style.boxShadow = `0 0 0 6px ${hexToRgba(accent, 0.25)}`;
       }
 
-      // Overlay: single layer (no radials)
       const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
       const overlayA = clamp(theme.overlayA, 0.00, 0.70);
       const css = hexToRgba(overlayBase, overlayA);
@@ -845,6 +966,8 @@
         document.head.appendChild(st);
       }
       st.textContent = `.board::after{ background: ${css} !important; }`;
+
+      return theme;
     }
 
     function themeSyncInputs(t){
@@ -932,6 +1055,53 @@
       };
     }
 
+    /* ---------- GLOBAL PRESETS ---------- */
+    function loadPresets(){
+      const raw = window.__MP_APP__.get(PRESETS_KEY);
+      const parsed = raw ? safeJSONParse(raw) : null;
+      return Array.isArray(parsed) ? parsed : [];
+    }
+    function savePresets(list){ window.__MP_APP__.set(PRESETS_KEY, JSON.stringify(list)); }
+
+    function sanitizePresetList(parsed){
+      if(!Array.isArray(parsed)) return null;
+      return parsed.filter(Boolean).map(p => ({
+        id: String(p.id || (Math.random().toString(16).slice(2) + Date.now().toString(16))),
+        name: String(p.name || "Imported"),
+        ns: String(p.ns || PRESET_NAMESPACE),
+        theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
+        // monthly planner doesn't bundle bg here; keep shape consistent anyway
+        bg: (p.bg && typeof p.bg === "object") ? p.bg : {}
+      }));
+    }
+
+    function refreshPresetSelect(){
+      const sel = document.getElementById("presetSelect");
+      if(!sel) return;
+      const list = loadPresets().filter(p => p && p.ns === PRESET_NAMESPACE);
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">—</option>`;
+      for(const p of list){
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || "Untitled";
+        sel.appendChild(opt);
+      }
+      if(cur) sel.value = cur;
+    }
+
+    function getPresetById(id){
+      return loadPresets().find(p => p && p.ns === PRESET_NAMESPACE && p.id === id) || null;
+    }
+
+    function setPresetStatus(msg=""){
+      const el = document.getElementById("presetStatus");
+      if(el) el.textContent = msg;
+    }
+
+    /* =========================
+       Panels
+    ========================== */
     function initPanels(){
       const themeBtn = document.getElementById("themeBtn");
       const themePanel = document.getElementById("themePanel");
@@ -964,6 +1134,9 @@
       }, { passive:true });
     }
 
+    /* =========================
+       Theme UI (✅ apply button + presets)
+    ========================== */
     function initThemeUI(){
       initPanels();
 
@@ -981,46 +1154,101 @@
         "tOverlayBase","tOverlayA"
       ];
 
+      // live preview only (no save)
       ids.forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
         el.addEventListener("input", () => {
           const t = themeReadFromInputs();
           themeApply(t);
-          themeSave(t);
+          setPresetStatus("");
         });
       });
 
+      document.getElementById("themeApply").addEventListener("click", () => {
+        const t = themeReadFromInputs();
+        const applied = themeApply(t);
+        themeSave(applied);
+        themeSyncInputs(applied);
+        setPresetStatus("Theme applied.");
+      });
+
       document.getElementById("themeReset").addEventListener("click", () => {
-        storageRemove(THEME_KEY);
+        themeClear();
         themeApply(DEFAULT_THEME);
         themeSyncInputs(DEFAULT_THEME);
+        setPresetStatus("Theme reset.");
       });
 
-      // Export settings JSON (theme + planner data)
-      document.getElementById("exportSettings").addEventListener("click", () => {
-        snapshotMonthToStore(); // make sure latest edits are saved
-        const bundle = buildSettingsBundle();
-        downloadJSON("monthly-planner-settings.json", bundle);
+      // GLOBAL presets wiring
+      refreshPresetSelect();
+
+      document.getElementById("presetSave").addEventListener("click", () => {
+        const name = (document.getElementById("presetName").value || "").trim();
+        if(!name){ setPresetStatus("Type a preset name first."); return; }
+        const list = loadPresets();
+        list.unshift({
+          id: (Math.random().toString(16).slice(2) + Date.now().toString(16)),
+          ns: PRESET_NAMESPACE,
+          name,
+          theme: themeReadFromInputs()
+        });
+        savePresets(list);
+        document.getElementById("presetName").value = "";
+        refreshPresetSelect();
+        document.getElementById("presetSelect").value = list[0].id;
+        setPresetStatus("Preset saved.");
       });
 
-      // Import settings JSON
-      const importFile = document.getElementById("importFile");
-      document.getElementById("importSettings").addEventListener("click", () => importFile.click());
+      document.getElementById("presetApply").addEventListener("click", () => {
+        const id = document.getElementById("presetSelect").value || "";
+        if(!id){ setPresetStatus("Choose a preset first."); return; }
+        const p = getPresetById(id);
+        if(!p){ setPresetStatus("Preset not found."); return; }
 
-      importFile.addEventListener("change", async () => {
-        const f = importFile.files && importFile.files[0];
-        if(!f) return;
-        const text = await f.text();
-        const obj = safeJSONParse(text);
-        if(!obj || typeof obj !== "object"){
-          alert("That file isn't valid JSON.");
-          importFile.value = "";
-          return;
+        const applied = themeApply(Object.assign({}, DEFAULT_THEME, p.theme || {}));
+        themeSave(applied);
+        themeSyncInputs(applied);
+        setPresetStatus("Preset applied.");
+      });
+
+      document.getElementById("presetDelete").addEventListener("click", () => {
+        const id = document.getElementById("presetSelect").value || "";
+        if(!id){ setPresetStatus("Choose a preset first."); return; }
+        const list = loadPresets();
+        const next = list.filter(p => !(p && p.ns === PRESET_NAMESPACE && p.id === id));
+        if(next.length === list.length){ setPresetStatus("Preset not found."); return; }
+        savePresets(next);
+        refreshPresetSelect();
+        document.getElementById("presetSelect").value = "";
+        setPresetStatus("Preset deleted.");
+      });
+
+      document.getElementById("presetCopy").addEventListener("click", async () => {
+        const payload = JSON.stringify(loadPresets(), null, 2);
+        const ok = await copyText(payload);
+        if(ok) setPresetStatus("Preset JSON copied.");
+        else{
+          const box = document.getElementById("presetImport");
+          box.value = payload;
+          box.focus(); box.select();
+          setPresetStatus("Could not copy automatically — JSON placed in the box to copy manually.");
         }
-        const ok = applySettingsBundle(obj);
-        if(!ok) alert("Settings JSON was missing required fields.");
-        importFile.value = "";
+      });
+
+      document.getElementById("presetImportBtn").addEventListener("click", () => {
+        const raw = (document.getElementById("presetImport").value || "").trim();
+        if(!raw){ setPresetStatus("Paste preset JSON first."); return; }
+        try{
+          const parsed = JSON.parse(raw);
+          const cleaned = sanitizePresetList(parsed);
+          if(!cleaned){ setPresetStatus("That JSON doesn’t look like a preset list."); return; }
+          savePresets(cleaned);
+          refreshPresetSelect();
+          setPresetStatus("Presets imported.");
+        }catch{
+          setPresetStatus("Invalid JSON.");
+        }
       });
 
       const saved = themeLoad() || DEFAULT_THEME;
@@ -1029,16 +1257,16 @@
     }
 
     /* =========================
-       Planner store (per-month)
+       Planner store (per-month, ✅ per-widget store)
     ========================== */
     function loadStore(){
-      const raw = storageGet(STORAGE_KEY);
+      const raw = window.__MP_APP__.get(STORAGE_KEY);
       const parsed = raw ? safeJSONParse(raw) : null;
       if(parsed && typeof parsed === "object" && parsed.months && typeof parsed.months === "object") return parsed;
       return { months: {} };
     }
     function saveStore(store){
-      storageSet(STORAGE_KEY, JSON.stringify(store));
+      window.__MP_APP__.set(STORAGE_KEY, JSON.stringify(store));
     }
 
     function dayKey(d){
@@ -1184,7 +1412,7 @@
     }
 
     /* =========================
-       Background (per month)
+       Background (per month) ✅ apply/reset buttons
     ========================== */
     const boardTint = document.getElementById("boardTint");
     const bgColor = document.getElementById("bgColor");
@@ -1192,6 +1420,11 @@
     const bgImage = document.getElementById("bgImage");
     const removeImage = document.getElementById("removeImage");
     const bgDot = document.getElementById("bgDot");
+
+    const bgApply = document.getElementById("bgApply");
+    const bgReset = document.getElementById("bgReset");
+
+    let bgDraft = null;
 
     function setBoardImage(dataUrlOrNull){
       document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
@@ -1215,30 +1448,34 @@
     function applyBackgroundFromMonth(bg){
       const tint = bg?.tint ?? "#efe7e1";
       const strength = bg?.strength ?? 35;
+      const imageDataUrl = bg?.imageDataUrl ?? null;
+
+      bgDraft = { tint, strength, imageDataUrl };
 
       bgColor.value = tint;
       bgStrength.value = String(strength);
 
       applyBoardTint(tint, strength);
-      setBoardImage(bg?.imageDataUrl ?? null);
+      setBoardImage(imageDataUrl);
     }
 
+    function updateBgDraftFromInputs(){
+      if(!bgDraft) bgDraft = { tint:"#efe7e1", strength:35, imageDataUrl:null };
+      bgDraft.tint = bgColor.value;
+      bgDraft.strength = Number(bgStrength.value);
+    }
+
+    // live preview only
     bgColor.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const monthData = ensureMonthData(activeMonthId);
-      monthData.background = monthData.background || {};
-      monthData.background.tint = bgColor.value;
-      store.months[activeMonthId] = monthData;
-      saveStore(store);
+      updateBgDraftFromInputs();
+      applyBoardTint(bgDraft.tint, bgDraft.strength);
+      setPresetStatus("");
     });
 
     bgStrength.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const monthData = ensureMonthData(activeMonthId);
-      monthData.background = monthData.background || {};
-      monthData.background.strength = Number(bgStrength.value);
-      store.months[activeMonthId] = monthData;
-      saveStore(store);
+      updateBgDraftFromInputs();
+      applyBoardTint(bgDraft.tint, bgDraft.strength);
+      setPresetStatus("");
     });
 
     bgImage.addEventListener("change", async () => {
@@ -1246,24 +1483,49 @@
       if (!file) return;
 
       const dataUrl = await fileToDataUrl(file);
-      setBoardImage(dataUrl);
+      if(!bgDraft) bgDraft = { tint:bgColor.value, strength:Number(bgStrength.value), imageDataUrl:null };
+      bgDraft.imageDataUrl = dataUrl;
 
-      const monthData = ensureMonthData(activeMonthId);
-      monthData.background = monthData.background || {};
-      monthData.background.imageDataUrl = dataUrl;
-      store.months[activeMonthId] = monthData;
-      saveStore(store);
+      setBoardImage(dataUrl);
+      setPresetStatus("");
     });
 
     removeImage.addEventListener("click", () => {
+      if(!bgDraft) bgDraft = { tint:bgColor.value, strength:Number(bgStrength.value), imageDataUrl:null };
+      bgDraft.imageDataUrl = null;
+
       setBoardImage(null);
       bgImage.value = "";
+      setPresetStatus("");
+    });
 
+    // commit
+    bgApply.addEventListener("click", () => {
+      updateBgDraftFromInputs();
       const monthData = ensureMonthData(activeMonthId);
       monthData.background = monthData.background || {};
-      monthData.background.imageDataUrl = null;
+      monthData.background.tint = bgDraft.tint;
+      monthData.background.strength = bgDraft.strength;
+      monthData.background.imageDataUrl = bgDraft.imageDataUrl;
       store.months[activeMonthId] = monthData;
       saveStore(store);
+      setPresetStatus("Background applied for this month.");
+    });
+
+    bgReset.addEventListener("click", () => {
+      bgDraft = { tint:"#efe7e1", strength:35, imageDataUrl:null };
+      bgColor.value = bgDraft.tint;
+      bgStrength.value = String(bgDraft.strength);
+      bgImage.value = "";
+
+      applyBoardTint(bgDraft.tint, bgDraft.strength);
+      setBoardImage(null);
+
+      const monthData = ensureMonthData(activeMonthId);
+      monthData.background = { ...bgDraft };
+      store.months[activeMonthId] = monthData;
+      saveStore(store);
+      setPresetStatus("Background reset for this month.");
     });
 
     /* =========================
@@ -1341,11 +1603,11 @@
     window.addEventListener("beforeunload", () => snapshotMonthToStore());
 
     /* =========================
-       Settings JSON (reusable format)
+       Settings JSON (kept)
     ========================== */
     function buildSettingsBundle(){
       const theme = themeLoad() || DEFAULT_THEME;
-      const data = loadStore(); // includes all months
+      const data = loadStore();
 
       return {
         version: 1,
@@ -1388,6 +1650,35 @@
     ========================== */
     initThemeUI();
     buildMonth(activeMonthId);
+
+    /* =========================
+       Keep export/import buttons working
+    ========================== */
+    document.getElementById("exportSettings").addEventListener("click", () => {
+      snapshotMonthToStore();
+      const bundle = buildSettingsBundle();
+      downloadJSON("monthly-planner-settings.json", bundle);
+      setPresetStatus("Exported settings JSON.");
+    });
+
+    const importFile = document.getElementById("importFile");
+    document.getElementById("importSettings").addEventListener("click", () => importFile.click());
+
+    importFile.addEventListener("change", async () => {
+      const f = importFile.files && importFile.files[0];
+      if(!f) return;
+      const text = await f.text();
+      const obj = safeJSONParse(text);
+      if(!obj || typeof obj !== "object"){
+        alert("That file isn't valid JSON.");
+        importFile.value = "";
+        return;
+      }
+      const ok = applySettingsBundle(obj);
+      if(!ok) alert("Settings JSON was missing required fields.");
+      importFile.value = "";
+      setPresetStatus(ok ? "Imported settings JSON." : "");
+    });
   </script>
 </body>
 </html>

@@ -32,13 +32,13 @@
     h1{margin:0; font-size:18px}
     .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
 
-    .widgetBoard{
-      position:relative;
-      border-radius: var(--r);
-      overflow:hidden;
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
-    }
+.widgetBoard{
+  position:relative;
+  border-radius: var(--r);
+  overflow: visible;              /* <-- CHANGED (was hidden) */
+  border:1px solid var(--stroke);
+  box-shadow: var(--shadow);
+}
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -70,6 +70,7 @@
       position:absolute;
       inset:0;
       pointer-events:none;
+      border-radius: inherit;
       z-index:1;
     }
     .boardContent{ position:relative; z-index:2; }
@@ -179,25 +180,28 @@
       box-shadow: 0 0 0 6px rgba(233,228,221,0.35);
     }
 
-    .panel{
-      position:absolute;
-      top: 44px;
-      right: 0;
-      width: 310px;                 /* slightly wider for presets UI */
-      border-radius: 16px;
-      border: 1px solid var(--stroke);
-      background: var(--panel-bg);
-      box-shadow: 0 18px 40px rgba(30,20,10,.12);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-      padding: 12px;
-      display:none;
-      z-index: 50;
+.panel{
+  position:absolute;
+  top: 44px;
+  right: 0;
+  width: 310px;
+  border-radius: 16px;
+  border: 1px solid var(--stroke);
+  background: var(--panel-bg);
+  box-shadow: 0 18px 40px rgba(30,20,10,.12);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  padding: 12px 12px 18px;        /* <-- extra bottom padding */
+  display:none;
+  z-index: 9999;
+  padding-bottom: 18px;/* <-- ensure it floats above */
 
-      /* ✅ scroll so nothing gets cut off */
-      max-height: calc(100vh - 140px);
-      overflow: auto;
-    }
+  /* ✅ scroll so nothing gets cut off */
+  max-height: calc(100dvh - 140px); /* <-- use dvh first */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
     .panel.open{ display:block; }
     .bgTitle{
       margin:0 0 10px 0;

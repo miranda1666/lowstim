@@ -783,26 +783,26 @@ function closePanels(){
 function positionPanel(panelEl, anchorEl){
   if(!panelEl || !anchorEl) return;
 
-  // force layout so offsetWidth/Height are correct
-  panelEl.style.left = "0px";
-  panelEl.style.top = "0px";
-
-  const rect = anchorEl.getBoundingClientRect();
+  const btn = anchorEl.getBoundingClientRect();
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-
-  const w = panelEl.offsetWidth || 320;
-  const h = panelEl.offsetHeight || 300;
-
-  let left = rect.right - w;
-  let top = rect.bottom + 10;
-
   const pad = 10;
+
+  // panel must be visible for accurate measurement
+  const pr = panelEl.getBoundingClientRect();
+  const w = pr.width || 320;
+  const h = pr.height || 260;
+
+  // default: align right edge with button right edge
+  let left = btn.right - w;
+  let top = btn.bottom + 10;
+
+  // clamp to viewport
   left = Math.max(pad, Math.min(left, vw - w - pad));
-  top = Math.max(pad, Math.min(top, vh - h - pad));
+  top  = Math.max(pad, Math.min(top,  vh - h - pad));
 
   panelEl.style.left = left + "px";
-  panelEl.style.top = top + "px";
+  panelEl.style.top  = top + "px";
 }
 
 function initPanels(){
@@ -811,20 +811,58 @@ function initPanels(){
   const bgBtn = document.getElementById("bgBtn");
   const bgPanel = document.getElementById("bgPanel");
 
+  // prevent taps inside panel from closing it
+  [themePanel, bgPanel].forEach(p=>{
+    if(!p) return;
+    p.addEventListener("pointerdown", (e)=> e.stopPropagation());
+  });
+
   function openPanel(panel, btn){
     panel.classList.add("open");
-    positionPanel(panel, btn);
+
+    // position AFTER it becomes visible
+    requestAnimationFrame(() => {
+      positionPanel(panel, btn);
+    });
   }
 
-  themeBtn.addEventListener("click", (e)=>{
-    e.stopPropagation();
-    bgPanel.classList.remove("open");
-    if(themePanel.classList.contains("open")){
-      themePanel.classList.remove("open");
+  function togglePanel(panel, btn, other){
+    other.classList.remove("open");
+    if(panel.classList.contains("open")){
+      panel.classList.remove("open");
     }else{
-      openPanel(themePanel, themeBtn);
+      openPanel(panel, btn);
     }
+  }
+
+  // Use pointerdown (more reliable than click in embeds)
+  themeBtn.addEventListener("pointerdown", (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    togglePanel(themePanel, themeBtn, bgPanel);
   });
+
+  bgBtn.addEventListener("pointerdown", (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    togglePanel(bgPanel, bgBtn, themePanel);
+  });
+
+  // outside tap closes
+  document.addEventListener("pointerdown", ()=> closePanels());
+
+  // keep position correct on resize/scroll
+  const reposition = ()=>{
+    if(themePanel.classList.contains("open")) positionPanel(themePanel, themeBtn);
+    if(bgPanel.classList.contains("open")) positionPanel(bgPanel, bgBtn);
+  };
+  window.addEventListener("resize", reposition);
+  window.addEventListener("scroll", reposition, true);
+
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape") closePanels();
+  });
+}
 
   bgBtn.addEventListener("click", (e)=>{
     e.stopPropagation();
@@ -836,12 +874,6 @@ function initPanels(){
     }
   });
 
-  document.addEventListener("click", (e)=>{
-    const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-    const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-    if(themePanel.classList.contains("open") && !insideTheme) themePanel.classList.remove("open");
-    if(bgPanel.classList.contains("open") && !insideBg) bgPanel.classList.remove("open");
-  });
 
   window.addEventListener("resize", ()=>{
     if(themePanel.classList.contains("open")) positionPanel(themePanel, themeBtn);

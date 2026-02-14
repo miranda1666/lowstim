@@ -90,7 +90,7 @@
       border-radius: var(--r);
     }
 
-    /* Tint layer (separate so you can strengthen/weakening without killing the image) */
+    /* Tint layer (applies to background area regardless of image) */
     .boardTint{
       position:absolute;
       inset:0;
@@ -105,7 +105,7 @@
     .card{
       background:var(--card);
       border:0;
-      border-radius:0;
+      border-radius: var(--r);
       box-shadow:none;
       padding:14px;
 
@@ -421,18 +421,6 @@
 
                 <div class="bgDiv"></div>
 
-                <div class="bgRow">
-                  <label for="tRadius">Radius</label>
-                  <input id="tRadius" type="range" min="10" max="28" value="18" />
-                </div>
-
-                <div class="bgRow">
-                  <label for="tShadow">Shadow</label>
-                  <input id="tShadow" type="range" min="0" max="30" value="10" />
-                </div>
-
-                <div class="bgDiv"></div>
-
                 <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
                 <button id="themeReset" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset theme</button>
 
@@ -730,16 +718,16 @@ function fileToDataUrl(file){
 const DEFAULT_THEME = {
   bg:"#ffffff",
   card:"#ffffff",
-  cardA:84,      // NEW
-  panelA:88,     // NEW
-  field:"#ffffff", // NEW
+  cardA:84,
+  panelA:88,
+  field:"#ffffff",
   stroke:"#e9e4dd",
   ink:"#2b2a28",
   muted:"#6a665f",
   soft:"#f3efe9",
-  accent:"#efe7e1", // NEW
-  radius:18,     // NEW
-  shadow:10      // NEW (px-ish strength)
+  accent:"#efe7e1",
+  radius:18,
+  shadow:10
 };
 
 function themeLoad(){ return loadJSON(THEME_KEY); }
@@ -799,8 +787,6 @@ function themeSyncInputs(t){
   document.getElementById("tSoft").value = normHex(x.soft, DEFAULT_THEME.soft);
 
   document.getElementById("tAccent").value = normHex(x.accent, DEFAULT_THEME.accent);
-  document.getElementById("tRadius").value = String(clamp(x.radius, 10, 28));
-  document.getElementById("tShadow").value = String(clamp(x.shadow, 0, 30));
 }
 
 function themeReadFromInputs(){
@@ -814,9 +800,7 @@ function themeReadFromInputs(){
     ink: document.getElementById("tInk").value,
     muted: document.getElementById("tMuted").value,
     soft: document.getElementById("tSoft").value,
-    accent: document.getElementById("tAccent").value,
-    radius: Number(document.getElementById("tRadius").value),
-    shadow: Number(document.getElementById("tShadow").value)
+    accent: document.getElementById("tAccent").value
   };
 }
 
@@ -998,7 +982,7 @@ function initThemeBgUI(){
   bgApplyToCSS(bgDraft);
 
   // theme inputs: preview only
-  ["tBg","tCard","tStroke","tInk","tMuted","tSoft","tField","tAccent","tCardA","tPanelA","tRadius","tShadow"].forEach(id=>{
+  ["tBg","tCard","tStroke","tInk","tMuted","tSoft","tField","tAccent","tCardA","tPanelA"].forEach(id=>{
     const el = document.getElementById(id);
     el.addEventListener("input", ()=>{
       themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());

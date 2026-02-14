@@ -742,7 +742,7 @@ function bgSyncInputs(bg){
 }
 
 /* =========================
-   Panels (WORKING IN NOTION EMBEDS)
+   Panels (FIXED FOR REAL)
 ========================= */
 function closePanels(){
   document.getElementById("bgPanel")?.classList.remove("open");
@@ -788,6 +788,7 @@ function initPanels(){
   function open(panel, btn){
     if(panel === themePanel) bgPanel.classList.remove("open");
     if(panel === bgPanel) themePanel.classList.remove("open");
+
     panel.classList.add("open");
     requestAnimationFrame(() => positionPanel(panel, btn));
   }
@@ -799,7 +800,7 @@ function initPanels(){
     if(!isOpen) open(panel, btn);
   }
 
-  // outside close in CAPTURE phase — only closes when something is already open
+  // Outside click closes (capture phase)
   function onOutsideCapture(e){
     const anyOpen = themePanel.classList.contains("open") || bgPanel.classList.contains("open");
     if(!anyOpen) return;
@@ -811,17 +812,34 @@ function initPanels(){
 
     if(!inside) closePanels();
   }
-
   document.addEventListener("pointerdown", onOutsideCapture, true);
-  document.addEventListener("mousedown",   onOutsideCapture, true);
-  document.addEventListener("touchstart",  onOutsideCapture, true);
 
-  const onTheme = (e)=>{ e.preventDefault(); toggle(themePanel, themeBtn); };
-  const onBg    = (e)=>{ e.preventDefault(); toggle(bgPanel, bgBtn); };
+  // Prevent double-toggle (pointer + click)
+  let lastToggleAt = 0;
+  function guarded(fn){
+    const now = Date.now();
+    if(now - lastToggleAt < 350) return;
+    lastToggleAt = now;
+    fn();
+  }
 
-  ["click","pointerdown","touchstart","mousedown"].forEach(evt=>{
-    themeBtn.addEventListener(evt, onTheme, { passive:false });
-    bgBtn.addEventListener(evt, onBg, { passive:false });
+  // Use pointerup + click fallback
+  themeBtn.addEventListener("pointerup", (e)=>{
+    e.preventDefault();
+    guarded(()=> toggle(themePanel, themeBtn));
+  });
+  bgBtn.addEventListener("pointerup", (e)=>{
+    e.preventDefault();
+    guarded(()=> toggle(bgPanel, bgBtn));
+  });
+
+  themeBtn.addEventListener("click", (e)=>{
+    e.preventDefault();
+    guarded(()=> toggle(themePanel, themeBtn));
+  });
+  bgBtn.addEventListener("click", (e)=>{
+    e.preventDefault();
+    guarded(()=> toggle(bgPanel, bgBtn));
   });
 
   const reposition = ()=>{

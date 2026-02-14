@@ -6,32 +6,45 @@
   <title>Lifestyle Goals</title>
   <style>
     :root{
+      /* Core theme */
       --bg:#ffffff;
-      --card: rgba(255,255,255,0.84);
-      --stroke:#e9e4dd;
       --ink:#2b2a28;
       --muted:#6a665f;
       --soft:#f3efe9;
-      --shadow:0 10px 30px rgba(30,20,10,.06);
+      --stroke:#e9e4dd;
+
+      /* Surfaces (now tunable) */
+      --card: rgba(255,255,255,0.84);     /* card base with alpha */
+      --panel-bg: rgba(255,255,255,0.88); /* settings panels */
+      --field-bg: rgba(255,255,255,1);    /* inputs */
+      --accent: #efe7e1;                  /* buttons/tags highlight */
+
+      /* Layout + elevation (now tunable) */
       --r:18px;
+      --shadow: 0 10px 30px rgba(30,20,10,.06);
 
       /* Board background controls */
       --board-tint:#efe7e1;
       --board-tint-a:0.12;
       --board-image:none;
 
-      /* image opacity only */
+      /* Image visibility controls (NEW) */
       --board-img-opacity: 1;
+      --board-img-blur: 0px;
+      --board-img-bright: 1.06;
+      --board-img-contrast: 1.10;
+      --board-img-sat: 1.10;
 
-      /* Panels */
-      --panel-bg: rgba(255,255,255,0.88);
-      --field-bg:#ffffff;
+      /* Overlay controls (NEW) */
+      --board-overlay: rgba(255,255,255,0.20); /* extra “wash” */
+      --board-overlay-mode: screen;
 
       /* Theme dot */
       --theme-dot: var(--ink);
     }
 
     *{ box-sizing:border-box; }
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
@@ -40,15 +53,20 @@
       padding:28px 18px;
     }
     .wrap{ max-width:980px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
 
+    /* Board */
     .widgetBoard{
       position:relative;
       border-radius: var(--r);
       overflow:hidden;
-      border:1px solid var(--stroke);
+      border:1px solid rgba(233,228,221,0.95);
+      border-color: var(--stroke);
       box-shadow: var(--shadow);
     }
 
+    /* Background IMAGE layer */
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -61,23 +79,30 @@
       z-index:0;
       pointer-events:none;
 
+      /* NEW: visibility controls */
       opacity: var(--board-img-opacity);
-      filter: saturate(1.18) contrast(1.22) brightness(1.10);
+      filter:
+        blur(var(--board-img-blur))
+        saturate(var(--board-img-sat))
+        contrast(var(--board-img-contrast))
+        brightness(var(--board-img-bright));
     }
 
+    /* Highlight + wash overlay layer */
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
       background:
-        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.22), transparent 60%),
-        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.16), transparent 62%),
-        rgba(255,255,255,0.10);
-      background-blend-mode: screen;
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.40), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.26), transparent 62%),
+        var(--board-overlay);
+      background-blend-mode: var(--board-overlay-mode);
       pointer-events:none;
       z-index:1;
     }
 
+    /* Tint layer (separate so you can strengthen/weakening without killing the image) */
     .boardTint{
       position:absolute;
       inset:0;
@@ -85,6 +110,7 @@
       z-index:2;
       background: rgba(0,0,0,0);
     }
+
     .boardContent{ position:relative; z-index:3; }
 
     .card{
@@ -93,8 +119,10 @@
       border-radius:0;
       box-shadow:none;
       padding:14px;
-      backdrop-filter: blur(3px);
-      -webkit-backdrop-filter: blur(3px);
+
+      /* This is what makes the background image actually show through nicely */
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .title{
@@ -105,7 +133,7 @@
       margin-bottom:10px;
     }
     .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
-
+    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
     .row{
       display:flex;
       gap:10px;
@@ -125,15 +153,20 @@
     }
     textarea{ width:100%; min-height:90px; resize:vertical; }
     button{ cursor:pointer; user-select:none; }
-    button.soft{ background:var(--soft); }
-    button.primary{ background: rgba(239,231,225,0.9); }
     button:active{ transform:translateY(1px); }
     .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
+    /* Buttons */
+    button.soft{ background: color-mix(in srgb, var(--soft) 92%, white 8%); }
+    button.primary{
+      background: color-mix(in srgb, var(--accent) 82%, white 18%);
+      border-color: color-mix(in srgb, var(--stroke) 82%, var(--accent) 18%);
+    }
 
     .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
     .kpi .box{
       flex:1; min-width:200px;
-      background:var(--soft);
+      background: color-mix(in srgb, var(--soft) 92%, white 8%);
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:10px;
@@ -167,18 +200,20 @@
     .meta b{ font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .meta span{ font-size:12px; color:var(--muted); }
     .right{ display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+
     .tag{
       font-size:11px;
       padding:6px 10px;
       border-radius:999px;
       border:1px solid var(--stroke);
-      background:var(--soft);
+      background: color-mix(in srgb, var(--accent) 55%, white 45%);
       user-select:none;
       white-space:nowrap;
     }
     .smallbtn{ padding:8px 10px; border-radius:12px; }
     .danger{ border-color:#efc2c2; }
 
+    /* Settings buttons */
     .bgWrap{ position:relative; margin-left:auto; display:flex; gap:8px; align-items:center; }
     .bgBtn, .themeBtn{
       width:34px; height:34px;
@@ -202,9 +237,10 @@
       box-shadow: 0 0 0 6px rgba(233,228,221,0.35);
     }
 
-    /* fixed + not clipped */
     .bgPanel{
-      position:fixed;
+      position:absolute;
+      top: 44px;
+      right: 0;
       width: 320px;
       border-radius: 16px;
       border: 1px solid var(--stroke);
@@ -214,12 +250,12 @@
       -webkit-backdrop-filter: blur(10px);
       padding: 12px;
       display:none;
-      z-index: 9999;
-      max-height: calc(100vh - 24px);
+      z-index: 50;
+
+      max-height: calc(100vh - 140px);
       overflow:auto;
-      visibility: visible;
     }
-    .bgPanel.open{ display:block; visibility:visible; }
+    .bgPanel.open{ display:block; }
 
     .bgTitle{
       margin:0 0 10px 0;
@@ -237,6 +273,7 @@
       padding: 7px 0;
     }
     .bgRow label{ font-size:12px; color:var(--muted); }
+
     .bgRow input[type="color"]{
       width:36px; height:28px;
       border-radius:10px;
@@ -247,7 +284,6 @@
     }
     .bgRow input[type="range"]{ width: 160px; }
     .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
-
     .bgMiniBtn{
       width:100%;
       border-radius:12px;
@@ -263,6 +299,7 @@
     }
     .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
 
+    /* Presets */
     .presetName{
       width:100%;
       border:1px solid var(--stroke);
@@ -288,6 +325,10 @@
       margin-top: 6px;
     }
 
+    /* Theme panel position */
+    .themePanel{ right: 42px; }
+
+    /* Internal reset confirm */
     .confirm{
       margin-top:10px;
       border:1px solid var(--stroke);
@@ -311,13 +352,15 @@
 
     @media (max-width: 720px){
       .kpi .box{ min-width:160px; }
-      .bgPanel{ width: min(92vw, 340px); }
+      .themePanel{ right: 0; }
     }
   </style>
 </head>
 
 <body>
   <div class="wrap">
+    <h1></h1>
+
     <div class="widgetBoard" id="widgetBoard" aria-label="Lifestyle goals board">
       <div class="boardTint" id="boardTint"></div>
       <div class="boardContent">
@@ -329,11 +372,12 @@
             </div>
 
             <div class="bgWrap" id="bgWrap">
+              <!-- Theme button -->
               <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
                 <span class="themeDot" id="themeDot" aria-hidden="true"></span>
               </button>
 
-              <div class="bgPanel" id="themePanel" role="dialog" aria-label="Theme settings">
+              <div class="bgPanel themePanel" id="themePanel" role="dialog" aria-label="Theme settings">
                 <div class="bgTitle">Theme</div>
 
                 <div class="bgRow">
@@ -342,8 +386,23 @@
                 </div>
 
                 <div class="bgRow">
-                  <label for="tCard">Card tint</label>
+                  <label for="tCard">Card color</label>
                   <input id="tCard" type="color" value="#ffffff" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tCardA">Card opacity</label>
+                  <input id="tCardA" type="range" min="60" max="98" value="84" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tPanelA">Panel opacity</label>
+                  <input id="tPanelA" type="range" min="65" max="98" value="88" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tField">Field bg</label>
+                  <input id="tField" type="color" value="#ffffff" />
                 </div>
 
                 <div class="bgRow">
@@ -364,6 +423,23 @@
                 <div class="bgRow">
                   <label for="tSoft">Secondary</label>
                   <input id="tSoft" type="color" value="#f3efe9" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tAccent">Accent</label>
+                  <input id="tAccent" type="color" value="#efe7e1" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgRow">
+                  <label for="tRadius">Radius</label>
+                  <input id="tRadius" type="range" min="10" max="28" value="18" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tShadow">Shadow</label>
+                  <input id="tShadow" type="range" min="0" max="30" value="10" />
                 </div>
 
                 <div class="bgDiv"></div>
@@ -399,6 +475,7 @@
                 </div>
               </div>
 
+              <!-- Background button -->
               <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
                 <span class="bgDot" id="bgDot" aria-hidden="true"></span>
               </button>
@@ -429,9 +506,46 @@
 
                 <div class="bgDiv"></div>
 
+                <!-- NEW: image visibility controls -->
+                <div class="bgTitle" style="margin:0 0 6px 0;">Image visibility</div>
+
                 <div class="bgRow">
-                  <label for="bgImgOpacity">Image opacity</label>
+                  <label for="bgImgOpacity">Opacity</label>
                   <input id="bgImgOpacity" type="range" min="0" max="100" value="100" />
+                </div>
+                <div class="bgRow">
+                  <label for="bgImgBlur">Blur</label>
+                  <input id="bgImgBlur" type="range" min="0" max="14" value="0" />
+                </div>
+                <div class="bgRow">
+                  <label for="bgImgBright">Brightness</label>
+                  <input id="bgImgBright" type="range" min="80" max="140" value="106" />
+                </div>
+                <div class="bgRow">
+                  <label for="bgImgContrast">Contrast</label>
+                  <input id="bgImgContrast" type="range" min="80" max="150" value="110" />
+                </div>
+                <div class="bgRow">
+                  <label for="bgImgSat">Saturation</label>
+                  <input id="bgImgSat" type="range" min="70" max="160" value="110" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <!-- NEW: overlay control -->
+                <div class="bgRow">
+                  <label for="bgOverlay">Wash</label>
+                  <input id="bgOverlay" type="range" min="0" max="60" value="20" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgOverlayMode">Mode</label>
+                  <select id="bgOverlayMode" style="width:160px;">
+                    <option value="screen" selected>Light (screen)</option>
+                    <option value="overlay">Overlay</option>
+                    <option value="multiply">Dark (multiply)</option>
+                    <option value="normal">Normal</option>
+                  </select>
                 </div>
 
                 <div class="bgDiv"></div>
@@ -444,6 +558,7 @@
 
           <div class="divider"></div>
 
+          <!-- Add goal -->
           <div class="row" aria-label="Add goal">
             <input id="goalTitle" style="flex:1; min-width:220px;" placeholder="Goal title (e.g., Walk 3x/week)…" />
             <span class="pill">
@@ -475,6 +590,7 @@
 
           <div class="divider"></div>
 
+          <!-- Internal reset confirmation -->
           <div class="row" style="justify-content:space-between; align-items:center;">
             <button id="resetAll" class="danger" type="button">Reset</button>
           </div>
@@ -492,6 +608,7 @@
 
           <div class="divider"></div>
 
+          <!-- KPIs -->
           <div class="kpi" aria-label="Summary">
             <div class="box">
               <div class="num" id="kTotal">—</div>
@@ -509,6 +626,7 @@
 
           <div class="divider"></div>
 
+          <!-- Filter -->
           <div class="row" style="justify-content:space-between; align-items:flex-end;">
             <div class="tiny">Goals</div>
             <span class="pill">
@@ -534,6 +652,10 @@
 /* =========================
    Shared preset JSON schema (cross-widget)
 ========================= */
+
+/* =========================
+   Safe storage + widget instance id
+========================= */
 (function(){
   const mem = Object.create(null);
   function canUseLocalStorage(){
@@ -558,6 +680,7 @@
     try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
     catch{ delete mem[key]; }
   }
+
   function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
 
   function getWidgetId(){
@@ -579,9 +702,10 @@
 })();
 
 const WID = window.__LW__?.wid || "default";
-const THEME_KEY   = "lifestyle_goals_theme_v2__" + WID;
-const BG_KEY      = "lifestyle_goals_bg_v3__" + WID;
-const PRESETS_KEY = "widget_presets_v2";
+
+const THEME_KEY = "lifestyle_goals_theme_v3__" + WID;
+const BG_KEY    = "lifestyle_goals_bg_v3__" + WID;
+const PRESETS_KEY = "widget_presets_v2"; // global across widgets
 
 function clamp(n, min, max){
   const x = Number(n);
@@ -647,37 +771,56 @@ function fileToDataUrl(file){
 }
 
 /* =========================
-   Theme
+   Theme (draft + apply)
 ========================= */
 const DEFAULT_THEME = {
   bg:"#ffffff",
   card:"#ffffff",
+  cardA:84,      // NEW
+  panelA:88,     // NEW
+  field:"#ffffff", // NEW
   stroke:"#e9e4dd",
   ink:"#2b2a28",
   muted:"#6a665f",
-  soft:"#f3efe9"
+  soft:"#f3efe9",
+  accent:"#efe7e1", // NEW
+  radius:18,     // NEW
+  shadow:10      // NEW (px-ish strength)
 };
-let themeDraft = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
+
+function themeLoad(){ return loadJSON(THEME_KEY); }
 function themeSave(t){ saveJSON(THEME_KEY, t); }
 
 function themeApplyToCSS(t){
   const x = Object.assign({}, DEFAULT_THEME, t || {});
-  const bg = normHex(x.bg, DEFAULT_THEME.bg);
-  const card = normHex(x.card, DEFAULT_THEME.card);
+  const bg     = normHex(x.bg, DEFAULT_THEME.bg);
+  const card   = normHex(x.card, DEFAULT_THEME.card);
+  const field  = normHex(x.field, DEFAULT_THEME.field);
   const stroke = normHex(x.stroke, DEFAULT_THEME.stroke);
-  const ink = normHex(x.ink, DEFAULT_THEME.ink);
-  const muted = normHex(x.muted, DEFAULT_THEME.muted);
-  const soft = normHex(x.soft, DEFAULT_THEME.soft);
+  const ink    = normHex(x.ink, DEFAULT_THEME.ink);
+  const muted  = normHex(x.muted, DEFAULT_THEME.muted);
+  const soft   = normHex(x.soft, DEFAULT_THEME.soft);
+  const accent = normHex(x.accent, DEFAULT_THEME.accent);
+
+  const cardA  = clamp(x.cardA, 60, 98) / 100;
+  const panelA = clamp(x.panelA, 65, 98) / 100;
+
+  const radius = clamp(x.radius, 10, 28);
+  const sh = clamp(x.shadow, 0, 30);
 
   document.documentElement.style.setProperty("--bg", bg);
   document.documentElement.style.setProperty("--ink", ink);
   document.documentElement.style.setProperty("--muted", muted);
   document.documentElement.style.setProperty("--soft", soft);
+  document.documentElement.style.setProperty("--accent", accent);
 
   document.documentElement.style.setProperty("--stroke", hexToRgba(stroke, 0.95));
-  document.documentElement.style.setProperty("--card", hexToRgba(card, 0.84));
-  document.documentElement.style.setProperty("--panel-bg", hexToRgba(card, 0.88));
-  document.documentElement.style.setProperty("--field-bg", "#ffffff");
+  document.documentElement.style.setProperty("--card", hexToRgba(card, cardA));
+  document.documentElement.style.setProperty("--panel-bg", hexToRgba(card, panelA));
+  document.documentElement.style.setProperty("--field-bg", hexToRgba(field, 1));
+
+  document.documentElement.style.setProperty("--r", radius + "px");
+  document.documentElement.style.setProperty("--shadow", `0 ${sh}px ${Math.max(12, sh*3)}px rgba(30,20,10,${(0.02 + sh/700).toFixed(3)})`);
 
   document.documentElement.style.setProperty("--theme-dot", ink);
   const dot = document.getElementById("themeDot");
@@ -687,43 +830,86 @@ function themeApplyToCSS(t){
     dot.style.borderColor = hexToRgba(stroke, 0.95);
   }
 }
+
 function themeSyncInputs(t){
   const x = Object.assign({}, DEFAULT_THEME, t || {});
   document.getElementById("tBg").value = normHex(x.bg, DEFAULT_THEME.bg);
   document.getElementById("tCard").value = normHex(x.card, DEFAULT_THEME.card);
+  document.getElementById("tCardA").value = String(clamp(x.cardA, 60, 98));
+  document.getElementById("tPanelA").value = String(clamp(x.panelA, 65, 98));
+  document.getElementById("tField").value = normHex(x.field, DEFAULT_THEME.field);
+
   document.getElementById("tStroke").value = normHex(x.stroke, DEFAULT_THEME.stroke);
   document.getElementById("tInk").value = normHex(x.ink, DEFAULT_THEME.ink);
   document.getElementById("tMuted").value = normHex(x.muted, DEFAULT_THEME.muted);
   document.getElementById("tSoft").value = normHex(x.soft, DEFAULT_THEME.soft);
+
+  document.getElementById("tAccent").value = normHex(x.accent, DEFAULT_THEME.accent);
+  document.getElementById("tRadius").value = String(clamp(x.radius, 10, 28));
+  document.getElementById("tShadow").value = String(clamp(x.shadow, 0, 30));
 }
+
 function themeReadFromInputs(){
   return {
     bg: document.getElementById("tBg").value,
     card: document.getElementById("tCard").value,
+    cardA: Number(document.getElementById("tCardA").value),
+    panelA: Number(document.getElementById("tPanelA").value),
+    field: document.getElementById("tField").value,
     stroke: document.getElementById("tStroke").value,
     ink: document.getElementById("tInk").value,
     muted: document.getElementById("tMuted").value,
-    soft: document.getElementById("tSoft").value
+    soft: document.getElementById("tSoft").value,
+    accent: document.getElementById("tAccent").value,
+    radius: Number(document.getElementById("tRadius").value),
+    shadow: Number(document.getElementById("tShadow").value)
   };
 }
 
+let themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+
 /* =========================
-   Background
+   Background (draft + apply)
 ========================= */
-const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageDataUrl:null, imgOpacity:100 };
-let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+const DEFAULT_BG = {
+  tint:"#efe7e1",
+  strength:12,
+  imageDataUrl:null,
+
+  imgOpacity:100,
+  imgBlur:0,
+  imgBright:106,
+  imgContrast:110,
+  imgSat:110,
+
+  overlay:20,
+  overlayMode:"screen"
+};
+
+function bgLoad(){ return loadJSON(BG_KEY); }
 function bgSave(bg){ saveJSON(BG_KEY, bg); }
+let bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
 
 function bgApplyToCSS(bg){
   const x = Object.assign({}, DEFAULT_BG, bg || {});
   const tint = normHex(x.tint, DEFAULT_BG.tint);
   const strength = clamp(Number(x.strength), 0, 70) / 100;
-  const imgOpacity = clamp(Number(x.imgOpacity), 0, 100) / 100;
 
   document.documentElement.style.setProperty("--board-tint", tint);
   document.documentElement.style.setProperty("--board-tint-a", String(strength));
   document.documentElement.style.setProperty("--board-image", x.imageDataUrl ? `url("${x.imageDataUrl}")` : "none");
-  document.documentElement.style.setProperty("--board-img-opacity", String(imgOpacity));
+
+  // NEW: image controls
+  document.documentElement.style.setProperty("--board-img-opacity", String(clamp(x.imgOpacity,0,100)/100));
+  document.documentElement.style.setProperty("--board-img-blur", clamp(x.imgBlur,0,14) + "px");
+  document.documentElement.style.setProperty("--board-img-bright", String(clamp(x.imgBright,80,140)/100));
+  document.documentElement.style.setProperty("--board-img-contrast", String(clamp(x.imgContrast,80,150)/100));
+  document.documentElement.style.setProperty("--board-img-sat", String(clamp(x.imgSat,70,160)/100));
+
+  // NEW: overlay
+  const washA = clamp(x.overlay,0,60)/100;
+  document.documentElement.style.setProperty("--board-overlay", `rgba(255,255,255,${washA})`);
+  document.documentElement.style.setProperty("--board-overlay-mode", String(x.overlayMode || "screen"));
 
   const boardTintEl = document.getElementById("boardTint");
   if(boardTintEl) boardTintEl.style.background = hexToRgba(tint, strength);
@@ -734,128 +920,60 @@ function bgApplyToCSS(bg){
     bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
   }
 }
+
 function bgSyncInputs(bg){
   const x = Object.assign({}, DEFAULT_BG, bg || {});
   document.getElementById("bgColor").value = normHex(x.tint, DEFAULT_BG.tint);
   document.getElementById("bgStrength").value = String(clamp(x.strength, 0, 70));
-  document.getElementById("bgImgOpacity").value = String(clamp(x.imgOpacity, 0, 100));
+
+  document.getElementById("bgImgOpacity").value = String(clamp(x.imgOpacity,0,100));
+  document.getElementById("bgImgBlur").value = String(clamp(x.imgBlur,0,14));
+  document.getElementById("bgImgBright").value = String(clamp(x.imgBright,80,140));
+  document.getElementById("bgImgContrast").value = String(clamp(x.imgContrast,80,150));
+  document.getElementById("bgImgSat").value = String(clamp(x.imgSat,70,160));
+
+  document.getElementById("bgOverlay").value = String(clamp(x.overlay,0,60));
+  document.getElementById("bgOverlayMode").value = String(x.overlayMode || "screen");
 }
 
-/* =========================
-   Panels (FIXED FOR REAL)
-========================= */
 function closePanels(){
   document.getElementById("bgPanel")?.classList.remove("open");
   document.getElementById("themePanel")?.classList.remove("open");
 }
 
-function positionPanel(panelEl, anchorEl){
-  if(!panelEl || !anchorEl) return;
-
-  // make measurable, but not visible while positioning
-  panelEl.style.visibility = "hidden";
-  panelEl.classList.add("open");
-
-  const btn = anchorEl.getBoundingClientRect();
-  const pr  = panelEl.getBoundingClientRect();
-
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const pad = 10;
-
-  const w = pr.width || 320;
-  const h = pr.height || 260;
-
-  let left = btn.right - w;
-  let top  = btn.bottom + 10;
-
-  left = Math.max(pad, Math.min(left, vw - w - pad));
-  top  = Math.max(pad, Math.min(top,  vh - h - pad));
-
-  panelEl.style.left = left + "px";
-  panelEl.style.top  = top  + "px";
-
-  panelEl.style.visibility = "visible";
-}
-
 function initPanels(){
-  const themeBtn   = document.getElementById("themeBtn");
+  const themeBtn = document.getElementById("themeBtn");
   const themePanel = document.getElementById("themePanel");
-  const bgBtn      = document.getElementById("bgBtn");
-  const bgPanel    = document.getElementById("bgPanel");
-  if(!themeBtn || !themePanel || !bgBtn || !bgPanel) return;
-
-  function open(panel, btn){
-    if(panel === themePanel) bgPanel.classList.remove("open");
-    if(panel === bgPanel) themePanel.classList.remove("open");
-
-    panel.classList.add("open");
-    requestAnimationFrame(() => positionPanel(panel, btn));
-  }
-
-  function toggle(panel, btn){
-    const isOpen = panel.classList.contains("open");
-    themePanel.classList.remove("open");
-    bgPanel.classList.remove("open");
-    if(!isOpen) open(panel, btn);
-  }
-
-  // Outside click closes (capture phase)
-  function onOutsideCapture(e){
-    const anyOpen = themePanel.classList.contains("open") || bgPanel.classList.contains("open");
-    if(!anyOpen) return;
-
-    const t = e.target;
-    const inside =
-      themePanel.contains(t) || bgPanel.contains(t) ||
-      themeBtn.contains(t)   || bgBtn.contains(t);
-
-    if(!inside) closePanels();
-  }
-  document.addEventListener("pointerdown", onOutsideCapture, true);
-
-  // Prevent double-toggle (pointer + click)
-  let lastToggleAt = 0;
-  function guarded(fn){
-    const now = Date.now();
-    if(now - lastToggleAt < 350) return;
-    lastToggleAt = now;
-    fn();
-  }
-
-  // Use pointerup + click fallback
-  themeBtn.addEventListener("pointerup", (e)=>{
-    e.preventDefault();
-    guarded(()=> toggle(themePanel, themeBtn));
-  });
-  bgBtn.addEventListener("pointerup", (e)=>{
-    e.preventDefault();
-    guarded(()=> toggle(bgPanel, bgBtn));
-  });
+  const bgBtn = document.getElementById("bgBtn");
+  const bgPanel = document.getElementById("bgPanel");
 
   themeBtn.addEventListener("click", (e)=>{
-    e.preventDefault();
-    guarded(()=> toggle(themePanel, themeBtn));
+    e.stopPropagation();
+    bgPanel.classList.remove("open");
+    themePanel.classList.toggle("open");
   });
+
   bgBtn.addEventListener("click", (e)=>{
-    e.preventDefault();
-    guarded(()=> toggle(bgPanel, bgBtn));
+    e.stopPropagation();
+    themePanel.classList.remove("open");
+    bgPanel.classList.toggle("open");
   });
 
-  const reposition = ()=>{
-    if(themePanel.classList.contains("open")) positionPanel(themePanel, themeBtn);
-    if(bgPanel.classList.contains("open")) positionPanel(bgPanel, bgBtn);
-  };
-  window.addEventListener("resize", reposition);
-  window.addEventListener("scroll", reposition, true);
+  document.addEventListener("click", (e)=>{
+    const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+    const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+    if(themePanel.classList.contains("open") && !insideTheme) themePanel.classList.remove("open");
+    if(bgPanel.classList.contains("open") && !insideBg) bgPanel.classList.remove("open");
+  });
 
+  // NEW: ESC closes panels
   document.addEventListener("keydown", (e)=>{
     if(e.key === "Escape") closePanels();
   });
 }
 
 /* =========================
-   Presets
+   Presets (GLOBAL key)
 ========================= */
 function loadPresets(){
   const list = loadJSON(PRESETS_KEY);
@@ -887,15 +1005,34 @@ function sanitizePresetList(parsed){
 }
 function applyPresetToThisWidget(preset){
   const th = preset.theme || {};
-  const mergedTheme = Object.assign({}, DEFAULT_THEME, {
-    bg: th.bg ?? th.pageBg,
-    card: th.card ?? th.cardBase,
+
+  const tLifestyle = {
+    bg: th.bg,
+    card: th.card,
+    cardA: th.cardA,
+    panelA: th.panelA,
+    field: th.field,
+    stroke: th.stroke,
+    ink: th.ink,
+    muted: th.muted,
+    soft: th.soft,
+    accent: th.accent,
+    radius: th.radius,
+    shadow: th.shadow
+  };
+
+  const tGeneric = {
+    bg: th.pageBg,
+    card: th.cardBase,
     stroke: th.stroke,
     ink: th.ink,
     muted: th.muted,
     soft: th.soft
-  });
+  };
+
+  const mergedTheme = Object.assign({}, DEFAULT_THEME, tGeneric, tLifestyle);
   const mergedBg = Object.assign({}, DEFAULT_BG, preset.bg || {});
+
   themeDraft = mergedTheme;
   bgDraft = mergedBg;
 
@@ -909,18 +1046,20 @@ function applyPresetToThisWidget(preset){
 }
 
 /* =========================
-   Init theme/bg UI
+   Init theme/bg UI (draft + apply)
 ========================= */
 function initThemeBgUI(){
-  themeDraft = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
-  bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+  themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+  bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
 
   themeSyncInputs(themeDraft);
   themeApplyToCSS(themeDraft);
+
   bgSyncInputs(bgDraft);
   bgApplyToCSS(bgDraft);
 
-  ["tBg","tCard","tStroke","tInk","tMuted","tSoft"].forEach(id=>{
+  // theme inputs: preview only
+  ["tBg","tCard","tStroke","tInk","tMuted","tSoft","tField","tAccent","tCardA","tPanelA","tRadius","tShadow"].forEach(id=>{
     const el = document.getElementById(id);
     el.addEventListener("input", ()=>{
       themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
@@ -943,6 +1082,7 @@ function initThemeBgUI(){
     setStatus("Theme reset.");
   });
 
+  // bg preview
   document.getElementById("bgColor").addEventListener("input", ()=>{
     bgDraft.tint = document.getElementById("bgColor").value;
     bgApplyToCSS(bgDraft);
@@ -953,8 +1093,23 @@ function initThemeBgUI(){
     bgApplyToCSS(bgDraft);
     setStatus("");
   });
-  document.getElementById("bgImgOpacity").addEventListener("input", ()=>{
-    bgDraft.imgOpacity = Number(document.getElementById("bgImgOpacity").value);
+
+  // NEW: bg controls preview
+  ["bgImgOpacity","bgImgBlur","bgImgBright","bgImgContrast","bgImgSat","bgOverlay"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", ()=>{
+      bgDraft.imgOpacity  = Number(document.getElementById("bgImgOpacity").value);
+      bgDraft.imgBlur     = Number(document.getElementById("bgImgBlur").value);
+      bgDraft.imgBright   = Number(document.getElementById("bgImgBright").value);
+      bgDraft.imgContrast = Number(document.getElementById("bgImgContrast").value);
+      bgDraft.imgSat      = Number(document.getElementById("bgImgSat").value);
+      bgDraft.overlay     = Number(document.getElementById("bgOverlay").value);
+      bgDraft.overlayMode = document.getElementById("bgOverlayMode").value;
+      bgApplyToCSS(bgDraft);
+      setStatus("");
+    });
+  });
+  document.getElementById("bgOverlayMode").addEventListener("change", ()=>{
+    bgDraft.overlayMode = document.getElementById("bgOverlayMode").value;
     bgApplyToCSS(bgDraft);
     setStatus("");
   });
@@ -979,7 +1134,15 @@ function initThemeBgUI(){
   document.getElementById("bgApply").addEventListener("click", ()=>{
     bgDraft.tint = document.getElementById("bgColor").value;
     bgDraft.strength = Number(document.getElementById("bgStrength").value);
-    bgDraft.imgOpacity = Number(document.getElementById("bgImgOpacity").value);
+
+    bgDraft.imgOpacity  = Number(document.getElementById("bgImgOpacity").value);
+    bgDraft.imgBlur     = Number(document.getElementById("bgImgBlur").value);
+    bgDraft.imgBright   = Number(document.getElementById("bgImgBright").value);
+    bgDraft.imgContrast = Number(document.getElementById("bgImgContrast").value);
+    bgDraft.imgSat      = Number(document.getElementById("bgImgSat").value);
+    bgDraft.overlay     = Number(document.getElementById("bgOverlay").value);
+    bgDraft.overlayMode = document.getElementById("bgOverlayMode").value;
+
     bgSave(bgDraft);
     setStatus("Background applied.");
   });
@@ -1004,9 +1167,17 @@ function initPresetsUI(){
     if(!name){ setStatus("Type a preset name first."); return; }
 
     themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+
+    // capture bg UI state (including new controls)
     bgDraft.tint = document.getElementById("bgColor").value;
     bgDraft.strength = Number(document.getElementById("bgStrength").value);
-    bgDraft.imgOpacity = Number(document.getElementById("bgImgOpacity").value);
+    bgDraft.imgOpacity  = Number(document.getElementById("bgImgOpacity").value);
+    bgDraft.imgBlur     = Number(document.getElementById("bgImgBlur").value);
+    bgDraft.imgBright   = Number(document.getElementById("bgImgBright").value);
+    bgDraft.imgContrast = Number(document.getElementById("bgImgContrast").value);
+    bgDraft.imgSat      = Number(document.getElementById("bgImgSat").value);
+    bgDraft.overlay     = Number(document.getElementById("bgOverlay").value);
+    bgDraft.overlayMode = document.getElementById("bgOverlayMode").value;
 
     const list = loadPresets();
     const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bgDraft } };
@@ -1094,7 +1265,10 @@ function initPresetsUI(){
   function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
 
   function defaultState(){
-    return { goals: [], ui: { view:"all" } };
+    return {
+      goals: [],
+      ui: { view:"all" }
+    };
   }
 
   function load(){
@@ -1112,7 +1286,10 @@ function initPresetsUI(){
   }
 
   let state = load();
-  function save(){ try{ window.__LW__.set(KEY, JSON.stringify(state)); }catch{} }
+
+  function save(){
+    try{ window.__LW__.set(KEY, JSON.stringify(state)); }catch{}
+  }
 
   function catLabel(c){
     const map = { health:"Health", home:"Home", relationships:"Relationships", learning:"Learning", fun:"Fun", other:"Other" };
@@ -1141,6 +1318,7 @@ function initPresetsUI(){
     const total = state.goals.length;
     const done = state.goals.filter(g => g.done).length;
     const active = total - done;
+
     $("kTotal").textContent = String(total);
     $("kActive").textContent = String(active);
     $("kDone").textContent = String(done);
@@ -1267,7 +1445,10 @@ function initPresetsUI(){
     const resetNo = $("resetNo");
 
     function hideReset(){ resetConfirm.style.display = "none"; }
-    function showReset(){ resetConfirm.style.display = "block"; closePanels(); }
+    function showReset(){
+      resetConfirm.style.display = "block";
+      closePanels();
+    }
 
     $("addGoal").addEventListener("click", addGoal);
     $("goalTitle").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); addGoal(); } });

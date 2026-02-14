@@ -28,16 +28,8 @@
       --board-tint-a:0.12;
       --board-image:none;
 
-      /* Image visibility controls (NEW) */
+      /* Image opacity control */
       --board-img-opacity: 1;
-      --board-img-blur: 0px;
-      --board-img-bright: 1.06;
-      --board-img-contrast: 1.10;
-      --board-img-sat: 1.10;
-
-      /* Overlay controls (NEW) */
-      --board-overlay: rgba(255,255,255,0.20); /* extra “wash” */
-      --board-overlay-mode: screen;
 
       /* Theme dot */
       --theme-dot: var(--ink);
@@ -60,7 +52,7 @@
     .widgetBoard{
       position:relative;
       border-radius: var(--r);
-      overflow:hidden;
+      overflow:visible; /* allow panels to overflow so they don't get cut off */
       border:1px solid rgba(233,228,221,0.95);
       border-color: var(--stroke);
       box-shadow: var(--shadow);
@@ -75,31 +67,27 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      transform: scale(1.01);
+      transform: scale(1.04);
       z-index:0;
       pointer-events:none;
 
-      /* NEW: visibility controls */
+      border-radius: var(--r);
+
+      /* Image visibility control */
       opacity: var(--board-img-opacity);
-      filter:
-        blur(var(--board-img-blur))
-        saturate(var(--board-img-sat))
-        contrast(var(--board-img-contrast))
-        brightness(var(--board-img-bright));
     }
 
-    /* Highlight + wash overlay layer */
+    /* Highlight overlay layer (kept lighter so images are more visible) */
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
       background:
-        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.40), transparent 60%),
-        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.26), transparent 62%),
-        var(--board-overlay);
-      background-blend-mode: var(--board-overlay-mode);
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.18), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.12), transparent 62%);
       pointer-events:none;
       z-index:1;
+      border-radius: var(--r);
     }
 
     /* Tint layer (separate so you can strengthen/weakening without killing the image) */
@@ -109,6 +97,7 @@
       pointer-events:none;
       z-index:2;
       background: rgba(0,0,0,0);
+      border-radius: var(--r);
     }
 
     .boardContent{ position:relative; z-index:3; }
@@ -506,49 +495,14 @@
 
                 <div class="bgDiv"></div>
 
-                <!-- NEW: image visibility controls -->
-                <div class="bgTitle" style="margin:0 0 6px 0;">Image visibility</div>
-
-                <div class="bgRow">
-                  <label for="bgImgOpacity">Opacity</label>
-                  <input id="bgImgOpacity" type="range" min="0" max="100" value="100" />
+                <!-- Image opacity (only shown when an image is added) -->
+                <div id="bgImgOpacityWrap" style="display:none;">
+                  <div class="bgRow">
+                    <label for="bgImgOpacity">Image opacity</label>
+                    <input id="bgImgOpacity" type="range" min="0" max="100" value="100" />
+                  </div>
+                  <div class="bgDiv"></div>
                 </div>
-                <div class="bgRow">
-                  <label for="bgImgBlur">Blur</label>
-                  <input id="bgImgBlur" type="range" min="0" max="14" value="0" />
-                </div>
-                <div class="bgRow">
-                  <label for="bgImgBright">Brightness</label>
-                  <input id="bgImgBright" type="range" min="80" max="140" value="106" />
-                </div>
-                <div class="bgRow">
-                  <label for="bgImgContrast">Contrast</label>
-                  <input id="bgImgContrast" type="range" min="80" max="150" value="110" />
-                </div>
-                <div class="bgRow">
-                  <label for="bgImgSat">Saturation</label>
-                  <input id="bgImgSat" type="range" min="70" max="160" value="110" />
-                </div>
-
-                <div class="bgDiv"></div>
-
-                <!-- NEW: overlay control -->
-                <div class="bgRow">
-                  <label for="bgOverlay">Wash</label>
-                  <input id="bgOverlay" type="range" min="0" max="60" value="20" />
-                </div>
-
-                <div class="bgRow">
-                  <label for="bgOverlayMode">Mode</label>
-                  <select id="bgOverlayMode" style="width:160px;">
-                    <option value="screen" selected>Light (screen)</option>
-                    <option value="overlay">Overlay</option>
-                    <option value="multiply">Dark (multiply)</option>
-                    <option value="normal">Normal</option>
-                  </select>
-                </div>
-
-                <div class="bgDiv"></div>
 
                 <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
                 <button id="bgReset" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset background</button>
@@ -875,20 +829,19 @@ const DEFAULT_BG = {
   tint:"#efe7e1",
   strength:12,
   imageDataUrl:null,
-
-  imgOpacity:100,
-  imgBlur:0,
-  imgBright:106,
-  imgContrast:110,
-  imgSat:110,
-
-  overlay:20,
-  overlayMode:"screen"
+  imgOpacity:100
 };
 
 function bgLoad(){ return loadJSON(BG_KEY); }
 function bgSave(bg){ saveJSON(BG_KEY, bg); }
 let bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+
+function bgSetOpacityUIVisibility(){
+  const wrap = document.getElementById("bgImgOpacityWrap");
+  if(!wrap) return;
+  const hasImg = !!bgDraft.imageDataUrl;
+  wrap.style.display = hasImg ? "block" : "none";
+}
 
 function bgApplyToCSS(bg){
   const x = Object.assign({}, DEFAULT_BG, bg || {});
@@ -899,17 +852,8 @@ function bgApplyToCSS(bg){
   document.documentElement.style.setProperty("--board-tint-a", String(strength));
   document.documentElement.style.setProperty("--board-image", x.imageDataUrl ? `url("${x.imageDataUrl}")` : "none");
 
-  // NEW: image controls
+  // Image opacity control
   document.documentElement.style.setProperty("--board-img-opacity", String(clamp(x.imgOpacity,0,100)/100));
-  document.documentElement.style.setProperty("--board-img-blur", clamp(x.imgBlur,0,14) + "px");
-  document.documentElement.style.setProperty("--board-img-bright", String(clamp(x.imgBright,80,140)/100));
-  document.documentElement.style.setProperty("--board-img-contrast", String(clamp(x.imgContrast,80,150)/100));
-  document.documentElement.style.setProperty("--board-img-sat", String(clamp(x.imgSat,70,160)/100));
-
-  // NEW: overlay
-  const washA = clamp(x.overlay,0,60)/100;
-  document.documentElement.style.setProperty("--board-overlay", `rgba(255,255,255,${washA})`);
-  document.documentElement.style.setProperty("--board-overlay-mode", String(x.overlayMode || "screen"));
 
   const boardTintEl = document.getElementById("boardTint");
   if(boardTintEl) boardTintEl.style.background = hexToRgba(tint, strength);
@@ -919,21 +863,16 @@ function bgApplyToCSS(bg){
     bgDot.style.background = tint;
     bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
   }
+
+  bgSetOpacityUIVisibility();
 }
 
 function bgSyncInputs(bg){
   const x = Object.assign({}, DEFAULT_BG, bg || {});
   document.getElementById("bgColor").value = normHex(x.tint, DEFAULT_BG.tint);
   document.getElementById("bgStrength").value = String(clamp(x.strength, 0, 70));
-
   document.getElementById("bgImgOpacity").value = String(clamp(x.imgOpacity,0,100));
-  document.getElementById("bgImgBlur").value = String(clamp(x.imgBlur,0,14));
-  document.getElementById("bgImgBright").value = String(clamp(x.imgBright,80,140));
-  document.getElementById("bgImgContrast").value = String(clamp(x.imgContrast,80,150));
-  document.getElementById("bgImgSat").value = String(clamp(x.imgSat,70,160));
-
-  document.getElementById("bgOverlay").value = String(clamp(x.overlay,0,60));
-  document.getElementById("bgOverlayMode").value = String(x.overlayMode || "screen");
+  bgSetOpacityUIVisibility();
 }
 
 function closePanels(){
@@ -966,7 +905,7 @@ function initPanels(){
     if(bgPanel.classList.contains("open") && !insideBg) bgPanel.classList.remove("open");
   });
 
-  // NEW: ESC closes panels
+  // ESC closes panels
   document.addEventListener("keydown", (e)=>{
     if(e.key === "Escape") closePanels();
   });
@@ -1094,22 +1033,9 @@ function initThemeBgUI(){
     setStatus("");
   });
 
-  // NEW: bg controls preview
-  ["bgImgOpacity","bgImgBlur","bgImgBright","bgImgContrast","bgImgSat","bgOverlay"].forEach(id=>{
-    document.getElementById(id).addEventListener("input", ()=>{
-      bgDraft.imgOpacity  = Number(document.getElementById("bgImgOpacity").value);
-      bgDraft.imgBlur     = Number(document.getElementById("bgImgBlur").value);
-      bgDraft.imgBright   = Number(document.getElementById("bgImgBright").value);
-      bgDraft.imgContrast = Number(document.getElementById("bgImgContrast").value);
-      bgDraft.imgSat      = Number(document.getElementById("bgImgSat").value);
-      bgDraft.overlay     = Number(document.getElementById("bgOverlay").value);
-      bgDraft.overlayMode = document.getElementById("bgOverlayMode").value;
-      bgApplyToCSS(bgDraft);
-      setStatus("");
-    });
-  });
-  document.getElementById("bgOverlayMode").addEventListener("change", ()=>{
-    bgDraft.overlayMode = document.getElementById("bgOverlayMode").value;
+  // image opacity preview (only when image exists; harmless otherwise)
+  document.getElementById("bgImgOpacity").addEventListener("input", ()=>{
+    bgDraft.imgOpacity = Number(document.getElementById("bgImgOpacity").value);
     bgApplyToCSS(bgDraft);
     setStatus("");
   });
@@ -1120,6 +1046,7 @@ function initThemeBgUI(){
     if(!file) return;
     const dataUrl = await fileToDataUrl(file);
     bgDraft.imageDataUrl = dataUrl;
+    bgDraft.imgOpacity = clamp(bgDraft.imgOpacity, 0, 100);
     bgApplyToCSS(bgDraft);
     setStatus("");
   });
@@ -1134,14 +1061,7 @@ function initThemeBgUI(){
   document.getElementById("bgApply").addEventListener("click", ()=>{
     bgDraft.tint = document.getElementById("bgColor").value;
     bgDraft.strength = Number(document.getElementById("bgStrength").value);
-
-    bgDraft.imgOpacity  = Number(document.getElementById("bgImgOpacity").value);
-    bgDraft.imgBlur     = Number(document.getElementById("bgImgBlur").value);
-    bgDraft.imgBright   = Number(document.getElementById("bgImgBright").value);
-    bgDraft.imgContrast = Number(document.getElementById("bgImgContrast").value);
-    bgDraft.imgSat      = Number(document.getElementById("bgImgSat").value);
-    bgDraft.overlay     = Number(document.getElementById("bgOverlay").value);
-    bgDraft.overlayMode = document.getElementById("bgOverlayMode").value;
+    bgDraft.imgOpacity = Number(document.getElementById("bgImgOpacity").value);
 
     bgSave(bgDraft);
     setStatus("Background applied.");
@@ -1168,16 +1088,10 @@ function initPresetsUI(){
 
     themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
 
-    // capture bg UI state (including new controls)
+    // capture bg UI state
     bgDraft.tint = document.getElementById("bgColor").value;
     bgDraft.strength = Number(document.getElementById("bgStrength").value);
-    bgDraft.imgOpacity  = Number(document.getElementById("bgImgOpacity").value);
-    bgDraft.imgBlur     = Number(document.getElementById("bgImgBlur").value);
-    bgDraft.imgBright   = Number(document.getElementById("bgImgBright").value);
-    bgDraft.imgContrast = Number(document.getElementById("bgImgContrast").value);
-    bgDraft.imgSat      = Number(document.getElementById("bgImgSat").value);
-    bgDraft.overlay     = Number(document.getElementById("bgOverlay").value);
-    bgDraft.overlayMode = document.getElementById("bgOverlayMode").value;
+    bgDraft.imgOpacity = Number(document.getElementById("bgImgOpacity").value);
 
     const list = loadPresets();
     const entry = { id: uid(), name, theme: { ...themeDraft }, bg: { ...bgDraft } };

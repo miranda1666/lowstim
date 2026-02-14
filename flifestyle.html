@@ -217,8 +217,9 @@
       z-index: 9999;
       max-height: calc(100vh - 24px);
       overflow:auto;
+      visibility: visible;
     }
-    .bgPanel.open{ display:block; }
+    .bgPanel.open{ display:block; visibility:visible; }
 
     .bgTitle{
       margin:0 0 10px 0;
@@ -657,7 +658,6 @@ const DEFAULT_THEME = {
   soft:"#f3efe9"
 };
 let themeDraft = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
-
 function themeSave(t){ saveJSON(THEME_KEY, t); }
 
 function themeApplyToCSS(t){
@@ -742,70 +742,87 @@ function bgSyncInputs(bg){
 }
 
 /* =========================
-   Panels (FIXED + WORKING)
+   Panels (WORKING IN NOTION EMBEDS)
 ========================= */
 function closePanels(){
   document.getElementById("bgPanel")?.classList.remove("open");
   document.getElementById("themePanel")?.classList.remove("open");
 }
+
 function positionPanel(panelEl, anchorEl){
   if(!panelEl || !anchorEl) return;
+
+  // make measurable, but not visible while positioning
+  panelEl.style.visibility = "hidden";
+  panelEl.classList.add("open");
+
   const btn = anchorEl.getBoundingClientRect();
+  const pr  = panelEl.getBoundingClientRect();
+
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const pad = 10;
 
-  const pr = panelEl.getBoundingClientRect();
   const w = pr.width || 320;
   const h = pr.height || 260;
 
   let left = btn.right - w;
-  let top = btn.bottom + 10;
+  let top  = btn.bottom + 10;
 
   left = Math.max(pad, Math.min(left, vw - w - pad));
   top  = Math.max(pad, Math.min(top,  vh - h - pad));
 
   panelEl.style.left = left + "px";
-  panelEl.style.top  = top + "px";
+  panelEl.style.top  = top  + "px";
+
+  panelEl.style.visibility = "visible";
 }
 
 function initPanels(){
-  const themeBtn = document.getElementById("themeBtn");
+  const themeBtn   = document.getElementById("themeBtn");
   const themePanel = document.getElementById("themePanel");
-  const bgBtn = document.getElementById("bgBtn");
-  const bgPanel = document.getElementById("bgPanel");
-
+  const bgBtn      = document.getElementById("bgBtn");
+  const bgPanel    = document.getElementById("bgPanel");
   if(!themeBtn || !themePanel || !bgBtn || !bgPanel) return;
 
-  // stop “outside close” when interacting with buttons/panels
-  [themePanel, bgPanel, themeBtn, bgBtn].forEach(el=>{
-    el.addEventListener("pointerdown", (e)=> e.stopPropagation());
-    el.addEventListener("click", (e)=> e.stopPropagation());
-  });
-
   function open(panel, btn){
+    if(panel === themePanel) bgPanel.classList.remove("open");
+    if(panel === bgPanel) themePanel.classList.remove("open");
     panel.classList.add("open");
     requestAnimationFrame(() => positionPanel(panel, btn));
   }
-  function toggle(panel, btn, other){
-    other.classList.remove("open");
-    if(panel.classList.contains("open")) panel.classList.remove("open");
-    else open(panel, btn);
+
+  function toggle(panel, btn){
+    const isOpen = panel.classList.contains("open");
+    themePanel.classList.remove("open");
+    bgPanel.classList.remove("open");
+    if(!isOpen) open(panel, btn);
   }
 
-  // support both pointer + click (some embeds behave differently)
-  const onTheme = (e)=>{ e.preventDefault(); toggle(themePanel, themeBtn, bgPanel); };
-  const onBg    = (e)=>{ e.preventDefault(); toggle(bgPanel, bgBtn, themePanel); };
+  // outside close in CAPTURE phase — only closes when something is already open
+  function onOutsideCapture(e){
+    const anyOpen = themePanel.classList.contains("open") || bgPanel.classList.contains("open");
+    if(!anyOpen) return;
 
-  themeBtn.addEventListener("pointerdown", onTheme);
-  themeBtn.addEventListener("click", onTheme);
+    const t = e.target;
+    const inside =
+      themePanel.contains(t) || bgPanel.contains(t) ||
+      themeBtn.contains(t)   || bgBtn.contains(t);
 
-  bgBtn.addEventListener("pointerdown", onBg);
-  bgBtn.addEventListener("click", onBg);
+    if(!inside) closePanels();
+  }
 
-  // outside closes
-  document.addEventListener("pointerdown", ()=> closePanels());
-  document.addEventListener("click", ()=> closePanels());
+  document.addEventListener("pointerdown", onOutsideCapture, true);
+  document.addEventListener("mousedown",   onOutsideCapture, true);
+  document.addEventListener("touchstart",  onOutsideCapture, true);
+
+  const onTheme = (e)=>{ e.preventDefault(); toggle(themePanel, themeBtn); };
+  const onBg    = (e)=>{ e.preventDefault(); toggle(bgPanel, bgBtn); };
+
+  ["click","pointerdown","touchstart","mousedown"].forEach(evt=>{
+    themeBtn.addEventListener(evt, onTheme, { passive:false });
+    bgBtn.addEventListener(evt, onBg, { passive:false });
+  });
 
   const reposition = ()=>{
     if(themePanel.classList.contains("open")) positionPanel(themePanel, themeBtn);

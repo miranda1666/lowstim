@@ -12,7 +12,7 @@
       /* Base theme tokens */
       --bg:#ffffff;
       --card: rgba(255,255,255,0.84); /* kept for compatibility */
-      --card-a: 0.84;                 /* ✅ NEW: card opacity (0..1) */
+      --card-a: 0.84;                 /* card opacity (0..1) */
       --stroke:#e9e4dd;
       --ink:#2b2a28;
       --muted:#6a665f;
@@ -24,7 +24,7 @@
       --board-tint:#efe7e1;
       --board-tint-a:0.12;
       --board-image:none;
-      --board-image-a: 0.92;          /* ✅ NEW: background image visibility (0..1) */
+      --board-image-a: 0.92;          /* background image visibility (0..1) */
 
       /* override-friendly “whites” + panel bg */
       --panel-bg: rgba(255,255,255,0.88);
@@ -66,7 +66,6 @@
       z-index:0;
       pointer-events:none;
 
-      /* ✅ NEW: image visibility control */
       opacity: var(--board-image-a);
 
       filter: saturate(1.1) contrast(1.06) brightness(1.03);
@@ -94,7 +93,6 @@
     .boardContent{ position:relative; z-index:2; }
 
     .card{
-      /* ✅ UPDATED: driven by --card-a */
       background: rgba(255,255,255,var(--card-a));
       border:0;
       border-radius:0;
@@ -186,7 +184,6 @@
       display:none;
       z-index: 50;
 
-      /* ✅ ensure nothing gets cut off */
       max-height: calc(100vh - 140px);
       overflow:auto;
     }
@@ -443,6 +440,27 @@
       display:block;
     }
 
+    /* ✅ Move modal tweaks (small + simple) */
+    .modalCard.moveCard{
+      width:min(520px, 96vw);
+      height:auto;
+      max-height:92vh;
+    }
+    .moveBody{
+      padding:14px;
+      background:var(--field-bg);
+    }
+    .moveBody label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .moveBody select{
+      width:100%;
+      margin-bottom:10px;
+    }
+
     /* Upload panel */
     .uploadGrid{
       display:grid;
@@ -507,7 +525,6 @@
                   <input id="bgStrength" type="range" min="0" max="70" value="12" />
                 </div>
 
-                <!-- ✅ NEW: Image visibility -->
                 <div class="bgRow">
                   <label for="bgImageA">Image visibility</label>
                   <input id="bgImageA" type="range" min="20" max="100" value="92" />
@@ -560,7 +577,6 @@
                   <input id="tCard" type="color" value="#ffffff" />
                 </div>
 
-                <!-- ✅ NEW: Card opacity -->
                 <div class="bgRow">
                   <label for="tCardA">Card opacity</label>
                   <input id="tCardA" type="range" min="40" max="95" value="84" />
@@ -623,7 +639,7 @@
 
               <div class="col">
                 <label for="bookTitle">Title (optional)</label>
-                <input id="bookTitle" type="text" placeholder="e.g., Deep Work" />
+                <input id="bookTitle" type="text" placeholder="" />
               </div>
 
               <div class="col">
@@ -674,6 +690,26 @@
         </div>
       </div>
       <div class="modalBody" id="readerBody"></div>
+    </div>
+  </div>
+
+  <!-- ✅ NEW: Move modal (replaces prompt() so it works in Notion embeds) -->
+  <div class="modal" id="moveModal" role="dialog" aria-label="Move book">
+    <div class="modalCard moveCard">
+      <div class="modalTop">
+        <div class="modalTitle" id="moveTitle">Move book</div>
+        <div class="row" style="gap:8px;">
+          <button id="moveClose" class="soft" type="button">Close</button>
+        </div>
+      </div>
+      <div class="moveBody">
+        <label for="moveShelfSelect">Choose shelf</label>
+        <select id="moveShelfSelect"></select>
+        <div class="row" style="justify-content:flex-end;">
+          <button id="moveCancel" class="soft" type="button">Cancel</button>
+          <button id="moveConfirm" class="primary" type="button">Move</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -824,7 +860,7 @@ const DEFAULT_THEME = {
   muted: "#6a665f",
   stroke: "#e9e4dd",
   cardBase: "#ffffff",
-  cardA: 84,          /* ✅ NEW: card opacity (40..95) */
+  cardA: 84,
   soft: "#f3efe9"
 };
 
@@ -848,10 +884,7 @@ function themeApplyToCSS(t){
 
   document.documentElement.style.setProperty("--stroke", hexToRgba(stroke, 0.95));
 
-  /* ✅ NEW: card opacity variable */
   document.documentElement.style.setProperty("--card-a", String(cardA));
-
-  /* keep compatibility (some UI elements use --card / panel bg) */
   document.documentElement.style.setProperty("--card", hexToRgba(cardBase, cardA));
   document.documentElement.style.setProperty("--panel-bg", hexToRgba(cardBase, 0.88));
   document.documentElement.style.setProperty("--field-bg", "#ffffff");
@@ -932,7 +965,7 @@ function initThemeUI(){
     if(!el) return;
     el.addEventListener("input", () => {
       themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
-      themeApplyToCSS(themeDraft);  // preview only
+      themeApplyToCSS(themeDraft);
       setStatus("");
     });
   });
@@ -979,19 +1012,13 @@ function bgApplyToCSS(bg){
   const tint = normHex(x.tint, DEFAULT_BG.tint);
 
   const baseStrength = clamp(Number(x.strength), 0, 70) / 100;
-
-  /* ✅ NEW: like reference — if image exists, reduce tint overlay so image shows */
-  const strength = x.imageDataUrl
-    ? Math.max(0.04, baseStrength * 0.25)
-    : baseStrength;
+  const strength = x.imageDataUrl ? Math.max(0.04, baseStrength * 0.25) : baseStrength;
 
   const imageA = clamp(Number(x.imageA ?? DEFAULT_BG.imageA), 20, 100) / 100;
 
   document.documentElement.style.setProperty("--board-tint", tint);
   document.documentElement.style.setProperty("--board-tint-a", String(strength));
   document.documentElement.style.setProperty("--board-image", x.imageDataUrl ? `url("${x.imageDataUrl}")` : "none");
-
-  /* ✅ NEW: image visibility var */
   document.documentElement.style.setProperty("--board-image-a", String(imageA));
 
   const boardTintEl = $("boardTint");
@@ -1053,7 +1080,6 @@ function initBackgroundUI(){
     setStatus("");
   });
 
-  /* ✅ NEW: image visibility slider */
   bgImageA.addEventListener("input", () => {
     bgDraft.imageA = Number(bgImageA.value);
     bgApplyToCSS(bgDraft);
@@ -1403,6 +1429,48 @@ function initPresetsUI(){
       .replaceAll("'","&#039;");
   }
 
+  /* ✅ NEW: Move modal plumbing (prompt-free) */
+  let moveBookId = null;
+
+  function openMoveModal(bookId){
+    const book = state.books.find(b => b.id === bookId);
+    if(!book) return;
+
+    moveBookId = bookId;
+
+    const sel = $("moveShelfSelect");
+    sel.innerHTML = "";
+    for(const s of state.shelves){
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.name || "Shelf";
+      sel.appendChild(opt);
+    }
+    sel.value = book.shelfId;
+
+    $("moveTitle").textContent = `Move: ${book.title || book.fileName || "Untitled"}`;
+    $("moveModal").classList.add("open");
+  }
+
+  function closeMoveModal(){
+    $("moveModal").classList.remove("open");
+    moveBookId = null;
+  }
+
+  function confirmMove(){
+    if(!moveBookId) return closeMoveModal();
+    const book = state.books.find(b => b.id === moveBookId);
+    if(!book) return closeMoveModal();
+
+    const targetId = $("moveShelfSelect").value;
+    if(!targetId) return;
+
+    book.shelfId = targetId;
+    saveState();
+    renderAll();
+    closeMoveModal();
+  }
+
   function renderShelves(){
     const root = $("shelves");
     root.innerHTML = "";
@@ -1508,20 +1576,21 @@ function initPresetsUI(){
           coverBtn.className = "miniBtn";
           coverBtn.type = "button";
           coverBtn.textContent = "Cover";
-          coverBtn.addEventListener("click", () => promptCoverChange(book.id));
+          coverBtn.addEventListener("click", (e) => { e.stopPropagation(); promptCoverChange(book.id); });
 
           const moveBtn = document.createElement("button");
           moveBtn.className = "miniBtn";
           moveBtn.type = "button";
           moveBtn.textContent = "Move";
-          moveBtn.addEventListener("click", () => promptMove(book.id));
+          moveBtn.addEventListener("click", (e) => { e.stopPropagation(); openMoveModal(book.id); });
 
           const delBtn = document.createElement("button");
           delBtn.className = "miniBtn danger";
           delBtn.type = "button";
           delBtn.textContent = "✕";
           delBtn.title = "Remove book";
-          delBtn.addEventListener("click", async () => {
+          delBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
             await removeBook(book.id);
           });
 
@@ -1662,24 +1731,6 @@ function initPresetsUI(){
     setTimeout(()=> input.remove(), 0);
   }
 
-  function promptMove(bookId){
-    const book = state.books.find(b => b.id === bookId);
-    if(!book) return;
-
-    const targetName = prompt(
-      "Move to which shelf?\n\nType the shelf name exactly:\n" + state.shelves.map(s=>s.name).join("\n"),
-      state.shelves.find(s=>s.id===book.shelfId)?.name || ""
-    );
-    if(!targetName) return;
-
-    const target = state.shelves.find(s => (s.name || "").trim().toLowerCase() === targetName.trim().toLowerCase());
-    if(!target) return alert("Shelf not found. Please type the shelf name exactly.");
-
-    book.shelfId = target.id;
-    saveState();
-    renderAll();
-  }
-
   /* Shelves ops + reset */
   function addShelf(){
     state.shelves.push({ id: uid(), name: `Shelf ${state.shelves.length + 1}` });
@@ -1713,7 +1764,8 @@ function initPresetsUI(){
     const required = [
       "fileInput","coverInput","bookTitle","shelfSelect","addBook",
       "addShelf","resetAll","resetConfirm","resetYes","resetNo",
-      "shelves","readerModal","readerTitle","readerBody","readerClose"
+      "shelves","readerModal","readerTitle","readerBody","readerClose",
+      "moveModal","moveShelfSelect","moveConfirm","moveCancel","moveClose"
     ];
     for(const id of required){ if(!$(id)) return; }
 
@@ -1729,6 +1781,14 @@ function initPresetsUI(){
     $("readerClose").addEventListener("click", closeReader);
     $("readerModal").addEventListener("click", (e) => {
       if(e.target && e.target.id === "readerModal") closeReader();
+    });
+
+    /* ✅ Move modal events */
+    $("moveClose").addEventListener("click", closeMoveModal);
+    $("moveCancel").addEventListener("click", closeMoveModal);
+    $("moveConfirm").addEventListener("click", confirmMove);
+    $("moveModal").addEventListener("click", (e) => {
+      if(e.target && e.target.id === "moveModal") closeMoveModal();
     });
 
     renderAll();

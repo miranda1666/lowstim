@@ -6,13 +6,12 @@
   <title>Purchase Log</title>
   <style>
     :root{
-
       --bg:#ffffff;
-      --card:#ffffffcc;             /* card surface */
-      --stroke:#e9e4dd;             /* borders */
-      --ink:#2b2a28;                /* primary text */
-      --muted:#6a665f;              /* secondary text */
-      --soft:#f3efe9;               /* soft surface */
+      --card:#ffffffcc;
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
       --shadow:0 10px 30px rgba(30,20,10,.06);
       --r:18px;
 
@@ -29,6 +28,7 @@
 
     *{box-sizing:border-box}
     html, body{ overflow: visible; }
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
@@ -39,11 +39,6 @@
     .wrap{max-width:980px; margin:0 auto;}
     h1{margin:0; font-size:18px}
     .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
-
-    .widgetShell{
-      position: relative;
-      overflow: visible;
-    }
 
     .widgetBoard{
       position:relative;
@@ -85,6 +80,7 @@
       inset:0;
       pointer-events:none;
       z-index:1;
+      background: rgba(0,0,0,0);
     }
     .boardContent{ position:relative; z-index:2; }
 
@@ -165,24 +161,23 @@
     }
 
     .panel{
-      position:absolute;
-      top: 44px;
-      right: 0;
-      width: 270px;
-      border-radius: 16px;
-      border: 1px solid var(--stroke);
+      position:fixed;
+      width:270px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
       background: var(--panel-bg);
       box-shadow: 0 18px 40px rgba(30,20,10,.12);
       backdrop-filter: blur(2px);
       -webkit-backdrop-filter: blur(2px);
-      padding: 12px;
+      padding:12px;
       display:none;
-      z-index: 9999;
-      max-height: min(70vh, 560px);
-      overflow: auto;
-      overscroll-behavior: contain;
+      z-index:99999;
+      max-height:min(70vh, 560px);
+      overflow:auto;
+      overscroll-behavior:contain;
     }
     .panel.open{ display:block; }
+
     .bgTitle{
       margin:0 0 10px 0;
       font-size:12px;
@@ -196,7 +191,7 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding: 7px 0;
+      padding:7px 0;
     }
     .bgRow label{ font-size:12px; color:var(--muted); }
     .bgRow input[type="color"]{
@@ -207,7 +202,7 @@
       background: transparent;
       cursor:pointer;
     }
-    .bgRow input[type="range"]{ width: 150px; }
+    .bgRow input[type="range"]{ width:150px; }
     .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
     .bgMiniBtn{
       width:100%;
@@ -222,7 +217,7 @@
       color: rgba(43,42,40,0.82);
       box-shadow: 0 2px 8px rgba(30,20,10,.06);
     }
-    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+    .bgDiv{ height:1px; background: var(--stroke); margin:8px 0; }
     .bgHint{ font-size:11px; color:var(--muted); line-height:1.35; margin-top:8px; }
   </style>
 </head>
@@ -231,156 +226,147 @@
     <h1>Purchase Log</h1>
     <div class="sub">Select a date to view/edit that day’s purchases</div>
 
-    <div class="widgetShell" id="widgetShell">
-      <div class="widgetBoard" id="widgetBoard" aria-label="Purchase log widget board">
-        <div class="boardTint" id="boardTint"></div>
-        <div class="boardContent">
-          <section class="card">
-            <div class="title">
-              <h2>Log a purchase</h2>
+    <div class="widgetBoard" id="widgetBoard" aria-label="Purchase log widget board">
+      <div class="boardTint" id="boardTint"></div>
+      <div class="boardContent">
+        <section class="card">
+          <div class="title">
+            <h2>Log a purchase</h2>
 
-              <!-- Background + Theme controls -->
-              <div class="controlsWrap" id="controlsWrap">
-                <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
-                  <span class="bgDot" id="bgDot" aria-hidden="true"></span>
-                </button>
+            <div class="controlsWrap" id="controlsWrap">
+              <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+              </button>
 
-                <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
-                  <span class="themeDot" id="themeDot" aria-hidden="true"></span>
-                </button>
-
-                <!-- Background panel -->
-                <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
-                  <div class="bgTitle">Background</div>
-
-                  <div class="bgRow">
-                    <label for="bgColor">Tint</label>
-                    <input id="bgColor" type="color" value="#efe7e1" />
-                  </div>
-
-                  <div class="bgRow">
-                    <label for="bgStrength">Strength</label>
-                    <input id="bgStrength" type="range" min="0" max="70" value="30" />
-                  </div>
-
-                  <div class="bgRow">
-                    <label for="bgImageA">Image visibility</label>
-                    <input id="bgImageA" type="range" min="20" max="100" value="92" />
-                  </div>
-
-                  <div class="bgDiv"></div>
-
-                  <div class="bgRow" style="align-items:flex-start;">
-                    <label for="bgImage">Image</label>
-                    <input id="bgImage" class="bgFile" type="file" accept="image/*" />
-                  </div>
-
-                  <div class="bgRow">
-                    <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
-                  </div>
-                </div>
-
-                <!-- Theme panel -->
-                <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
-                  <div class="bgTitle">Theme</div>
-
-                  <div class="bgRow">
-                    <label for="tPageBg">Page bg</label>
-                    <input id="tPageBg" type="color" value="#ffffff" />
-                  </div>
-
-                  <div class="bgRow">
-                    <label for="tText">Text</label>
-                    <input id="tText" type="color" value="#2b2a28" />
-                  </div>
-
-                  <div class="bgRow">
-                    <label for="tMuted">Muted</label>
-                    <input id="tMuted" type="color" value="#6a665f" />
-                  </div>
-
-                  <div class="bgDiv"></div>
-
-                  <div class="bgRow">
-                    <label for="tStroke">Borders</label>
-                    <input id="tStroke" type="color" value="#e9e4dd" />
-                  </div>
-
-                  <div class="bgRow">
-                    <label for="tCard">Card</label>
-                    <input id="tCard" type="color" value="#ffffff" />
-                  </div>
-
-                  <div class="bgRow">
-                    <label for="tCardA">Card opacity</label>
-                    <input id="tCardA" type="range" min="20" max="95" value="80" />
-                  </div>
-
-                  <div class="bgRow">
-                    <label for="tSoft">Secondary</label>
-                    <input id="tSoft" type="color" value="#f3efe9" />
-                  </div>
-
-                  <div class="bgDiv"></div>
-
-                  <div class="bgRow">
-                    <button id="resetTheme" class="bgMiniBtn" type="button">Reset theme</button>
-                  </div>
-
-                  <div class="bgHint">
-                  </div>
-                </div>
-              </div>
+              <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+              </button>
             </div>
+          </div>
 
-            <div class="row">
-              <input type="date" id="pDate">
+          <div class="row">
+            <input type="date" id="pDate">
 
-              <label class="tiny">
-                Currency
-                <select id="currency">
-                  <option value="AUTO">Auto (from locale)</option>
-                  <option value="GBP">GBP (£)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="NGN">NGN (₦)</option>
-                  <option value="CAD">CAD ($)</option>
-                  <option value="AUD">AUD ($)</option>
-                  <option value="JPY">JPY (¥)</option>
-                  <option value="ZAR">ZAR (R)</option>
-                </select>
-              </label>
-
-              <input type="number" id="pAmt" step="0.01" placeholder="Amount">
-              <select id="pCat">
-                <option>Food</option><option>Transport</option><option>Fun</option><option>Essentials</option><option>Bills</option><option>Other</option>
+            <label class="tiny">
+              Currency
+              <select id="currency">
+                <option value="AUTO">Auto (from locale)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="NGN">NGN (₦)</option>
+                <option value="CAD">CAD ($)</option>
+                <option value="AUD">AUD ($)</option>
+                <option value="JPY">JPY (¥)</option>
+                <option value="ZAR">ZAR (R)</option>
               </select>
-              <select id="pType">
-                <option value="planned">Planned</option>
-                <option value="impulse">Impulse</option>
-              </select>
-              <button id="pAdd">Add</button>
-            </div>
+            </label>
 
-            <div class="divider"></div>
+            <input type="number" id="pAmt" step="0.01" placeholder="Amount">
+            <select id="pCat">
+              <option>Food</option><option>Transport</option><option>Fun</option><option>Essentials</option><option>Bills</option><option>Other</option>
+            </select>
+            <select id="pType">
+              <option value="planned">Planned</option>
+              <option value="impulse">Impulse</option>
+            </select>
+            <button id="pAdd">Add</button>
+          </div>
 
-            <div class="kpi" id="kpis"></div>
+          <div class="divider"></div>
 
-            <div class="divider"></div>
+          <div class="kpi" id="kpis"></div>
 
-            <div class="list" id="purchaseList"></div>
+          <div class="divider"></div>
 
-            <div class="foot"></div>
-          </section>
-        </div>
+          <div class="list" id="purchaseList"></div>
+
+          <div class="foot"></div>
+        </section>
       </div>
     </div>
   </div>
 
+  <!-- Background panel -->
+  <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+    <div class="bgTitle">Background</div>
+
+    <div class="bgRow">
+      <label for="bgColor">Tint</label>
+      <input id="bgColor" type="color" value="#efe7e1" />
+    </div>
+
+    <div class="bgRow">
+      <label for="bgStrength">Strength</label>
+      <input id="bgStrength" type="range" min="0" max="70" value="30" />
+    </div>
+
+    <div class="bgRow">
+      <label for="bgImageA">Image visibility</label>
+      <input id="bgImageA" type="range" min="20" max="100" value="92" />
+    </div>
+
+    <div class="bgDiv"></div>
+
+    <div class="bgRow" style="align-items:flex-start;">
+      <label for="bgImage">Image</label>
+      <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+    </div>
+
+    <div class="bgRow">
+      <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+    </div>
+  </div>
+
+  <!-- Theme panel -->
+  <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+    <div class="bgTitle">Theme</div>
+
+    <div class="bgRow">
+      <label for="tPageBg">Page bg</label>
+      <input id="tPageBg" type="color" value="#ffffff" />
+    </div>
+
+    <div class="bgRow">
+      <label for="tText">Text</label>
+      <input id="tText" type="color" value="#2b2a28" />
+    </div>
+
+    <div class="bgRow">
+      <label for="tMuted">Muted</label>
+      <input id="tMuted" type="color" value="#6a665f" />
+    </div>
+
+    <div class="bgDiv"></div>
+
+    <div class="bgRow">
+      <label for="tStroke">Borders</label>
+      <input id="tStroke" type="color" value="#e9e4dd" />
+    </div>
+
+    <div class="bgRow">
+      <label for="tCard">Card</label>
+      <input id="tCard" type="color" value="#ffffff" />
+    </div>
+
+    <div class="bgRow">
+      <label for="tCardA">Card opacity</label>
+      <input id="tCardA" type="range" min="20" max="95" value="80" />
+    </div>
+
+    <div class="bgRow">
+      <label for="tSoft">Secondary</label>
+      <input id="tSoft" type="color" value="#f3efe9" />
+    </div>
+
+    <div class="bgDiv"></div>
+
+    <div class="bgRow">
+      <button id="resetTheme" class="bgMiniBtn" type="button">Reset theme</button>
+    </div>
+  </div>
+
 <script>
-  /* --------------------------
-     Shared helpers
-  --------------------------- */
   function hexToRgba(hex, a){
     const h = String(hex || "").replace("#","").trim();
     const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
@@ -390,6 +376,7 @@
     const b = num & 255;
     return `rgba(${r},${g},${b},${a})`;
   }
+
   function clamp(n, min, max){
     n = Number(n);
     if(!Number.isFinite(n)) return min;
@@ -397,78 +384,71 @@
   }
 
   /* --------------------------
-     Panel positioning so settings never get cut off
+     Panel positioning
   --------------------------- */
-  (function initPanelPositioning(){
-    const shell = document.getElementById("widgetShell");
+  (function initPanels(){
     const bgBtn = document.getElementById("bgBtn");
-    const bgPanel = document.getElementById("bgPanel");
     const themeBtn = document.getElementById("themeBtn");
+    const bgPanel = document.getElementById("bgPanel");
     const themePanel = document.getElementById("themePanel");
 
     function closeAll(except){
-      [bgPanel, themePanel].forEach(p=>{
-        if(!p) return;
-        if(p !== except) p.classList.remove("open");
+      [bgPanel, themePanel].forEach(panel => {
+        if(panel && panel !== except) panel.classList.remove("open");
       });
       document.body.style.paddingBottom = "";
     }
 
     function placePanel(btn, panel){
-      if(!btn || !panel || !shell) return;
+      if(!btn || !panel) return;
 
-      const shellRect = shell.getBoundingClientRect();
-      const btnRect = btn.getBoundingClientRect();
+      const r = btn.getBoundingClientRect();
       const pad = 10;
 
-      let top = (btnRect.bottom - shellRect.top) + pad;
-      let left = (btnRect.right - shellRect.left) - panel.offsetWidth;
+      let top = r.bottom + pad;
+      let left = r.right - panel.offsetWidth;
 
-      left = Math.max(pad, Math.min(shell.clientWidth - panel.offsetWidth - pad, left));
+      left = Math.max(pad, Math.min(window.innerWidth - panel.offsetWidth - pad, left));
 
-      panel.style.left = left + "px";
       panel.style.top = top + "px";
-      panel.style.right = "auto";
+      panel.style.left = left + "px";
 
-      requestAnimationFrame(()=>{
+      requestAnimationFrame(() => {
         const panelRect = panel.getBoundingClientRect();
-        const need = Math.ceil(panelRect.bottom + 24);
-        document.body.style.paddingBottom = Math.max(24, need - window.innerHeight + 24) + "px";
+        const overflow = panelRect.bottom - window.innerHeight;
+        document.body.style.paddingBottom = overflow > 0 ? (overflow + 28) + "px" : "";
       });
     }
 
     function openPanel(btn, panel){
-      if(!panel) return;
-      const isOpen = panel.classList.contains("open");
-      closeAll(null);
-      if(isOpen) return;
+      const wasOpen = panel.classList.contains("open");
+      closeAll();
+      if(wasOpen) return;
       panel.classList.add("open");
-      requestAnimationFrame(()=>placePanel(btn, panel));
+      requestAnimationFrame(() => placePanel(btn, panel));
     }
 
-    bgBtn?.addEventListener("click", (e)=>{
+    bgBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       openPanel(bgBtn, bgPanel);
     });
 
-    themeBtn?.addEventListener("click", (e)=>{
+    themeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       openPanel(themeBtn, themePanel);
     });
 
-    window.addEventListener("resize", ()=>{
-      if(bgPanel?.classList.contains("open")) placePanel(bgBtn, bgPanel);
-      if(themePanel?.classList.contains("open")) placePanel(themeBtn, themePanel);
+    window.addEventListener("resize", () => {
+      if(bgPanel.classList.contains("open")) placePanel(bgBtn, bgPanel);
+      if(themePanel.classList.contains("open")) placePanel(themeBtn, themePanel);
     });
 
-    document.addEventListener("click", (e)=>{
+    document.addEventListener("click", (e) => {
       const inside =
-        e.target.closest("#bgPanel") || e.target.closest("#bgBtn") ||
-        e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-      if(!inside) closeAll(null);
+        e.target.closest("#bgBtn") || e.target.closest("#bgPanel") ||
+        e.target.closest("#themeBtn") || e.target.closest("#themePanel");
+      if(!inside) closeAll();
     });
-
-    window.__purchaseLogPanels__ = { placePanel, openPanel, closeAll };
   })();
 
   /* --------------------------
@@ -504,10 +484,8 @@
       document.documentElement.style.setProperty("--ink", t.ink);
       document.documentElement.style.setProperty("--muted", t.muted);
       document.documentElement.style.setProperty("--soft", t.soft);
-
       document.documentElement.style.setProperty("--stroke", hexToRgba(t.stroke, 0.95));
       document.documentElement.style.setProperty("--card", hexToRgba(t.cardBase, clamp(t.cardA, 20, 95) / 100));
-
       document.documentElement.style.setProperty("--theme-dot", t.ink);
 
       const dot = $("themeDot");
@@ -682,7 +660,7 @@
 
   function todayISO(){ return new Date().toISOString().slice(0,10); }
   function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
-  function monthKey(dIso){ return (dIso || "").slice(0,7); } // YYYY-MM
+  function monthKey(dIso){ return (dIso || "").slice(0,7); }
 
   const REGION_TO_CURRENCY = {
     GB:"GBP", US:"USD", CA:"CAD", AU:"AUD", NZ:"NZD",

@@ -4,23 +4,32 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Savings Garden</title>
+
   <style>
     :root{
-      --bg:#ffffff; --card:#ffffffcc; --stroke:#e9e4dd; --ink:#2b2a28;
-      --muted:#6a665f; --soft:#f3efe9; --shadow:0 10px 30px rgba(30,20,10,.06);
+      --bg:#ffffff;
+      --card: rgba(255,255,255,0.84);
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
       --r:18px;
 
-      --board-tint:#ffffff;
-      --board-tint-a:0.30;
+      --board-tint:#efe7e1;
+      --board-tint-a:0.12;
       --board-image:none;
+      --board-image-a:0.92;
 
-      /* preset-friendly panel/field backgrounds */
-      --panel-bg: rgba(255,255,255,0.92);
+      --panel-bg: rgba(255,255,255,0.86);
       --field-bg: #ffffff;
 
       --theme-dot: var(--ink);
     }
-    *{box-sizing:border-box}
+
+    *{ box-sizing:border-box; }
+    html, body{ overflow: visible; }
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
@@ -28,17 +37,24 @@
       background: var(--bg);
       padding:28px 18px;
     }
-    .wrap{max-width:760px; margin:0 auto;}
-    h1{margin:0; font-size:18px}
-    .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
 
-.widgetBoard{
-  position:relative;
-  border-radius: var(--r);
-  overflow: visible;              /* <-- CHANGED (was hidden) */
-  border:1px solid var(--stroke);
-  box-shadow: var(--shadow);
-}
+    .wrap{ max-width:760px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; }
+
+    .widgetShell{
+      position:relative;
+      overflow:visible;
+    }
+
+    .widgetBoard{
+      position:relative;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+    }
+
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -47,10 +63,11 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      transform: scale(1.02);
+      transform: scale(1.01);
       z-index:0;
       pointer-events:none;
-      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+      filter: saturate(1.25) contrast(1.15) brightness(1.05);
+      opacity: var(--board-image-a);
     }
 
     .widgetBoard::after{
@@ -58,9 +75,9 @@
       position:absolute;
       inset:0;
       background:
-        radial-gradient(740px 480px at 18% 20%, rgba(255,255,255,0.34), transparent 62%),
-        radial-gradient(680px 520px at 86% 28%, rgba(255,255,255,0.20), transparent 65%),
-        rgba(255,255,255,0.20);
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.35), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.22), transparent 62%),
+        rgba(255,255,255,0.22);
       background-blend-mode: screen;
       pointer-events:none;
       z-index:0;
@@ -70,33 +87,49 @@
       position:absolute;
       inset:0;
       pointer-events:none;
-      border-radius: inherit;
       z-index:1;
+      background: rgba(0,0,0,0);
     }
+
     .boardContent{ position:relative; z-index:2; }
 
     .card{
       background:var(--card);
       border:0;
-      border-radius:0;
+      border-radius:18px; /* rounded like your other widgets */
       box-shadow:none;
       padding:14px;
+      color:var(--ink);
       backdrop-filter: blur(2px);
       -webkit-backdrop-filter: blur(2px);
+      margin:10px;
     }
 
     .title{
       display:flex;
-      align-items:flex-end;
+      align-items:flex-start;
       justify-content:space-between;
       gap:10px;
-      margin-bottom:10px
+      margin-bottom:10px;
     }
-    .title h2{margin:0; font-size:14px; font-weight:650; letter-spacing:.2px}
-    .hint{color:var(--muted); font-size:12px}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
 
-    button, input, select{
+    .rightControls{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+
+    .title h2{
+      margin:0;
+      font-size:14px;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+
+    .hint{ color:var(--muted); font-size:12px; }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    button, input, select, textarea{
       font:inherit;
       border:1px solid var(--stroke);
       background:var(--field-bg);
@@ -106,16 +139,20 @@
       outline:none;
       -webkit-tap-highlight-color: transparent;
     }
-    button{cursor:pointer}
-    button.soft{background:var(--soft)}
-    button:active{transform:translateY(1px)}
-    .divider{height:1px; background:var(--stroke); margin:12px 0}
+
+    button{ cursor:pointer; }
+    button.soft{ background:var(--soft); }
+    button:active{ transform:translateY(1px); }
+
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
     .meter{
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:10px;
       background:var(--field-bg);
     }
+
     .track{
       height:12px;
       border-radius:999px;
@@ -123,10 +160,20 @@
       border:1px solid var(--stroke);
       overflow:hidden;
     }
-    .fill{height:100%; width:0%; background:rgba(40,30,20,.12)}
-    .tiny{font-size:12px; color:var(--muted)}
+
+    .fill{
+      height:100%;
+      width:0%;
+      background:rgba(40,30,20,.12);
+    }
+
+    .tiny{ font-size:12px; color:var(--muted); }
+
     .garden{
-      display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
       padding:10px;
       border:1px solid var(--stroke);
       border-radius:14px;
@@ -134,29 +181,37 @@
       min-height:56px;
       font-size:18px;
     }
+
     .pill{
-      display:inline-flex; align-items:center; gap:8px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
       border:1px solid var(--stroke);
       background:var(--field-bg);
       border-radius:999px;
       padding:8px 12px;
       font-size:13px;
+      white-space:nowrap;
     }
+
     .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
     .kpi .box{
-      flex:1; min-width:160px;
+      flex:1;
+      min-width:160px;
       background:var(--soft);
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:10px;
     }
-    .kpi .num{font-weight:750; font-size:16px}
-    .kpi .lab{font-size:12px; color:var(--muted)}
-    .danger{border-color:#efc2c2}
+    .kpi .num{ font-weight:750; font-size:16px; }
+    .kpi .lab{ font-size:12px; color:var(--muted); }
 
-    .controlsWrap{ position:relative; margin-left:auto; display:flex; gap:10px; align-items:center; }
+    .danger{ border-color:#efc2c2; }
+
+    .settingsWrap{ position:relative; }
     .bgBtn, .themeBtn{
-      width:34px; height:34px;
+      width:34px;
+      height:34px;
       border-radius:999px;
       border:1px solid var(--stroke);
       background: rgba(255,255,255,0.92);
@@ -165,45 +220,45 @@
       place-items:center;
       box-shadow: 0 3px 12px rgba(30,20,10,.08);
     }
+
     .bgDot{
-      width:14px; height:14px;
+      width:14px;
+      height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
       background: var(--board-tint);
-      box-shadow: 0 0 0 6px rgba(239,231,225,0.30);
+      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
     }
+
     .themeDot{
-      width:14px; height:14px;
+      width:14px;
+      height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
       background: var(--theme-dot);
-      box-shadow: 0 0 0 6px rgba(233,228,221,0.35);
+      box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
     }
 
-.panel{
-  position:absolute;
-  top: 44px;
-  right: 0;
-  width: 310px;
-  border-radius: 16px;
-  border: 1px solid var(--stroke);
-  background: var(--panel-bg);
-  box-shadow: 0 18px 40px rgba(30,20,10,.12);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  padding: 12px 12px 18px;        /* <-- extra bottom padding */
-  display:none;
-  z-index: 9999;
-  padding-bottom: 18px;/* <-- ensure it floats above */
+    .panel{
+      position:absolute;
+      width:320px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background: var(--panel-bg);
+      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      padding:12px;
+      display:none;
+      z-index:9999;
+      max-height:min(70vh, 560px);
+      overflow:auto;
+      overscroll-behavior:contain;
+    }
 
-  /* ✅ scroll so nothing gets cut off */
-  max-height: calc(100dvh - 140px); /* <-- use dvh first */
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
     .panel.open{ display:block; }
-    .bgTitle{
+
+    .panelTitle{
       margin:0 0 10px 0;
       font-size:12px;
       font-weight:700;
@@ -211,29 +266,40 @@
       text-transform:uppercase;
       color: rgba(43,42,40,0.72);
     }
-    .bgRow{
+
+    .pRow{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding: 7px 0;
+      padding:7px 0;
     }
-    .bgRow label{ font-size:12px; color:var(--muted); }
-    .bgRow input[type="color"]{
-      width:36px; height:28px;
+
+    .pRow label{ font-size:12px; color:var(--muted); }
+
+    .pRow input[type="color"]{
+      width:36px;
+      height:28px;
       border-radius:10px;
       padding:0;
       border:1px solid var(--stroke);
       background: transparent;
       cursor:pointer;
     }
-    .bgRow input[type="range"]{ width: 150px; }
-    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
-    .bgMiniBtn{
+
+    .pRow input[type="range"]{ width:160px; }
+
+    .pFile{
+      width:100%;
+      font-size:12px;
+      color: rgba(43,42,40,0.75);
+    }
+
+    .miniBtn{
       width:100%;
       border-radius:12px;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.95);
+      background: rgba(255,255,255,0.90);
       padding:9px 10px;
       font-weight:700;
       letter-spacing:.06em;
@@ -241,275 +307,293 @@
       font-size:11px;
       color: rgba(43,42,40,0.82);
       box-shadow: 0 2px 8px rgba(30,20,10,.06);
+      cursor:pointer;
     }
-    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
-    .bgHint{ font-size:11px; color:var(--muted); line-height:1.35; margin-top:8px; }
 
-    /* Presets UI (matches your other widget) */
+    .miniBtn:active{ transform: translateY(1px); }
+
+    .pDiv{ height:1px; background: var(--stroke); margin:8px 0; }
+
+    .status{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+      min-height:16px;
+    }
+
     .presetName{
       width:100%;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,.95);
+      background: rgba(255,255,255,0.96);
       border-radius:12px;
       padding:10px 12px;
       font-size:12px;
-      color: var(--ink);
+      color:var(--ink);
+      outline:none;
     }
+
+    .presetSelect{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color:var(--ink);
+      outline:none;
+      height:38px;
+    }
+
     .presetArea{
       width:100%;
-      min-height: 92px;
-      resize: vertical;
+      min-height:92px;
+      resize:vertical;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,.95);
+      background: rgba(255,255,255,0.96);
       border-radius:12px;
       padding:10px 12px;
       font-size:12px;
       line-height:1.35;
-      color: var(--ink);
-    }
-    .presetSelect{
-      height:34px;
-      border-radius:12px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.95);
-      padding:0 10px;
-      color: var(--ink);
-      width: 150px;
-      font-size:12px;
-    }
-    .status{
-      font-size:12px;
-      color: var(--muted);
-      margin-top: 6px;
+      color:var(--ink);
+      outline:none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      white-space: pre;
+      overflow:auto;
     }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <h1>Savings Garden</h1>
     <div class="sub">Add savings and watch your garden grow 🌱</div>
 
-    <div class="widgetBoard" id="widgetBoard" aria-label="Savings Garden widget board">
-      <div class="boardTint" id="boardTint"></div>
-      <div class="boardContent">
-        <section class="card">
-          <div class="title">
-            <!-- Controls live on the right -->
-            <div class="controlsWrap" id="controlsWrap">
-              <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
-                <span class="bgDot" id="bgDot" aria-hidden="true"></span>
-              </button>
+    <div class="widgetShell" id="widgetShell">
+      <div class="widgetBoard" id="widgetBoard" aria-label="Savings Garden widget board">
+        <div class="boardTint" id="boardTint"></div>
 
-              <!-- theme button -->
-              <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
-                <span class="themeDot" id="themeDot" aria-hidden="true"></span>
-              </button>
-
-              <!-- Background panel -->
-              <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
-                <div class="bgTitle">Background</div>
-
-                <div class="bgRow">
-                  <label for="bgColor">Tint</label>
-                  <input id="bgColor" type="color" value="#efe7e1" />
-                </div>
-
-                <div class="bgRow">
-                  <label for="bgStrength">Strength</label>
-                  <input id="bgStrength" type="range" min="0" max="70" value="30" />
-                </div>
-
-                <div class="bgDiv"></div>
-
-                <div class="bgRow" style="align-items:flex-start;">
-                  <label for="bgImage">Image</label>
-                  <input id="bgImage" class="bgFile" type="file" accept="image/*" />
-                </div>
-
-                <div class="bgRow">
-                  <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
-                </div>
-
-                <div class="bgDiv"></div>
-
-                <!-- ✅ explicit apply/reset so nothing changes unless user applies -->
-                <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
-                <button id="bgReset" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset background</button>
+        <div class="boardContent">
+          <section class="card">
+            <div class="title">
+              <div>
+                <h2>Savings</h2>
               </div>
 
-              <!-- Theme panel -->
-              <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
-                <div class="bgTitle">Theme</div>
-
-                <div class="bgRow">
-                  <label for="tPageBg">Page bg</label>
-                  <input id="tPageBg" type="color" value="#ffffff" />
+              <div class="rightControls">
+                <div class="settingsWrap">
+                  <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                    <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+                  </button>
                 </div>
 
-                <div class="bgRow">
-                  <label for="tText">Text</label>
-                  <input id="tText" type="color" value="#2b2a28" />
+                <div class="settingsWrap">
+                  <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                    <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+                  </button>
                 </div>
-
-                <div class="bgRow">
-                  <label for="tMuted">Muted</label>
-                  <input id="tMuted" type="color" value="#6a665f" />
-                </div>
-
-                <div class="bgDiv"></div>
-
-                <div class="bgRow">
-                  <label for="tStroke">Borders</label>
-                  <input id="tStroke" type="color" value="#e9e4dd" />
-                </div>
-
-                <!-- keep your existing extras (we map presets too) -->
-                <div class="bgRow">
-                  <label for="tCard">Card</label>
-                  <input id="tCard" type="color" value="#ffffff" />
-                </div>
-
-                <div class="bgRow">
-                  <label for="tSoft">Secondary</label>
-                  <input id="tSoft" type="color" value="#f3efe9" />
-                </div>
-
-                <div class="bgDiv"></div>
-
-                <!-- ✅ explicit apply/reset so nothing persists unless user applies -->
-                <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
-                <button id="resetTheme" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset theme</button>
-
-                <div class="bgDiv"></div>
-
-                <!-- ✅ Presets (GLOBAL JSON that works across widgets) -->
-                <div class="bgTitle" style="margin:0 0 6px 0;">Presets</div>
-
-                <div class="bgRow" style="flex-direction:column;align-items:stretch;gap:10px;">
-                  <input class="presetName" id="presetName" placeholder="Preset name" />
-                  <button class="bgMiniBtn" id="presetSave" type="button">Save current as preset</button>
-                </div>
-
-                <div class="bgRow">
-                  <label for="presetSelect">Choose</label>
-                  <select class="presetSelect" id="presetSelect"></select>
-                </div>
-
-                <button class="bgMiniBtn" id="presetApply" type="button">Apply preset</button>
-                <button class="bgMiniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
-
-                <div class="bgDiv"></div>
-
-                <button class="bgMiniBtn" id="presetCopy" type="button">Copy preset JSON</button>
-
-                <div class="bgRow" style="flex-direction:column;align-items:stretch;gap:10px;">
-                  <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
-                  <button class="bgMiniBtn" id="presetImportBtn" type="button">Import presets</button>
-                  <div class="status" id="presetStatus" aria-live="polite"></div>
-                </div>
-
-                <div class="bgHint"></div>
               </div>
             </div>
-          </div>
 
-          <div class="hint" style="margin:-4px 0 10px;">Choose your milestone (e.g., every 10, 20, 30…)</div>
+            <div class="hint" style="margin:-4px 0 10px;">Choose your milestone (e.g., every 10, 20, 30…)</div>
 
-          <div class="row">
-            <input type="number" id="savAdd" step="0.01" placeholder="Add savings">
-            <button id="savBtn">Add</button>
-            <button class="soft" id="savUndo" type="button">Undo</button>
+            <div class="row">
+              <input type="number" id="savAdd" step="0.01" placeholder="Add savings">
+              <button id="savBtn" type="button">Add</button>
+              <button class="soft" id="savUndo" type="button">Undo</button>
 
-            <span class="pill">
-              Milestone
-              <select id="milestone">
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="30">30</option>
-                <option value="40">40</option>
-                <option value="50" selected>50</option>
-                <option value="75">75</option>
-                <option value="100">100</option>
-              </select>
-              <span class="tiny">per plant</span>
-            </span>
+              <span class="pill">
+                Milestone
+                <select id="milestone">
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="30">30</option>
+                  <option value="40">40</option>
+                  <option value="50" selected>50</option>
+                  <option value="75">75</option>
+                  <option value="100">100</option>
+                </select>
+                <span class="tiny">per plant</span>
+              </span>
 
-            <span class="pill">
-              Currency
-              <select id="currency">
-                <option value="AUTO">Auto (from locale)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="NGN">NGN (₦)</option>
-                <option value="CAD">CAD ($)</option>
-                <option value="AUD">AUD ($)</option>
-                <option value="JPY">JPY (¥)</option>
-                <option value="ZAR">ZAR (R)</option>
-              </select>
-            </span>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="kpi">
-            <div class="box">
-              <div class="num" id="totalTxt">—</div>
-              <div class="lab">Total saved</div>
+              <span class="pill">
+                Currency
+                <select id="currency">
+                  <option value="AUTO">Auto (from locale)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="NGN">NGN (₦)</option>
+                  <option value="CAD">CAD ($)</option>
+                  <option value="AUD">AUD ($)</option>
+                  <option value="JPY">JPY (¥)</option>
+                  <option value="ZAR">ZAR (R)</option>
+                </select>
+              </span>
             </div>
-            <div class="box">
-              <div class="num" id="plantsTxt">—</div>
-              <div class="lab">Plants grown</div>
+
+            <div class="divider"></div>
+
+            <div class="kpi">
+              <div class="box">
+                <div class="num" id="totalTxt">—</div>
+                <div class="lab">Total saved</div>
+              </div>
+              <div class="box">
+                <div class="num" id="plantsTxt">—</div>
+                <div class="lab">Plants grown</div>
+              </div>
+              <div class="box">
+                <div class="num" id="nextTxt">—</div>
+                <div class="lab">Next plant at</div>
+              </div>
             </div>
-            <div class="box">
-              <div class="num" id="nextTxt">—</div>
-              <div class="lab">Next plant at</div>
+
+            <div class="divider"></div>
+
+            <div class="meter">
+              <div class="row" style="justify-content:space-between">
+                <span class="tiny">Progress to next plant</span>
+                <span class="tiny"><b id="progTxt">—</b></span>
+              </div>
+              <div class="track"><div class="fill" id="fill"></div></div>
             </div>
-          </div>
 
-          <div class="divider"></div>
+            <div class="divider"></div>
 
-          <div class="meter">
-            <div class="row" style="justify-content:space-between">
-              <span class="tiny">Progress to next plant</span>
-              <span class="tiny"><b id="progTxt">—</b></span>
-            </div>
-            <div class="track"><div class="fill" id="fill"></div></div>
-          </div>
+            <div class="tiny" style="margin-bottom:8px">Garden</div>
+            <div class="garden" id="garden"></div>
 
-          <div class="divider"></div>
-
-          <div class="tiny" style="margin-bottom:8px">Garden</div>
-          <div class="garden" id="garden"></div>
-
-          <div class="divider"></div>
-          <div class="tiny">Note: “Milestone” means how much you need to save to grow a plant.</div>
-        </section>
+            <div class="divider"></div>
+            <div class="tiny">Note: “Milestone” means how much you need to save to grow a plant.</div>
+          </section>
+        </div>
       </div>
     </div>
   </div>
 
-<script>
-/* =========================================================
-   Shared preset JSON schema (cross-widget)
-   - Stored globally under: widget_presets_v2
-   - JSON is an array: [{id,name, theme:{...}, bg:{...}}]
-   - Any widget can import/apply; unknown keys ignored.
-========================================================= */
+  <!-- Background panel -->
+  <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+    <div class="panelTitle">Background</div>
 
-/* ========================= Safe storage + widget instance id ========================= */
+    <div class="pRow">
+      <label for="bgColor">Tint</label>
+      <input id="bgColor" type="color" value="#efe7e1" />
+    </div>
+
+    <div class="pRow">
+      <label for="bgStrength">Strength</label>
+      <input id="bgStrength" type="range" min="0" max="70" value="12" />
+    </div>
+
+    <div class="pRow">
+      <label for="bgImageA">Image visibility</label>
+      <input id="bgImageA" type="range" min="20" max="100" value="92" />
+    </div>
+
+    <div class="pDiv"></div>
+
+    <div class="pRow" style="align-items:flex-start;">
+      <label for="bgImage">Image</label>
+      <input id="bgImage" class="pFile" type="file" accept="image/*" />
+    </div>
+
+    <div class="pRow">
+      <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
+    </div>
+
+    <div class="pDiv"></div>
+
+    <button class="miniBtn" id="bgApply" type="button">Apply background</button>
+    <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+    <div class="status" id="uiStatus" aria-live="polite"></div>
+  </div>
+
+  <!-- Theme panel -->
+  <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+    <div class="panelTitle">Theme</div>
+
+    <div class="pRow">
+      <label for="tBg">Page bg</label>
+      <input id="tBg" type="color" value="#ffffff" />
+    </div>
+
+    <div class="pRow">
+      <label for="tInk">Text</label>
+      <input id="tInk" type="color" value="#2b2a28" />
+    </div>
+
+    <div class="pRow">
+      <label for="tMuted">Muted</label>
+      <input id="tMuted" type="color" value="#6a665f" />
+    </div>
+
+    <div class="pRow">
+      <label for="tStroke">Borders</label>
+      <input id="tStroke" type="color" value="#e9e4dd" />
+    </div>
+
+    <div class="pRow">
+      <label for="tCard">Card</label>
+      <input id="tCard" type="color" value="#ffffff" />
+    </div>
+
+    <div class="pRow">
+      <label for="tCardA">Card opacity</label>
+      <input id="tCardA" type="range" min="20" max="95" value="84" />
+    </div>
+
+    <div class="pRow">
+      <label for="tSoft">Secondary</label>
+      <input id="tSoft" type="color" value="#f3efe9" />
+    </div>
+
+    <div class="pDiv"></div>
+
+    <button id="tApply" class="miniBtn" type="button">Apply theme</button>
+    <button id="tReset" class="miniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+    <div class="pDiv"></div>
+
+    <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
+
+    <input class="presetName" id="presetName" placeholder="Preset name">
+    <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+    <div class="pDiv"></div>
+
+    <select class="presetSelect" id="presetSelect"></select>
+
+    <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+    <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+    <div class="pDiv"></div>
+
+    <button class="miniBtn" id="presetCopy" type="button">Copy preset JSON</button>
+
+    <div class="pDiv"></div>
+
+    <textarea class="presetArea" id="presetImport" placeholder='Paste preset JSON here, then click "Import presets".'></textarea>
+    <button class="miniBtn" id="presetImportBtn" type="button" style="margin-top:8px;">Import presets</button>
+
+    <div class="status" id="presetStatus" aria-live="polite"></div>
+  </div>
+
+<script>
+/* =========================
+   Safe storage + widget instance id
+========================= */
 (function(){
   const mem = Object.create(null);
 
   function canUseLocalStorage(){
     try{
-      const k="__t__"+Math.random().toString(16).slice(2);
+      const k="__sg__"+Math.random().toString(16).slice(2);
       localStorage.setItem(k,"1");
       localStorage.removeItem(k);
       return true;
     }catch{ return false; }
   }
-
   const hasLS = canUseLocalStorage();
 
   function storageGet(key){
@@ -542,446 +626,423 @@
     return fresh;
   }
 
-  window.__SG__ = { wid: getWidgetId(), get: storageGet, set: storageSet, remove: storageRemove };
+  window.__SG_APP__ = { wid:getWidgetId(), get:storageGet, set:storageSet, remove:storageRemove };
 })();
 
-const WID = window.__SG__?.wid || "default";
+/* =========================
+   Utils
+========================= */
+(function(){
+  function clamp(n,min,max){
+    n = Number(n);
+    if(!Number.isFinite(n)) return min;
+    return Math.max(min, Math.min(max, n));
+  }
+  function normHex(hex, fallback){
+    const s = String(hex || "").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+  }
+  function hexToRgba(hex, a){
+    const h = normHex(hex, "#ffffff").replace("#","");
+    const num = parseInt(h, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function loadJSON(key){
+    try{
+      const raw = window.__SG_APP__.get(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch{ return null; }
+  }
+  function saveJSON(key, val){
+    try{ window.__SG_APP__.set(key, JSON.stringify(val)); }catch{}
+  }
+  async function copyText(text){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch{}
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return !!ok;
+    }catch{ return false; }
+  }
+  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  window.__sgUtils = { clamp, normHex, hexToRgba, loadJSON, saveJSON, copyText, uid, fileToDataUrl };
+})();
+
+/* =========================
+   Keys
+========================= */
+const WID = window.__SG_APP__?.wid || "default";
+const KEY = "savings_garden_v1__" + WID;
+const BG_KEY = "savings_garden_bg_v2__" + WID;
+const THEME_KEY = "savings_garden_theme_v3__" + WID;
 const PRESETS_KEY = "widget_presets_v2";
-const KEY      = "savings_garden_v1__" + WID;
-const BG_KEY   = "savings_garden_bg_v1__" + WID;
-const THEME_KEY= "savings_garden_theme_v2__" + WID;
-const CUR_KEY  = "savings_garden_currency_pref_v1__" + WID;
-const MS_KEY   = "savings_garden_milestone_v1__" + WID;
+const CUR_KEY = "savings_garden_currency_pref_v1__" + WID;
+const MS_KEY = "savings_garden_milestone_v1__" + WID;
 
-/* --------------------------
-   Shared helper
---------------------------- */
-function normHex(hex, fallback){
-  const s = String(hex || "").trim();
-  return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
-}
-function clamp(n, min, max){
-  const x = Number(n);
-  if(!Number.isFinite(x)) return min;
-  return Math.max(min, Math.min(max, x));
-}
-function hexToRgba(hex, a){
-  const h = normHex(hex, "#efe7e1").slice(1);
-  const r = parseInt(h.slice(0,2), 16);
-  const g = parseInt(h.slice(2,4), 16);
-  const b = parseInt(h.slice(4,6), 16);
-  return `rgba(${r},${g},${b},${a})`;
-}
-function loadJSON(key){
-  try{
-    const raw = window.__SG__.get(key);
-    return raw ? JSON.parse(raw) : null;
-  }catch{ return null; }
-}
-function saveJSON(key, val){
-  try{ window.__SG__.set(key, JSON.stringify(val)); }catch{}
-}
-function removeKey(key){
-  try{ window.__SG__.remove(key); }catch{}
-}
-async function copyText(text){
-  try{
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  }catch{}
-  try{
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.left = "-9999px";
-    document.body.appendChild(ta);
-    ta.focus(); ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    return !!ok;
-  }catch{ return false; }
-}
-function uid(){
-  return Math.random().toString(16).slice(2) + Date.now().toString(16);
-}
-function fileToDataUrl(file){
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result));
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-}
-
-/* --------------------------
-   Panels (close siblings)
---------------------------- */
-(function initPanels(){
+/* =========================
+   Panel positioning
+========================= */
+(function(){
+  const shell = document.getElementById("widgetShell");
   const bgBtn = document.getElementById("bgBtn");
   const bgPanel = document.getElementById("bgPanel");
   const themeBtn = document.getElementById("themeBtn");
   const themePanel = document.getElementById("themePanel");
-  if(!bgBtn || !bgPanel || !themeBtn || !themePanel) return;
 
-  bgBtn.addEventListener("click", (e)=>{
-    e.stopPropagation();
-    themePanel.classList.remove("open");
-    bgPanel.classList.toggle("open");
-  });
-
-  themeBtn.addEventListener("click", (e)=>{
-    e.stopPropagation();
-    bgPanel.classList.remove("open");
-    themePanel.classList.toggle("open");
-  });
-
-  document.addEventListener("click", (e)=>{
-    const inBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-    const inTh = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-    if(!inBg) bgPanel.classList.remove("open");
-    if(!inTh) themePanel.classList.remove("open");
-  });
-
-  window.addEventListener("scroll", ()=>{
-    bgPanel.classList.remove("open");
-    themePanel.classList.remove("open");
-  }, { passive:true });
-})();
-
-/* --------------------------
-   Theme (draft + apply)
-   - preview always
-   - persists only on Apply/Reset
---------------------------- */
-(function initTheme(){
-  const $ = (id)=>document.getElementById(id);
-
-  const DEFAULT_THEME = {
-    pageBg:"#ffffff",
-    ink:"#2b2a28",
-    muted:"#6a665f",
-    stroke:"#e9e4dd",
-    cardBase:"#ffffff",
-    soft:"#f3efe9"
-  };
-
-  // Load persisted
-  let themeDraft = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
-
-  const tPageBg = $("tPageBg");
-  const tText   = $("tText");
-  const tMuted  = $("tMuted");
-  const tStroke = $("tStroke");
-  const tCard   = $("tCard");
-  const tSoft   = $("tSoft");
-  const themeDot= $("themeDot");
-  const applyBtn= $("themeApply");
-  const resetBtn= $("resetTheme");
-
-  if(!tPageBg || !tText || !tMuted || !tStroke || !tCard || !tSoft || !applyBtn || !resetBtn) return;
-
-  function applyThemeToCSS(t){
-    const x = Object.assign({}, DEFAULT_THEME, t || {});
-    const pageBg  = normHex(x.pageBg, DEFAULT_THEME.pageBg);
-    const ink     = normHex(x.ink, DEFAULT_THEME.ink);
-    const muted   = normHex(x.muted, DEFAULT_THEME.muted);
-    const stroke  = normHex(x.stroke, DEFAULT_THEME.stroke);
-    const cardBase= normHex(x.cardBase, DEFAULT_THEME.cardBase);
-    const soft    = normHex(x.soft, DEFAULT_THEME.soft);
-
-    document.documentElement.style.setProperty("--bg", pageBg);
-    document.documentElement.style.setProperty("--ink", ink);
-    document.documentElement.style.setProperty("--muted", muted);
-    document.documentElement.style.setProperty("--soft", soft);
-
-    document.documentElement.style.setProperty("--stroke", hexToRgba(stroke, 0.95));
-    document.documentElement.style.setProperty("--card", hexToRgba(cardBase, 0.80));
-
-    // make panel/field backgrounds stable + preset-friendly
-    document.documentElement.style.setProperty("--panel-bg", `rgba(255,255,255,0.92)`);
-    document.documentElement.style.setProperty("--field-bg", `rgba(255,255,255,0.98)`);
-
-    document.documentElement.style.setProperty("--theme-dot", ink);
-
-    if(themeDot){
-      themeDot.style.background = ink;
-      themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(stroke, 0.35)}`;
-      themeDot.style.borderColor = hexToRgba(stroke, 0.95);
-    }
-  }
-
-  function syncInputs(t){
-    tPageBg.value = normHex(t.pageBg, DEFAULT_THEME.pageBg);
-    tText.value   = normHex(t.ink, DEFAULT_THEME.ink);
-    tMuted.value  = normHex(t.muted, DEFAULT_THEME.muted);
-    tStroke.value = normHex(t.stroke, DEFAULT_THEME.stroke);
-    tCard.value   = normHex(t.cardBase, DEFAULT_THEME.cardBase);
-    tSoft.value   = normHex(t.soft, DEFAULT_THEME.soft);
-  }
-
-  function readInputs(){
-    return {
-      pageBg: tPageBg.value,
-      ink: tText.value,
-      muted: tMuted.value,
-      stroke: tStroke.value,
-      cardBase: tCard.value,
-      soft: tSoft.value
-    };
-  }
-
-  // initial
-  syncInputs(themeDraft);
-  applyThemeToCSS(themeDraft);
-
-  // preview on input (no persist)
-  [tPageBg,tText,tMuted,tStroke,tCard,tSoft].forEach(el=>{
-    el.addEventListener("input", ()=>{
-      themeDraft = Object.assign({}, themeDraft, readInputs());
-      applyThemeToCSS(themeDraft);
-      setPresetStatus("");
+  function closeAll(except){
+    [bgPanel, themePanel].forEach(p=>{
+      if(!p) return;
+      if(p !== except) p.classList.remove("open");
     });
+    document.body.style.paddingBottom = "";
+  }
+
+  function placePanel(btn, panel){
+    if(!btn || !panel || !shell) return;
+    const shellRect = shell.getBoundingClientRect();
+    const r = btn.getBoundingClientRect();
+    const pad = 10;
+
+    let top = (r.bottom - shellRect.top) + pad;
+    let left = (r.right - shellRect.left) - panel.offsetWidth;
+
+    left = Math.max(pad, Math.min(shell.clientWidth - panel.offsetWidth - pad, left));
+    panel.style.left = left + "px";
+    panel.style.top  = top + "px";
+
+    requestAnimationFrame(()=>{
+      const panelRect = panel.getBoundingClientRect();
+      const need = Math.ceil(panelRect.bottom + 24);
+      document.body.style.paddingBottom = Math.max(24, need - window.innerHeight + 24) + "px";
+    });
+  }
+
+  function openPanel(btn, panel){
+    const isOpen = panel.classList.contains("open");
+    closeAll(null);
+    if(isOpen) return;
+    panel.classList.add("open");
+    requestAnimationFrame(()=>placePanel(btn, panel));
+  }
+
+  bgBtn?.addEventListener("click",(e)=>{ e.stopPropagation(); openPanel(bgBtn, bgPanel); });
+  themeBtn?.addEventListener("click",(e)=>{ e.stopPropagation(); openPanel(themeBtn, themePanel); });
+
+  window.addEventListener("resize", ()=>{
+    if(bgPanel?.classList.contains("open")) placePanel(bgBtn, bgPanel);
+    if(themePanel?.classList.contains("open")) placePanel(themeBtn, themePanel);
   });
 
-  applyBtn.addEventListener("click", ()=>{
-    themeDraft = Object.assign({}, themeDraft, readInputs());
-    saveJSON(THEME_KEY, themeDraft);
-    setPresetStatus("Theme applied.");
+  document.addEventListener("click",(e)=>{
+    const inside =
+      e.target.closest("#bgPanel") || e.target.closest("#bgBtn") ||
+      e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+    if(!inside) closeAll(null);
   });
-
-  resetBtn.addEventListener("click", ()=>{
-    themeDraft = Object.assign({}, DEFAULT_THEME);
-    syncInputs(themeDraft);
-    applyThemeToCSS(themeDraft);
-    saveJSON(THEME_KEY, themeDraft);
-    setPresetStatus("Theme reset.");
-  });
-
-  // expose for presets
-  window.__SG_THEME__ = {
-    DEFAULT_THEME,
-    getDraft: ()=>Object.assign({}, themeDraft),
-    setDraft: (t)=>{
-      themeDraft = Object.assign({}, DEFAULT_THEME, t || {});
-      syncInputs(themeDraft);
-      applyThemeToCSS(themeDraft);
-    },
-    persist: ()=>saveJSON(THEME_KEY, themeDraft)
-  };
 })();
 
-/* --------------------------
-   Background (draft + apply)
-   - preview always
-   - persists only on Apply/Reset
---------------------------- */
-(function initBg(){
+/* =========================
+   Background
+========================= */
+(function(){
+  const { hexToRgba, clamp, normHex, loadJSON, saveJSON, fileToDataUrl } = window.__sgUtils;
+
   const boardTintEl = document.getElementById("boardTint");
   const bgColor = document.getElementById("bgColor");
   const bgStrength = document.getElementById("bgStrength");
+  const bgImageA = document.getElementById("bgImageA");
   const bgImage = document.getElementById("bgImage");
   const bgRemove = document.getElementById("bgRemove");
-  const bgDot = document.getElementById("bgDot");
   const bgApply = document.getElementById("bgApply");
   const bgReset = document.getElementById("bgReset");
-  if(!boardTintEl || !bgColor || !bgStrength || !bgImage || !bgRemove || !bgDot || !bgApply || !bgReset) return;
+  const bgDot = document.getElementById("bgDot");
 
-  const DEFAULT_BG = { tint:"#efe7e1", strength:30, imageDataUrl:null };
+  if(!bgColor || !bgStrength || !bgImageA || !bgImage || !bgRemove || !bgApply || !bgReset || !boardTintEl) return;
+
+  const DEFAULT_BG = { tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null };
   let bgDraft = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
 
-  function applyBgToCSS(bg){
-    const tint = normHex(bg.tint, DEFAULT_BG.tint);
-    const strength = clamp(bg.strength, 0, 70) / 100;
+  function setStatus(msg){
+    const ui = document.getElementById("uiStatus");
+    if(ui) ui.textContent = msg || "";
+    const preset = document.getElementById("presetStatus");
+    if(preset && msg) preset.textContent = msg;
+  }
+
+  function applyBgDraft(){
+    const tint = normHex(bgDraft.tint, DEFAULT_BG.tint);
+    const baseStrength = clamp(bgDraft.strength, 0, 70) / 100;
+    const strength = bgDraft.imageDataUrl ? Math.max(0.04, baseStrength * 0.25) : baseStrength;
+    const imageA = clamp(bgDraft.imageA ?? DEFAULT_BG.imageA, 20, 100) / 100;
 
     document.documentElement.style.setProperty("--board-tint", tint);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
-    document.documentElement.style.setProperty("--board-image", bg.imageDataUrl ? `url("${bg.imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-image", bgDraft.imageDataUrl ? `url("${bgDraft.imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-image-a", String(imageA));
 
     boardTintEl.style.background = hexToRgba(tint, strength);
 
-    bgDot.style.background = tint;
-    bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+    }
   }
 
-  function syncInputs(bg){
-    bgColor.value = normHex(bg.tint, DEFAULT_BG.tint);
-    bgStrength.value = String(clamp(bg.strength, 0, 70));
-  }
+  bgColor.value = bgDraft.tint;
+  bgStrength.value = String(bgDraft.strength);
+  bgImageA.value = String(bgDraft.imageA ?? DEFAULT_BG.imageA);
+  applyBgDraft();
 
-  // initial
-  syncInputs(bgDraft);
-  applyBgToCSS(bgDraft);
-
-  bgColor.addEventListener("input", ()=>{
-    bgDraft.tint = bgColor.value;
-    applyBgToCSS(bgDraft);
-    setPresetStatus("");
-  });
-  bgStrength.addEventListener("input", ()=>{
-    bgDraft.strength = Number(bgStrength.value);
-    applyBgToCSS(bgDraft);
-    setPresetStatus("");
-  });
+  bgColor.addEventListener("input", ()=>{ bgDraft.tint = bgColor.value; applyBgDraft(); setStatus(""); });
+  bgStrength.addEventListener("input", ()=>{ bgDraft.strength = Number(bgStrength.value); applyBgDraft(); setStatus(""); });
+  bgImageA.addEventListener("input", ()=>{ bgDraft.imageA = Number(bgImageA.value); applyBgDraft(); setStatus(""); });
 
   bgImage.addEventListener("change", async ()=>{
     const file = bgImage.files && bgImage.files[0];
     if(!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    bgDraft.imageDataUrl = dataUrl;
-    applyBgToCSS(bgDraft);
-    setPresetStatus("");
+    bgDraft.imageDataUrl = await fileToDataUrl(file);
+    applyBgDraft();
+    setStatus("");
   });
 
   bgRemove.addEventListener("click", ()=>{
     bgDraft.imageDataUrl = null;
     bgImage.value = "";
-    applyBgToCSS(bgDraft);
-    setPresetStatus("");
+    applyBgDraft();
+    setStatus("");
   });
 
   bgApply.addEventListener("click", ()=>{
-    bgDraft.tint = bgColor.value;
-    bgDraft.strength = Number(bgStrength.value);
     saveJSON(BG_KEY, bgDraft);
-    setPresetStatus("Background applied.");
+    setStatus("Background applied.");
   });
 
   bgReset.addEventListener("click", ()=>{
+    window.__SG_APP__.remove(BG_KEY);
     bgDraft = Object.assign({}, DEFAULT_BG);
-    syncInputs(bgDraft);
-    applyBgToCSS(bgDraft);
-    saveJSON(BG_KEY, bgDraft);
-    setPresetStatus("Background reset.");
+    bgColor.value = DEFAULT_BG.tint;
+    bgStrength.value = String(DEFAULT_BG.strength);
+    bgImageA.value = String(DEFAULT_BG.imageA);
+    bgImage.value = "";
+    applyBgDraft();
+    setStatus("Background reset.");
   });
 
-  // expose for presets
   window.__SG_BG__ = {
-    DEFAULT_BG,
-    getDraft: ()=>Object.assign({}, bgDraft),
-    setDraft: (b)=>{
-      bgDraft = Object.assign({}, DEFAULT_BG, b || {});
-      syncInputs(bgDraft);
-      applyBgToCSS(bgDraft);
-    },
-    persist: ()=>saveJSON(BG_KEY, bgDraft)
+    getDraft: ()=>({ ...bgDraft }),
+    setDraft: (bg)=>{
+      bgDraft = Object.assign({}, DEFAULT_BG, bg || {});
+      bgColor.value = bgDraft.tint;
+      bgStrength.value = String(clamp(bgDraft.strength, 0, 70));
+      bgImageA.value = String(clamp(bgDraft.imageA ?? DEFAULT_BG.imageA, 20, 100));
+      bgImage.value = "";
+      applyBgDraft();
+    }
   };
 })();
 
-/* --------------------------
-   Presets (GLOBAL)
---------------------------- */
-function setPresetStatus(msg){
-  const el = document.getElementById("presetStatus");
-  if(el) el.textContent = msg || "";
-}
-function loadPresets(){
-  const list = loadJSON(PRESETS_KEY);
-  return Array.isArray(list) ? list : [];
-}
-function savePresets(list){
-  saveJSON(PRESETS_KEY, list);
-}
-function refreshPresetSelect(){
-  const sel = document.getElementById("presetSelect");
-  if(!sel) return;
-  const list = loadPresets();
-  const cur = sel.value;
+/* =========================
+   Theme + presets
+========================= */
+(function(){
+  const { clamp, normHex, loadJSON, saveJSON, copyText, uid } = window.__sgUtils;
+  const $ = (id)=>document.getElementById(id);
 
-  sel.innerHTML = `<option value="">—</option>`;
-  for(const p of list){
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.name || "Untitled";
-    sel.appendChild(opt);
-  }
-  if(cur) sel.value = cur;
-}
-function sanitizePresetList(parsed){
-  if(!Array.isArray(parsed)) return null;
-  return parsed.filter(Boolean).map(p => ({
-    id: String(p.id || uid()),
-    name: String(p.name || "Imported"),
-    theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
-    bg: (p.bg && typeof p.bg === "object") ? p.bg : {}
-  }));
-}
-function applyPresetToThisWidget(p){
-  const th = p.theme || {};
-  const bg = p.bg || {};
-
-  // accept either generic keys (bg/text/muted/line/panelAlpha) OR garden keys (pageBg/ink/stroke/cardBase/soft)
-  const themeFromGarden = {
-    pageBg: th.pageBg,
-    ink: th.ink,
-    muted: th.muted,
-    stroke: th.stroke,
-    cardBase: th.cardBase,
-    soft: th.soft
+  const DEFAULTS = {
+    bg:"#ffffff",
+    ink:"#2b2a28",
+    muted:"#6a665f",
+    stroke:"#e9e4dd",
+    card:"#ffffff",
+    cardA:84,
+    soft:"#f3efe9"
   };
 
-  const themeFromGeneric = {
-    pageBg: th.bg,
-    ink: th.text,
-    muted: th.muted,
-    stroke: th.line,
-    // reasonable mapping for generic presets
-    cardBase: th.bg || "#ffffff",
-    soft: "#f3efe9"
-  };
+  function setPresetStatus(msg){
+    const el = $("presetStatus");
+    if(el) el.textContent = msg || "";
+  }
 
-  if(window.__SG_THEME__){
-    window.__SG_THEME__.setDraft(Object.assign({}, themeFromGeneric, themeFromGarden));
-    window.__SG_THEME__.persist();   // applying preset should persist immediately
+  function applyTheme(t){
+    const theme = Object.assign({}, DEFAULTS, t || {});
+    const bg = normHex(theme.bg, DEFAULTS.bg);
+    const ink = normHex(theme.ink, DEFAULTS.ink);
+    const muted = normHex(theme.muted, DEFAULTS.muted);
+    const stroke = normHex(theme.stroke, DEFAULTS.stroke);
+    const card = normHex(theme.card, DEFAULTS.card);
+    const cardA = clamp(theme.cardA, 20, 95);
+    const soft = normHex(theme.soft, DEFAULTS.soft);
+
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.setProperty("--ink", ink);
+    document.documentElement.style.setProperty("--muted", muted);
+    document.documentElement.style.setProperty("--stroke", stroke);
+    document.documentElement.style.setProperty("--soft", soft);
+    document.documentElement.style.setProperty("--card", window.__sgUtils.hexToRgba(card, cardA / 100));
+    document.documentElement.style.setProperty("--theme-dot", ink);
+
+    const themeDot = $("themeDot");
+    if(themeDot){
+      themeDot.style.background = ink;
+      themeDot.style.boxShadow = `0 0 0 6px rgba(243,239,233,${Math.min(0.32, 0.10 + (cardA/300))})`;
+    }
   }
-  if(window.__SG_BG__){
-    window.__SG_BG__.setDraft(bg);
-    window.__SG_BG__.persist();
+
+  function syncInputs(t){
+    const x = Object.assign({}, DEFAULTS, t || {});
+    $("tBg").value = normHex(x.bg, DEFAULTS.bg);
+    $("tInk").value = normHex(x.ink, DEFAULTS.ink);
+    $("tMuted").value = normHex(x.muted, DEFAULTS.muted);
+    $("tStroke").value = normHex(x.stroke, DEFAULTS.stroke);
+    $("tCard").value = normHex(x.card, DEFAULTS.card);
+    $("tCardA").value = String(clamp(x.cardA,20,95));
+    $("tSoft").value = normHex(x.soft, DEFAULTS.soft);
   }
-  setPresetStatus("Preset applied.");
-}
-(function initPresetsUI(){
-  const nameEl = document.getElementById("presetName");
-  const saveBtn = document.getElementById("presetSave");
-  const sel = document.getElementById("presetSelect");
-  const applyBtn = document.getElementById("presetApply");
-  const delBtn = document.getElementById("presetDelete");
-  const copyBtn = document.getElementById("presetCopy");
-  const importTa = document.getElementById("presetImport");
-  const importBtn = document.getElementById("presetImportBtn");
-  if(!nameEl || !saveBtn || !sel || !applyBtn || !delBtn || !copyBtn || !importTa || !importBtn) return;
+
+  function readInputs(){
+    return {
+      bg: $("tBg").value,
+      ink: $("tInk").value,
+      muted: $("tMuted").value,
+      stroke: $("tStroke").value,
+      card: $("tCard").value,
+      cardA: Number($("tCardA").value),
+      soft: $("tSoft").value
+    };
+  }
+
+  let themeDraft = Object.assign({}, DEFAULTS, loadJSON(THEME_KEY) || {});
+  applyTheme(themeDraft);
+  syncInputs(themeDraft);
+
+  ["tBg","tInk","tMuted","tStroke","tCard","tCardA","tSoft"].forEach(id=>{
+    const el = $(id);
+    el?.addEventListener("input", ()=>{
+      themeDraft = Object.assign({}, themeDraft, readInputs());
+      applyTheme(themeDraft);
+      setPresetStatus("");
+    });
+  });
+
+  $("tApply")?.addEventListener("click", ()=>{
+    themeDraft = Object.assign({}, themeDraft, readInputs());
+    saveJSON(THEME_KEY, themeDraft);
+    setPresetStatus("Theme applied.");
+  });
+
+  $("tReset")?.addEventListener("click", ()=>{
+    window.__SG_APP__.remove(THEME_KEY);
+    themeDraft = Object.assign({}, DEFAULTS);
+    applyTheme(themeDraft);
+    syncInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+    setPresetStatus("Theme reset.");
+  });
+
+  function loadPresets(){
+    const list = loadJSON(PRESETS_KEY);
+    return Array.isArray(list) ? list : [];
+  }
+  function savePresets(list){ saveJSON(PRESETS_KEY, list); }
+
+  function refreshPresetSelect(){
+    const presetSelect = $("presetSelect");
+    const list = loadPresets();
+    const cur = presetSelect.value;
+    presetSelect.innerHTML = `<option value="">—</option>`;
+    for(const p of list){
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled";
+      presetSelect.appendChild(opt);
+    }
+    if(cur) presetSelect.value = cur;
+  }
+
+  function sanitizePresetList(parsed){
+    if(!Array.isArray(parsed)) return null;
+    return parsed.filter(Boolean).map(p => ({
+      id: String(p.id || uid()),
+      name: String(p.name || "Imported"),
+      theme: (p.theme && typeof p.theme === "object") ? p.theme : {},
+      bg: (p.bg && typeof p.bg === "object") ? p.bg : {}
+    }));
+  }
+
+  function applyPreset(p){
+    const theme = Object.assign({}, DEFAULTS, p.theme || {});
+    themeDraft = theme;
+    applyTheme(themeDraft);
+    syncInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+
+    const bg = Object.assign({ tint:"#efe7e1", strength:12, imageA:92, imageDataUrl:null }, p.bg || {});
+    if(window.__SG_BG__){
+      window.__SG_BG__.setDraft(bg);
+      saveJSON(BG_KEY, bg);
+    }
+
+    setPresetStatus("Preset applied.");
+  }
 
   refreshPresetSelect();
 
-  saveBtn.addEventListener("click", ()=>{
-    const name = (nameEl.value || "").trim();
+  $("presetSave")?.addEventListener("click", ()=>{
+    const presetName = $("presetName");
+    const name = (presetName.value || "").trim();
     if(!name){ setPresetStatus("Type a preset name first."); return; }
 
-    const theme = window.__SG_THEME__ ? window.__SG_THEME__.getDraft() : {};
-    const bg = window.__SG_BG__ ? window.__SG_BG__.getDraft() : {};
+    const entry = {
+      id: uid(),
+      name,
+      theme: { ...themeDraft },
+      bg: { ...(window.__SG_BG__ ? window.__SG_BG__.getDraft() : {}) }
+    };
 
     const list = loadPresets();
-    const entry = { id: uid(), name, theme: { ...theme }, bg: { ...bg } };
     list.unshift(entry);
     savePresets(list);
 
-    nameEl.value = "";
+    presetName.value = "";
     refreshPresetSelect();
-    sel.value = entry.id;
+    $("presetSelect").value = entry.id;
     setPresetStatus("Preset saved.");
   });
 
-  applyBtn.addEventListener("click", ()=>{
-    const id = sel.value;
+  $("presetApply")?.addEventListener("click", ()=>{
+    const id = $("presetSelect").value || "";
     if(!id){ setPresetStatus("Choose a preset first."); return; }
     const p = loadPresets().find(x=>x.id===id);
     if(!p){ setPresetStatus("Preset not found."); return; }
-    applyPresetToThisWidget(p);
+    applyPreset(p);
   });
 
-  delBtn.addEventListener("click", ()=>{
-    const id = sel.value;
+  $("presetDelete")?.addEventListener("click", ()=>{
+    const id = $("presetSelect").value || "";
     if(!id){ setPresetStatus("Choose a preset first."); return; }
     let list = loadPresets();
     const before = list.length;
@@ -989,24 +1050,24 @@ function applyPresetToThisWidget(p){
     if(list.length===before){ setPresetStatus("Preset not found."); return; }
     savePresets(list);
     refreshPresetSelect();
-    sel.value = "";
+    $("presetSelect").value = "";
     setPresetStatus("Preset deleted.");
   });
 
-  copyBtn.addEventListener("click", async ()=>{
+  $("presetCopy")?.addEventListener("click", async ()=>{
     const payload = JSON.stringify(loadPresets(), null, 2);
     const ok = await copyText(payload);
     if(ok) setPresetStatus("Preset JSON copied.");
     else{
-      importTa.value = payload;
-      importTa.focus();
-      importTa.select();
+      $("presetImport").value = payload;
+      $("presetImport").focus();
+      $("presetImport").select();
       setPresetStatus("Could not copy automatically — JSON placed in the box to copy manually.");
     }
   });
 
-  importBtn.addEventListener("click", ()=>{
-    const raw = (importTa.value || "").trim();
+  $("presetImportBtn")?.addEventListener("click", ()=>{
+    const raw = ($("presetImport").value || "").trim();
     if(!raw){ setPresetStatus("Paste preset JSON first."); return; }
     try{
       const parsed = JSON.parse(raw);
@@ -1021,9 +1082,9 @@ function applyPresetToThisWidget(p){
   });
 })();
 
-/* --------------------------
-   Savings Garden app (instance-safe keys)
---------------------------- */
+/* =========================
+   Savings Garden app
+========================= */
 (function(){
   const $ = (id)=>document.getElementById(id);
 
@@ -1039,9 +1100,9 @@ function applyPresetToThisWidget(p){
 
   function getRegionFromLocale(locale){
     try{
-      if (typeof Intl !== "undefined" && Intl.Locale){
+      if(typeof Intl !== "undefined" && Intl.Locale){
         const loc = new Intl.Locale(locale);
-        if (loc.region) return loc.region.toUpperCase();
+        if(loc.region) return loc.region.toUpperCase();
       }
     }catch(e){}
     const norm = String(locale || "").replace("_","-");
@@ -1056,10 +1117,10 @@ function applyPresetToThisWidget(p){
   }
 
   function money(n){
-    const v = Number(n||0);
+    const v = Number(n || 0);
     if(!isFinite(v)) return "0";
     const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || undefined;
-    const pref = window.__SG__.get(CUR_KEY) || "AUTO";
+    const pref = window.__SG_APP__.get(CUR_KEY) || "AUTO";
     const cur = (pref === "AUTO") ? autoCurrency() : pref;
 
     try{
@@ -1075,12 +1136,12 @@ function applyPresetToThisWidget(p){
   const PLANTS = ["🌱","🌿","🍃","🌸","🌼","🌷","🌳","🪴"];
 
   function defaultState(){
-    return { total: 0, history: [] };
+    return { total:0, history:[] };
   }
 
   function load(){
     try{
-      const raw = window.__SG__.get(KEY);
+      const raw = window.__SG_APP__.get(KEY);
       return raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState();
     }catch(e){ return defaultState(); }
   }
@@ -1088,16 +1149,16 @@ function applyPresetToThisWidget(p){
   let state = load();
 
   function save(){
-    try{ window.__SG__.set(KEY, JSON.stringify(state)); }catch{}
+    try{ window.__SG_APP__.set(KEY, JSON.stringify(state)); }catch{}
   }
 
   function getMilestone(){
-    const v = Number(window.__SG__.get(MS_KEY) || $("milestone").value || 50);
-    return (isFinite(v) && v>0) ? v : 50;
+    const v = Number(window.__SG_APP__.get(MS_KEY) || $("milestone").value || 50);
+    return (isFinite(v) && v > 0) ? v : 50;
   }
 
   function setMilestone(v){
-    window.__SG__.set(MS_KEY, String(v));
+    window.__SG_APP__.set(MS_KEY, String(v));
   }
 
   function render(){
@@ -1122,22 +1183,23 @@ function applyPresetToThisWidget(p){
       garden.innerHTML = `<span class="tiny">Add savings to grow your first 🌱</span>`;
       return;
     }
+
     const shown = Math.min(32, plants);
-    for(let i=0;i<shown;i++){
-      const s=document.createElement("span");
+    for(let i=0; i<shown; i++){
+      const s = document.createElement("span");
       s.textContent = PLANTS[i % PLANTS.length];
       garden.appendChild(s);
     }
     if(plants > shown){
-      const more=document.createElement("span");
-      more.className="tiny";
+      const more = document.createElement("span");
+      more.className = "tiny";
       more.textContent = `+${plants - shown} more`;
       garden.appendChild(more);
     }
   }
 
   function init(){
-    const msSaved = window.__SG__.get(MS_KEY);
+    const msSaved = window.__SG_APP__.get(MS_KEY);
     if(msSaved) $("milestone").value = msSaved;
 
     $("milestone").addEventListener("change", ()=>{
@@ -1145,17 +1207,17 @@ function applyPresetToThisWidget(p){
       render();
     });
 
-    const curSaved = window.__SG__.get(CUR_KEY) || "AUTO";
+    const curSaved = window.__SG_APP__.get(CUR_KEY) || "AUTO";
     $("currency").value = curSaved;
     $("currency").addEventListener("change", ()=>{
-      window.__SG__.set(CUR_KEY, $("currency").value);
+      window.__SG_APP__.set(CUR_KEY, $("currency").value);
       render();
     });
 
     $("savBtn").addEventListener("click", ()=>{
       const v = Number($("savAdd").value);
       if(!isFinite(v) || v <= 0) return;
-      state.total = Number(state.total||0) + v;
+      state.total = Number(state.total || 0) + v;
       state.history.unshift(v);
       save();
       $("savAdd").value = "";
@@ -1165,7 +1227,7 @@ function applyPresetToThisWidget(p){
     $("savUndo").addEventListener("click", ()=>{
       const last = state.history.shift();
       if(!last) return;
-      state.total = Math.max(0, Number(state.total||0) - last);
+      state.total = Math.max(0, Number(state.total || 0) - last);
       save();
       render();
     });

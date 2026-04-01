@@ -116,6 +116,17 @@
       transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
       user-select:none;
       white-space:nowrap;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
+
+    .btn svg{
+      width:14px;
+      height:14px;
+      display:block;
+      flex:0 0 auto;
     }
 
     .btn:hover{
@@ -798,8 +809,20 @@
           </div>
         </div>
 
-        <button id="prevWeek" class="btn" type="button">◀ PREV</button>
-        <button id="nextWeek" class="btn" type="button">NEXT ▶</button>
+        <button id="prevWeek" class="btn" type="button" aria-label="Previous week">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <span>Prev</span>
+        </button>
+
+        <button id="nextWeek" class="btn" type="button" aria-label="Next week">
+          <span>Next</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+
         <button id="clearWeek" class="btn primary" type="button">CLEAR WEEK</button>
       </div>
     </div>

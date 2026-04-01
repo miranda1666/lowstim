@@ -2,11 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  />
   <title>Workout Tracker + Planner</title>
   <style>
     :root{
-      --bg:#ffffff;
+      --page-bg:#ffffff;
+      --widget-bg:#ffffff;
       --cream:#e6d8cc;
       --stone:#c9beb6;
       --text:#1f1f1f;
@@ -29,21 +33,41 @@
 
       --dayMin: 160px;
 
-      --board-tint: #ffffff;
+      --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
+      --board-blur: 0px;
+
+      --card-bg: rgba(255,255,255,0.88);
+      --field-bg: #ffffff;
     }
 
     *{ box-sizing:border-box; }
+
+    html, body{
+      width:100%;
+      min-height:100%;
+    }
+
     body{
       margin:0;
-      background:var(--bg);
+      background:var(--page-bg);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       padding:26px;
+      -webkit-text-size-adjust:100%;
+    }
+
+    button, input, select, textarea{
+      font: inherit;
+    }
+
+    input, textarea, select{
+      color: var(--text);
     }
 
     .wrap{ max-width:1120px; margin:0 auto; }
+
     .top{
       display:flex;
       align-items:flex-start;
@@ -52,6 +76,7 @@
       margin-bottom:14px;
       flex-wrap:wrap;
     }
+
     .kicker{
       font-size:var(--fsKicker);
       letter-spacing:.12em;
@@ -59,7 +84,22 @@
       color:var(--muted);
       padding-top:4px;
     }
-    .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .btn,
+    .mini-btn,
+    .bg-btn,
+    .chip,
+    .toggle{
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     .btn{
       appearance:none;
@@ -76,12 +116,19 @@
       transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
       user-select:none;
       white-space:nowrap;
-      -webkit-tap-highlight-color: transparent;
     }
-    .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
-    .btn.primary{ background:var(--cream); }
+
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 18px rgba(0,0,0,0.08);
+    }
+
+    .btn.primary{
+      background:var(--cream);
+    }
 
     .popover{ position:relative; }
+
     .icon-pill{
       display:inline-flex;
       align-items:center;
@@ -94,6 +141,7 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     .bg-btn{
       width:34px;
       height:34px;
@@ -103,11 +151,15 @@
       cursor:pointer;
       display:grid;
       place-items:center;
-      -webkit-tap-highlight-color: transparent;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       transition: transform 140ms ease, box-shadow 140ms ease;
     }
-    .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
+
+    .bg-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 14px 22px rgba(0,0,0,0.10);
+    }
+
     .bg-btn:active{ transform: translateY(0px); }
 
     .bg-dot{
@@ -119,7 +171,6 @@
       box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
     }
 
-    /* NEW: theme/settings button (palette icon) */
     .theme-dot{
       width:14px;
       height:14px;
@@ -133,17 +184,20 @@
       position:absolute;
       top: 46px;
       right: 0;
-      width: 270px;
+      width: 320px;
       border-radius: 16px;
       border: 1px solid var(--borderSoft);
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.94);
       box-shadow: 0 18px 40px rgba(0,0,0,0.10);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       padding: 12px;
       display:none;
       z-index: 80;
+      max-height: min(76vh, 680px);
+      overflow: auto;
     }
+
     .panel.open{ display:block; }
 
     .panel h2{
@@ -162,32 +216,40 @@
       gap:10px;
       padding: 8px 0;
     }
+
     .row label{
       font-size: 12px;
       color: var(--muted);
     }
+
     input[type="color"]{
-      width: 36px;
-      height: 28px;
+      width: 42px;
+      height: 32px;
       border: 1px solid var(--borderSoft);
       border-radius: 10px;
       padding: 0;
       background: transparent;
       cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      flex: 0 0 auto;
     }
-    input[type="range"]{ width: 150px; }
+
+    input[type="range"]{
+      width: 150px;
+      max-width: 100%;
+    }
+
     .file{
       width:100%;
       font-size: 12px;
       color: rgba(31,31,31,0.75);
     }
+
     .mini-btn{
       width: 100%;
       border: 1px solid var(--borderSoft);
       background: rgba(255,255,255,0.95);
       border-radius: 12px;
-      padding: 9px 10px;
+      padding: 10px 12px;
       cursor: pointer;
       font-weight: 700;
       letter-spacing: .06em;
@@ -195,14 +257,17 @@
       font-size: 11px;
       color: rgba(31,31,31,0.80);
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
+
     .mini-btn:active{ transform: translateY(1px); }
+
     .divider{
       height: 1px;
       background: rgba(201,190,182,0.35);
       margin: 8px 0;
     }
+
     .hintSmall{
       margin-top: 8px;
       font-size: 11px;
@@ -210,7 +275,27 @@
       line-height: 1.35;
     }
 
-    /* Widget board + content */
+    .presetName, .presetSelect{
+      width: 100%;
+      border: 1px solid var(--borderSoft);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.95);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .presetSelect{ min-height: 40px; }
+
+    .status{
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+      min-height: 14px;
+    }
+
     .widgetBoard{
       position: relative;
       border-radius: var(--rOuter);
@@ -218,8 +303,9 @@
       border: 1px solid var(--borderSoft);
       box-shadow: var(--shadow);
       padding: 14px;
-      background: transparent;
+      background: var(--widget-bg);
     }
+
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -228,19 +314,21 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      filter: saturate(0.95);
-      transform: scale(1.02);
+      filter: blur(var(--board-blur)) saturate(1);
+      transform: scale(1.03);
       z-index:0;
+      will-change: transform, filter;
     }
+
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
-      background:
-      background-blend-mode: screen;
       pointer-events: none;
       z-index:0;
+      background: rgba(255,255,255,0.30);
     }
+
     .boardTint{
       position:absolute;
       inset:0;
@@ -257,15 +345,16 @@
     }
 
     .card{
-      background: rgba(255,255,255,0.88);
+      background: var(--card-bg);
       border:1px solid var(--border);
       border-radius:var(--rOuter);
-      box-shadow: none; /* board handles main shadow */
+      box-shadow: none;
       padding:14px;
       min-width:0;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     .cardHead{
       display:flex;
       align-items:flex-end;
@@ -273,6 +362,7 @@
       gap:12px;
       margin-bottom:12px;
     }
+
     .cardTitle{
       font-size:14px;
       letter-spacing:.14em;
@@ -280,6 +370,7 @@
       color:var(--muted);
       margin:0;
     }
+
     .meta{
       font-size:12px;
       color:var(--muted);
@@ -291,7 +382,7 @@
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
       padding:12px;
-      background:#fff;
+      background: var(--field-bg);
       overflow:auto;
       -webkit-overflow-scrolling:touch;
     }
@@ -310,7 +401,7 @@
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
       padding:12px;
-      background: linear-gradient(180deg, var(--creamSoft), rgba(255,255,255,0));
+      background: var(--creamSoft);
       min-height:360px;
       display:flex;
       flex-direction:column;
@@ -323,19 +414,21 @@
       justify-content:space-between;
       gap:8px;
     }
+
     .dow{
       font-size:12px;
       letter-spacing:.12em;
       text-transform:uppercase;
       color:var(--muted);
     }
+
     .datePill{
       font-size:11px;
       color:var(--muted);
       border:1px solid var(--borderSoft);
       border-radius:var(--rPill);
       padding:5px 8px;
-      background:#fff;
+      background: var(--field-bg);
       line-height:1;
       user-select:none;
       white-space:nowrap;
@@ -352,14 +445,15 @@
     .input{
       width:100%;
       border:1px solid var(--border);
-      background:#fff;
+      background: var(--field-bg);
       border-radius:12px;
       padding:9px 10px;
       font-size:var(--fsBody);
       outline:none;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      height:36px;
+      min-height:36px;
     }
+
     .input:focus{
       border-color: rgba(201,190,182,1);
       box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
@@ -368,14 +462,15 @@
     .planBox{
       border:1px solid var(--border);
       border-radius:12px;
-      background:#fff;
+      background: var(--field-bg);
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       padding:8px 9px;
       display:flex;
       gap:8px;
       align-items:center;
-      height:64px;
+      min-height:64px;
     }
+
     .planNums{
       display:flex;
       flex-direction:column;
@@ -387,12 +482,15 @@
       padding-left:2px;
       min-width:18px;
     }
+
     .planText{
       border:0;
       outline:none;
       background:transparent;
       width:100%;
       font-size:var(--fsBody);
+      color: var(--text);
+      min-height:30px;
     }
 
     .stack{
@@ -400,10 +498,11 @@
       flex-direction:column;
       gap:8px;
     }
+
     .chip{
       appearance:none;
       border:1px solid var(--border);
-      background:#fff;
+      background: var(--field-bg);
       border-radius:var(--rPill);
       padding:9px 10px;
       font-size:12px;
@@ -412,10 +511,15 @@
       transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
       user-select:none;
       text-align:left;
-      height:34px;
-      -webkit-tap-highlight-color: transparent;
+      min-height:34px;
+      color: var(--text);
     }
-    .chip:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+
+    .chip:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 18px rgba(0,0,0,0.08);
+    }
+
     .chip[data-active="true"]{
       background:var(--cream);
       box-shadow: 0 10px 18px rgba(0,0,0,0.08);
@@ -430,50 +534,60 @@
       gap:10px;
       padding-top:4px;
     }
+
     .doneLabel{
       font-size:12px;
       color:var(--muted);
       user-select:none;
     }
+
     .toggle{
-      width:40px; height:24px;
+      width:40px;
+      height:24px;
       border-radius:var(--rPill);
       border:1px solid var(--border);
-      background:#fff;
+      background: var(--field-bg);
       position:relative;
       cursor:pointer;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       transition: background 160ms ease;
       flex:0 0 auto;
-      -webkit-tap-highlight-color: transparent;
     }
+
     .toggle::after{
       content:"";
       position:absolute;
-      top:2px; left:2px;
-      width:20px; height:20px;
+      top:2px;
+      left:2px;
+      width:20px;
+      height:20px;
       border-radius:var(--rPill);
       background:var(--stone);
       transition: transform 160ms ease, background 160ms ease;
     }
-    .toggle[data-on="true"]{ background: rgba(230,216,204,0.65); }
-    .toggle[data-on="true"]::after{
-      transform: translateX(16px);
-      background:#b8aea7;
+
+    .toggle[data-on="true"]{
+      background: rgba(230,216,204,0.65);
     }
 
-    /* SUMMARY (kept simple) */
+    .toggle[data-on="true"]::after{
+      transform: translateX(16px);
+      background: var(--stone);
+    }
+
     .summary{
       display:flex;
       flex-direction:column;
       gap:12px;
     }
+
     .box{
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
       padding:12px;
-      background: linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0));
+      background: var(--creamSoft);
     }
+
     .boxTop{
       display:flex;
       align-items:flex-start;
@@ -481,17 +595,20 @@
       gap:10px;
       margin-bottom:8px;
     }
+
     .boxLabel{
       font-size:12px;
       letter-spacing:.14em;
       text-transform:uppercase;
       color:var(--muted);
     }
+
     .big{
       font-size:26px;
       font-weight:740;
       letter-spacing:-0.02em;
     }
+
     .bar{
       height:10px;
       border-radius:var(--rPill);
@@ -500,18 +617,21 @@
       overflow:hidden;
       margin-bottom:8px;
     }
+
     .bar > div{
       height:100%;
       width:0%;
       background: var(--stone);
       transition: width 220ms ease;
     }
+
     .hint{
       font-size:12px;
       color:#7a716a;
       line-height:1.4;
       margin:0;
     }
+
     .bullets{
       margin:8px 0 0 0;
       padding-left:18px;
@@ -519,19 +639,21 @@
       font-size:13px;
       line-height:1.45;
     }
+
     .todayRow{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
       gap:10px;
     }
+
     .todayPill{
       font-size:11px;
       color:var(--muted);
       border:1px solid var(--borderSoft);
       border-radius:var(--rPill);
       padding:5px 8px;
-      background:#fff;
+      background: var(--field-bg);
       line-height:1;
       user-select:none;
       white-space:nowrap;
@@ -540,25 +662,60 @@
     @media (max-width: 1040px){
       .grid{ grid-template-columns: 1fr; }
     }
+
+    @media (max-width: 720px){
+      body{ padding:14px; }
+      .top{ gap:12px; }
+      .btns{ width:100%; }
+      .panel{
+        position: fixed;
+        top: 14px;
+        left: 14px;
+        right: 14px;
+        width: auto;
+        max-height: calc(100dvh - 28px);
+        z-index: 999;
+      }
+      .widgetBoard{ padding:10px; }
+      .card{ padding:10px; }
+      .planFrame{ padding:10px; }
+      .days{ gap:8px; }
+      .day{
+        padding:10px;
+        min-height:320px;
+      }
+      .input,
+      .planText,
+      .presetName,
+      .presetSelect{
+        font-size:16px;
+      }
+      input[type="range"]{
+        width: 120px;
+      }
+    }
   </style>
 </head>
-
 <body>
   <main class="wrap">
     <div class="top">
       <div class="kicker">Workout Tracker + Planner</div>
 
       <div class="btns">
-        <!-- Background settings -->
         <div class="popover" id="bgPopover">
           <div class="icon-pill">
             <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
-              <span class="bg-dot" aria-hidden="true"></span>
+              <span class="bg-dot" id="bgDot" aria-hidden="true"></span>
             </button>
           </div>
 
           <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
             <h2>Background</h2>
+
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+            <div class="divider"></div>
 
             <div class="row">
               <label for="bgColor">Tint</label>
@@ -568,6 +725,11 @@
             <div class="row">
               <label for="bgStrength">Tint strength</label>
               <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="row">
+              <label for="bgBlur">Image blur</label>
+              <input id="bgBlur" type="range" min="0" max="20" value="0" />
             </div>
 
             <div class="divider"></div>
@@ -583,7 +745,6 @@
           </div>
         </div>
 
-        <!-- NEW: Theme settings (collapsible like background) -->
         <div class="popover" id="themePopover">
           <div class="icon-pill">
             <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -594,65 +755,46 @@
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
             <h2>Theme</h2>
 
-            <div class="row">
-              <label for="tWidgetBg">Widget bg</label>
-              <input id="tWidgetBg" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tCardBg">Card bg</label>
-              <input id="tCardBg" type="color" value="#ffffff" />
-            </div>
-
-            <div class="row">
-              <label for="tFieldBg">Fields bg</label>
-              <input id="tFieldBg" type="color" value="#ffffff" />
-            </div>
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="resetTheme" type="button" style="margin-top:8px;">Reset theme</button>
 
             <div class="divider"></div>
 
-            <div class="row">
-              <label for="tText">Text</label>
-              <input id="tText" type="color" value="#1f1f1f" />
-            </div>
-
-            <div class="row">
-              <label for="tMuted">Muted text</label>
-              <input id="tMuted" type="color" value="#6b625c" />
-            </div>
+            <div class="row"><label for="tWidgetBg">Widget bg</label><input id="tWidgetBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tCardBg">Card bg</label><input id="tCardBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tFieldBg">Fields bg</label><input id="tFieldBg" type="color" value="#ffffff" /></div>
 
             <div class="divider"></div>
 
-            <div class="row">
-              <label for="tBorder">Borders</label>
-              <input id="tBorder" type="color" value="#c9beb6" />
-            </div>
-
-            <div class="row">
-              <label for="tStone">Accent</label>
-              <input id="tStone" type="color" value="#c9beb6" />
-            </div>
+            <div class="row"><label for="tText">Text</label><input id="tText" type="color" value="#1f1f1f" /></div>
+            <div class="row"><label for="tMuted">Muted text</label><input id="tMuted" type="color" value="#6b625c" /></div>
 
             <div class="divider"></div>
 
-            <div class="row">
-              <label for="tCream">Highlight</label>
-              <input id="tCream" type="color" value="#e6d8cc" />
-            </div>
-
-            <div class="row">
-              <label for="tCreamSoft">Highlight soft</label>
-              <input id="tCreamSoft" type="color" value="#e6d8cc" />
-            </div>
+            <div class="row"><label for="tBorder">Borders</label><input id="tBorder" type="color" value="#c9beb6" /></div>
+            <div class="row"><label for="tStone">Accent</label><input id="tStone" type="color" value="#c9beb6" /></div>
 
             <div class="divider"></div>
 
-            <div class="row">
-              <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
-            </div>
+            <div class="row"><label for="tCream">Highlight</label><input id="tCream" type="color" value="#e6d8cc" /></div>
+            <div class="row"><label for="tCreamSoft">Panels tint</label><input id="tCreamSoft" type="color" value="#e6d8cc" /></div>
 
-            <div class="hintSmall">
-            </div>
+            <div class="divider"></div>
+
+            <h2 style="margin-top:4px;">Presets</h2>
+
+            <input class="presetName" id="presetName" placeholder="Preset name">
+
+            <button class="mini-btn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+            <div class="divider"></div>
+
+            <select class="presetSelect" id="presetSelect"></select>
+
+            <button class="mini-btn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
           </div>
         </div>
 
@@ -666,7 +808,6 @@
       <div class="boardTint" id="boardTint"></div>
 
       <div class="grid">
-        <!-- WEEKLY PLAN -->
         <section class="card" aria-label="Weekly plan">
           <div class="cardHead">
             <h2 class="cardTitle">Weekly plan</h2>
@@ -678,7 +819,6 @@
           </div>
         </section>
 
-        <!-- SUMMARY -->
         <aside class="card" aria-label="Summary">
           <div class="cardHead">
             <h2 class="cardTitle">Summary</h2>
@@ -729,9 +869,193 @@
   </main>
 
   <script>
-    window.addEventListener("DOMContentLoaded", () => {
+    (function(){
+      "use strict";
+
       const MS_DAY = 86400000;
       const dowNames = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+
+      function canUseLocalStorage(){
+        try{
+          const k = "__t__" + Math.random().toString(16).slice(2);
+          localStorage.setItem(k, "1");
+          localStorage.removeItem(k);
+          return true;
+        }catch{
+          return false;
+        }
+      }
+
+      const hasLS = canUseLocalStorage();
+      const mem = Object.create(null);
+
+      function lsGet(key){
+        try{
+          return hasLS ? localStorage.getItem(key) : (mem[key] ?? null);
+        }catch{
+          return mem[key] ?? null;
+        }
+      }
+
+      function lsSet(key, value){
+        try{
+          if(hasLS) localStorage.setItem(key, value);
+          else mem[key] = String(value);
+        }catch{
+          mem[key] = String(value);
+        }
+      }
+
+      function lsRemove(key){
+        try{
+          if(hasLS) localStorage.removeItem(key);
+          else delete mem[key];
+        }catch{
+          delete mem[key];
+        }
+      }
+
+      function loadJSON(key, fallback = null){
+        try{
+          const raw = lsGet(key);
+          return raw ? JSON.parse(raw) : fallback;
+        }catch{
+          return fallback;
+        }
+      }
+
+      function saveJSON(key, value){
+        lsSet(key, JSON.stringify(value));
+      }
+
+      function sanitizeId(value){
+        return String(value || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "default";
+      }
+
+      function getWidgetId(){
+        try{
+          const params = new URLSearchParams(location.search);
+          const fromQuery = sanitizeId(params.get("wid"));
+          if(fromQuery && fromQuery !== "default") return fromQuery;
+        }catch{}
+
+        const fromPath = sanitizeId(location.pathname.replace(/\.[^/.]+$/, ""));
+        return fromPath || "default";
+      }
+
+      const WID = getWidgetId();
+      const BC_NAME = "workout-planner-sync";
+      const channel = ("BroadcastChannel" in window) ? new BroadcastChannel(BC_NAME) : null;
+
+      function broadcast(type, payload){
+        try{
+          if(channel) channel.postMessage({ type, payload, wid: WID, ts: Date.now() });
+        }catch{}
+      }
+
+      const DB_NAME = "workout_tracker_planner_db_v3";
+      const DB_STORE = "kv";
+      let dbPromise = null;
+
+      function openDB(){
+        if(dbPromise) return dbPromise;
+
+        dbPromise = new Promise((resolve) => {
+          if(!("indexedDB" in window)){
+            resolve(null);
+            return;
+          }
+
+          const request = indexedDB.open(DB_NAME, 1);
+
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if(!db.objectStoreNames.contains(DB_STORE)){
+              db.createObjectStore(DB_STORE);
+            }
+          };
+
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => resolve(null);
+        });
+
+        return dbPromise;
+      }
+
+      async function idbGet(key){
+        const db = await openDB();
+        if(!db) return null;
+
+        return new Promise((resolve) => {
+          try{
+            const tx = db.transaction(DB_STORE, "readonly");
+            const store = tx.objectStore(DB_STORE);
+            const req = store.get(key);
+            req.onsuccess = () => resolve(req.result ?? null);
+            req.onerror = () => resolve(null);
+          }catch{
+            resolve(null);
+          }
+        });
+      }
+
+      async function idbSet(key, value){
+        const db = await openDB();
+        if(!db) return false;
+
+        return new Promise((resolve) => {
+          try{
+            const tx = db.transaction(DB_STORE, "readwrite");
+            const store = tx.objectStore(DB_STORE);
+            const req = store.put(value, key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+          }catch{
+            resolve(false);
+          }
+        });
+      }
+
+      async function idbRemove(key){
+        const db = await openDB();
+        if(!db) return false;
+
+        return new Promise((resolve) => {
+          try{
+            const tx = db.transaction(DB_STORE, "readwrite");
+            const store = tx.objectStore(DB_STORE);
+            const req = store.delete(key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+          }catch{
+            resolve(false);
+          }
+        });
+      }
+
+      function clamp(n, min, max){
+        const x = Number(n);
+        if(!Number.isFinite(x)) return min;
+        return Math.max(min, Math.min(max, x));
+      }
+
+      function normHex(hex, fallback){
+        const s = String(hex || "").trim();
+        return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+      }
+
+      function hexToRgba(hex, alpha){
+        const h = normHex(hex, "#ffffff").replace("#", "");
+        const num = parseInt(h, 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
 
       function startOfWeek(date){
         const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -741,108 +1065,49 @@
         d.setHours(0,0,0,0);
         return d;
       }
+
       function isoKey(d){
         const y = d.getFullYear();
-        const m = String(d.getMonth()+1).padStart(2,"0");
-        const day = String(d.getDate()).padStart(2,"0");
+        const m = String(d.getMonth()+1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
         return `${y}-${m}-${day}`;
       }
+
       function fmtPill(d){
         const m = d.toLocaleString(undefined, { month:"short" });
         return `${d.getDate()} ${m}`;
       }
+
       function fmtRange(ws){
-        const end = new Date(ws.getTime() + 6*MS_DAY);
+        const end = new Date(ws.getTime() + 6 * MS_DAY);
         return `${ws.getDate()} ${ws.toLocaleString(undefined,{month:"short"})} — ${end.getDate()} ${end.toLocaleString(undefined,{month:"short"})} · ${ws.getFullYear()}`;
       }
 
-      /* ---------------------------
-         BACKGROUND SETTINGS (existing)
-      ---------------------------- */
-      const BG_KEY = "wk_tracker_bg_v1";
-
-      const bgBtn = document.getElementById("bgBtn");
-      const bgPanel = document.getElementById("bgPanel");
-      const bgColor = document.getElementById("bgColor");
-      const bgStrength = document.getElementById("bgStrength");
-      const bgImage = document.getElementById("bgImage");
-      const removeImage = document.getElementById("removeImage");
-      const boardTintEl = document.getElementById("boardTint");
-      const bgDot = document.querySelector(".bg-dot");
-
-      function loadBg(){
-        try{
-          const raw = localStorage.getItem(BG_KEY);
-          if(raw) return JSON.parse(raw) || null;
-        }catch{}
-        return null;
-      }
-      function saveBg(bg){
-        try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-      }
-      function hexToRgba(hex, a){
-        const h = String(hex || "").replace("#","").trim();
-        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-        const num = parseInt(full || "efe7e1", 16);
-        const r = (num >> 16) & 255;
-        const g = (num >> 8) & 255;
-        const b = num & 255;
-        return `rgba(${r},${g},${b},${a})`;
-      }
-      function setBoardImage(dataUrlOrNull){
-        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-      }
-      function applyBoardTint(colorHex, strengthPct){
-        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
-        document.documentElement.style.setProperty("--board-tint", colorHex);
-        document.documentElement.style.setProperty("--board-tint-a", String(strength));
-
-        if (bgDot){
-          bgDot.style.background = colorHex;
-          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
-        }
-        if (boardTintEl){
-          boardTintEl.style.background = hexToRgba(colorHex, strength);
-        }
-      }
-      async function fileToDataUrl(file){
+      function fileToDataUrl(file){
         return new Promise((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(String(r.result));
-          r.onerror = reject;
-          r.readAsDataURL(file);
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
         });
       }
 
-      const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
-      bgColor.value = bgState.tint;
-      bgStrength.value = String(bgState.strength);
-      applyBoardTint(bgState.tint, bgState.strength);
-      setBoardImage(bgState.imageDataUrl);
+      const KEYS = {
+        theme: `wtp_theme_v3__${WID}`,
+        bg: `wtp_bg_v3__${WID}`,
+        bgImage: `wtp_bg_image_v3__${WID}`,
+        presets: `wtp_presets_v3__workouttracker`,
+        week: (ws) => `wtp_week_v3__${WID}__${isoKey(ws)}`
+      };
 
-      /* ---------------------------
-         THEME SETTINGS (NEW)
-         Lets users change "everything": widget bg, borders, text, accents, etc.
-      ---------------------------- */
-      const THEME_KEY = "wk_tracker_theme_v1";
-
-      const themeBtn = document.getElementById("themeBtn");
-      const themePanel = document.getElementById("themePanel");
-      const themeDot = document.getElementById("themeDot");
-
-      const tWidgetBg = document.getElementById("tWidgetBg");
-      const tCardBg   = document.getElementById("tCardBg");
-      const tFieldBg  = document.getElementById("tFieldBg");
-      const tText     = document.getElementById("tText");
-      const tMuted    = document.getElementById("tMuted");
-      const tBorder   = document.getElementById("tBorder");
-      const tStone    = document.getElementById("tStone");
-      const tCream    = document.getElementById("tCream");
-      const tCreamSoft= document.getElementById("tCreamSoft");
-      const resetTheme= document.getElementById("resetTheme");
+      const DEFAULT_BG = {
+        tint: "#efe7e1",
+        strength: 30,
+        blur: 0
+      };
 
       const DEFAULT_THEME = {
-        bg: "#ffffff",
+        widgetBg: "#ffffff",
         cardBg: "#ffffff",
         fieldBg: "#ffffff",
         text: "#1f1f1f",
@@ -853,234 +1118,336 @@
         creamSoftHex: "#e6d8cc"
       };
 
-      function loadTheme(){
-        try{
-          const raw = localStorage.getItem(THEME_KEY);
-          if(raw) return JSON.parse(raw) || null;
-        }catch{}
-        return null;
-      }
-      function saveTheme(t){
-        try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+      function defaultDay(){
+        return {
+          workout: "",
+          plan: "",
+          intensity: "moderate",
+          done: false
+        };
       }
 
-      function applyTheme(t){
-        // Base page background
-        document.documentElement.style.setProperty("--bg", t.bg);
+      const els = {
+        bgBtn: document.getElementById("bgBtn"),
+        bgPanel: document.getElementById("bgPanel"),
+        bgColor: document.getElementById("bgColor"),
+        bgStrength: document.getElementById("bgStrength"),
+        bgBlur: document.getElementById("bgBlur"),
+        bgImage: document.getElementById("bgImage"),
+        removeImage: document.getElementById("removeImage"),
+        bgApply: document.getElementById("bgApply"),
+        bgReset: document.getElementById("bgReset"),
+        bgDot: document.getElementById("bgDot"),
+        boardTint: document.getElementById("boardTint"),
 
-        // Card background (kept translucent by design; using rgba based on color)
-        const cardAlpha = 0.88;
-        document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, cardAlpha));
+        themeBtn: document.getElementById("themeBtn"),
+        themePanel: document.getElementById("themePanel"),
+        themeDot: document.getElementById("themeDot"),
+        themeApply: document.getElementById("themeApply"),
+        resetTheme: document.getElementById("resetTheme"),
 
-        // Field backgrounds
-        document.documentElement.style.setProperty("--field-bg", t.fieldBg);
+        tWidgetBg: document.getElementById("tWidgetBg"),
+        tCardBg: document.getElementById("tCardBg"),
+        tFieldBg: document.getElementById("tFieldBg"),
+        tText: document.getElementById("tText"),
+        tMuted: document.getElementById("tMuted"),
+        tBorder: document.getElementById("tBorder"),
+        tStone: document.getElementById("tStone"),
+        tCream: document.getElementById("tCream"),
+        tCreamSoft: document.getElementById("tCreamSoft"),
 
-        // Text + muted
-        document.documentElement.style.setProperty("--text", t.text);
-        document.documentElement.style.setProperty("--muted", t.muted);
+        presetName: document.getElementById("presetName"),
+        presetSelect: document.getElementById("presetSelect"),
+        presetSave: document.getElementById("presetSave"),
+        presetApply: document.getElementById("presetApply"),
+        presetDelete: document.getElementById("presetDelete"),
+        presetStatus: document.getElementById("presetStatus"),
 
-        // Accent + highlight
-        document.documentElement.style.setProperty("--stone", t.stone);
-        document.documentElement.style.setProperty("--cream", t.cream);
+        days: document.getElementById("days"),
+        weekMeta: document.getElementById("weekMeta"),
+        completedVal: document.getElementById("completedVal"),
+        plannedVal: document.getElementById("plannedVal"),
+        completedBar: document.getElementById("completedBar"),
+        plannedBar: document.getElementById("plannedBar"),
+        mixVal: document.getElementById("mixVal"),
+        mixList: document.getElementById("mixList"),
+        todayPill: document.getElementById("todayPill"),
+        todaySummary: document.getElementById("todaySummary"),
+        prevWeek: document.getElementById("prevWeek"),
+        nextWeek: document.getElementById("nextWeek"),
+        clearWeek: document.getElementById("clearWeek")
+      };
 
-        // Borders: derive rgba variants from a single hex
-        document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
-        document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
-
-        // Cream soft: for gradients/tints
-        document.documentElement.style.setProperty("--creamSoft", hexToRgba(t.creamSoftHex, 0.20));
-
-        // Update theme dot preview
-        if(themeDot){
-          themeDot.style.background = t.text;
-          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
-          themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
-        }
-
-
+      function setStatus(msg){
+        els.presetStatus.textContent = msg || "";
       }
 
+      function safeTheme(input){
+        const t = { ...DEFAULT_THEME, ...(input || {}) };
+        return {
+          widgetBg: normHex(t.widgetBg, DEFAULT_THEME.widgetBg),
+          cardBg: normHex(t.cardBg, DEFAULT_THEME.cardBg),
+          fieldBg: normHex(t.fieldBg, DEFAULT_THEME.fieldBg),
+          text: normHex(t.text, DEFAULT_THEME.text),
+          muted: normHex(t.muted, DEFAULT_THEME.muted),
+          borderHex: normHex(t.borderHex, DEFAULT_THEME.borderHex),
+          stone: normHex(t.stone, DEFAULT_THEME.stone),
+          cream: normHex(t.cream, DEFAULT_THEME.cream),
+          creamSoftHex: normHex(t.creamSoftHex, DEFAULT_THEME.creamSoftHex)
+        };
+      }
 
-      const injected = document.createElement("style");
-      injected.textContent = `
-        .card{ background: var(--card-bg, rgba(255,255,255,0.88)); }
-        .planFrame{ background: var(--field-bg, #fff); }
-        .input{ background: var(--field-bg, #fff); }
-        .planBox{ background: var(--field-bg, #fff); }
-        .datePill{ background: var(--field-bg, #fff); }
-        .todayPill{ background: var(--field-bg, #fff); }
-        .chip{ background: var(--field-bg, #fff); }
-        .toggle{ background: var(--field-bg, #fff); }
-      `;
-      document.head.appendChild(injected);
+      function safeBg(input){
+        const b = { ...DEFAULT_BG, ...(input || {}) };
+        return {
+          tint: normHex(b.tint, DEFAULT_BG.tint),
+          strength: clamp(b.strength, 0, 70),
+          blur: clamp(b.blur, 0, 20)
+        };
+      }
 
-      const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
-
-      // Initialize inputs
-      tWidgetBg.value = themeState.bg;
-      tCardBg.value = themeState.cardBg;
-      tFieldBg.value = themeState.fieldBg;
-      tText.value = themeState.text;
-      tMuted.value = themeState.muted;
-      tBorder.value = themeState.borderHex;
-      tStone.value = themeState.stone;
-      tCream.value = themeState.cream;
-      tCreamSoft.value = themeState.creamSoftHex;
-
-      applyTheme(themeState);
-
-      function wireThemeInput(inputEl, key){
-        inputEl.addEventListener("input", () => {
-          themeState[key] = inputEl.value;
-          applyTheme(themeState);
-          saveTheme(themeState);
-          applyBoardTint(bgState.tint, bgState.strength);
+      function readThemeInputs(){
+        return safeTheme({
+          widgetBg: els.tWidgetBg.value,
+          cardBg: els.tCardBg.value,
+          fieldBg: els.tFieldBg.value,
+          text: els.tText.value,
+          muted: els.tMuted.value,
+          borderHex: els.tBorder.value,
+          stone: els.tStone.value,
+          cream: els.tCream.value,
+          creamSoftHex: els.tCreamSoft.value
         });
       }
 
-      wireThemeInput(tWidgetBg, "bg");
-      wireThemeInput(tCardBg, "cardBg");
-      wireThemeInput(tFieldBg, "fieldBg");
-      wireThemeInput(tText, "text");
-      wireThemeInput(tMuted, "muted");
-      wireThemeInput(tBorder, "borderHex");
-      wireThemeInput(tStone, "stone");
-      wireThemeInput(tCream, "cream");
-      wireThemeInput(tCreamSoft, "creamSoftHex");
+      function syncThemeInputs(theme){
+        els.tWidgetBg.value = theme.widgetBg;
+        els.tCardBg.value = theme.cardBg;
+        els.tFieldBg.value = theme.fieldBg;
+        els.tText.value = theme.text;
+        els.tMuted.value = theme.muted;
+        els.tBorder.value = theme.borderHex;
+        els.tStone.value = theme.stone;
+        els.tCream.value = theme.cream;
+        els.tCreamSoft.value = theme.creamSoftHex;
+      }
 
-      resetTheme.addEventListener("click", () => {
-        Object.assign(themeState, DEFAULT_THEME);
-        tWidgetBg.value = themeState.bg;
-        tCardBg.value = themeState.cardBg;
-        tFieldBg.value = themeState.fieldBg;
-        tText.value = themeState.text;
-        tMuted.value = themeState.muted;
-        tBorder.value = themeState.borderHex;
-        tStone.value = themeState.stone;
-        tCream.value = themeState.cream;
-        tCreamSoft.value = themeState.creamSoftHex;
+      function readBgInputs(){
+        return safeBg({
+          tint: els.bgColor.value,
+          strength: Number(els.bgStrength.value),
+          blur: Number(els.bgBlur.value)
+        });
+      }
 
-        applyTheme(themeState);
-        saveTheme(themeState);
-        applyBoardTint(bgState.tint, bgState.strength);
-      });
+      function syncBgInputs(bg){
+        els.bgColor.value = bg.tint;
+        els.bgStrength.value = String(bg.strength);
+        els.bgBlur.value = String(bg.blur);
+      }
 
-      /* ---------------------------
-         POPOVER OPEN/CLOSE (both panels)
-      ---------------------------- */
-      bgBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        bgPanel.classList.toggle("open");
-        themePanel.classList.remove("open");
-      });
+      function applyTheme(theme){
+        const t = safeTheme(theme);
 
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        bgPanel.classList.remove("open");
-      });
+        document.documentElement.style.setProperty("--page-bg", t.widgetBg);
+        document.documentElement.style.setProperty("--widget-bg", t.widgetBg);
+        document.documentElement.style.setProperty("--text", t.text);
+        document.documentElement.style.setProperty("--muted", t.muted);
+        document.documentElement.style.setProperty("--stone", t.stone);
+        document.documentElement.style.setProperty("--cream", t.cream);
 
-      document.addEventListener("click", (e) => {
-        const bgOpen = bgPanel.classList.contains("open");
-        const thOpen = themePanel.classList.contains("open");
+        document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
+        document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
+        document.documentElement.style.setProperty("--creamSoft", hexToRgba(t.creamSoftHex, 0.20));
+        document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, 0.88));
+        document.documentElement.style.setProperty("--field-bg", t.fieldBg);
 
-        if(bgOpen){
-          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-          if(!inside) bgPanel.classList.remove("open");
+        els.themeDot.style.background = t.text;
+        els.themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
+        els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
+
+        return t;
+      }
+
+      function applyBackgroundVisual(bg, imageDataUrl){
+        const b = safeBg(bg);
+
+        document.documentElement.style.setProperty("--board-tint", b.tint);
+        document.documentElement.style.setProperty("--board-tint-a", String(b.strength / 100));
+        document.documentElement.style.setProperty("--board-blur", `${b.blur}px`);
+        document.documentElement.style.setProperty("--board-image", imageDataUrl ? `url("${imageDataUrl}")` : "none");
+
+        els.boardTint.style.background = hexToRgba(b.tint, b.strength / 100);
+
+        const overlayAlpha = clamp((b.strength / 100) + 0.08, 0.08, 0.55);
+        let overlayStyle = document.getElementById("wtp_overlay_style");
+        if(!overlayStyle){
+          overlayStyle = document.createElement("style");
+          overlayStyle.id = "wtp_overlay_style";
+          document.head.appendChild(overlayStyle);
         }
-        if(thOpen){
-          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-          if(!inside) themePanel.classList.remove("open");
+        overlayStyle.textContent = `.widgetBoard::after{background:${hexToRgba("#ffffff", overlayAlpha)} !important;}`;
+
+        els.bgDot.style.background = b.tint;
+        els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(b.tint, Math.min(0.35, (b.strength / 100) + 0.12))}`;
+      }
+
+      async function saveTheme(theme){
+        const t = safeTheme(theme);
+        saveJSON(KEYS.theme, t);
+        broadcast("theme");
+      }
+
+      async function loadTheme(){
+        return safeTheme(loadJSON(KEYS.theme, DEFAULT_THEME));
+      }
+
+      async function saveBackground(bg, imageDataUrl){
+        const b = safeBg(bg);
+        saveJSON(KEYS.bg, b);
+        if(imageDataUrl){
+          await idbSet(KEYS.bgImage, imageDataUrl);
+        }else{
+          await idbRemove(KEYS.bgImage);
         }
-      });
+        broadcast("background");
+      }
 
-      /* ---------------------------
-         BACKGROUND HANDLERS (existing)
-      ---------------------------- */
-      bgColor.addEventListener("input", () => {
-        bgState.tint = bgColor.value;
-        applyBoardTint(bgState.tint, bgStrength.value);
-        saveBg(bgState);
-      });
+      async function loadBackground(){
+        const bg = safeBg(loadJSON(KEYS.bg, DEFAULT_BG));
+        const imageDataUrl = await idbGet(KEYS.bgImage);
+        return {
+          bg,
+          imageDataUrl: (typeof imageDataUrl === "string" && imageDataUrl) ? imageDataUrl : null
+        };
+      }
 
-      bgStrength.addEventListener("input", () => {
-        bgState.strength = Number(bgStrength.value);
-        applyBoardTint(bgState.tint, bgState.strength);
-        saveBg(bgState);
-      });
+      async function loadPresets(){
+        const raw = loadJSON(KEYS.presets, []);
+        return Array.isArray(raw) ? raw : [];
+      }
 
-      bgImage.addEventListener("change", async () => {
-        const file = bgImage.files && bgImage.files[0];
-        if(!file) return;
-        const dataUrl = await fileToDataUrl(file);
-        bgState.imageDataUrl = dataUrl;
-        setBoardImage(dataUrl);
-        saveBg(bgState);
-      });
+      async function savePresets(list){
+        saveJSON(KEYS.presets, Array.isArray(list) ? list : []);
+        broadcast("presets");
+      }
 
-      removeImage.addEventListener("click", () => {
-        bgState.imageDataUrl = null;
-        setBoardImage(null);
-        bgImage.value = "";
-        saveBg(bgState);
-      });
+      function presetImageKey(id){
+        return `wtp_preset_image_v3__${id}`;
+      }
 
-      /* ---------------------------
-         WEEK PLANNER (existing)
-      ---------------------------- */
-      const STORAGE_PREFIX = "wk_plan_fixed_";
-      const weekKey = (ws) => STORAGE_PREFIX + isoKey(ws);
-      const defaultDay = () => ({ workout:"", plan:"", intensity:"moderate", done:false });
+      function makeId(){
+        return Math.random().toString(16).slice(2) + Date.now().toString(16);
+      }
+
+      async function refreshPresetSelect(){
+        const presets = await loadPresets();
+        const currentValue = els.presetSelect.value;
+
+        els.presetSelect.innerHTML = `<option value="">—</option>`;
+
+        for(const p of presets){
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name || "Untitled";
+          els.presetSelect.appendChild(opt);
+        }
+
+        if(currentValue && presets.some(p => p.id === currentValue)){
+          els.presetSelect.value = currentValue;
+        }
+      }
+
+      async function getPresetById(id){
+        const presets = await loadPresets();
+        return presets.find(p => p && p.id === id) || null;
+      }
+
+      function sanitizeWeekData(ws, data){
+        const out = {};
+        const source = (data && typeof data === "object") ? data : {};
+        for(let i=0;i<7;i++){
+          const d = new Date(ws.getTime() + i * MS_DAY);
+          const k = isoKey(d);
+          const item = source[k] || {};
+          out[k] = {
+            workout: String(item.workout || ""),
+            plan: String(item.plan || ""),
+            intensity: ["light","moderate","intense"].includes(item.intensity) ? item.intensity : "moderate",
+            done: !!item.done
+          };
+        }
+        return out;
+      }
 
       function loadWeek(ws){
-        let raw = null;
-        try{ raw = localStorage.getItem(weekKey(ws)); }catch{}
-        let data = {};
-        if(raw){
-          try { data = JSON.parse(raw) || {}; } catch { data = {}; }
-        }
-        for(let i=0;i<7;i++){
-          const d = new Date(ws.getTime() + i*MS_DAY);
-          const k = isoKey(d);
-          data[k] = { ...defaultDay(), ...(data[k] || {}) };
-        }
-        return data;
+        return sanitizeWeekData(ws, loadJSON(KEYS.week(ws), {}));
       }
+
       function saveWeek(ws, data){
-        try{ localStorage.setItem(weekKey(ws), JSON.stringify(data)); }catch{}
+        saveJSON(KEYS.week(ws), sanitizeWeekData(ws, data));
+        broadcast("week", { week: isoKey(ws) });
       }
 
-      const daysEl = document.getElementById("days");
-      const weekMetaEl = document.getElementById("weekMeta");
-
-      const completedVal = document.getElementById("completedVal");
-      const plannedVal = document.getElementById("plannedVal");
-      const completedBar = document.getElementById("completedBar");
-      const plannedBar = document.getElementById("plannedBar");
-
-      const mixVal = document.getElementById("mixVal");
-      const mixList = document.getElementById("mixList");
-
-      const todayPill = document.getElementById("todayPill");
-      const todaySummary = document.getElementById("todaySummary");
-
-      const prevWeekBtn = document.getElementById("prevWeek");
-      const nextWeekBtn = document.getElementById("nextWeek");
-      const clearWeekBtn = document.getElementById("clearWeek");
+      function clampPct(p){
+        return Math.max(0, Math.min(100, p));
+      }
 
       let weekStart = startOfWeek(new Date());
-      let data = loadWeek(weekStart);
+      let weekData = loadWeek(weekStart);
 
-      function clampPct(p){ return Math.max(0, Math.min(100, p)); }
+      let themeDraft = safeTheme(DEFAULT_THEME);
+      let bgDraft = safeBg(DEFAULT_BG);
+      let bgDraftImage = null;
 
-      function render(){
-        weekMetaEl.textContent = fmtRange(weekStart);
-        daysEl.innerHTML = "";
+      function updateSummary(){
+        const keys = Object.keys(weekData);
+        const planned = keys.filter(k => (weekData[k].workout || "").trim().length > 0);
+        const completed = planned.filter(k => weekData[k].done);
+
+        els.plannedVal.textContent = planned.length;
+        els.completedVal.textContent = completed.length;
+
+        els.plannedBar.style.width = clampPct((planned.length / 7) * 100) + "%";
+        const denom = planned.length > 0 ? planned.length : 7;
+        els.completedBar.style.width = clampPct((completed.length / denom) * 100) + "%";
+
+        const mix = { light:0, moderate:0, intense:0 };
+        for(const key of planned){
+          const intensity = weekData[key].intensity || "moderate";
+          if(mix[intensity] !== undefined) mix[intensity] += 1;
+        }
+
+        els.mixVal.textContent = planned.length ? `${mix.light}/${mix.moderate}/${mix.intense}` : "—";
+        els.mixList.innerHTML = `
+          <li>Light: ${mix.light}</li>
+          <li>Moderate: ${mix.moderate}</li>
+          <li>Intense: ${mix.intense}</li>
+        `;
+
+        const today = new Date();
+        const tk = isoKey(today);
+        els.todayPill.textContent = fmtPill(today);
+
+        const t = weekData[tk];
+        if(t && (t.workout || "").trim()){
+          const nice = (t.intensity || "moderate").replace(/^\w/, c => c.toUpperCase());
+          const done = t.done ? "Done" : "Planned";
+          const planSnippet = (t.plan || "").trim() ? ` · ${t.plan.trim()}` : "";
+          els.todaySummary.textContent = `${done}: ${t.workout} · ${nice}${planSnippet}`;
+        }else{
+          els.todaySummary.textContent = "No plan set for today yet.";
+        }
+      }
+
+      function renderWeek(){
+        els.weekMeta.textContent = fmtRange(weekStart);
+        els.days.innerHTML = "";
 
         for(let i=0;i<7;i++){
-          const date = new Date(weekStart.getTime() + i*MS_DAY);
+          const date = new Date(weekStart.getTime() + i * MS_DAY);
           const key = isoKey(date);
-          const item = data[key];
+          const item = weekData[key];
 
           const day = document.createElement("div");
           day.className = "day";
@@ -1100,26 +1467,32 @@
           top.appendChild(dp);
           day.appendChild(top);
 
-          // workout
           const wWrap = document.createElement("div");
           const wLab = document.createElement("div");
           wLab.className = "label";
           wLab.textContent = "Workout";
+
           const wInp = document.createElement("input");
           wInp.className = "input";
           wInp.type = "text";
           wInp.placeholder = "e.g.";
           wInp.value = item.workout;
+          wInp.autocomplete = "off";
+          wInp.spellcheck = false;
           wInp.addEventListener("input", () => {
-            data[key].workout = wInp.value;
-            saveWeek(weekStart, data);
+            weekData[key].workout = wInp.value;
+            saveWeek(weekStart, weekData);
             updateSummary();
           });
+          wInp.addEventListener("change", () => {
+            weekData[key].workout = wInp.value;
+            saveWeek(weekStart, weekData);
+          });
+
           wWrap.appendChild(wLab);
           wWrap.appendChild(wInp);
           day.appendChild(wWrap);
 
-          // plan
           const pWrap = document.createElement("div");
           const pLab = document.createElement("div");
           pLab.className = "label";
@@ -1136,10 +1509,16 @@
           pInp.type = "text";
           pInp.placeholder = "Notes…";
           pInp.value = item.plan;
+          pInp.autocomplete = "off";
+          pInp.spellcheck = false;
           pInp.addEventListener("input", () => {
-            data[key].plan = pInp.value;
-            saveWeek(weekStart, data);
+            weekData[key].plan = pInp.value;
+            saveWeek(weekStart, weekData);
             updateSummary();
+          });
+          pInp.addEventListener("change", () => {
+            weekData[key].plan = pInp.value;
+            saveWeek(weekStart, weekData);
           });
 
           pBox.appendChild(nums);
@@ -1149,7 +1528,6 @@
           pWrap.appendChild(pBox);
           day.appendChild(pWrap);
 
-          // intensity
           const iWrap = document.createElement("div");
           const iLab = document.createElement("div");
           iLab.className = "label";
@@ -1171,10 +1549,10 @@
             b.textContent = opt.label;
             b.dataset.active = String(item.intensity === opt.id);
             b.addEventListener("click", () => {
-              data[key].intensity = opt.id;
+              weekData[key].intensity = opt.id;
               Array.from(stack.querySelectorAll(".chip")).forEach(x => x.dataset.active = "false");
               b.dataset.active = "true";
-              saveWeek(weekStart, data);
+              saveWeek(weekStart, weekData);
               updateSummary();
             });
             stack.appendChild(b);
@@ -1184,7 +1562,6 @@
           iWrap.appendChild(stack);
           day.appendChild(iWrap);
 
-          // done
           const doneRow = document.createElement("div");
           doneRow.className = "doneRow";
 
@@ -1195,82 +1572,353 @@
           const toggle = document.createElement("div");
           toggle.className = "toggle";
           toggle.dataset.on = String(!!item.done);
+          toggle.setAttribute("role", "button");
+          toggle.setAttribute("tabindex", "0");
           toggle.addEventListener("click", () => {
-            data[key].done = !data[key].done;
-            toggle.dataset.on = String(data[key].done);
-            saveWeek(weekStart, data);
+            weekData[key].done = !weekData[key].done;
+            toggle.dataset.on = String(weekData[key].done);
+            saveWeek(weekStart, weekData);
             updateSummary();
+          });
+          toggle.addEventListener("keydown", (e) => {
+            if(e.key === "Enter" || e.key === " "){
+              e.preventDefault();
+              toggle.click();
+            }
           });
 
           doneRow.appendChild(doneLabel);
           doneRow.appendChild(toggle);
           day.appendChild(doneRow);
 
-          daysEl.appendChild(day);
+          els.days.appendChild(day);
         }
 
         updateSummary();
       }
 
-      function updateSummary(){
-        const keys = Object.keys(data);
-        const planned = keys.filter(k => (data[k].workout || "").trim().length > 0);
-        const completed = planned.filter(k => data[k].done);
+      function closePanels(){
+        els.bgPanel.classList.remove("open");
+        els.themePanel.classList.remove("open");
+      }
 
-        plannedVal.textContent = planned.length;
-        completedVal.textContent = completed.length;
+      async function hardReloadTheme(){
+        const saved = await loadTheme();
+        themeDraft = applyTheme(saved);
+        syncThemeInputs(themeDraft);
+      }
 
-        plannedBar.style.width = clampPct((planned.length / 7) * 100) + "%";
-        const denom = planned.length > 0 ? planned.length : 7;
-        completedBar.style.width = clampPct((completed.length / denom) * 100) + "%";
+      async function hardReloadBackground(){
+        const saved = await loadBackground();
+        bgDraft = saved.bg;
+        bgDraftImage = saved.imageDataUrl;
+        syncBgInputs(bgDraft);
+        applyBackgroundVisual(bgDraft, bgDraftImage);
+      }
 
-        const mix = { light:0, moderate:0, intense:0 };
-        planned.forEach(k => {
-          const it = (data[k].intensity || "moderate");
-          if(mix[it] !== undefined) mix[it] += 1;
+      async function initSettings(){
+        const savedTheme = await loadTheme();
+        themeDraft = applyTheme(savedTheme);
+        syncThemeInputs(themeDraft);
+
+        const savedBg = await loadBackground();
+        bgDraft = savedBg.bg;
+        bgDraftImage = savedBg.imageDataUrl;
+        syncBgInputs(bgDraft);
+        applyBackgroundVisual(bgDraft, bgDraftImage);
+
+        await refreshPresetSelect();
+      }
+
+      function attachPopoverEvents(){
+        els.bgBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          els.bgPanel.classList.toggle("open");
+          els.themePanel.classList.remove("open");
         });
 
-        mixVal.textContent = planned.length ? `${mix.light}/${mix.moderate}/${mix.intense}` : "—";
-        mixList.innerHTML = `
-          <li>Light: ${mix.light}</li>
-          <li>Moderate: ${mix.moderate}</li>
-          <li>Intense: ${mix.intense}</li>
-        `;
+        els.themeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          els.themePanel.classList.toggle("open");
+          els.bgPanel.classList.remove("open");
+        });
 
-        const today = new Date();
-        const tk = isoKey(today);
-        todayPill.textContent = fmtPill(today);
+        document.addEventListener("click", (e) => {
+          const inBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          const inTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if(!inBg) els.bgPanel.classList.remove("open");
+          if(!inTheme) els.themePanel.classList.remove("open");
+        });
 
-        const t = data[tk];
-        if(t && (t.workout || "").trim()){
-          const nice = (t.intensity || "moderate").replace(/^\w/, c => c.toUpperCase());
-          const done = t.done ? "Done" : "Planned";
-          const planSnippet = (t.plan || "").trim() ? ` · ${t.plan.trim()}` : "";
-          todaySummary.textContent = `${done}: ${t.workout} · ${nice}${planSnippet}`;
-        } else {
-          todaySummary.textContent = "No plan set for today yet.";
+        document.addEventListener("keydown", (e) => {
+          if(e.key === "Escape") closePanels();
+        });
+      }
+
+      function attachThemeEvents(){
+        [
+          els.tWidgetBg,
+          els.tCardBg,
+          els.tFieldBg,
+          els.tText,
+          els.tMuted,
+          els.tBorder,
+          els.tStone,
+          els.tCream,
+          els.tCreamSoft
+        ].forEach(el => {
+          el.addEventListener("input", () => {
+            themeDraft = applyTheme(readThemeInputs());
+            setStatus("");
+          });
+        });
+
+        els.themeApply.addEventListener("click", async () => {
+          themeDraft = applyTheme(readThemeInputs());
+          await saveTheme(themeDraft);
+          syncThemeInputs(themeDraft);
+          setStatus("Theme applied.");
+        });
+
+        els.resetTheme.addEventListener("click", async () => {
+          themeDraft = applyTheme(DEFAULT_THEME);
+          syncThemeInputs(themeDraft);
+          await saveTheme(themeDraft);
+          setStatus("Theme reset.");
+        });
+      }
+
+      function attachBackgroundEvents(){
+        els.bgColor.addEventListener("input", () => {
+          bgDraft = readBgInputs();
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgStrength.addEventListener("input", () => {
+          bgDraft = readBgInputs();
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgBlur.addEventListener("input", () => {
+          bgDraft = readBgInputs();
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgImage.addEventListener("change", async () => {
+          const file = els.bgImage.files && els.bgImage.files[0];
+          if(!file) return;
+          try{
+            bgDraftImage = await fileToDataUrl(file);
+            applyBackgroundVisual(bgDraft, bgDraftImage);
+            setStatus("");
+          }catch{
+            setStatus("Could not load image.");
+          }
+        });
+
+        els.removeImage.addEventListener("click", () => {
+          bgDraftImage = null;
+          els.bgImage.value = "";
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgApply.addEventListener("click", async () => {
+          bgDraft = readBgInputs();
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          await saveBackground(bgDraft, bgDraftImage);
+          setStatus("Background applied.");
+        });
+
+        els.bgReset.addEventListener("click", async () => {
+          bgDraft = safeBg(DEFAULT_BG);
+          bgDraftImage = null;
+          els.bgImage.value = "";
+          syncBgInputs(bgDraft);
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          await saveBackground(bgDraft, bgDraftImage);
+          setStatus("Background reset.");
+        });
+      }
+
+      function attachPresetEvents(){
+        els.presetSave.addEventListener("click", async () => {
+          const name = String(els.presetName.value || "").trim();
+          if(!name){
+            setStatus("Type a preset name first.");
+            return;
+          }
+
+          const presets = await loadPresets();
+          const id = makeId();
+
+          const theme = readThemeInputs();
+          const bg = readBgInputs();
+
+          presets.unshift({
+            id,
+            name,
+            theme,
+            bg,
+            hasImage: !!bgDraftImage
+          });
+
+          if(bgDraftImage){
+            await idbSet(presetImageKey(id), bgDraftImage);
+          }
+
+          await savePresets(presets);
+          els.presetName.value = "";
+          await refreshPresetSelect();
+          els.presetSelect.value = id;
+          setStatus("Preset saved.");
+        });
+
+        els.presetApply.addEventListener("click", async () => {
+          const id = String(els.presetSelect.value || "");
+          if(!id){
+            setStatus("Choose a preset first.");
+            return;
+          }
+
+          const preset = await getPresetById(id);
+          if(!preset){
+            setStatus("Preset not found.");
+            return;
+          }
+
+          const newTheme = safeTheme(preset.theme || DEFAULT_THEME);
+          const newBg = safeBg(preset.bg || DEFAULT_BG);
+          const presetImage = preset.hasImage ? await idbGet(presetImageKey(id)) : null;
+
+          themeDraft = applyTheme(newTheme);
+          syncThemeInputs(themeDraft);
+          await saveTheme(themeDraft);
+
+          bgDraft = newBg;
+          bgDraftImage = (typeof presetImage === "string" && presetImage) ? presetImage : null;
+          syncBgInputs(bgDraft);
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          await saveBackground(bgDraft, bgDraftImage);
+
+          setStatus("Preset applied.");
+        });
+
+        els.presetDelete.addEventListener("click", async () => {
+          const id = String(els.presetSelect.value || "");
+          if(!id){
+            setStatus("Choose a preset first.");
+            return;
+          }
+
+          const presets = await loadPresets();
+          const next = presets.filter(p => p.id !== id);
+          if(next.length === presets.length){
+            setStatus("Preset not found.");
+            return;
+          }
+
+          await idbRemove(presetImageKey(id));
+          await savePresets(next);
+          await refreshPresetSelect();
+          els.presetSelect.value = "";
+          setStatus("Preset deleted.");
+        });
+      }
+
+      function attachWeekEvents(){
+        els.prevWeek.addEventListener("click", () => {
+          weekStart = new Date(weekStart.getTime() - 7 * MS_DAY);
+          weekData = loadWeek(weekStart);
+          renderWeek();
+        });
+
+        els.nextWeek.addEventListener("click", () => {
+          weekStart = new Date(weekStart.getTime() + 7 * MS_DAY);
+          weekData = loadWeek(weekStart);
+          renderWeek();
+        });
+
+        els.clearWeek.addEventListener("click", () => {
+          lsRemove(KEYS.week(weekStart));
+          weekData = loadWeek(weekStart);
+          renderWeek();
+          broadcast("week", { week: isoKey(weekStart) });
+        });
+
+        window.addEventListener("pagehide", () => {
+          saveWeek(weekStart, weekData);
+        });
+
+        document.addEventListener("visibilitychange", () => {
+          if(document.visibilityState === "hidden"){
+            saveWeek(weekStart, weekData);
+          }
+        });
+      }
+
+      function attachSyncEvents(){
+        window.addEventListener("storage", async (e) => {
+          if(!e.key) return;
+
+          if(e.key === KEYS.theme){
+            await hardReloadTheme();
+          }
+          if(e.key === KEYS.bg){
+            await hardReloadBackground();
+          }
+          if(e.key === KEYS.presets){
+            await refreshPresetSelect();
+          }
+          if(e.key === KEYS.week(weekStart)){
+            weekData = loadWeek(weekStart);
+            renderWeek();
+          }
+        });
+
+        if(channel){
+          channel.onmessage = async (event) => {
+            const msg = event.data || {};
+            if(!msg.type) return;
+
+            if(msg.type === "theme"){
+              await hardReloadTheme();
+            }
+            if(msg.type === "background"){
+              await hardReloadBackground();
+            }
+            if(msg.type === "presets"){
+              await refreshPresetSelect();
+            }
+            if(msg.type === "week"){
+              const targetWeek = msg.payload && msg.payload.week;
+              if(targetWeek === isoKey(weekStart)){
+                weekData = loadWeek(weekStart);
+                renderWeek();
+              }
+            }
+          };
         }
       }
 
-      // Week nav
-      prevWeekBtn.addEventListener("click", () => {
-        weekStart = new Date(weekStart.getTime() - 7*MS_DAY);
-        data = loadWeek(weekStart);
-        render();
-      });
-      nextWeekBtn.addEventListener("click", () => {
-        weekStart = new Date(weekStart.getTime() + 7*MS_DAY);
-        data = loadWeek(weekStart);
-        render();
-      });
-      clearWeekBtn.addEventListener("click", () => {
-        try{ localStorage.removeItem(weekKey(weekStart)); }catch{}
-        data = loadWeek(weekStart);
-        render();
-      });
+      async function init(){
+        attachPopoverEvents();
+        attachThemeEvents();
+        attachBackgroundEvents();
+        attachPresetEvents();
+        attachWeekEvents();
+        attachSyncEvents();
 
-      render();
-    });
+        await initSettings();
+        weekData = loadWeek(weekStart);
+        renderWeek();
+      }
+
+      init();
+    })();
   </script>
 </body>
 </html>

@@ -38,7 +38,10 @@
       overflow-x:hidden;
     }
 
-    .wrap{ max-width:980px; margin:0 auto; }
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+    }
 
     h1{
       margin:0;
@@ -48,10 +51,10 @@
 
     .widgetBoard{
       position:relative;
-      border-radius:var(--r);
-      overflow:hidden;
+      border-radius: var(--r);
+      overflow:visible; /* FIX: panel must not be clipped */
       border:1px solid var(--stroke);
-      box-shadow:var(--shadow);
+      box-shadow: var(--shadow);
       isolation:isolate;
     }
 
@@ -59,10 +62,11 @@
       content:"";
       position:absolute;
       inset:0;
-      background-image:var(--board-image);
-      background-size:cover;
-      background-position:center;
-      background-repeat:no-repeat;
+      border-radius:inherit;
+      background-image: var(--board-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       z-index:0;
       pointer-events:none;
       transform:translateZ(0);
@@ -75,17 +79,19 @@
       z-index:1;
       pointer-events:none;
       background: rgba(0,0,0,0);
+      border-radius:inherit;
     }
 
     .boardContent{
       position:relative;
       z-index:2;
+      border-radius:inherit;
     }
 
     .card{
       background:var(--card);
       border:0;
-      border-radius:0;
+      border-radius:inherit;
       box-shadow:none;
       padding:14px;
       backdrop-filter: blur(2px);
@@ -262,6 +268,8 @@
       gap:8px;
       align-items:center;
       margin-left:auto;
+      position:relative;
+      z-index:20;
     }
 
     .panelWrap{
@@ -278,6 +286,8 @@
       display:grid;
       place-items:center;
       box-shadow: 0 3px 12px rgba(30,20,10,.08);
+      position:relative;
+      z-index:21;
     }
 
     .bgDot,
@@ -305,13 +315,13 @@
       width:min(320px, calc(100vw - 32px));
       border-radius:16px;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.92);
-      box-shadow:0 18px 40px rgba(30,20,10,.12);
+      background: rgba(255,255,255,0.97);
+      box-shadow:0 18px 40px rgba(30,20,10,.16);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       padding:12px;
       display:none;
-      z-index:9999;
+      z-index:99999;
       max-height:min(82vh, 720px);
       overflow:auto;
       overscroll-behavior:contain;
@@ -678,9 +688,9 @@
     imageDataUrl:null
   };
 
-  const APP_VERSION = 10;
-  const STORAGE_NS = "career_goals_v10";
-  const CHANNEL_NAME = "career-goals-sync-v10";
+  const APP_VERSION = 11;
+  const STORAGE_NS = "career_goals_v11";
+  const CHANNEL_NAME = "career-goals-sync-v11";
   const $ = (id)=>document.getElementById(id);
 
   function clamp(n, min, max){

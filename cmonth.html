@@ -29,8 +29,6 @@
       --btn-border-a: 0.10;
       --btn-ink: rgba(43,43,43,0.70);
 
-      --accent: #cbb8ae;
-
       --board-radius: 24px;
       --board-tint: #efe7e1;
       --board-tint-a: 0.35;
@@ -130,8 +128,8 @@
     }
 
     .theme-dot{
-      background: var(--accent);
-      box-shadow: 0 0 0 6px rgba(203,184,174,0.25);
+      background: var(--ink);
+      box-shadow: 0 0 0 6px rgba(43,43,43,0.12);
     }
 
     .popover{ position: relative; }
@@ -420,7 +418,7 @@
 
     .daynote:focus{
       border-color: rgba(var(--border-rgb), 0.18);
-      box-shadow: 0 0 0 4px rgba(203,184,174,0.18);
+      box-shadow: 0 0 0 4px rgba(43,43,43,0.10);
     }
 
     .goals-wrap{ display: flex; flex-direction: column; gap: 8px; }
@@ -575,7 +573,6 @@
             <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
             <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
-            <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
 
             <div class="divider"></div>
 
@@ -726,7 +723,6 @@
         appBg: "#ffffff",
         ink: "#2b2b2b",
         muted: "#7a7a7a",
-        accent: "#cbb8ae",
 
         borderColor: "#1e1e1e",
         borderA: 0.10,
@@ -979,7 +975,6 @@
           appBg: normHex(theme.appBg, DEFAULT_THEME.appBg),
           ink: normHex(theme.ink, DEFAULT_THEME.ink),
           muted: normHex(theme.muted, DEFAULT_THEME.muted),
-          accent: normHex(theme.accent, DEFAULT_THEME.accent),
 
           borderColor: normHex(theme.borderColor, DEFAULT_THEME.borderColor),
           borderA: clamp(theme.borderA, 0.04, 0.30),
@@ -1171,7 +1166,6 @@
         r.setProperty("--app-bg", t.appBg);
         r.setProperty("--ink", t.ink);
         r.setProperty("--muted", t.muted);
-        r.setProperty("--accent", t.accent);
 
         r.setProperty("--border-rgb", hexToRgbTuple(t.borderColor));
         r.setProperty("--border-a", String(t.borderA));
@@ -1204,8 +1198,8 @@
 
         const dot = $("themeDot");
         if(dot){
-          dot.style.background = t.accent;
-          dot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.accent, 0.25)}`;
+          dot.style.background = t.ink;
+          dot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.ink, 0.12)}`;
         }
 
         let st = $("overlayStyle");
@@ -1224,7 +1218,6 @@
         set("tAppBg", t.appBg);
         set("tInk", t.ink);
         set("tMuted", t.muted);
-        set("tAccent", t.accent);
 
         set("tBorderColor", t.borderColor);
         set("tBorderA", Math.round(t.borderA * 100));
@@ -1265,7 +1258,6 @@
           appBg: g("tAppBg")?.value,
           ink: g("tInk")?.value,
           muted: g("tMuted")?.value,
-          accent: g("tAccent")?.value,
 
           borderColor: g("tBorderColor")?.value,
           borderA: Number(g("tBorderA")?.value) / 100,
@@ -1485,7 +1477,7 @@
         themeSyncInputs(themeDraft);
 
         const ids = [
-          "tAppBg","tInk","tMuted","tAccent",
+          "tAppBg","tInk","tMuted",
           "tBorderColor","tBorderA",
           "tSurfaceColor","tSurfaceA",
           "tPanelColor","tPanelA",

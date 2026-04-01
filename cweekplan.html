@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Weekly Overview</title>
   <style>
     :root{
@@ -16,25 +16,23 @@
       --border: rgba(var(--border-rgb), var(--border-a));
       --shadow: 0 12px 34px rgba(20, 20, 20, 0.08);
 
-      --surface-a: 0.78; /* pills */
+      --surface-a: 0.78;
       --panel-a: 0.92;
 
       --btn-a: 0.92;
       --btn-border-a: 0.10;
       --btn-ink: rgba(43,43,43,0.72);
 
-      --accent: #cbb8ae; /* drives selection ring + theme dot */
+      --accent: #cbb8ae;
 
-      /* overlay (single; no radials) */
       --overlay-base: #ffffff;
       --overlay-a: 0.34;
 
-      /* Board background */
       --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
+      --bg-blur: 0px;
 
-      /* Day cards + blocks + inputs */
       --day-bg: #ffffff;
       --day-bg-a: 0.94;
 
@@ -44,12 +42,8 @@
       --input-bg: #ffffff;
       --input-bg-a: 0.96;
 
-      /* TASK: full box fill strength (strong default) */
       --task-tint-a: 0.90;
 
-      /* =========================
-         LAYOUT / SCALE
-      ========================= */
       --board-radius: 26px;
       --radius: 20px;
 
@@ -80,16 +74,29 @@
     }
 
     *{ box-sizing: border-box; }
+
+    html, body{
+      width: 100%;
+      min-height: 100%;
+    }
+
     body{
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
       color: var(--ink);
       background: var(--app-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: hidden;
+    }
+
+    button, input, textarea, select{
+      font: inherit;
     }
 
     .wrap{
       max-width: var(--page-max);
-      margin: 26px auto;
+      margin: 24px auto;
       padding: 18px;
     }
 
@@ -130,7 +137,8 @@
       justify-content: flex-end;
     }
 
-    .icon-pill{
+    .icon-pill,
+    .week-pill{
       display: inline-flex;
       align-items: center;
       gap: 10px;
@@ -140,6 +148,7 @@
       padding: var(--chip-pad);
       box-shadow: 0 8px 22px rgba(20,20,20,0.06);
       backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
 
     .bg-btn, .nav-btn, .theme-btn{
@@ -155,8 +164,13 @@
       color: var(--btn-ink);
       font-weight: 900;
       line-height: 1;
+      touch-action: manipulation;
+      user-select: none;
     }
-    .bg-btn:active, .nav-btn:active, .theme-btn:active{ transform: translateY(1px); }
+
+    .bg-btn:active, .nav-btn:active, .theme-btn:active, .mini-btn:active, .add-btn:active, .icon-btn:active{
+      transform: translateY(1px);
+    }
 
     .bg-dot, .theme-dot{
       width: 16px;
@@ -165,29 +179,40 @@
       border: 1px solid rgba(var(--border-rgb), 0.14);
       background: var(--board-tint);
       box-shadow: 0 0 0 7px rgba(239,231,225,0.30);
+      pointer-events: none;
     }
+
     .theme-dot{
       background: var(--accent);
       box-shadow: 0 0 0 7px rgba(203,184,174,0.22);
     }
 
-    .popover{ position: relative; }
+    .popover{
+      position: relative;
+    }
 
     .panel{
       position: absolute;
       top: 48px;
       right: 0;
-      width: 360px;
+      width: min(380px, calc(100vw - 36px));
       border-radius: 18px;
       border: 1px solid var(--border);
       background: rgba(255,255,255, var(--panel-a));
       box-shadow: 0 22px 50px rgba(20,20,20,0.12);
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       padding: 14px;
       display: none;
-      z-index: 50;
+      z-index: 80;
+      max-height: min(78vh, 680px);
+      overflow: auto;
+      overscroll-behavior: contain;
     }
-    .panel.open{ display: block; }
+
+    .panel.open{
+      display: block;
+    }
 
     .panelTitle{
       margin: 0 0 10px 0;
@@ -205,6 +230,7 @@
       gap: 12px;
       padding: 9px 0;
     }
+
     .row label{
       font-size: 12px;
       color: var(--muted);
@@ -213,6 +239,7 @@
     input[type="color"]{
       width: 36px;
       height: 28px;
+      min-width: 36px;
       border: 1px solid rgba(var(--border-rgb), 0.12);
       border-radius: 10px;
       padding: 0;
@@ -220,7 +247,12 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    input[type="range"]{ width: 170px; }
+
+    input[type="range"]{
+      width: 170px;
+      max-width: 48vw;
+      touch-action: pan-y;
+    }
 
     .file{
       width: 100%;
@@ -238,25 +270,14 @@
       font-weight: 750;
       color: rgba(43,43,43,0.86);
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      touch-action: manipulation;
     }
-    .mini-btn:active{ transform: translateY(1px); }
 
     .divider{
       height: 1px;
       background: rgba(var(--border-rgb), 0.08);
       margin: 10px 0;
-    }
-
-    .week-pill{
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      padding: var(--chip-pad);
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255, var(--surface-a));
-      box-shadow: 0 8px 22px rgba(20,20,20,0.06);
-      backdrop-filter: blur(2px);
     }
 
     .week-label{
@@ -269,7 +290,29 @@
       letter-spacing: 0.1px;
     }
 
-    /* Board */
+    .presetName, .presetSelect{
+      width: 100%;
+      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border-radius: 14px;
+      padding: 11px 12px;
+      background: rgba(255,255,255,0.92);
+      color: var(--ink);
+      font: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .presetSelect{
+      height: 40px;
+    }
+
+    .status{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      min-height: 16px;
+    }
+
     .board{
       border: 1px solid var(--border);
       border-radius: var(--board-radius);
@@ -277,6 +320,7 @@
       overflow: hidden;
       position: relative;
       background: none;
+      isolation: isolate;
     }
 
     .board::before{
@@ -287,8 +331,9 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      filter: saturate(1.02) contrast(1.03);
-      transform: scale(1.02);
+      filter: blur(var(--bg-blur)) saturate(1.02) contrast(1.03);
+      transform: translateZ(0);
+      will-change: filter;
     }
 
     .board::after{
@@ -296,7 +341,7 @@
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: rgba(255,255,255,0.34); /* overridden by JS */
+      background: rgba(255,255,255,0.34);
     }
 
     .board-tint{
@@ -309,10 +354,8 @@
     .board-content{
       position: relative;
       z-index: 2;
-      backdrop-filter: blur(2px);
     }
 
-    /* Grid */
     .grid{
       display: grid;
       grid-auto-flow: column;
@@ -323,7 +366,9 @@
       overscroll-behavior-x: contain;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
+      touch-action: pan-x pan-y;
     }
+
     @media (min-width: 1200px){
       .grid{
         grid-auto-flow: initial;
@@ -347,7 +392,7 @@
     }
 
     .day.selected{
-      outline: 4px solid rgba(0,0,0,0); /* set by JS */
+      outline: 4px solid rgba(0,0,0,0);
       outline-offset: 3px;
     }
 
@@ -364,19 +409,21 @@
       display: flex;
       align-items: baseline;
       gap: 10px;
+      flex-wrap: wrap;
     }
+
     .day-name{
       font-weight: 800;
       font-size: 15px;
       letter-spacing: 0.15px;
     }
+
     .day-date{
       font-size: 13px;
       color: var(--muted);
       font-weight: 650;
     }
 
-    /* ✅ FIXED: centered swatch (input no longer affects layout) */
     .day-color{
       position: relative;
       width: 34px;
@@ -385,12 +432,14 @@
       border: 1px solid rgba(var(--border-rgb), 0.10);
       background: rgba(255,255,255,0.70);
       backdrop-filter: blur(2px);
-
+      -webkit-backdrop-filter: blur(2px);
       opacity: 0;
       transform: translateY(-2px);
       pointer-events: none;
       transition: opacity 140ms ease, transform 140ms ease;
+      overflow: hidden;
     }
+
     .day:hover .day-color,
     .day:focus-within .day-color,
     .day.selected .day-color{
@@ -443,13 +492,21 @@
       background: rgba(255,255,255, var(--block-bg-a));
     }
 
-    .block .label{
+    .block .label,
+    .tasks .label{
       font-size: var(--label);
       color: var(--muted);
-      margin-bottom: 10px;
       font-weight: 700;
       letter-spacing: .02em;
       text-transform: uppercase;
+    }
+
+    .block .label{
+      margin-bottom: 10px;
+    }
+
+    .tasks .label{
+      margin-bottom: 2px;
     }
 
     textarea{
@@ -466,6 +523,8 @@
       overflow: auto;
       white-space: pre-wrap;
       word-break: break-word;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     textarea:focus{
@@ -484,15 +543,6 @@
       gap: 10px;
       flex: 1;
       min-height: 190px;
-    }
-
-    .tasks .label{
-      font-size: var(--label);
-      color: var(--muted);
-      font-weight: 700;
-      letter-spacing: .02em;
-      text-transform: uppercase;
-      margin-bottom: 2px;
     }
 
     .taskList{
@@ -519,6 +569,7 @@
       min-height: var(--task-min-h);
       max-height: calc(var(--max-lines) * 1.35em + 28px);
     }
+
     .task-row .taskInput:focus{
       border: none;
       box-shadow: none;
@@ -537,8 +588,9 @@
       -webkit-tap-highlight-color: transparent;
       font-weight: 900;
       font-size: 18px;
+      touch-action: manipulation;
+      user-select: none;
     }
-    .icon-btn:active{ transform: translateY(1px); }
 
     .add-btn{
       width: 100%;
@@ -552,8 +604,9 @@
       -webkit-tap-highlight-color: transparent;
       font-size: 14px;
       letter-spacing: 0.1px;
+      touch-action: manipulation;
+      user-select: none;
     }
-    .add-btn:active{ transform: translateY(1px); }
 
     .footer-note{
       padding: 0 var(--pad) var(--pad);
@@ -573,12 +626,74 @@
       border: 1px solid rgba(var(--border-rgb), 0.10);
       background: rgba(255,255,255,0.75);
     }
+
+    @media (max-width: 860px){
+      .wrap{
+        padding: 14px;
+        margin: 16px auto;
+      }
+
+      .titlebar{
+        align-items: stretch;
+      }
+
+      .controls{
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .week-pill{
+        flex: 1 1 100%;
+        justify-content: space-between;
+      }
+
+      .week-label{
+        min-width: 0;
+        flex: 1;
+      }
+
+      .panel{
+        position: fixed;
+        top: auto;
+        right: 18px;
+        left: 18px;
+        bottom: max(16px, env(safe-area-inset-bottom));
+        width: auto;
+        max-height: min(78vh, 700px);
+      }
+    }
+
+    @media (max-width: 520px){
+      .wrap{
+        padding: 12px;
+      }
+
+      .grid{
+        grid-auto-columns: minmax(86vw, 1fr);
+        padding: 12px;
+      }
+
+      .day-body{
+        padding: 12px;
+      }
+
+      .footer-note{
+        padding: 0 12px 12px;
+      }
+
+      input[type="range"]{
+        width: 140px;
+        max-width: 42vw;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="titlebar">
       <div class="title">
+        <h1>Weekly Overview</h1>
+        <div class="subtitle">Plan your week and keep every change saved.</div>
       </div>
 
       <div class="controls">
@@ -588,7 +703,6 @@
           <button class="nav-btn" id="nextWeek" type="button" aria-label="Next week" title="Next week">›</button>
         </div>
 
-        <!-- THEME -->
         <div class="popover">
           <div class="icon-pill">
             <button class="theme-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -598,6 +712,11 @@
 
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
             <div class="panelTitle">Theme</div>
+
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="themeReset" type="button" style="margin-top:10px;">Reset theme</button>
+
+            <div class="divider"></div>
 
             <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
@@ -646,11 +765,23 @@
 
             <div class="divider"></div>
 
-            <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+            <div class="panelTitle" style="margin-top:6px;">Presets</div>
+
+            <input class="presetName" id="presetName" placeholder="Preset name" />
+
+            <button class="mini-btn" id="presetSave" type="button" style="margin-top:10px;">Save current as preset</button>
+
+            <div class="divider"></div>
+
+            <select class="presetSelect" id="presetSelect"></select>
+
+            <button class="mini-btn" id="presetApply" type="button" style="margin-top:10px;">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button" style="margin-top:10px;">Delete preset</button>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
           </div>
         </div>
 
-        <!-- BACKGROUND -->
         <div class="popover">
           <div class="icon-pill">
             <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
@@ -661,6 +792,11 @@
           <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
             <div class="panelTitle">Background</div>
 
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:10px;">Reset background</button>
+
+            <div class="divider"></div>
+
             <div class="row">
               <label for="bgColor">Tint</label>
               <input id="bgColor" type="color" value="#efe7e1" />
@@ -669,6 +805,11 @@
             <div class="row">
               <label for="bgStrength">Tint strength</label>
               <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="row">
+              <label for="bgBlur">Image blur</label>
+              <input id="bgBlur" type="range" min="0" max="24" value="0" />
             </div>
 
             <div class="divider"></div>
@@ -683,7 +824,6 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -701,694 +841,1287 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "weekly_overview_v5";
-    const THEME_KEY   = "weekly_overview_theme_v5";
+    (async function(){
+      "use strict";
 
-    const $ = (sel, root=document) => root.querySelector(sel);
-    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-
-    function clamp(n, min, max){
-      const x = Number(n);
-      if(!Number.isFinite(x)) return min;
-      return Math.max(min, Math.min(max, x));
-    }
-
-    function normHex(hex, fallback){
-      const s = String(hex || "").trim();
-      return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
-    }
-
-    function hexToRgbTuple(hex){
-      const h = normHex(hex, "#ffffff").slice(1);
-      const r = parseInt(h.slice(0,2), 16);
-      const g = parseInt(h.slice(2,4), 16);
-      const b = parseInt(h.slice(4,6), 16);
-      return `${r},${g},${b}`;
-    }
-
-    function hexToRgba(hex, a){
-      const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
-      return `rgba(${r},${g},${b},${a})`;
-    }
-
-    function formatShortDate(d){
-      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    }
-
-    function toISODate(d){
-      const x = new Date(d);
-      x.setHours(0,0,0,0);
-      return x.toISOString().slice(0,10);
-    }
-
-    function mondayOfWeek(date){
-      const d = new Date(date);
-      const day = d.getDay();
-      const diff = (day === 0 ? -6 : 1) - day;
-      d.setDate(d.getDate() + diff);
-      d.setHours(0,0,0,0);
-      return d;
-    }
-
-    function addDays(d, n){
-      const x = new Date(d);
-      x.setDate(x.getDate() + n);
-      return x;
-    }
-
-    function weekIdFromDate(date){
-      return toISODate(mondayOfWeek(date));
-    }
-
-    function prettyWeekLabel(weekId){
-      const mon = new Date(weekId + "T00:00:00");
-      const sun = addDays(mon, 6);
-      const opts = { month: "short", day: "numeric" };
-      const left = mon.toLocaleDateString(undefined, opts);
-      const right = sun.toLocaleDateString(undefined, opts);
-      return `${left} – ${right}`;
-    }
-
-    /* ============================
-       Theme
-    ============================ */
-    const DEFAULT_THEME = {
-      appBg: "#ffffff",
-      ink: "#2b2b2b",
-      muted: "#7a7a7a",
-      accent: "#cbb8ae",
-
-      borderColor: "#1e1e1e",
-      borderA: 0.10,
-
-      surfaceA: 0.78,
-      panelA: 0.92,
-
-      btnA: 0.92,
-      btnBorderA: 0.10,
-      btnInk: "#2b2b2b",
-
-      overlayBase: "#ffffff",
-      overlayA: 0.34,
-
-      dayBg: "#ffffff",
-      dayBgA: 0.94,
-
-      blockBg: "#ffffff",
-      blockBgA: 0.72,
-
-      inputBg: "#ffffff",
-      inputBgA: 0.96,
-
-      taskTintA: 0.90
-    };
-
-    function themeLoad(){
-      try{
-        const raw = localStorage.getItem(THEME_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
-    }
-
-    function themeSave(t){
-      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-    }
-
-    function setSelectionRingFromAccent(accentHex){
-      const accent = normHex(accentHex, DEFAULT_THEME.accent);
-      let st = document.getElementById("accentRingStyle");
-      if(!st){
-        st = document.createElement("style");
-        st.id = "accentRingStyle";
-        document.head.appendChild(st);
-      }
-      st.textContent = `
-        .day.selected{
-          outline-color: ${hexToRgba(accent, 0.62)} !important;
-          box-shadow: 0 0 0 1px ${hexToRgba(accent, 0.22)} inset;
-        }
-      `;
-    }
-
-    function themeApply(t){
-      const theme = Object.assign({}, DEFAULT_THEME, t || {});
-      const r = document.documentElement.style;
-
-      r.setProperty("--app-bg", normHex(theme.appBg, DEFAULT_THEME.appBg));
-      r.setProperty("--ink", normHex(theme.ink, DEFAULT_THEME.ink));
-      r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
-      r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
-
-      r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
-      r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
-
-      r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
-      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
-
-      r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
-      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
-      r.setProperty("--btn-ink", hexToRgba(normHex(theme.btnInk, "#2b2b2b"), 0.72));
-
-      r.setProperty("--day-bg", normHex(theme.dayBg, DEFAULT_THEME.dayBg));
-      r.setProperty("--day-bg-a", String(clamp(theme.dayBgA, 0.70, 1.00)));
-
-      r.setProperty("--block-bg", normHex(theme.blockBg, DEFAULT_THEME.blockBg));
-      r.setProperty("--block-bg-a", String(clamp(theme.blockBgA, 0.55, 1.00)));
-
-      r.setProperty("--input-bg", normHex(theme.inputBg, DEFAULT_THEME.inputBg));
-      r.setProperty("--input-bg-a", String(clamp(theme.inputBgA, 0.60, 1.00)));
-
-      r.setProperty("--task-tint-a", String(clamp(theme.taskTintA, 0.10, 1.00)));
-
-      const dot = document.getElementById("themeDot");
-      if(dot){
-        const accent = normHex(theme.accent, DEFAULT_THEME.accent);
-        dot.style.background = accent;
-        dot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
-      }
-
-      setSelectionRingFromAccent(theme.accent);
-
-      const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
-      const overlayA = clamp(theme.overlayA, 0.00, 0.70);
-      const css = hexToRgba(overlayBase, overlayA);
-
-      let st = document.getElementById("overlayStyle");
-      if(!st){
-        st = document.createElement("style");
-        st.id = "overlayStyle";
-        document.head.appendChild(st);
-      }
-      st.textContent = `.board::after{ background: ${css} !important; }`;
-
-      let st2 = document.getElementById("surfaceStyle");
-      if(!st2){
-        st2 = document.createElement("style");
-        st2.id = "surfaceStyle";
-        document.head.appendChild(st2);
-      }
-      st2.textContent = `
-        .day{ background: ${hexToRgba(normHex(theme.dayBg, "#ffffff"), clamp(theme.dayBgA,0.70,1.00))} !important; }
-        .block{ background: ${hexToRgba(normHex(theme.blockBg, "#ffffff"), clamp(theme.blockBgA,0.55,1.00))} !important; }
-        textarea{ background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important; }
-        .task-row .taskInput{ background: transparent !important; }
-      `;
-    }
-
-    function themeSyncInputs(t){
-      const theme = Object.assign({}, DEFAULT_THEME, t || {});
-      const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
-
-      set("tAppBg", theme.appBg);
-      set("tInk", theme.ink);
-      set("tMuted", theme.muted);
-      set("tAccent", theme.accent);
-
-      set("tBorderColor", theme.borderColor);
-      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
-
-      set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
-      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
-
-      set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
-      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
-      set("tBtnInk", theme.btnInk);
-
-      set("tOverlayBase", theme.overlayBase);
-      set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
-
-      set("tDayBg", theme.dayBg);
-      set("tDayBgA", Math.round(clamp(theme.dayBgA, 0.70, 1.00) * 100));
-
-      set("tBlockBg", theme.blockBg);
-      set("tBlockBgA", Math.round(clamp(theme.blockBgA, 0.55, 1.00) * 100));
-
-      set("tInputBg", theme.inputBg);
-      set("tInputBgA", Math.round(clamp(theme.inputBgA, 0.60, 1.00) * 100));
-
-      set("tTaskTintA", Math.round(clamp(theme.taskTintA, 0.10, 1.00) * 100));
-    }
-
-    function themeReadFromInputs(){
-      const g = (id)=>document.getElementById(id);
-      return {
-        appBg: g("tAppBg")?.value,
-        ink: g("tInk")?.value,
-        muted: g("tMuted")?.value,
-        accent: g("tAccent")?.value,
-
-        borderColor: g("tBorderColor")?.value,
-        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
-
-        surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
-        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
-
-        btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
-        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
-        btnInk: g("tBtnInk")?.value,
-
-        overlayBase: g("tOverlayBase")?.value,
-        overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
-
-        dayBg: g("tDayBg")?.value,
-        dayBgA: clamp(Number(g("tDayBgA")?.value)/100, 0.70, 1.00),
-
-        blockBg: g("tBlockBg")?.value,
-        blockBgA: clamp(Number(g("tBlockBgA")?.value)/100, 0.55, 1.00),
-
-        inputBg: g("tInputBg")?.value,
-        inputBgA: clamp(Number(g("tInputBgA")?.value)/100, 0.60, 1.00),
-
-        taskTintA: clamp(Number(g("tTaskTintA")?.value)/100, 0.10, 1.00),
+      /* =========================================================
+         OPTIONAL CLOUD SYNC
+         ---------------------------------------------------------
+         To sync across devices, fill these in with your Supabase data.
+         Leave enabled:false if you only want same-device saving.
+      ========================================================= */
+      const CLOUD_SYNC = {
+        enabled: false,
+        supabaseUrl: "",
+        supabaseAnonKey: "",
+        table: "widget_state"
       };
-    }
 
-    function initThemeUI(){
-      const themeBtn = $("#themeBtn");
-      const themePanel = $("#themePanel");
-      const themeReset = $("#themeReset");
-      if(!themeBtn || !themePanel || !themeReset) return;
+      /* =========================================================
+         CONSTANTS
+      ========================================================= */
+      const DEFAULT_THEME = {
+        appBg: "#ffffff",
+        ink: "#2b2b2b",
+        muted: "#7a7a7a",
+        accent: "#cbb8ae",
 
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        $("#bgPanel")?.classList.remove("open");
-      });
+        borderColor: "#1e1e1e",
+        borderA: 0.10,
 
-      document.addEventListener("click", (e) => {
-        if(!themePanel.classList.contains("open")) return;
-        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-        if(!inside) themePanel.classList.remove("open");
-      });
+        surfaceA: 0.78,
+        panelA: 0.92,
 
-      const ids = [
-        "tAppBg","tInk","tMuted","tAccent",
-        "tBorderColor","tBorderA",
-        "tSurfaceA","tPanelA",
-        "tBtnA","tBtnBorderA","tBtnInk",
-        "tOverlayBase","tOverlayA",
-        "tDayBg","tDayBgA",
-        "tBlockBg","tBlockBgA",
-        "tInputBg","tInputBgA",
-        "tTaskTintA"
-      ];
+        btnA: 0.92,
+        btnBorderA: 0.10,
+        btnInk: "#2b2b2b",
 
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if(!el) return;
-        el.addEventListener("input", () => {
-          const t = themeReadFromInputs();
-          themeApply(t);
-          themeSave(t);
-          applyTaskFillsForAllDays();
-          syncDayPickerSwatches();
-        });
-      });
+        overlayBase: "#ffffff",
+        overlayA: 0.34,
 
-      themeReset.addEventListener("click", () => {
-        localStorage.removeItem(THEME_KEY);
-        themeApply(DEFAULT_THEME);
-        themeSyncInputs(DEFAULT_THEME);
-        applyTaskFillsForAllDays();
-        syncDayPickerSwatches();
-      });
+        dayBg: "#ffffff",
+        dayBgA: 0.94,
 
-      const saved = themeLoad() || DEFAULT_THEME;
-      themeApply(saved);
-      themeSyncInputs(saved);
-    }
+        blockBg: "#ffffff",
+        blockBgA: 0.72,
 
-    /* ============================
-       Store (weeks)
-    ============================ */
-    function loadStore(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : { weeks: {} };
-      }catch{
-        return { weeks: {} };
+        inputBg: "#ffffff",
+        inputBgA: 0.96,
+
+        taskTintA: 0.90
+      };
+
+      const DEFAULT_BG = {
+        tint: "#efe7e1",
+        strength: 30,
+        blur: 0,
+        imageDataUrl: null
+      };
+
+      const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+      const defaultDayColors = ["#d9c6bd","#d6d0c8","#cdd5d0","#c9d7dd","#d1cde2","#e3d4d2","#d9d9e2"];
+
+      const APP_VERSION = 8;
+      const STORAGE_NS = "weekly_overview_v8";
+      const PRESET_NAMESPACE = "weeklyoverview";
+      const CHANNEL_NAME = "weekly-overview-sync-v8";
+
+      /* =========================================================
+         HELPERS
+      ========================================================= */
+      const $ = (sel, root=document) => root.querySelector(sel);
+      const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+      function clamp(n, min, max){
+        const x = Number(n);
+        if(!Number.isFinite(x)) return min;
+        return Math.max(min, Math.min(max, x));
       }
-    }
-    function saveStore(store){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-    }
 
-    /* ============================
-       Week UI
-    ============================ */
-    const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-    const defaultDayColors = ["#d9c6bd","#d6d0c8","#cdd5d0","#c9d7dd","#d1cde2","#e3d4d2","#d9d9e2"];
-    const grid = $("#grid");
+      function deepClone(obj){
+        return JSON.parse(JSON.stringify(obj));
+      }
 
-    let selectedDayId = "day-0";
-    let activeWeekId = weekIdFromDate(new Date());
-    let store = loadStore();
+      function uid(){
+        return Math.random().toString(16).slice(2) + Date.now().toString(16);
+      }
 
-    function setDayHeaderTint(dayEl, color){
-      const header = dayEl.querySelector(".day-header");
-      header.style.background =
-        `linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92)),
-         radial-gradient(180px 110px at 16% 28%, ${hexToRgba(color, 0.22)}, transparent 72%)`;
-    }
+      function stableWidgetId(){
+        try{
+          const sp = new URLSearchParams(location.search);
+          const wid = (sp.get("wid") || "").trim();
+          if (wid) return wid;
+        }catch{}
 
-    function taskRowHTML(value=""){
-      const safe = (value ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
-      return `
-        <div class="task-row">
-          <textarea class="taskInput" placeholder="Task…">${safe}</textarea>
-          <button class="icon-btn removeTask" type="button" aria-label="Remove task" title="Remove">×</button>
-        </div>
-      `;
-    }
+        const pathPart = (location.pathname || "weekly-overview").replace(/[^a-zA-Z0-9_-]+/g, "_");
+        return pathPart || "weekly-overview";
+      }
 
-    function ensureWeekData(weekId){
-      if (!store.weeks[weekId]){
-        store.weeks[weekId] = {
+      const WID = stableWidgetId();
+
+      function normHex(hex, fallback){
+        const s = String(hex || "").trim();
+        return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+      }
+
+      function hexToRgbTuple(hex){
+        const h = normHex(hex, "#ffffff").slice(1);
+        const r = parseInt(h.slice(0,2), 16);
+        const g = parseInt(h.slice(2,4), 16);
+        const b = parseInt(h.slice(4,6), 16);
+        return `${r},${g},${b}`;
+      }
+
+      function hexToRgba(hex, a){
+        const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+        return `rgba(${r},${g},${b},${a})`;
+      }
+
+      function formatShortDate(d){
+        return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      }
+
+      function toISODate(d){
+        const x = new Date(d);
+        x.setHours(0,0,0,0);
+        const year = x.getFullYear();
+        const month = String(x.getMonth() + 1).padStart(2, "0");
+        const day = String(x.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function mondayOfWeek(date){
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = (day === 0 ? -6 : 1) - day;
+        d.setDate(d.getDate() + diff);
+        d.setHours(0,0,0,0);
+        return d;
+      }
+
+      function addDays(d, n){
+        const x = new Date(d);
+        x.setDate(x.getDate() + n);
+        return x;
+      }
+
+      function weekIdFromDate(date){
+        return toISODate(mondayOfWeek(date));
+      }
+
+      function prettyWeekLabel(weekId){
+        const mon = new Date(weekId + "T00:00:00");
+        const sun = addDays(mon, 6);
+        const opts = { month: "short", day: "numeric" };
+        const left = mon.toLocaleDateString(undefined, opts);
+        const right = sun.toLocaleDateString(undefined, opts);
+        return `${left} – ${right}`;
+      }
+
+      function escapeHtml(str){
+        return String(str ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+
+      function fileToDataUrl(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
+      function nowTs(){
+        return Date.now();
+      }
+
+      function setStatus(msg=""){
+        const el = $("#presetStatus");
+        if (el) el.textContent = msg;
+      }
+
+      function debounce(fn, delay){
+        let t = null;
+        return function(...args){
+          clearTimeout(t);
+          t = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+
+      /* =========================================================
+         STORAGE ENGINE
+         - IndexedDB first
+         - localStorage fallback
+      ========================================================= */
+      const storage = {
+        db: null,
+        hasIDB: false,
+        lsKey: `${STORAGE_NS}__${WID}`,
+
+        async init(){
+          if (!("indexedDB" in window)) {
+            this.hasIDB = false;
+            return;
+          }
+
+          try{
+            this.db = await new Promise((resolve, reject) => {
+              const req = indexedDB.open(`${STORAGE_NS}__db`, 1);
+              req.onupgradeneeded = () => {
+                const db = req.result;
+                if (!db.objectStoreNames.contains("state")) {
+                  db.createObjectStore("state");
+                }
+              };
+              req.onsuccess = () => resolve(req.result);
+              req.onerror = () => reject(req.error);
+            });
+            this.hasIDB = true;
+          }catch{
+            this.db = null;
+            this.hasIDB = false;
+          }
+        },
+
+        async get(){
+          if (this.hasIDB && this.db){
+            try{
+              const val = await new Promise((resolve, reject) => {
+                const tx = this.db.transaction("state", "readonly");
+                const store = tx.objectStore("state");
+                const req = store.get(this.lsKey);
+                req.onsuccess = () => resolve(req.result ?? null);
+                req.onerror = () => reject(req.error);
+              });
+              if (val) return val;
+            }catch{}
+          }
+
+          try{
+            const raw = localStorage.getItem(this.lsKey);
+            return raw ? JSON.parse(raw) : null;
+          }catch{
+            return null;
+          }
+        },
+
+        async set(value){
+          try{
+            localStorage.setItem(this.lsKey, JSON.stringify(value));
+          }catch{}
+
+          if (this.hasIDB && this.db){
+            try{
+              await new Promise((resolve, reject) => {
+                const tx = this.db.transaction("state", "readwrite");
+                const store = tx.objectStore("state");
+                const req = store.put(value, this.lsKey);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+              });
+            }catch{}
+          }
+        }
+      };
+
+      /* =========================================================
+         OPTIONAL SUPABASE CLOUD SYNC
+      ========================================================= */
+      function cloudReady(){
+        return !!(
+          CLOUD_SYNC.enabled &&
+          CLOUD_SYNC.supabaseUrl &&
+          CLOUD_SYNC.supabaseAnonKey &&
+          CLOUD_SYNC.table
+        );
+      }
+
+      async function cloudLoad(){
+        if (!cloudReady()) return null;
+        try{
+          const url = `${CLOUD_SYNC.supabaseUrl.replace(/\/$/, "")}/rest/v1/${encodeURIComponent(CLOUD_SYNC.table)}?widget_id=eq.${encodeURIComponent(WID)}&select=payload,updated_at&limit=1`;
+          const res = await fetch(url, {
+            headers: {
+              "apikey": CLOUD_SYNC.supabaseAnonKey,
+              "Authorization": `Bearer ${CLOUD_SYNC.supabaseAnonKey}`,
+              "Accept": "application/json"
+            }
+          });
+          if (!res.ok) return null;
+          const rows = await res.json();
+          if (!Array.isArray(rows) || !rows.length) return null;
+          const row = rows[0];
+          return row && row.payload ? row.payload : null;
+        }catch{
+          return null;
+        }
+      }
+
+      async function cloudSave(payload){
+        if (!cloudReady()) return false;
+        try{
+          const url = `${CLOUD_SYNC.supabaseUrl.replace(/\/$/, "")}/rest/v1/${encodeURIComponent(CLOUD_SYNC.table)}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "apikey": CLOUD_SYNC.supabaseAnonKey,
+              "Authorization": `Bearer ${CLOUD_SYNC.supabaseAnonKey}`,
+              "Content-Type": "application/json",
+              "Prefer": "resolution=merge-duplicates"
+            },
+            body: JSON.stringify({
+              widget_id: WID,
+              payload,
+              updated_at: new Date().toISOString()
+            })
+          });
+          return res.ok;
+        }catch{
+          return false;
+        }
+      }
+
+      /* =========================================================
+         APP STATE
+      ========================================================= */
+      function defaultWeekData(){
+        return {
           days: dayNames.map((_, i) => ({
             color: defaultDayColors[i],
             focus: "",
             tasks: [""]
           })),
-          background: {
-            tint: "#efe7e1",
-            strength: 30,
-            imageDataUrl: null
-          }
+          background: deepClone(DEFAULT_BG)
         };
-        saveStore(store);
       }
-      return store.weeks[weekId];
-    }
 
-    function applyTaskFill(dayEl){
-      const color = dayEl.dataset.color || "#cbb8ae";
-      const taskTintA = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--task-tint-a")) || 0.90;
-      dayEl.querySelectorAll(".task-row").forEach(row => {
-        row.style.background = hexToRgba(color, clamp(taskTintA, 0.10, 1.00));
-      });
-    }
+      function normalizeTheme(obj){
+        const t = Object.assign({}, DEFAULT_THEME, obj || {});
+        return {
+          appBg: normHex(t.appBg, DEFAULT_THEME.appBg),
+          ink: normHex(t.ink, DEFAULT_THEME.ink),
+          muted: normHex(t.muted, DEFAULT_THEME.muted),
+          accent: normHex(t.accent, DEFAULT_THEME.accent),
 
-    function applyTaskFillsForAllDays(){
-      $$(".day").forEach(applyTaskFill);
-    }
+          borderColor: normHex(t.borderColor, DEFAULT_THEME.borderColor),
+          borderA: clamp(t.borderA, 0.04, 0.30),
 
-    function syncDayPickerSwatches(){
-      $$(".day").forEach(dayEl => {
-        const color = dayEl.dataset.color || "#cbb8ae";
-        const box = dayEl.querySelector(".day-color");
-        if(box){
-          box.style.setProperty("--swatch", color);
-          box.style.borderColor = hexToRgba(color, 0.25);
+          surfaceA: clamp(t.surfaceA, 0.40, 0.98),
+          panelA: clamp(t.panelA, 0.60, 0.98),
+
+          btnA: clamp(t.btnA, 0.55, 1.00),
+          btnBorderA: clamp(t.btnBorderA, 0.00, 0.30),
+          btnInk: normHex(t.btnInk, DEFAULT_THEME.btnInk),
+
+          overlayBase: normHex(t.overlayBase, DEFAULT_THEME.overlayBase),
+          overlayA: clamp(t.overlayA, 0.00, 0.70),
+
+          dayBg: normHex(t.dayBg, DEFAULT_THEME.dayBg),
+          dayBgA: clamp(t.dayBgA, 0.70, 1.00),
+
+          blockBg: normHex(t.blockBg, DEFAULT_THEME.blockBg),
+          blockBgA: clamp(t.blockBgA, 0.55, 1.00),
+
+          inputBg: normHex(t.inputBg, DEFAULT_THEME.inputBg),
+          inputBgA: clamp(t.inputBgA, 0.60, 1.00),
+
+          taskTintA: clamp(t.taskTintA, 0.10, 1.00)
+        };
+      }
+
+      function normalizeBackground(obj){
+        const bg = Object.assign({}, DEFAULT_BG, obj || {});
+        return {
+          tint: normHex(bg.tint, DEFAULT_BG.tint),
+          strength: clamp(Number(bg.strength), 0, 70),
+          blur: clamp(Number(bg.blur), 0, 24),
+          imageDataUrl: typeof bg.imageDataUrl === "string" && bg.imageDataUrl ? bg.imageDataUrl : null
+        };
+      }
+
+      function normalizeWeek(week){
+        const safe = defaultWeekData();
+        if (!week || typeof week !== "object") return safe;
+
+        if (Array.isArray(week.days)) {
+          safe.days = safe.days.map((base, i) => {
+            const incoming = week.days[i] || {};
+            const tasks = Array.isArray(incoming.tasks) && incoming.tasks.length ? incoming.tasks.map(v => String(v ?? "")) : [""];
+            return {
+              color: normHex(incoming.color, base.color),
+              focus: String(incoming.focus ?? ""),
+              tasks
+            };
+          });
         }
-      });
-    }
 
-    function buildWeek(weekId){
-      activeWeekId = weekId;
-      const weekData = ensureWeekData(weekId);
+        safe.background = normalizeBackground(week.background);
+        return safe;
+      }
 
-      $("#weekLabel").textContent = prettyWeekLabel(weekId);
+      function normalizePresets(list){
+        if (!Array.isArray(list)) return [];
+        return list
+          .filter(Boolean)
+          .map(p => ({
+            id: String(p.id || uid()),
+            ns: String(p.ns || PRESET_NAMESPACE),
+            name: String(p.name || "Untitled"),
+            theme: normalizeTheme(p.theme),
+            bg: normalizeBackground(p.bg)
+          }))
+          .filter(p => p.ns === PRESET_NAMESPACE);
+      }
 
-      const monday = new Date(weekId + "T00:00:00");
-      grid.innerHTML = "";
+      function normalizeState(raw){
+        const safe = {
+          version: APP_VERSION,
+          wid: WID,
+          lastUpdated: Number(raw?.lastUpdated || 0) || 0,
+          theme: normalizeTheme(raw?.theme),
+          presets: normalizePresets(raw?.presets),
+          weeks: {}
+        };
 
-      dayNames.forEach((name, i) => {
-        const date = addDays(monday, i);
-        const dayData = weekData.days[i];
-        const color = dayData.color || defaultDayColors[i];
+        const weeks = raw?.weeks && typeof raw.weeks === "object" ? raw.weeks : {};
+        for (const [weekId, value] of Object.entries(weeks)) {
+          safe.weeks[weekId] = normalizeWeek(value);
+        }
 
-        const day = document.createElement("section");
-        day.className = "day";
-        day.dataset.dayId = `day-${i}`;
-        day.dataset.color = color;
+        return safe;
+      }
 
-        const tasks = (Array.isArray(dayData.tasks) && dayData.tasks.length) ? dayData.tasks : [""];
-        const tasksHtml = tasks.map(t => taskRowHTML(t)).join("");
+      let state = normalizeState(null);
+      let activeWeekId = weekIdFromDate(new Date());
+      let selectedDayId = "day-0";
+      let themeDraft = normalizeTheme(DEFAULT_THEME);
+      let bgDraft = normalizeBackground(DEFAULT_BG);
 
-        day.innerHTML = `
-          <div class="day-header">
-            <div class="day-title">
-              <div class="day-name">${name}</div>
-              <div class="day-date">${formatShortDate(date)}</div>
-            </div>
-            <div class="day-color" title="Change day color">
-              <input class="dayColorInput" type="color" value="${color}" aria-label="Set day color"/>
-            </div>
-          </div>
+      const grid = $("#grid");
+      const boardTint = $("#boardTint");
+      const bgDot = $("#bgDot");
+      const themeDot = $("#themeDot");
 
-          <div class="day-body">
-            <div class="block">
-              <div class="label">Focus</div>
-              <textarea class="focusInput" placeholder="One main thing…">${(dayData.focus ?? "")
-                .replaceAll("&","&amp;")
-                .replaceAll("<","&lt;")
-                .replaceAll(">","&gt;")}</textarea>
-            </div>
+      function ensureWeekData(weekId){
+        if (!state.weeks[weekId]) {
+          state.weeks[weekId] = defaultWeekData();
+        } else {
+          state.weeks[weekId] = normalizeWeek(state.weeks[weekId]);
+        }
+        return state.weeks[weekId];
+      }
 
-            <div class="tasks">
-              <div class="label">Tasks</div>
-              <div class="taskList">${tasksHtml}</div>
-              <button class="add-btn addTask" type="button">+ Add task</button>
-            </div>
+      function touchState(){
+        state.lastUpdated = nowTs();
+      }
+
+      const bc = "BroadcastChannel" in window ? new BroadcastChannel(CHANNEL_NAME) : null;
+
+      async function saveState({ cloudToo = true, broadcastToo = true } = {}){
+        touchState();
+        await storage.set(state);
+
+        if (broadcastToo && bc) {
+          try{
+            bc.postMessage({ type: "state-updated", wid: WID, lastUpdated: state.lastUpdated });
+          }catch{}
+        }
+
+        if (cloudToo) {
+          debouncedCloudSave();
+        }
+      }
+
+      const debouncedSave = debounce(() => { saveState(); }, 160);
+      const debouncedCloudSave = debounce(() => { cloudSave(state); }, 900);
+
+      async function flushSave(){
+        await saveState();
+      }
+
+      function currentWeek(){
+        return ensureWeekData(activeWeekId);
+      }
+
+      /* =========================================================
+         THEME
+      ========================================================= */
+      function setSelectionRingFromAccent(accentHex){
+        const accent = normHex(accentHex, DEFAULT_THEME.accent);
+        let st = $("#accentRingStyle");
+        if (!st){
+          st = document.createElement("style");
+          st.id = "accentRingStyle";
+          document.head.appendChild(st);
+        }
+        st.textContent = `
+          .day.selected{
+            outline-color: ${hexToRgba(accent, 0.62)} !important;
+            box-shadow: 0 0 0 1px ${hexToRgba(accent, 0.22)} inset;
+          }
+          textarea:focus{
+            box-shadow: 0 0 0 5px ${hexToRgba(accent, 0.18)} !important;
+          }
+        `;
+      }
+
+      function applyTheme(theme){
+        const t = normalizeTheme(theme);
+        const r = document.documentElement.style;
+
+        r.setProperty("--app-bg", t.appBg);
+        r.setProperty("--ink", t.ink);
+        r.setProperty("--muted", t.muted);
+        r.setProperty("--accent", t.accent);
+
+        r.setProperty("--border-rgb", hexToRgbTuple(t.borderColor));
+        r.setProperty("--border-a", String(t.borderA));
+
+        r.setProperty("--surface-a", String(t.surfaceA));
+        r.setProperty("--panel-a", String(t.panelA));
+
+        r.setProperty("--btn-a", String(t.btnA));
+        r.setProperty("--btn-border-a", String(t.btnBorderA));
+        r.setProperty("--btn-ink", hexToRgba(t.btnInk, 0.72));
+
+        r.setProperty("--day-bg", t.dayBg);
+        r.setProperty("--day-bg-a", String(t.dayBgA));
+
+        r.setProperty("--block-bg", t.blockBg);
+        r.setProperty("--block-bg-a", String(t.blockBgA));
+
+        r.setProperty("--input-bg", t.inputBg);
+        r.setProperty("--input-bg-a", String(t.inputBgA));
+
+        r.setProperty("--task-tint-a", String(t.taskTintA));
+
+        if (themeDot){
+          themeDot.style.background = t.accent;
+          themeDot.style.boxShadow = `0 0 0 7px ${hexToRgba(t.accent, 0.22)}`;
+        }
+
+        setSelectionRingFromAccent(t.accent);
+
+        let st = $("#overlayStyle");
+        if (!st){
+          st = document.createElement("style");
+          st.id = "overlayStyle";
+          document.head.appendChild(st);
+        }
+        st.textContent = `.board::after{ background: ${hexToRgba(t.overlayBase, t.overlayA)} !important; }`;
+
+        let st2 = $("#surfaceStyle");
+        if (!st2){
+          st2 = document.createElement("style");
+          st2.id = "surfaceStyle";
+          document.head.appendChild(st2);
+        }
+        st2.textContent = `
+          .day{ background: ${hexToRgba(t.dayBg, t.dayBgA)} !important; }
+          .block{ background: ${hexToRgba(t.blockBg, t.blockBgA)} !important; }
+          textarea{ background: ${hexToRgba(t.inputBg, t.inputBgA)} !important; }
+          .task-row .taskInput{ background: transparent !important; }
+        `;
+      }
+
+      function syncThemeInputs(t){
+        const theme = normalizeTheme(t);
+        const set = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.value = String(val);
+        };
+
+        set("tAppBg", theme.appBg);
+        set("tInk", theme.ink);
+        set("tMuted", theme.muted);
+        set("tAccent", theme.accent);
+
+        set("tBorderColor", theme.borderColor);
+        set("tBorderA", Math.round(theme.borderA * 100));
+
+        set("tSurfaceA", Math.round(theme.surfaceA * 100));
+        set("tPanelA", Math.round(theme.panelA * 100));
+
+        set("tBtnA", Math.round(theme.btnA * 100));
+        set("tBtnBorderA", Math.round(theme.btnBorderA * 100));
+        set("tBtnInk", theme.btnInk);
+
+        set("tOverlayBase", theme.overlayBase);
+        set("tOverlayA", Math.round(theme.overlayA * 100));
+
+        set("tDayBg", theme.dayBg);
+        set("tDayBgA", Math.round(theme.dayBgA * 100));
+
+        set("tBlockBg", theme.blockBg);
+        set("tBlockBgA", Math.round(theme.blockBgA * 100));
+
+        set("tInputBg", theme.inputBg);
+        set("tInputBgA", Math.round(theme.inputBgA * 100));
+
+        set("tTaskTintA", Math.round(theme.taskTintA * 100));
+      }
+
+      function readThemeInputs(){
+        const g = id => document.getElementById(id);
+        return normalizeTheme({
+          appBg: g("tAppBg")?.value,
+          ink: g("tInk")?.value,
+          muted: g("tMuted")?.value,
+          accent: g("tAccent")?.value,
+
+          borderColor: g("tBorderColor")?.value,
+          borderA: Number(g("tBorderA")?.value) / 100,
+
+          surfaceA: Number(g("tSurfaceA")?.value) / 100,
+          panelA: Number(g("tPanelA")?.value) / 100,
+
+          btnA: Number(g("tBtnA")?.value) / 100,
+          btnBorderA: Number(g("tBtnBorderA")?.value) / 100,
+          btnInk: g("tBtnInk")?.value,
+
+          overlayBase: g("tOverlayBase")?.value,
+          overlayA: Number(g("tOverlayA")?.value) / 100,
+
+          dayBg: g("tDayBg")?.value,
+          dayBgA: Number(g("tDayBgA")?.value) / 100,
+
+          blockBg: g("tBlockBg")?.value,
+          blockBgA: Number(g("tBlockBgA")?.value) / 100,
+
+          inputBg: g("tInputBg")?.value,
+          inputBgA: Number(g("tInputBgA")?.value) / 100,
+
+          taskTintA: Number(g("tTaskTintA")?.value) / 100
+        });
+      }
+
+      /* =========================================================
+         BACKGROUND
+      ========================================================= */
+      function setBoardImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      }
+
+      function applyBoardTint(colorHex, strengthPct){
+        const tint = normHex(colorHex, DEFAULT_BG.tint);
+        const strength = clamp(Number(strengthPct) / 100, 0, 0.70);
+
+        document.documentElement.style.setProperty("--board-tint", tint);
+        document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+        if (bgDot){
+          bgDot.style.background = tint;
+          bgDot.style.boxShadow = `0 0 0 7px ${hexToRgba(tint, Math.min(0.30, strength + 0.10))}`;
+        }
+
+        boardTint.style.background = hexToRgba(tint, strength);
+      }
+
+      function applyBoardBlur(px){
+        const blur = clamp(Number(px), 0, 24);
+        document.documentElement.style.setProperty("--bg-blur", `${blur}px`);
+      }
+
+      function applyBackground(bg){
+        const safe = normalizeBackground(bg);
+        applyBoardTint(safe.tint, safe.strength);
+        applyBoardBlur(safe.blur);
+        setBoardImage(safe.imageDataUrl);
+      }
+
+      function syncBgInputs(bg){
+        const safe = normalizeBackground(bg);
+        $("#bgColor").value = safe.tint;
+        $("#bgStrength").value = String(safe.strength);
+        $("#bgBlur").value = String(safe.blur);
+        $("#bgImage").value = "";
+      }
+
+      function readBgInputs(){
+        return normalizeBackground({
+          tint: $("#bgColor")?.value,
+          strength: Number($("#bgStrength")?.value),
+          blur: Number($("#bgBlur")?.value),
+          imageDataUrl: bgDraft.imageDataUrl
+        });
+      }
+
+      /* =========================================================
+         BUILD / RENDER
+      ========================================================= */
+      function setDayHeaderTint(dayEl, color){
+        const header = dayEl.querySelector(".day-header");
+        header.style.background =
+          `linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92)),
+           radial-gradient(180px 110px at 16% 28%, ${hexToRgba(color, 0.22)}, transparent 72%)`;
+      }
+
+      function taskRowHTML(value=""){
+        return `
+          <div class="task-row">
+            <textarea class="taskInput" placeholder="Task…">${escapeHtml(value)}</textarea>
+            <button class="icon-btn removeTask" type="button" aria-label="Remove task" title="Remove">×</button>
           </div>
         `;
-
-        grid.appendChild(day);
-        setDayHeaderTint(day, color);
-        applyTaskFill(day);
-      });
-
-      selectDay(selectedDayId);
-      applyBackgroundFromWeek(weekData.background);
-      syncDayPickerSwatches();
-    }
-
-    function selectDay(dayId){
-      selectedDayId = dayId;
-      $$(".day").forEach(d => d.classList.toggle("selected", d.dataset.dayId === dayId));
-    }
-
-    function snapshotWeekToStore(){
-      const weekData = ensureWeekData(activeWeekId);
-
-      $$(".day").forEach((dayEl, i) => {
-        const color = dayEl.dataset.color || defaultDayColors[i];
-        const focus = dayEl.querySelector(".focusInput")?.value ?? "";
-        const tasks = Array.from(dayEl.querySelectorAll(".taskInput")).map(t => t.value);
-
-        weekData.days[i] = {
-          color,
-          focus,
-          tasks: tasks.length ? tasks : [""]
-        };
-      });
-
-      store.weeks[activeWeekId] = weekData;
-      saveStore(store);
-    }
-
-    /* ============================
-       Background (per week)
-    ============================ */
-    const boardTint = $("#boardTint");
-    const bgBtn = $("#bgBtn");
-    const bgPanel = $("#bgPanel");
-    const bgColor = $("#bgColor");
-    const bgStrength = $("#bgStrength");
-    const bgImage = $("#bgImage");
-    const removeImage = $("#removeImage");
-    const bgDot = $("#bgDot");
-
-    function setBoardImage(dataUrlOrNull){
-      document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-    }
-
-    function applyBoardTint(colorHex, strengthPct){
-      const tint = normHex(colorHex, "#efe7e1");
-      const strength = clamp(Number(strengthPct)/100, 0, 0.70);
-
-      document.documentElement.style.setProperty("--board-tint", tint);
-      document.documentElement.style.setProperty("--board-tint-a", String(strength));
-
-      if(bgDot){
-        bgDot.style.background = tint;
-        bgDot.style.boxShadow = `0 0 0 7px ${hexToRgba(tint, Math.min(0.30, strength + 0.10))}`;
       }
 
-      boardTint.style.background = hexToRgba(tint, strength);
-    }
+      function applyTaskFill(dayEl){
+        const color = dayEl.dataset.color || "#cbb8ae";
+        const taskTintA = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--task-tint-a")) || 0.90;
+        dayEl.querySelectorAll(".task-row").forEach(row => {
+          row.style.background = hexToRgba(color, clamp(taskTintA, 0.10, 1.00));
+        });
+      }
 
-    function applyBackgroundFromWeek(bg){
-      const tint = bg?.tint ?? "#efe7e1";
-      const strength = bg?.strength ?? 30;
+      function applyTaskFillsForAllDays(){
+        $$(".day").forEach(applyTaskFill);
+      }
 
-      bgColor.value = tint;
-      bgStrength.value = String(strength);
+      function syncDayPickerSwatches(){
+        $$(".day").forEach(dayEl => {
+          const color = dayEl.dataset.color || "#cbb8ae";
+          const box = dayEl.querySelector(".day-color");
+          if (box){
+            box.style.setProperty("--swatch", color);
+            box.style.borderColor = hexToRgba(color, 0.25);
+          }
+        });
+      }
 
-      applyBoardTint(tint, strength);
-      setBoardImage(bg?.imageDataUrl ?? null);
-    }
+      function selectDay(dayId){
+        selectedDayId = dayId;
+        $$(".day").forEach(d => d.classList.toggle("selected", d.dataset.dayId === dayId));
+      }
 
-    bgBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      bgPanel.classList.toggle("open");
-      $("#themePanel")?.classList.remove("open");
-    });
+      function buildWeek(weekId){
+        activeWeekId = weekId;
+        const weekData = ensureWeekData(weekId);
 
-    document.addEventListener("click", (e) => {
-      if (!bgPanel.classList.contains("open")) return;
-      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      if (!inside) bgPanel.classList.remove("open");
-    });
+        $("#weekLabel").textContent = prettyWeekLabel(weekId);
 
-    bgColor.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const weekData = ensureWeekData(activeWeekId);
-      weekData.background = weekData.background || {};
-      weekData.background.tint = bgColor.value;
-      store.weeks[activeWeekId] = weekData;
-      saveStore(store);
-    });
+        const monday = new Date(weekId + "T00:00:00");
+        grid.innerHTML = "";
 
-    bgStrength.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const weekData = ensureWeekData(activeWeekId);
-      weekData.background = weekData.background || {};
-      weekData.background.strength = Number(bgStrength.value);
-      store.weeks[activeWeekId] = weekData;
-      saveStore(store);
-    });
+        dayNames.forEach((name, i) => {
+          const date = addDays(monday, i);
+          const dayData = weekData.days[i];
+          const color = normHex(dayData.color, defaultDayColors[i]);
 
-    bgImage.addEventListener("change", async () => {
-      const file = bgImage.files && bgImage.files[0];
-      if (!file) return;
+          const day = document.createElement("section");
+          day.className = "day";
+          day.dataset.dayId = `day-${i}`;
+          day.dataset.color = color;
 
-      const dataUrl = await fileToDataUrl(file);
-      setBoardImage(dataUrl);
+          const tasks = Array.isArray(dayData.tasks) && dayData.tasks.length ? dayData.tasks : [""];
+          const tasksHtml = tasks.map(t => taskRowHTML(t)).join("");
 
-      const weekData = ensureWeekData(activeWeekId);
-      weekData.background = weekData.background || {};
-      weekData.background.imageDataUrl = dataUrl;
-      store.weeks[activeWeekId] = weekData;
-      saveStore(store);
-    });
+          day.innerHTML = `
+            <div class="day-header">
+              <div class="day-title">
+                <div class="day-name">${name}</div>
+                <div class="day-date">${formatShortDate(date)}</div>
+              </div>
+              <div class="day-color" title="Change day color">
+                <input class="dayColorInput" type="color" value="${color}" aria-label="Set day color" />
+              </div>
+            </div>
 
-    removeImage.addEventListener("click", () => {
-      setBoardImage(null);
-      bgImage.value = "";
+            <div class="day-body">
+              <div class="block">
+                <div class="label">Focus</div>
+                <textarea class="focusInput" placeholder="One main thing…">${escapeHtml(dayData.focus ?? "")}</textarea>
+              </div>
 
-      const weekData = ensureWeekData(activeWeekId);
-      weekData.background = weekData.background || {};
-      weekData.background.imageDataUrl = null;
-      store.weeks[activeWeekId] = weekData;
-      saveStore(store);
-    });
+              <div class="tasks">
+                <div class="label">Tasks</div>
+                <div class="taskList">${tasksHtml}</div>
+                <button class="add-btn addTask" type="button">+ Add task</button>
+              </div>
+            </div>
+          `;
 
-    function fileToDataUrl(file){
-      return new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
-    }
+          grid.appendChild(day);
+          setDayHeaderTint(day, color);
+          applyTaskFill(day);
+        });
 
-    /* ============================
-       Week navigation
-    ============================ */
-    $("#prevWeek").addEventListener("click", () => {
-      snapshotWeekToStore();
-      const mon = new Date(activeWeekId + "T00:00:00");
-      buildWeek(toISODate(addDays(mon, -7)));
-    });
-
-    $("#nextWeek").addEventListener("click", () => {
-      snapshotWeekToStore();
-      const mon = new Date(activeWeekId + "T00:00:00");
-      buildWeek(toISODate(addDays(mon, 7)));
-    });
-
-    /* ============================
-       Interactions + autosave
-    ============================ */
-    grid.addEventListener("click", (e) => {
-      if (e.target.closest("input, button, textarea")) return;
-      const day = e.target.closest(".day");
-      if (day) selectDay(day.dataset.dayId);
-    });
-
-    grid.addEventListener("input", (e) => {
-      if (e.target.classList.contains("dayColorInput")){
-        const day = e.target.closest(".day");
-        const color = e.target.value;
-        day.dataset.color = color;
-        setDayHeaderTint(day, color);
-        applyTaskFill(day);
-        snapshotWeekToStore();
+        selectDay(selectedDayId);
+        bgDraft = normalizeBackground(weekData.background);
+        syncBgInputs(bgDraft);
+        applyBackground(bgDraft);
         syncDayPickerSwatches();
-        return;
-      }
-      if (e.target.classList.contains("focusInput") || e.target.classList.contains("taskInput")){
-        snapshotWeekToStore();
-      }
-    });
-
-    grid.addEventListener("click", (e) => {
-      const addBtn = e.target.closest(".addTask");
-      if (addBtn){
-        const day = addBtn.closest(".day");
-        addTask(day, true);
-        snapshotWeekToStore();
-        return;
       }
 
-      const rmBtn = e.target.closest(".removeTask");
-      if (rmBtn){
-        const day = rmBtn.closest(".day");
-        const row = rmBtn.closest(".task-row");
-        const list = day.querySelector(".taskList");
-        row.remove();
-        if (!list.querySelector(".task-row")) addTask(day, false);
-        applyTaskFill(day);
-        snapshotWeekToStore();
-        return;
+      /* =========================================================
+         SNAPSHOT CURRENT UI INTO STATE
+      ========================================================= */
+      function snapshotWeekToState(){
+        const weekData = ensureWeekData(activeWeekId);
+
+        $$(".day").forEach((dayEl, i) => {
+          const color = normHex(dayEl.dataset.color, defaultDayColors[i]);
+          const focus = dayEl.querySelector(".focusInput")?.value ?? "";
+          const tasks = Array.from(dayEl.querySelectorAll(".taskInput")).map(t => String(t.value ?? ""));
+
+          weekData.days[i] = {
+            color,
+            focus,
+            tasks: tasks.length ? tasks : [""]
+          };
+        });
+
+        state.weeks[activeWeekId] = weekData;
       }
-    });
 
-    function addTask(dayEl, focusNew = true){
-      const list = dayEl.querySelector(".taskList");
-      const wrap = document.createElement("div");
-      wrap.innerHTML = taskRowHTML("");
-      const row = wrap.firstElementChild;
-      list.appendChild(row);
-
-      applyTaskFill(dayEl);
-
-      if (focusNew){
-        row.querySelector(".taskInput").focus({ preventScroll: false });
+      function persistCurrentWeekSoon(){
+        snapshotWeekToState();
+        debouncedSave();
       }
-    }
 
-    grid.addEventListener("keydown", (e) => {
-      if (e.target.classList && e.target.classList.contains("taskInput")){
-        if (e.key === "Enter" && !e.shiftKey){
-          e.preventDefault();
-          addTask(e.target.closest(".day"), true);
-          snapshotWeekToStore();
+      /* =========================================================
+         PRESETS
+      ========================================================= */
+      function refreshPresetSelect(){
+        const sel = $("#presetSelect");
+        if (!sel) return;
+
+        const cur = sel.value;
+        sel.innerHTML = `<option value="">—</option>`;
+
+        const list = normalizePresets(state.presets);
+        for (const p of list) {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name || "Untitled";
+          sel.appendChild(opt);
+        }
+
+        if (list.some(p => p.id === cur)) {
+          sel.value = cur;
         }
       }
-    });
 
-    window.addEventListener("beforeunload", () => snapshotWeekToStore());
+      function currentPresetPayload(){
+        return {
+          id: uid(),
+          ns: PRESET_NAMESPACE,
+          name: ($("#presetName")?.value || "").trim() || "Untitled",
+          theme: normalizeTheme(themeDraft),
+          bg: normalizeBackground(bgDraft)
+        };
+      }
 
-    /* ============================
-       Boot
-    ============================ */
-    initThemeUI();
-    buildWeek(activeWeekId);
+      /* =========================================================
+         UI WIRING
+      ========================================================= */
+      function closePanels(except){
+        if (except !== "theme") $("#themePanel")?.classList.remove("open");
+        if (except !== "bg") $("#bgPanel")?.classList.remove("open");
+      }
+
+      function addTask(dayEl, focusNew = true){
+        const list = dayEl.querySelector(".taskList");
+        const wrap = document.createElement("div");
+        wrap.innerHTML = taskRowHTML("");
+        const row = wrap.firstElementChild;
+        list.appendChild(row);
+
+        applyTaskFill(dayEl);
+
+        if (focusNew){
+          const input = row.querySelector(".taskInput");
+          requestAnimationFrame(() => input?.focus({ preventScroll: false }));
+        }
+      }
+
+      function initPanels(){
+        $("#themeBtn")?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const open = $("#themePanel").classList.toggle("open");
+          if (open) closePanels("theme");
+        });
+
+        $("#bgBtn")?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const open = $("#bgPanel").classList.toggle("open");
+          if (open) closePanels("bg");
+        });
+
+        document.addEventListener("click", (e) => {
+          const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          if (!insideTheme) $("#themePanel")?.classList.remove("open");
+          if (!insideBg) $("#bgPanel")?.classList.remove("open");
+        });
+      }
+
+      function initThemeUI(){
+        themeDraft = normalizeTheme(state.theme);
+        syncThemeInputs(themeDraft);
+        applyTheme(themeDraft);
+
+        const ids = [
+          "tAppBg","tInk","tMuted","tAccent",
+          "tBorderColor","tBorderA",
+          "tSurfaceA","tPanelA",
+          "tBtnA","tBtnBorderA","tBtnInk",
+          "tOverlayBase","tOverlayA",
+          "tDayBg","tDayBgA",
+          "tBlockBg","tBlockBgA",
+          "tInputBg","tInputBgA",
+          "tTaskTintA"
+        ];
+
+        ids.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.addEventListener("input", () => {
+            themeDraft = readThemeInputs();
+            applyTheme(themeDraft);
+            applyTaskFillsForAllDays();
+            syncDayPickerSwatches();
+            setStatus("");
+          });
+        });
+
+        $("#themeApply")?.addEventListener("click", async () => {
+          themeDraft = readThemeInputs();
+          state.theme = normalizeTheme(themeDraft);
+          applyTheme(state.theme);
+          applyTaskFillsForAllDays();
+          syncDayPickerSwatches();
+          await saveState();
+          setStatus("Theme applied.");
+        });
+
+        $("#themeReset")?.addEventListener("click", async () => {
+          themeDraft = normalizeTheme(DEFAULT_THEME);
+          state.theme = normalizeTheme(DEFAULT_THEME);
+          syncThemeInputs(themeDraft);
+          applyTheme(themeDraft);
+          applyTaskFillsForAllDays();
+          syncDayPickerSwatches();
+          await saveState();
+          setStatus("Theme reset.");
+        });
+      }
+
+      function initBackgroundUI(){
+        const previewBgFromDraft = () => {
+          bgDraft = readBgInputs();
+          applyBackground(bgDraft);
+          setStatus("");
+        };
+
+        $("#bgColor")?.addEventListener("input", previewBgFromDraft);
+        $("#bgStrength")?.addEventListener("input", previewBgFromDraft);
+        $("#bgBlur")?.addEventListener("input", previewBgFromDraft);
+
+        $("#bgImage")?.addEventListener("change", async () => {
+          const file = $("#bgImage").files && $("#bgImage").files[0];
+          if (!file) return;
+          try{
+            bgDraft.imageDataUrl = await fileToDataUrl(file);
+            bgDraft = normalizeBackground(bgDraft);
+            applyBackground(bgDraft);
+            setStatus("");
+          }catch{
+            setStatus("Could not read that image.");
+          }
+        });
+
+        $("#removeImage")?.addEventListener("click", () => {
+          bgDraft.imageDataUrl = null;
+          $("#bgImage").value = "";
+          bgDraft = normalizeBackground(bgDraft);
+          applyBackground(bgDraft);
+          setStatus("");
+        });
+
+        $("#bgApply")?.addEventListener("click", async () => {
+          const weekData = ensureWeekData(activeWeekId);
+          bgDraft = readBgInputs();
+          weekData.background = normalizeBackground(bgDraft);
+          state.weeks[activeWeekId] = weekData;
+          applyBackground(weekData.background);
+          await saveState();
+          setStatus("Background applied.");
+        });
+
+        $("#bgReset")?.addEventListener("click", async () => {
+          const weekData = ensureWeekData(activeWeekId);
+          weekData.background = normalizeBackground(DEFAULT_BG);
+          state.weeks[activeWeekId] = weekData;
+          bgDraft = normalizeBackground(DEFAULT_BG);
+          syncBgInputs(bgDraft);
+          applyBackground(bgDraft);
+          await saveState();
+          setStatus("Background reset.");
+        });
+      }
+
+      function initPresetUI(){
+        refreshPresetSelect();
+
+        $("#presetSave")?.addEventListener("click", async () => {
+          const name = ($("#presetName")?.value || "").trim();
+          if (!name){
+            setStatus("Type a preset name first.");
+            return;
+          }
+
+          const payload = currentPresetPayload();
+          payload.name = name;
+
+          state.presets = [payload, ...normalizePresets(state.presets).filter(p => p.id !== payload.id)];
+          refreshPresetSelect();
+          $("#presetName").value = "";
+          $("#presetSelect").value = payload.id;
+          await saveState();
+          setStatus("Preset saved.");
+        });
+
+        $("#presetApply")?.addEventListener("click", async () => {
+          const id = $("#presetSelect")?.value || "";
+          if (!id){
+            setStatus("Choose a preset first.");
+            return;
+          }
+
+          const preset = normalizePresets(state.presets).find(p => p.id === id);
+          if (!preset){
+            setStatus("Preset not found.");
+            return;
+          }
+
+          themeDraft = normalizeTheme(preset.theme);
+          state.theme = normalizeTheme(preset.theme);
+          syncThemeInputs(themeDraft);
+          applyTheme(themeDraft);
+
+          const weekData = ensureWeekData(activeWeekId);
+          weekData.background = normalizeBackground(preset.bg);
+          state.weeks[activeWeekId] = weekData;
+
+          bgDraft = normalizeBackground(weekData.background);
+          syncBgInputs(bgDraft);
+          applyBackground(bgDraft);
+
+          applyTaskFillsForAllDays();
+          syncDayPickerSwatches();
+          await saveState();
+          setStatus("Preset applied.");
+        });
+
+        $("#presetDelete")?.addEventListener("click", async () => {
+          const id = $("#presetSelect")?.value || "";
+          if (!id){
+            setStatus("Choose a preset first.");
+            return;
+          }
+
+          const before = normalizePresets(state.presets);
+          const after = before.filter(p => p.id !== id);
+
+          if (after.length === before.length){
+            setStatus("Preset not found.");
+            return;
+          }
+
+          state.presets = after;
+          refreshPresetSelect();
+          $("#presetSelect").value = "";
+          await saveState();
+          setStatus("Preset deleted.");
+        });
+      }
+
+      function initWeekNavigation(){
+        $("#prevWeek")?.addEventListener("click", async () => {
+          snapshotWeekToState();
+          const mon = new Date(activeWeekId + "T00:00:00");
+          buildWeek(toISODate(addDays(mon, -7)));
+          await saveState({ cloudToo: false });
+        });
+
+        $("#nextWeek")?.addEventListener("click", async () => {
+          snapshotWeekToState();
+          const mon = new Date(activeWeekId + "T00:00:00");
+          buildWeek(toISODate(addDays(mon, 7)));
+          await saveState({ cloudToo: false });
+        });
+      }
+
+      function initGridInteractions(){
+        grid.addEventListener("click", (e) => {
+          if (e.target.closest("input, button, textarea, select")) return;
+          const day = e.target.closest(".day");
+          if (day) selectDay(day.dataset.dayId);
+        });
+
+        grid.addEventListener("input", (e) => {
+          if (e.target.classList.contains("dayColorInput")){
+            const day = e.target.closest(".day");
+            const color = normHex(e.target.value, "#cbb8ae");
+            day.dataset.color = color;
+            setDayHeaderTint(day, color);
+            applyTaskFill(day);
+            syncDayPickerSwatches();
+            persistCurrentWeekSoon();
+            return;
+          }
+
+          if (e.target.classList.contains("focusInput") || e.target.classList.contains("taskInput")){
+            persistCurrentWeekSoon();
+          }
+        });
+
+        grid.addEventListener("change", (e) => {
+          if (e.target.classList.contains("focusInput") || e.target.classList.contains("taskInput") || e.target.classList.contains("dayColorInput")){
+            persistCurrentWeekSoon();
+          }
+        });
+
+        grid.addEventListener("focusout", (e) => {
+          if (e.target.classList && (e.target.classList.contains("focusInput") || e.target.classList.contains("taskInput"))){
+            persistCurrentWeekSoon();
+          }
+        }, true);
+
+        grid.addEventListener("click", (e) => {
+          const addBtn = e.target.closest(".addTask");
+          if (addBtn){
+            const day = addBtn.closest(".day");
+            addTask(day, true);
+            persistCurrentWeekSoon();
+            return;
+          }
+
+          const rmBtn = e.target.closest(".removeTask");
+          if (rmBtn){
+            const day = rmBtn.closest(".day");
+            const row = rmBtn.closest(".task-row");
+            const list = day.querySelector(".taskList");
+            row.remove();
+
+            if (!list.querySelector(".task-row")){
+              addTask(day, false);
+            }
+
+            applyTaskFill(day);
+            persistCurrentWeekSoon();
+          }
+        });
+
+        grid.addEventListener("keydown", (e) => {
+          if (e.target.classList && e.target.classList.contains("taskInput")){
+            if (e.key === "Enter" && !e.shiftKey){
+              e.preventDefault();
+              addTask(e.target.closest(".day"), true);
+              persistCurrentWeekSoon();
+            }
+          }
+        });
+      }
+
+      /* =========================================================
+         CROSS-TAB / SAME-BROWSER SYNC
+      ========================================================= */
+      if (bc){
+        bc.onmessage = async (event) => {
+          const msg = event.data;
+          if (!msg || msg.type !== "state-updated" || msg.wid !== WID) return;
+
+          const incoming = await storage.get();
+          if (!incoming) return;
+
+          if ((incoming.lastUpdated || 0) > (state.lastUpdated || 0)){
+            state = normalizeState(incoming);
+            themeDraft = normalizeTheme(state.theme);
+            applyTheme(themeDraft);
+            syncThemeInputs(themeDraft);
+            buildWeek(activeWeekId);
+            refreshPresetSelect();
+            applyTaskFillsForAllDays();
+            syncDayPickerSwatches();
+          }
+        };
+      }
+
+      window.addEventListener("storage", async (e) => {
+        if (e.key !== storage.lsKey || !e.newValue) return;
+        try{
+          const incoming = normalizeState(JSON.parse(e.newValue));
+          if ((incoming.lastUpdated || 0) > (state.lastUpdated || 0)){
+            state = incoming;
+            themeDraft = normalizeTheme(state.theme);
+            applyTheme(themeDraft);
+            syncThemeInputs(themeDraft);
+            buildWeek(activeWeekId);
+            refreshPresetSelect();
+            applyTaskFillsForAllDays();
+            syncDayPickerSwatches();
+          }
+        }catch{}
+      });
+
+      /* =========================================================
+         PAGE LIFECYCLE SAVING
+      ========================================================= */
+      window.addEventListener("beforeunload", () => {
+        snapshotWeekToState();
+        try{
+          localStorage.setItem(storage.lsKey, JSON.stringify(Object.assign({}, state, { lastUpdated: nowTs() })));
+        }catch{}
+      });
+
+      window.addEventListener("pagehide", async () => {
+        snapshotWeekToState();
+        await flushSave();
+      });
+
+      document.addEventListener("visibilitychange", async () => {
+        if (document.visibilityState === "hidden"){
+          snapshotWeekToState();
+          await flushSave();
+        }
+      });
+
+      /* =========================================================
+         BOOT
+      ========================================================= */
+      await storage.init();
+
+      const localState = await storage.get();
+      state = normalizeState(localState);
+
+      if (cloudReady()){
+        const remoteState = await cloudLoad();
+        if (remoteState && (remoteState.lastUpdated || 0) > (state.lastUpdated || 0)){
+          state = normalizeState(remoteState);
+          await storage.set(state);
+        }
+      }
+
+      ensureWeekData(activeWeekId);
+
+      initPanels();
+      initThemeUI();
+      initBackgroundUI();
+      initPresetUI();
+      initWeekNavigation();
+      initGridInteractions();
+
+      applyTheme(state.theme);
+      themeDraft = normalizeTheme(state.theme);
+      syncThemeInputs(themeDraft);
+
+      buildWeek(activeWeekId);
+      refreshPresetSelect();
+      applyTaskFillsForAllDays();
+      syncDayPickerSwatches();
+
+      /* cloud polling for other devices */
+      if (cloudReady()){
+        setInterval(async () => {
+          const remote = await cloudLoad();
+          if (remote && (remote.lastUpdated || 0) > (state.lastUpdated || 0)){
+            state = normalizeState(remote);
+            await storage.set(state);
+            themeDraft = normalizeTheme(state.theme);
+            applyTheme(themeDraft);
+            syncThemeInputs(themeDraft);
+            buildWeek(activeWeekId);
+            refreshPresetSelect();
+            applyTaskFillsForAllDays();
+            syncDayPickerSwatches();
+          }
+        }, 5000);
+      }
+    })();
   </script>
 </body>
 </html>

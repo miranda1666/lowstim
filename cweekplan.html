@@ -7,7 +7,6 @@
   <style>
     :root{
       --app-bg: #ffffff;
-
       --ink: #2b2b2b;
       --muted: #7a7a7a;
 
@@ -96,7 +95,7 @@
 
     .wrap{
       max-width: var(--page-max);
-      margin: 24px auto;
+      margin: 26px auto;
       padding: 18px;
     }
 
@@ -168,7 +167,8 @@
       user-select: none;
     }
 
-    .bg-btn:active, .nav-btn:active, .theme-btn:active, .mini-btn:active, .add-btn:active, .icon-btn:active{
+    .bg-btn:active, .nav-btn:active, .theme-btn:active,
+    .mini-btn:active, .add-btn:active, .icon-btn:active{
       transform: translateY(1px);
     }
 
@@ -179,7 +179,6 @@
       border: 1px solid rgba(var(--border-rgb), 0.14);
       background: var(--board-tint);
       box-shadow: 0 0 0 7px rgba(239,231,225,0.30);
-      pointer-events: none;
     }
 
     .theme-dot{
@@ -187,9 +186,7 @@
       box-shadow: 0 0 0 7px rgba(203,184,174,0.22);
     }
 
-    .popover{
-      position: relative;
-    }
+    .popover{ position: relative; }
 
     .panel{
       position: absolute;
@@ -210,9 +207,7 @@
       overscroll-behavior: contain;
     }
 
-    .panel.open{
-      display: block;
-    }
+    .panel.open{ display: block; }
 
     .panelTitle{
       margin: 0 0 10px 0;
@@ -239,7 +234,6 @@
     input[type="color"]{
       width: 36px;
       height: 28px;
-      min-width: 36px;
       border: 1px solid rgba(var(--border-rgb), 0.12);
       border-radius: 10px;
       padding: 0;
@@ -302,9 +296,7 @@
       outline: none;
     }
 
-    .presetSelect{
-      height: 40px;
-    }
+    .presetSelect{ height: 40px; }
 
     .status{
       font-size: 12px;
@@ -433,6 +425,7 @@
       background: rgba(255,255,255,0.70);
       backdrop-filter: blur(2px);
       -webkit-backdrop-filter: blur(2px);
+
       opacity: 0;
       transform: translateY(-2px);
       pointer-events: none;
@@ -501,13 +494,8 @@
       text-transform: uppercase;
     }
 
-    .block .label{
-      margin-bottom: 10px;
-    }
-
-    .tasks .label{
-      margin-bottom: 2px;
-    }
+    .block .label{ margin-bottom: 10px; }
+    .tasks .label{ margin-bottom: 2px; }
 
     textarea{
       width: 100%;
@@ -664,23 +652,13 @@
     }
 
     @media (max-width: 520px){
-      .wrap{
-        padding: 12px;
-      }
-
+      .wrap{ padding: 12px; }
       .grid{
         grid-auto-columns: minmax(86vw, 1fr);
         padding: 12px;
       }
-
-      .day-body{
-        padding: 12px;
-      }
-
-      .footer-note{
-        padding: 0 12px 12px;
-      }
-
+      .day-body{ padding: 12px; }
+      .footer-note{ padding: 0 12px 12px; }
       input[type="range"]{
         width: 140px;
         max-width: 42vw;
@@ -766,7 +744,7 @@
 
             <div class="panelTitle" style="margin-top:6px;">Presets</div>
 
-            <input class="presetName" id="presetName" placeholder="Preset name" />
+            <input class="presetName" id="presetName" placeholder="Preset name">
 
             <button class="mini-btn" id="presetSave" type="button" style="margin-top:10px;">Save current as preset</button>
 
@@ -843,22 +821,6 @@
     (async function(){
       "use strict";
 
-      /* =========================================================
-         OPTIONAL CLOUD SYNC
-         ---------------------------------------------------------
-         To sync across devices, fill these in with your Supabase data.
-         Leave enabled:false if you only want same-device saving.
-      ========================================================= */
-      const CLOUD_SYNC = {
-        enabled: false,
-        supabaseUrl: "",
-        supabaseAnonKey: "",
-        table: "widget_state"
-      };
-
-      /* =========================================================
-         CONSTANTS
-      ========================================================= */
       const DEFAULT_THEME = {
         appBg: "#ffffff",
         ink: "#2b2b2b",
@@ -900,14 +862,11 @@
       const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
       const defaultDayColors = ["#d9c6bd","#d6d0c8","#cdd5d0","#c9d7dd","#d1cde2","#e3d4d2","#d9d9e2"];
 
-      const APP_VERSION = 8;
-      const STORAGE_NS = "weekly_overview_v8";
+      const APP_VERSION = 9;
+      const STORAGE_NS = "weekly_overview_v9";
       const PRESET_NAMESPACE = "weeklyoverview";
-      const CHANNEL_NAME = "weekly-overview-sync-v8";
+      const CHANNEL_NAME = "weekly-overview-sync-v9";
 
-      /* =========================================================
-         HELPERS
-      ========================================================= */
       const $ = (sel, root=document) => root.querySelector(sel);
       const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
@@ -931,7 +890,6 @@
           const wid = (sp.get("wid") || "").trim();
           if (wid) return wid;
         }catch{}
-
         const pathPart = (location.pathname || "weekly-overview").replace(/[^a-zA-Z0-9_-]+/g, "_");
         return pathPart || "weekly-overview";
       }
@@ -963,10 +921,10 @@
       function toISODate(d){
         const x = new Date(d);
         x.setHours(0,0,0,0);
-        const year = x.getFullYear();
-        const month = String(x.getMonth() + 1).padStart(2, "0");
+        const y = x.getFullYear();
+        const m = String(x.getMonth() + 1).padStart(2, "0");
         const day = String(x.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
+        return `${y}-${m}-${day}`;
       }
 
       function mondayOfWeek(date){
@@ -1013,10 +971,6 @@
         });
       }
 
-      function nowTs(){
-        return Date.now();
-      }
-
       function setStatus(msg=""){
         const el = $("#presetStatus");
         if (el) el.textContent = msg;
@@ -1030,57 +984,49 @@
         };
       }
 
-      /* =========================================================
-         STORAGE ENGINE
-         - IndexedDB first
-         - localStorage fallback
-      ========================================================= */
       const storage = {
         db: null,
         hasIDB: false,
-        lsKey: `${STORAGE_NS}__${WID}`,
+        key: `${STORAGE_NS}__${WID}`,
 
         async init(){
           if (!("indexedDB" in window)) {
             this.hasIDB = false;
             return;
           }
-
           try{
             this.db = await new Promise((resolve, reject) => {
-              const req = indexedDB.open(`${STORAGE_NS}__db`, 1);
+              const req = indexedDB.open(`${STORAGE_NS}_db`, 1);
               req.onupgradeneeded = () => {
                 const db = req.result;
-                if (!db.objectStoreNames.contains("state")) {
-                  db.createObjectStore("state");
-                }
+                if (!db.objectStoreNames.contains("state")) db.createObjectStore("state");
               };
               req.onsuccess = () => resolve(req.result);
               req.onerror = () => reject(req.error);
             });
             this.hasIDB = true;
           }catch{
-            this.db = null;
             this.hasIDB = false;
+            this.db = null;
           }
         },
 
         async get(){
           if (this.hasIDB && this.db){
             try{
-              const val = await new Promise((resolve, reject) => {
+              const result = await new Promise((resolve, reject) => {
                 const tx = this.db.transaction("state", "readonly");
                 const store = tx.objectStore("state");
-                const req = store.get(this.lsKey);
+                const req = store.get(this.key);
                 req.onsuccess = () => resolve(req.result ?? null);
                 req.onerror = () => reject(req.error);
               });
-              if (val) return val;
+              if (result) return result;
             }catch{}
           }
 
           try{
-            const raw = localStorage.getItem(this.lsKey);
+            const raw = localStorage.getItem(this.key);
             return raw ? JSON.parse(raw) : null;
           }catch{
             return null;
@@ -1089,7 +1035,7 @@
 
         async set(value){
           try{
-            localStorage.setItem(this.lsKey, JSON.stringify(value));
+            localStorage.setItem(this.key, JSON.stringify(value));
           }catch{}
 
           if (this.hasIDB && this.db){
@@ -1097,7 +1043,7 @@
               await new Promise((resolve, reject) => {
                 const tx = this.db.transaction("state", "readwrite");
                 const store = tx.objectStore("state");
-                const req = store.put(value, this.lsKey);
+                const req = store.put(value, this.key);
                 req.onsuccess = () => resolve();
                 req.onerror = () => reject(req.error);
               });
@@ -1106,66 +1052,6 @@
         }
       };
 
-      /* =========================================================
-         OPTIONAL SUPABASE CLOUD SYNC
-      ========================================================= */
-      function cloudReady(){
-        return !!(
-          CLOUD_SYNC.enabled &&
-          CLOUD_SYNC.supabaseUrl &&
-          CLOUD_SYNC.supabaseAnonKey &&
-          CLOUD_SYNC.table
-        );
-      }
-
-      async function cloudLoad(){
-        if (!cloudReady()) return null;
-        try{
-          const url = `${CLOUD_SYNC.supabaseUrl.replace(/\/$/, "")}/rest/v1/${encodeURIComponent(CLOUD_SYNC.table)}?widget_id=eq.${encodeURIComponent(WID)}&select=payload,updated_at&limit=1`;
-          const res = await fetch(url, {
-            headers: {
-              "apikey": CLOUD_SYNC.supabaseAnonKey,
-              "Authorization": `Bearer ${CLOUD_SYNC.supabaseAnonKey}`,
-              "Accept": "application/json"
-            }
-          });
-          if (!res.ok) return null;
-          const rows = await res.json();
-          if (!Array.isArray(rows) || !rows.length) return null;
-          const row = rows[0];
-          return row && row.payload ? row.payload : null;
-        }catch{
-          return null;
-        }
-      }
-
-      async function cloudSave(payload){
-        if (!cloudReady()) return false;
-        try{
-          const url = `${CLOUD_SYNC.supabaseUrl.replace(/\/$/, "")}/rest/v1/${encodeURIComponent(CLOUD_SYNC.table)}`;
-          const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "apikey": CLOUD_SYNC.supabaseAnonKey,
-              "Authorization": `Bearer ${CLOUD_SYNC.supabaseAnonKey}`,
-              "Content-Type": "application/json",
-              "Prefer": "resolution=merge-duplicates"
-            },
-            body: JSON.stringify({
-              widget_id: WID,
-              payload,
-              updated_at: new Date().toISOString()
-            })
-          });
-          return res.ok;
-        }catch{
-          return false;
-        }
-      }
-
-      /* =========================================================
-         APP STATE
-      ========================================================= */
       function defaultWeekData(){
         return {
           days: dayNames.map((_, i) => ({
@@ -1228,7 +1114,9 @@
         if (Array.isArray(week.days)) {
           safe.days = safe.days.map((base, i) => {
             const incoming = week.days[i] || {};
-            const tasks = Array.isArray(incoming.tasks) && incoming.tasks.length ? incoming.tasks.map(v => String(v ?? "")) : [""];
+            const tasks = Array.isArray(incoming.tasks) && incoming.tasks.length
+              ? incoming.tasks.map(v => String(v ?? ""))
+              : [""];
             return {
               color: normHex(incoming.color, base.color),
               focus: String(incoming.focus ?? ""),
@@ -1294,28 +1182,22 @@
       }
 
       function touchState(){
-        state.lastUpdated = nowTs();
+        state.lastUpdated = Date.now();
       }
 
       const bc = "BroadcastChannel" in window ? new BroadcastChannel(CHANNEL_NAME) : null;
 
-      async function saveState({ cloudToo = true, broadcastToo = true } = {}){
+      async function saveState(){
         touchState();
         await storage.set(state);
-
-        if (broadcastToo && bc) {
+        if (bc){
           try{
             bc.postMessage({ type: "state-updated", wid: WID, lastUpdated: state.lastUpdated });
           }catch{}
         }
-
-        if (cloudToo) {
-          debouncedCloudSave();
-        }
       }
 
-      const debouncedSave = debounce(() => { saveState(); }, 160);
-      const debouncedCloudSave = debounce(() => { cloudSave(state); }, 900);
+      const debouncedSave = debounce(() => { saveState(); }, 120);
 
       async function flushSave(){
         await saveState();
@@ -1325,9 +1207,6 @@
         return ensureWeekData(activeWeekId);
       }
 
-      /* =========================================================
-         THEME
-      ========================================================= */
       function setSelectionRingFromAccent(accentHex){
         const accent = normHex(accentHex, DEFAULT_THEME.accent);
         let st = $("#accentRingStyle");
@@ -1477,9 +1356,6 @@
         });
       }
 
-      /* =========================================================
-         BACKGROUND
-      ========================================================= */
       function setBoardImage(dataUrlOrNull){
         document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
       }
@@ -1528,9 +1404,6 @@
         });
       }
 
-      /* =========================================================
-         BUILD / RENDER
-      ========================================================= */
       function setDayHeaderTint(dayEl, color){
         const header = dayEl.querySelector(".day-header");
         header.style.background =
@@ -1604,7 +1477,7 @@
                 <div class="day-date">${formatShortDate(date)}</div>
               </div>
               <div class="day-color" title="Change day color">
-                <input class="dayColorInput" type="color" value="${color}" aria-label="Set day color" />
+                <input class="dayColorInput" type="color" value="${color}" aria-label="Set day color"/>
               </div>
             </div>
 
@@ -1634,9 +1507,6 @@
         syncDayPickerSwatches();
       }
 
-      /* =========================================================
-         SNAPSHOT CURRENT UI INTO STATE
-      ========================================================= */
       function snapshotWeekToState(){
         const weekData = ensureWeekData(activeWeekId);
 
@@ -1660,9 +1530,11 @@
         debouncedSave();
       }
 
-      /* =========================================================
-         PRESETS
-      ========================================================= */
+      async function persistCurrentWeekNow(){
+        snapshotWeekToState();
+        await flushSave();
+      }
+
       function refreshPresetSelect(){
         const sel = $("#presetSelect");
         if (!sel) return;
@@ -1678,9 +1550,7 @@
           sel.appendChild(opt);
         }
 
-        if (list.some(p => p.id === cur)) {
-          sel.value = cur;
-        }
+        if (list.some(p => p.id === cur)) sel.value = cur;
       }
 
       function currentPresetPayload(){
@@ -1693,9 +1563,6 @@
         };
       }
 
-      /* =========================================================
-         UI WIRING
-      ========================================================= */
       function closePanels(except){
         if (except !== "theme") $("#themePanel")?.classList.remove("open");
         if (except !== "bg") $("#bgPanel")?.classList.remove("open");
@@ -1707,7 +1574,6 @@
         wrap.innerHTML = taskRowHTML("");
         const row = wrap.firstElementChild;
         list.appendChild(row);
-
         applyTaskFill(dayEl);
 
         if (focusNew){
@@ -1772,7 +1638,7 @@
           applyTheme(state.theme);
           applyTaskFillsForAllDays();
           syncDayPickerSwatches();
-          await saveState();
+          await flushSave();
           setStatus("Theme applied.");
         });
 
@@ -1783,7 +1649,7 @@
           applyTheme(themeDraft);
           applyTaskFillsForAllDays();
           syncDayPickerSwatches();
-          await saveState();
+          await flushSave();
           setStatus("Theme reset.");
         });
       }
@@ -1826,7 +1692,7 @@
           weekData.background = normalizeBackground(bgDraft);
           state.weeks[activeWeekId] = weekData;
           applyBackground(weekData.background);
-          await saveState();
+          await flushSave();
           setStatus("Background applied.");
         });
 
@@ -1837,7 +1703,7 @@
           bgDraft = normalizeBackground(DEFAULT_BG);
           syncBgInputs(bgDraft);
           applyBackground(bgDraft);
-          await saveState();
+          await flushSave();
           setStatus("Background reset.");
         });
       }
@@ -1859,7 +1725,7 @@
           refreshPresetSelect();
           $("#presetName").value = "";
           $("#presetSelect").value = payload.id;
-          await saveState();
+          await flushSave();
           setStatus("Preset saved.");
         });
 
@@ -1891,7 +1757,7 @@
 
           applyTaskFillsForAllDays();
           syncDayPickerSwatches();
-          await saveState();
+          await flushSave();
           setStatus("Preset applied.");
         });
 
@@ -1913,24 +1779,22 @@
           state.presets = after;
           refreshPresetSelect();
           $("#presetSelect").value = "";
-          await saveState();
+          await flushSave();
           setStatus("Preset deleted.");
         });
       }
 
       function initWeekNavigation(){
         $("#prevWeek")?.addEventListener("click", async () => {
-          snapshotWeekToState();
+          await persistCurrentWeekNow();
           const mon = new Date(activeWeekId + "T00:00:00");
           buildWeek(toISODate(addDays(mon, -7)));
-          await saveState({ cloudToo: false });
         });
 
         $("#nextWeek")?.addEventListener("click", async () => {
-          snapshotWeekToState();
+          await persistCurrentWeekNow();
           const mon = new Date(activeWeekId + "T00:00:00");
           buildWeek(toISODate(addDays(mon, 7)));
-          await saveState({ cloudToo: false });
         });
       }
 
@@ -1986,9 +1850,7 @@
             const list = day.querySelector(".taskList");
             row.remove();
 
-            if (!list.querySelector(".task-row")){
-              addTask(day, false);
-            }
+            if (!list.querySelector(".task-row")) addTask(day, false);
 
             applyTaskFill(day);
             persistCurrentWeekSoon();
@@ -2004,11 +1866,18 @@
             }
           }
         });
+
+        grid.addEventListener("keyup", (e) => {
+          if (e.target.classList && (e.target.classList.contains("focusInput") || e.target.classList.contains("taskInput"))){
+            persistCurrentWeekSoon();
+          }
+        });
+
+        grid.addEventListener("paste", () => {
+          persistCurrentWeekSoon();
+        });
       }
 
-      /* =========================================================
-         CROSS-TAB / SAME-BROWSER SYNC
-      ========================================================= */
       if (bc){
         bc.onmessage = async (event) => {
           const msg = event.data;
@@ -2031,7 +1900,7 @@
       }
 
       window.addEventListener("storage", async (e) => {
-        if (e.key !== storage.lsKey || !e.newValue) return;
+        if (e.key !== storage.key || !e.newValue) return;
         try{
           const incoming = normalizeState(JSON.parse(e.newValue));
           if ((incoming.lastUpdated || 0) > (state.lastUpdated || 0)){
@@ -2047,44 +1916,28 @@
         }catch{}
       });
 
-      /* =========================================================
-         PAGE LIFECYCLE SAVING
-      ========================================================= */
-      window.addEventListener("beforeunload", () => {
-        snapshotWeekToState();
+      async function emergencySave(){
         try{
-          localStorage.setItem(storage.lsKey, JSON.stringify(Object.assign({}, state, { lastUpdated: nowTs() })));
-        }catch{}
-      });
-
-      window.addEventListener("pagehide", async () => {
-        snapshotWeekToState();
-        await flushSave();
-      });
-
-      document.addEventListener("visibilitychange", async () => {
-        if (document.visibilityState === "hidden"){
           snapshotWeekToState();
           await flushSave();
+        }catch{}
+      }
+
+      window.addEventListener("beforeunload", emergencySave);
+      window.addEventListener("pagehide", emergencySave);
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden"){
+          emergencySave();
         }
       });
 
-      /* =========================================================
-         BOOT
-      ========================================================= */
+      window.addEventListener("blur", emergencySave);
+
       await storage.init();
 
-      const localState = await storage.get();
-      state = normalizeState(localState);
-
-      if (cloudReady()){
-        const remoteState = await cloudLoad();
-        if (remoteState && (remoteState.lastUpdated || 0) > (state.lastUpdated || 0)){
-          state = normalizeState(remoteState);
-          await storage.set(state);
-        }
-      }
-
+      const loaded = await storage.get();
+      state = normalizeState(loaded);
       ensureWeekData(activeWeekId);
 
       initPanels();
@@ -2102,24 +1955,6 @@
       refreshPresetSelect();
       applyTaskFillsForAllDays();
       syncDayPickerSwatches();
-
-      /* cloud polling for other devices */
-      if (cloudReady()){
-        setInterval(async () => {
-          const remote = await cloudLoad();
-          if (remote && (remote.lastUpdated || 0) > (state.lastUpdated || 0)){
-            state = normalizeState(remote);
-            await storage.set(state);
-            themeDraft = normalizeTheme(state.theme);
-            applyTheme(themeDraft);
-            syncThemeInputs(themeDraft);
-            buildWeek(activeWeekId);
-            refreshPresetSelect();
-            applyTaskFillsForAllDays();
-            syncDayPickerSwatches();
-          }
-        }, 5000);
-      }
     })();
   </script>
 </body>

@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Diet Planner + Tracker</title>
+
   <style>
     :root{
-      --bg:#ffffff;
+      --page-bg:#ffffff;
+      --widget-bg:#ffffff;
       --cream:#e6d8cc;
-      --stone:#c9beb6;
       --text:#1f1f1f;
       --muted:#6b625c;
 
@@ -32,20 +33,29 @@
       --board-tint: #ffffff;
       --board-tint-a: 0.30;
       --board-image: none;
+      --board-blur: 0px;
 
-      /* NEW: variables to let theme editor override hard-coded whites */
       --card-bg: rgba(255,255,255,0.88);
       --field-bg: #ffffff;
     }
+
     *{ box-sizing:border-box; }
+    html, body{ min-height:100%; }
+
     body{
       margin:0;
-      background:var(--bg);
+      background:var(--page-bg);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       padding:26px;
+      -webkit-text-size-adjust:100%;
     }
+
+    button, input, select, textarea{ font: inherit; }
+    input, textarea, select{ color: var(--text); }
+
     .wrap{ max-width:1100px; margin:0 auto; }
+
     .top{
       display:flex;
       align-items:flex-start;
@@ -54,6 +64,7 @@
       margin-bottom:14px;
       flex-wrap:wrap;
     }
+
     .kicker{
       font-size:var(--fsKicker);
       letter-spacing:.12em;
@@ -61,7 +72,24 @@
       color:var(--muted);
       padding-top:4px;
     }
-    .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .btn,
+    .mini-btn,
+    .bg-btn,
+    .iconBtn,
+    .chip{
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     .btn{
       appearance:none;
       border:1px solid var(--border);
@@ -77,12 +105,25 @@
       transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
       user-select:none;
       white-space:nowrap;
-      -webkit-tap-highlight-color: transparent;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
     }
+
+    .btn svg{
+      width:14px;
+      height:14px;
+      display:block;
+      flex:0 0 auto;
+    }
+
     .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
     .btn.primary{ background:var(--cream); }
+    .btn.danger{ background: rgba(230,216,204,0.30); }
 
     .popover{ position:relative; }
+
     .icon-pill{
       display:inline-flex;
       align-items:center;
@@ -95,6 +136,7 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     .bg-btn{
       width:34px;
       height:34px;
@@ -104,14 +146,13 @@
       cursor:pointer;
       display:grid;
       place-items:center;
-      -webkit-tap-highlight-color: transparent;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       transition: transform 140ms ease, box-shadow 140ms ease;
     }
     .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
     .bg-btn:active{ transform: translateY(0px); }
 
-    .bg-dot{
+    .bg-dot, .theme-dot{
       width:14px;
       height:14px;
       border-radius:999px;
@@ -119,13 +160,7 @@
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
     }
-
-    /* NEW: theme button dot */
     .theme-dot{
-      width:14px;
-      height:14px;
-      border-radius:999px;
-      border:1px solid rgba(201,190,182,0.75);
       background: var(--text);
       box-shadow: 0 0 0 6px rgba(201,190,182,0.25);
     }
@@ -134,16 +169,18 @@
       position:absolute;
       top: 46px;
       right: 0;
-      width: 270px;
+      width: 320px;
       border-radius: 16px;
       border: 1px solid var(--borderSoft);
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.94);
       box-shadow: 0 18px 40px rgba(0,0,0,0.10);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       padding: 12px;
       display:none;
       z-index: 80;
+      max-height: 76vh;
+      overflow-y: auto;
     }
     .panel.open{ display:block; }
 
@@ -163,32 +200,37 @@
       gap:10px;
       padding: 8px 0;
     }
+
     .panel .rowT label{
       font-size: 12px;
       color: var(--muted);
     }
+
     input[type="color"]{
-      width: 36px;
-      height: 28px;
+      width: 42px;
+      height: 32px;
       border: 1px solid var(--borderSoft);
       border-radius: 10px;
       padding: 0;
       background: transparent;
       cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      flex: 0 0 auto;
     }
-    input[type="range"]{ width: 150px; }
+
+    input[type="range"]{ width: 150px; max-width:100%; }
+
     .file{
       width:100%;
       font-size: 12px;
       color: rgba(31,31,31,0.75);
     }
+
     .mini-btn{
       width: 100%;
       border: 1px solid var(--borderSoft);
       background: rgba(255,255,255,0.95);
       border-radius: 12px;
-      padding: 9px 10px;
+      padding: 10px 12px;
       cursor: pointer;
       font-weight: 700;
       letter-spacing: .06em;
@@ -196,19 +238,38 @@
       font-size: 11px;
       color: rgba(31,31,31,0.80);
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      -webkit-tap-highlight-color: transparent;
     }
     .mini-btn:active{ transform: translateY(1px); }
+
     .divider{
       height: 1px;
       background: rgba(201,190,182,0.35);
       margin: 8px 0;
     }
+
     .hintSmall{
       margin-top: 8px;
       font-size: 11px;
       color: var(--muted);
       line-height: 1.35;
+    }
+
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top:6px;
+      min-height:16px;
+    }
+
+    .presetName, .select2{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.92);
+      color: var(--text);
+      outline:none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
 
     .widgetBoard{
@@ -218,8 +279,9 @@
       border: 1px solid var(--borderSoft);
       box-shadow: var(--shadow);
       padding: 14px;
-      background: transparent;
+      background: var(--widget-bg);
     }
+
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -228,22 +290,21 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      filter: saturate(0.95);
-      transform: scale(1.02);
+      filter: blur(var(--board-blur)) saturate(1);
+      transform: scale(1.03);
       z-index:0;
+      will-change: transform, filter;
     }
+
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
-      background:
-        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.35), transparent 60%),
-        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.22), transparent 62%),
-        rgba(255,255,255,0.30);
-      background-blend-mode: screen;
+      background: rgba(255,255,255,0.30);
       pointer-events: none;
       z-index:0;
     }
+
     .boardTint{
       position:absolute;
       inset:0;
@@ -264,12 +325,12 @@
       background: var(--card-bg);
       border:1px solid var(--border);
       border-radius:var(--rOuter);
-      box-shadow:none; /* board holds main shadow */
       padding:14px;
       min-width:0;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     .cardHead{
       display:flex;
       align-items:flex-end;
@@ -277,6 +338,7 @@
       gap:12px;
       margin-bottom:12px;
     }
+
     .cardTitle{
       font-size:14px;
       letter-spacing:.14em;
@@ -284,6 +346,7 @@
       color:var(--muted);
       margin:0;
     }
+
     .meta{
       font-size:12px;
       color:var(--muted);
@@ -291,14 +354,15 @@
       white-space:nowrap;
     }
 
-    /* Meals */
     .mealList{ display:grid; gap:12px; }
+
     .meal{
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
       padding:12px;
-      background: linear-gradient(180deg, var(--creamSoft), rgba(255,255,255,0));
+      background: var(--creamSoft);
     }
+
     .mealTop{
       display:flex;
       align-items:center;
@@ -306,6 +370,7 @@
       gap:10px;
       margin-bottom:10px;
     }
+
     .mealName{
       font-size:12px;
       letter-spacing:.14em;
@@ -313,6 +378,7 @@
       color:var(--muted);
       margin:0;
     }
+
     .pill{
       font-size:11px;
       color:var(--muted);
@@ -331,9 +397,10 @@
       gap:10px;
       align-items:end;
     }
+
     .row2{
       display:grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap:10px;
       margin-top:10px;
       align-items:end;
@@ -347,6 +414,7 @@
       color:var(--muted);
       margin:0 0 6px 0;
     }
+
     .input, .select{
       width:100%;
       border:1px solid var(--border);
@@ -356,13 +424,15 @@
       font-size:var(--fsBody);
       outline:none;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      height:36px;
+      min-height:36px;
       color: var(--text);
     }
+
     .input:focus, .select:focus{
       border-color: rgba(201,190,182,1);
       box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
     }
+
     .mini{
       font-size:12px;
       color:#7a716a;
@@ -370,12 +440,12 @@
       margin-top:8px;
     }
 
-    /* Fullness */
     .fullness{
       display:flex;
       gap:8px;
       flex-wrap:wrap;
     }
+
     .chip{
       appearance:none;
       border:1px solid var(--border);
@@ -387,24 +457,26 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
       user-select:none;
-      height:34px;
+      min-height:34px;
       color: var(--text);
     }
+
     .chip:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+
     .chip[data-active="true"]{
       background:var(--cream);
       box-shadow: 0 10px 18px rgba(0,0,0,0.08);
       transform:translateY(-1px);
     }
 
-    /* Sidebar */
     .box{
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
       padding:12px;
-      background: linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0));
+      background: var(--creamSoft);
       margin-bottom:12px;
     }
+
     .boxTop{
       display:flex;
       align-items:flex-start;
@@ -412,17 +484,20 @@
       gap:10px;
       margin-bottom:8px;
     }
+
     .boxLabel{
       font-size:12px;
       letter-spacing:.14em;
       text-transform:uppercase;
       color:var(--muted);
     }
+
     .big{
       font-size:26px;
       font-weight:740;
       letter-spacing:-0.02em;
     }
+
     .bar{
       height:10px;
       border-radius:var(--rPill);
@@ -431,24 +506,28 @@
       overflow:hidden;
       margin:10px 0 8px;
     }
+
     .bar > div{
       height:100%;
       width:0%;
-      background: var(--stone);
+      background: var(--cream);
       transition: width 220ms ease;
     }
+
     .hint{
       font-size:12px;
       color:#7a716a;
       line-height:1.4;
       margin:0;
     }
+
     .totals{
       display:grid;
       grid-template-columns: 1fr 1fr;
       gap:10px;
       margin-top:10px;
     }
+
     .miniBox{
       border:1px solid var(--borderSoft);
       border-radius:14px;
@@ -456,6 +535,7 @@
       background:var(--field-bg);
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
+
     .miniLabel{
       font-size:11px;
       letter-spacing:.14em;
@@ -463,6 +543,7 @@
       color:var(--muted);
       margin-bottom:6px;
     }
+
     .miniVal{
       font-size:18px;
       font-weight:720;
@@ -473,13 +554,16 @@
       display:grid;
       gap:10px;
     }
+
     .goalRow{
       display:grid;
       grid-template-columns: 1fr 0.55fr;
       gap:10px;
       align-items:end;
     }
+
     .goalList{ display:grid; gap:10px; margin-top:10px; }
+
     .goalItem{
       border:1px solid var(--borderSoft);
       border-radius:14px;
@@ -491,6 +575,7 @@
       gap:10px;
       align-items:end;
     }
+
     .iconBtn{
       appearance:none;
       border:1px solid var(--border);
@@ -502,18 +587,47 @@
       box-shadow: var(--shadowSoft);
       transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
       user-select:none;
-      -webkit-tap-highlight-color: transparent;
       color: var(--text);
     }
+
     .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+
     .iconBtn.danger{ background: rgba(230,216,204,0.30); }
 
     @media (max-width: 980px){
+      body{ padding:16px; }
       .grid{ grid-template-columns: 1fr; }
       .row{ grid-template-columns: 1fr; }
       .goalRow{ grid-template-columns: 1fr; }
       .goalItem{ grid-template-columns: 1fr; }
       .totals{ grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px){
+      body{ padding:14px; }
+
+      .top{ gap:12px; }
+      .btns{ width:100%; }
+
+      .panel{
+        position: fixed;
+        top: 14px;
+        left: 14px;
+        right: 14px;
+        width: auto;
+        max-height: calc(100dvh - 28px);
+        z-index: 999;
+      }
+
+      .widgetBoard{ padding:10px; }
+      .card{ padding:10px; }
+
+      .input,
+      .select,
+      .presetName,
+      .select2{
+        font-size:16px;
+      }
     }
   </style>
 </head>
@@ -522,18 +636,22 @@
   <main class="wrap">
     <div class="top">
       <div class="kicker">Diet Planner + Tracker</div>
-      <div class="btns">
 
-        <!-- Background settings (existing) -->
+      <div class="btns">
         <div class="popover" id="bgPopover">
           <div class="icon-pill">
             <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
-              <span class="bg-dot" aria-hidden="true"></span>
+              <span class="bg-dot" id="bgDot" aria-hidden="true"></span>
             </button>
           </div>
 
           <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
             <h2>Background</h2>
+
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+            <div class="divider"></div>
 
             <div class="rowT">
               <label for="bgColor">Tint</label>
@@ -543,6 +661,11 @@
             <div class="rowT">
               <label for="bgStrength">Tint strength</label>
               <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="rowT">
+              <label for="bgBlur">Image blur</label>
+              <input id="bgBlur" type="range" min="0" max="20" value="0" />
             </div>
 
             <div class="divider"></div>
@@ -558,7 +681,6 @@
           </div>
         </div>
 
-        <!-- NEW: Theme settings -->
         <div class="popover" id="themePopover">
           <div class="icon-pill">
             <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -568,6 +690,11 @@
 
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
             <h2>Theme</h2>
+
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="resetTheme" type="button" style="margin-top:8px;">Reset theme</button>
+
+            <div class="divider"></div>
 
             <div class="rowT">
               <label for="tWidgetBg">Page bg</label>
@@ -604,36 +731,58 @@
             </div>
 
             <div class="rowT">
-              <label for="tStone">Accent</label>
-              <input id="tStone" type="color" value="#c9beb6" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="rowT">
               <label for="tCream">Highlight</label>
               <input id="tCream" type="color" value="#e6d8cc" />
             </div>
 
             <div class="rowT">
-              <label for="tCreamSoft">Highlight soft</label>
+              <label for="tCreamSoft">Panels tint</label>
               <input id="tCreamSoft" type="color" value="#e6d8cc" />
             </div>
 
             <div class="divider"></div>
 
-            <div class="rowT">
-              <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
+            <h2 style="margin:0 0 10px 0;">Presets</h2>
+
+            <div class="rowT" style="align-items:flex-start; flex-direction:column; gap:8px;">
+              <input id="presetName" class="presetName" placeholder="Preset name" />
+              <button class="mini-btn" id="presetSave" type="button">Save current as preset</button>
             </div>
 
-            <div class="hintSmall">
+            <div class="rowT">
+              <label for="presetSelect">Choose</label>
+              <select id="presetSelect" class="select2">
+                <option value="">—</option>
+              </select>
             </div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="presetApply" type="button">Apply preset</button>
+            </div>
+
+            <div class="rowT">
+              <button class="mini-btn" id="presetDelete" type="button">Delete preset</button>
+            </div>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
           </div>
         </div>
 
-        <button id="prevDay" class="btn" type="button">◀ PREV</button>
-        <button id="nextDay" class="btn" type="button">NEXT ▶</button>
-        <button id="clearDay" class="btn primary" type="button">CLEAR DAY</button>
+        <button id="prevDay" class="btn" type="button" aria-label="Previous day">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <span>Prev</span>
+        </button>
+
+        <button id="nextDay" class="btn" type="button" aria-label="Next day">
+          <span>Next</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+
+        <button id="clearDay" class="btn primary" type="button">Clear Day</button>
       </div>
     </div>
 
@@ -641,7 +790,6 @@
       <div class="boardTint" id="boardTint"></div>
 
       <div class="grid">
-        <!-- LEFT: Meals -->
         <section class="card" aria-label="Meals">
           <div class="cardHead">
             <h2 class="cardTitle">Meals</h2>
@@ -651,7 +799,6 @@
           <div class="mealList" id="mealList"></div>
         </section>
 
-        <!-- RIGHT: Totals + Goals -->
         <aside class="card" aria-label="Totals and goals">
           <div class="cardHead">
             <h2 class="cardTitle">Totals</h2>
@@ -708,7 +855,7 @@
                   <label class="label" for="newGoalName">Add another goal</label>
                   <input id="newGoalName" class="input" type="text" placeholder="e.g. Water (cups), Steps, etc." />
                 </div>
-                <button id="addGoal" class="btn primary" type="button" style="height:36px;">ADD</button>
+                <button id="addGoal" class="btn primary" type="button" style="height:36px;">Add</button>
               </div>
 
               <div id="goalList" class="goalList"></div>
@@ -720,275 +867,217 @@
   </main>
 
   <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      // ---------- Utilities ----------
+    (function(){
+      "use strict";
+
+      function canUseLocalStorage(){
+        try{
+          const k = "__t__" + Math.random().toString(16).slice(2);
+          localStorage.setItem(k, "1");
+          localStorage.removeItem(k);
+          return true;
+        }catch{
+          return false;
+        }
+      }
+
+      const hasLS = canUseLocalStorage();
+      const mem = Object.create(null);
+
+      function lsGet(key){
+        try{
+          return hasLS ? localStorage.getItem(key) : (mem[key] ?? null);
+        }catch{
+          return mem[key] ?? null;
+        }
+      }
+
+      function lsSet(key, value){
+        try{
+          if(hasLS) localStorage.setItem(key, value);
+          else mem[key] = String(value);
+        }catch{
+          mem[key] = String(value);
+        }
+      }
+
+      function lsRemove(key){
+        try{
+          if(hasLS) localStorage.removeItem(key);
+          else delete mem[key];
+        }catch{
+          delete mem[key];
+        }
+      }
+
+      function loadJSON(key, fallback = null){
+        try{
+          const raw = lsGet(key);
+          return raw ? JSON.parse(raw) : fallback;
+        }catch{
+          return fallback;
+        }
+      }
+
+      function saveJSON(key, value){
+        lsSet(key, JSON.stringify(value));
+      }
+
+      function sanitizeId(value){
+        return String(value || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "default";
+      }
+
+      function getWidgetId(){
+        try{
+          const params = new URLSearchParams(location.search);
+          const fromQuery = sanitizeId(params.get("wid"));
+          if(fromQuery && fromQuery !== "default") return fromQuery;
+        }catch{}
+
+        const fromPath = sanitizeId(location.pathname.replace(/\.[^/.]+$/, ""));
+        return fromPath || "default";
+      }
+
+      const WID = getWidgetId();
+      const BC_NAME = "diet-tracker-sync";
+      const channel = ("BroadcastChannel" in window) ? new BroadcastChannel(BC_NAME) : null;
+
+      function broadcast(type, payload){
+        try{
+          if(channel) channel.postMessage({ type, payload, wid: WID, ts: Date.now() });
+        }catch{}
+      }
+
+      const DB_NAME = "diet_tracker_db_v3";
+      const DB_STORE = "kv";
+      let dbPromise = null;
+
+      function openDB(){
+        if(dbPromise) return dbPromise;
+
+        dbPromise = new Promise((resolve) => {
+          if(!("indexedDB" in window)){
+            resolve(null);
+            return;
+          }
+
+          const request = indexedDB.open(DB_NAME, 1);
+
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if(!db.objectStoreNames.contains(DB_STORE)){
+              db.createObjectStore(DB_STORE);
+            }
+          };
+
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => resolve(null);
+        });
+
+        return dbPromise;
+      }
+
+      async function idbGet(key){
+        const db = await openDB();
+        if(!db) return null;
+
+        return new Promise((resolve) => {
+          try{
+            const tx = db.transaction(DB_STORE, "readonly");
+            const store = tx.objectStore(DB_STORE);
+            const req = store.get(key);
+            req.onsuccess = () => resolve(req.result ?? null);
+            req.onerror = () => resolve(null);
+          }catch{
+            resolve(null);
+          }
+        });
+      }
+
+      async function idbSet(key, value){
+        const db = await openDB();
+        if(!db) return false;
+
+        return new Promise((resolve) => {
+          try{
+            const tx = db.transaction(DB_STORE, "readwrite");
+            const store = tx.objectStore(DB_STORE);
+            const req = store.put(value, key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+          }catch{
+            resolve(false);
+          }
+        });
+      }
+
+      async function idbRemove(key){
+        const db = await openDB();
+        if(!db) return false;
+
+        return new Promise((resolve) => {
+          try{
+            const tx = db.transaction(DB_STORE, "readwrite");
+            const store = tx.objectStore(DB_STORE);
+            const req = store.delete(key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+          }catch{
+            resolve(false);
+          }
+        });
+      }
+
+      function clamp(n, min, max){
+        const x = Number(n);
+        if(!Number.isFinite(x)) return min;
+        return Math.max(min, Math.min(max, x));
+      }
+
+      function normHex(hex, fallback){
+        const s = String(hex || "").trim();
+        return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+      }
+
+      function hexToRgba(hex, alpha){
+        const h = normHex(hex, "#ffffff").replace("#", "");
+        const num = parseInt(h, 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
+
       const pad2 = (n) => String(n).padStart(2,"0");
       const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
       const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
       const clampPct = (p) => Math.max(0, Math.min(100, p));
 
-      /* ---------------------------
-         BACKGROUND SETTINGS (existing)
-      ---------------------------- */
-      const BG_KEY = "diet_tracker_bg_v1";
-
-      const bgBtn = document.getElementById("bgBtn");
-      const bgPanel = document.getElementById("bgPanel");
-      const bgColor = document.getElementById("bgColor");
-      const bgStrength = document.getElementById("bgStrength");
-      const bgImage = document.getElementById("bgImage");
-      const removeImage = document.getElementById("removeImage");
-      const boardTintEl = document.getElementById("boardTint");
-      const bgDot = document.querySelector(".bg-dot");
-
-      function loadBg(){
-        try{
-          const raw = localStorage.getItem(BG_KEY);
-          if(raw) return JSON.parse(raw) || null;
-        }catch{}
-        return null;
-      }
-      function saveBg(bg){
-        try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-      }
-      function hexToRgba(hex, a){
-        const h = String(hex || "").replace("#","").trim();
-        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-        const num = parseInt(full || "efe7e1", 16);
-        const r = (num >> 16) & 255;
-        const g = (num >> 8) & 255;
-        const b = num & 255;
-        return `rgba(${r},${g},${b},${a})`;
-      }
-      function setBoardImage(dataUrlOrNull){
-        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-      }
-      function applyBoardTint(colorHex, strengthPct){
-        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
-        document.documentElement.style.setProperty("--board-tint", colorHex);
-        document.documentElement.style.setProperty("--board-tint-a", String(strength));
-
-        if (bgDot){
-          bgDot.style.background = colorHex;
-          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
-        }
-        if (boardTintEl){
-          boardTintEl.style.background = hexToRgba(colorHex, strength);
-        }
-      }
-      async function fileToDataUrl(file){
+      function fileToDataUrl(file){
         return new Promise((resolve, reject) => {
           const r = new FileReader();
-          r.onload = () => resolve(String(r.result));
+          r.onload = () => resolve(String(r.result || ""));
           r.onerror = reject;
           r.readAsDataURL(file);
         });
       }
 
-      const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
-      bgColor.value = bgState.tint;
-      bgStrength.value = String(bgState.strength);
-      applyBoardTint(bgState.tint, bgState.strength);
-      setBoardImage(bgState.imageDataUrl);
+      function makeId(){
+        return Math.random().toString(16).slice(2) + Date.now().toString(16);
+      }
 
-      /* ---------------------------
-         THEME SETTINGS (NEW)
-      ---------------------------- */
-      const THEME_KEY = "diet_tracker_theme_v1";
-
-      const themeBtn = document.getElementById("themeBtn");
-      const themePanel = document.getElementById("themePanel");
-      const themeDot = document.getElementById("themeDot");
-
-      const tWidgetBg = document.getElementById("tWidgetBg");
-      const tCardBg   = document.getElementById("tCardBg");
-      const tFieldBg  = document.getElementById("tFieldBg");
-      const tText     = document.getElementById("tText");
-      const tMuted    = document.getElementById("tMuted");
-      const tBorder   = document.getElementById("tBorder");
-      const tStone    = document.getElementById("tStone");
-      const tCream    = document.getElementById("tCream");
-      const tCreamSoft= document.getElementById("tCreamSoft");
-      const resetTheme= document.getElementById("resetTheme");
-
-      const DEFAULT_THEME = {
-        bg: "#ffffff",
-        cardBg: "#ffffff",
-        fieldBg: "#ffffff",
-        text: "#1f1f1f",
-        muted: "#6b625c",
-        borderHex: "#c9beb6",
-        stone: "#c9beb6",
-        cream: "#e6d8cc",
-        creamSoftHex: "#e6d8cc"
+      const KEYS = {
+        bg: `diet_tracker_bg_v3__${WID}`,
+        bgImage: `diet_tracker_bg_image_v3__${WID}`,
+        theme: `diet_tracker_theme_v3__${WID}`,
+        presets: `diet_tracker_presets_v3`,
+        day: (dayKey) => `diet_tracker_day_v3__${WID}__${dayKey}`
       };
 
-      function loadTheme(){
-        try{
-          const raw = localStorage.getItem(THEME_KEY);
-          if(raw) return JSON.parse(raw) || null;
-        }catch{}
-        return null;
-      }
-      function saveTheme(t){
-        try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-      }
-
-      function applyTheme(t){
-        // Base
-        document.documentElement.style.setProperty("--bg", t.bg);
-        document.documentElement.style.setProperty("--text", t.text);
-        document.documentElement.style.setProperty("--muted", t.muted);
-
-        // Accents
-        document.documentElement.style.setProperty("--stone", t.stone);
-        document.documentElement.style.setProperty("--cream", t.cream);
-
-        // Borders from one hex
-        document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
-        document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
-
-        // Soft cream
-        document.documentElement.style.setProperty("--creamSoft", hexToRgba(t.creamSoftHex, 0.20));
-
-        // Card/field overrides
-        document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, 0.88));
-        document.documentElement.style.setProperty("--field-bg", t.fieldBg);
-
-        // Dot preview
-        if(themeDot){
-          themeDot.style.background = t.text;
-          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
-          themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
-        }
-      }
-
-      // Minimal override for remaining hard-coded #fff elements
-      const injected = document.createElement("style");
-      injected.textContent = `
-        .btn{ background: var(--field-bg, #fff); border-color: var(--border); color: var(--text); }
-        .mini-btn{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--text); }
-        .pill{ background: var(--field-bg, #fff); border-color: var(--borderSoft); color: var(--muted); }
-        .miniBox, .goalItem{ background: var(--field-bg, #fff); }
-      `;
-      document.head.appendChild(injected);
-
-      const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
-
-      // Init inputs
-      tWidgetBg.value = themeState.bg;
-      tCardBg.value = themeState.cardBg;
-      tFieldBg.value = themeState.fieldBg;
-      tText.value = themeState.text;
-      tMuted.value = themeState.muted;
-      tBorder.value = themeState.borderHex;
-      tStone.value = themeState.stone;
-      tCream.value = themeState.cream;
-      tCreamSoft.value = themeState.creamSoftHex;
-
-      applyTheme(themeState);
-
-      function wireThemeInput(inputEl, key){
-        inputEl.addEventListener("input", () => {
-          themeState[key] = inputEl.value;
-          applyTheme(themeState);
-          saveTheme(themeState);
-          // keep bg dot visuals consistent (uses border color too)
-          applyBoardTint(bgState.tint, bgState.strength);
-        });
-      }
-
-      wireThemeInput(tWidgetBg, "bg");
-      wireThemeInput(tCardBg, "cardBg");
-      wireThemeInput(tFieldBg, "fieldBg");
-      wireThemeInput(tText, "text");
-      wireThemeInput(tMuted, "muted");
-      wireThemeInput(tBorder, "borderHex");
-      wireThemeInput(tStone, "stone");
-      wireThemeInput(tCream, "cream");
-      wireThemeInput(tCreamSoft, "creamSoftHex");
-
-      resetTheme.addEventListener("click", () => {
-        Object.assign(themeState, DEFAULT_THEME);
-
-        tWidgetBg.value = themeState.bg;
-        tCardBg.value = themeState.cardBg;
-        tFieldBg.value = themeState.fieldBg;
-        tText.value = themeState.text;
-        tMuted.value = themeState.muted;
-        tBorder.value = themeState.borderHex;
-        tStone.value = themeState.stone;
-        tCream.value = themeState.cream;
-        tCreamSoft.value = themeState.creamSoftHex;
-
-        applyTheme(themeState);
-        saveTheme(themeState);
-        applyBoardTint(bgState.tint, bgState.strength);
-      });
-
-      /* ---------------------------
-         POPOVER OPEN/CLOSE (both panels)
-      ---------------------------- */
-      bgBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        bgPanel.classList.toggle("open");
-        themePanel.classList.remove("open");
-      });
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        bgPanel.classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        const bgOpen = bgPanel.classList.contains("open");
-        const thOpen = themePanel.classList.contains("open");
-
-        if(bgOpen){
-          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-          if (!inside) bgPanel.classList.remove("open");
-        }
-        if(thOpen){
-          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-          if (!inside) themePanel.classList.remove("open");
-        }
-      });
-
-      /* ---------------------------
-         BACKGROUND HANDLERS (existing)
-      ---------------------------- */
-      bgColor.addEventListener("input", () => {
-        bgState.tint = bgColor.value;
-        applyBoardTint(bgState.tint, bgStrength.value);
-        saveBg(bgState);
-      });
-
-      bgStrength.addEventListener("input", () => {
-        bgState.strength = Number(bgStrength.value);
-        applyBoardTint(bgState.tint, bgState.strength);
-        saveBg(bgState);
-      });
-
-      bgImage.addEventListener("change", async () => {
-        const file = bgImage.files && bgImage.files[0];
-        if(!file) return;
-        const dataUrl = await fileToDataUrl(file);
-        bgState.imageDataUrl = dataUrl;
-        setBoardImage(dataUrl);
-        saveBg(bgState);
-      });
-
-      removeImage.addEventListener("click", () => {
-        bgState.imageDataUrl = null;
-        setBoardImage(null);
-        bgImage.value = "";
-        saveBg(bgState);
-      });
-
-      /* ---------------------------
-         APP LOGIC (existing)
-      ---------------------------- */
       const MEALS = [
         { id:"breakfast", label:"Breakfast" },
         { id:"lunch", label:"Lunch" },
@@ -1003,18 +1092,35 @@
         { id:"too_full", label:"Too full" }
       ];
 
-      // ---------- Storage model ----------
-      const STORAGE_PREFIX = "diet_tracker_v1_";
+      const DEFAULT_BG = {
+        tint:"#efe7e1",
+        strength:30,
+        blur:0
+      };
+
+      const DEFAULT_THEME = {
+        widgetBg: "#ffffff",
+        cardBg: "#ffffff",
+        fieldBg: "#ffffff",
+        text: "#1f1f1f",
+        muted: "#6b625c",
+        borderHex: "#c9beb6",
+        cream: "#e6d8cc",
+        creamSoftHex: "#e6d8cc"
+      };
 
       function defaultDayData(){
         const meals = {};
-        MEALS.forEach(m => meals[m.id] = {
-          name: "",
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fiber: 0,
-          fullness: ""
+        MEALS.forEach(m => {
+          meals[m.id] = {
+            name: "",
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fiber: 0,
+            fullness: "",
+            tag: ""
+          };
         });
 
         return {
@@ -1027,84 +1133,368 @@
         };
       }
 
-      function keyFor(date){ return STORAGE_PREFIX + isoDay(date); }
+      function sanitizeCustomGoal(g){
+        return {
+          id: String(g?.id || ("g_" + makeId())),
+          name: String(g?.name || ""),
+          value: Math.max(0, Number(g?.value || 0))
+        };
+      }
 
-      function loadDay(date){
-        const raw = localStorage.getItem(keyFor(date));
-        if(!raw) return defaultDayData();
-        try{
-          const parsed = JSON.parse(raw);
-          const base = defaultDayData();
+      function sanitizeMeal(src){
+        return {
+          name: String(src?.name || ""),
+          calories: Math.max(0, Number(src?.calories || 0)),
+          protein: Math.max(0, Number(src?.protein || 0)),
+          carbs: Math.max(0, Number(src?.carbs || 0)),
+          fiber: Math.max(0, Number(src?.fiber || 0)),
+          fullness: ["hungry","neutral","satisfied","too_full",""].includes(String(src?.fullness || "")) ? String(src?.fullness || "") : "",
+          tag: String(src?.tag || "")
+        };
+      }
 
-          base.goals.calories = Number(parsed?.goals?.calories || 0);
-          base.goals.protein = Number(parsed?.goals?.protein || 0);
-          base.goals.custom = Array.isArray(parsed?.goals?.custom) ? parsed.goals.custom : [];
+      function sanitizeDayData(data){
+        const base = defaultDayData();
+        const src = data && typeof data === "object" ? data : {};
 
-          MEALS.forEach(m => {
-            const src = parsed?.meals?.[m.id] || {};
-            base.meals[m.id] = {
-              name: String(src.name || ""),
-              calories: Number(src.calories || 0),
-              protein: Number(src.protein || 0),
-              carbs: Number(src.carbs || 0),
-              fiber: Number(src.fiber || 0),
-              fullness: String(src.fullness || ""),
-              tag: String(src.tag || "")
-            };
+        base.goals.calories = Math.max(0, Number(src?.goals?.calories || 0));
+        base.goals.protein = Math.max(0, Number(src?.goals?.protein || 0));
+        base.goals.custom = Array.isArray(src?.goals?.custom) ? src.goals.custom.map(sanitizeCustomGoal) : [];
+
+        MEALS.forEach(m => {
+          base.meals[m.id] = sanitizeMeal(src?.meals?.[m.id]);
+        });
+
+        return base;
+      }
+
+      const els = {
+        bgBtn: document.getElementById("bgBtn"),
+        bgPanel: document.getElementById("bgPanel"),
+        bgColor: document.getElementById("bgColor"),
+        bgStrength: document.getElementById("bgStrength"),
+        bgBlur: document.getElementById("bgBlur"),
+        bgImage: document.getElementById("bgImage"),
+        removeImage: document.getElementById("removeImage"),
+        bgApply: document.getElementById("bgApply"),
+        bgReset: document.getElementById("bgReset"),
+        boardTintEl: document.getElementById("boardTint"),
+        bgDot: document.getElementById("bgDot"),
+
+        themeBtn: document.getElementById("themeBtn"),
+        themePanel: document.getElementById("themePanel"),
+        themeDot: document.getElementById("themeDot"),
+        themeApply: document.getElementById("themeApply"),
+        resetTheme: document.getElementById("resetTheme"),
+
+        tWidgetBg: document.getElementById("tWidgetBg"),
+        tCardBg: document.getElementById("tCardBg"),
+        tFieldBg: document.getElementById("tFieldBg"),
+        tText: document.getElementById("tText"),
+        tMuted: document.getElementById("tMuted"),
+        tBorder: document.getElementById("tBorder"),
+        tCream: document.getElementById("tCream"),
+        tCreamSoft: document.getElementById("tCreamSoft"),
+
+        presetName: document.getElementById("presetName"),
+        presetSave: document.getElementById("presetSave"),
+        presetSelect: document.getElementById("presetSelect"),
+        presetApply: document.getElementById("presetApply"),
+        presetDelete: document.getElementById("presetDelete"),
+        presetStatus: document.getElementById("presetStatus"),
+
+        dayMeta: document.getElementById("dayMeta"),
+        mealList: document.getElementById("mealList"),
+
+        calTotalEl: document.getElementById("calTotal"),
+        proteinTotalEl: document.getElementById("proteinTotal"),
+        carbTotalEl: document.getElementById("carbTotal"),
+        fiberTotalEl: document.getElementById("fiberTotal"),
+
+        calBar: document.getElementById("calBar"),
+        proteinBar: document.getElementById("proteinBar"),
+        calHint: document.getElementById("calHint"),
+        proteinHint: document.getElementById("proteinHint"),
+
+        goalCalories: document.getElementById("goalCalories"),
+        goalProtein: document.getElementById("goalProtein"),
+        newGoalName: document.getElementById("newGoalName"),
+        addGoalBtn: document.getElementById("addGoal"),
+        goalList: document.getElementById("goalList"),
+
+        prevDayBtn: document.getElementById("prevDay"),
+        nextDayBtn: document.getElementById("nextDay"),
+        clearDayBtn: document.getElementById("clearDay"),
+      };
+
+      function setStatus(msg){
+        els.presetStatus.textContent = msg || "";
+      }
+
+      const escapeHtml = (s) =>
+        String(s ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+
+      const askConfirm = (message, { okText="Confirm", cancelText="Cancel", danger=false } = {}) =>
+        new Promise((resolve) => {
+          const wrap = document.createElement("div");
+          wrap.style.position = "fixed";
+          wrap.style.inset = "0";
+          wrap.style.zIndex = "9999";
+          wrap.style.display = "grid";
+          wrap.style.placeItems = "center";
+          wrap.style.padding = "18px";
+          wrap.style.background = "rgba(20,18,16,.35)";
+          wrap.style.backdropFilter = "blur(8px)";
+          wrap.style.webkitBackdropFilter = "blur(8px)";
+
+          wrap.innerHTML = `
+            <div style="
+              width:min(520px,100%);
+              background:rgba(255,255,255,.92);
+              border:1px solid rgba(43,43,43,.14);
+              border-radius:20px;
+              box-shadow:0 12px 40px rgba(0,0,0,.12);
+              overflow:hidden;">
+              <div style="padding:14px 16px;border-bottom:1px solid rgba(43,43,43,.10);font-weight:650;">
+                Confirm
+              </div>
+              <div style="padding:14px 16px;line-height:1.45;color:rgba(43,43,43,.92);">
+                ${escapeHtml(message)}
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:12px 16px;border-top:1px solid rgba(43,43,43,.10);">
+                <button class="btn" type="button" id="cnlBtn">${escapeHtml(cancelText)}</button>
+                <button class="btn ${danger ? "danger" : "primary"}" type="button" id="okBtn">${escapeHtml(okText)}</button>
+              </div>
+            </div>
+          `;
+
+          const cleanup = (val) => {
+            document.removeEventListener("keydown", onKey);
+            wrap.remove();
+            resolve(val);
+          };
+
+          const onKey = (e) => {
+            if(e.key === "Escape") cleanup(false);
+          };
+
+          wrap.addEventListener("click", (e) => {
+            if(e.target === wrap) cleanup(false);
           });
-          return base;
-        }catch{
-          localStorage.removeItem(keyFor(date));
-          return defaultDayData();
+
+          document.body.appendChild(wrap);
+          document.addEventListener("keydown", onKey);
+
+          wrap.querySelector("#cnlBtn").addEventListener("click", () => cleanup(false));
+          wrap.querySelector("#okBtn").addEventListener("click", () => cleanup(true));
+
+          setTimeout(() => wrap.querySelector("#okBtn").focus(), 0);
+        });
+
+      function safeTheme(input){
+        const theme = { ...DEFAULT_THEME, ...(input || {}) };
+        return {
+          widgetBg: normHex(theme.widgetBg, DEFAULT_THEME.widgetBg),
+          cardBg: normHex(theme.cardBg, DEFAULT_THEME.cardBg),
+          fieldBg: normHex(theme.fieldBg, DEFAULT_THEME.fieldBg),
+          text: normHex(theme.text, DEFAULT_THEME.text),
+          muted: normHex(theme.muted, DEFAULT_THEME.muted),
+          borderHex: normHex(theme.borderHex, DEFAULT_THEME.borderHex),
+          cream: normHex(theme.cream, DEFAULT_THEME.cream),
+          creamSoftHex: normHex(theme.creamSoftHex, DEFAULT_THEME.creamSoftHex)
+        };
+      }
+
+      function safeBg(input){
+        const bg = { ...DEFAULT_BG, ...(input || {}) };
+        return {
+          tint: normHex(bg.tint, DEFAULT_BG.tint),
+          strength: clamp(bg.strength, 0, 70),
+          blur: clamp(bg.blur, 0, 20)
+        };
+      }
+
+      function readThemeFromUI(){
+        return safeTheme({
+          widgetBg: els.tWidgetBg.value,
+          cardBg: els.tCardBg.value,
+          fieldBg: els.tFieldBg.value,
+          text: els.tText.value,
+          muted: els.tMuted.value,
+          borderHex: els.tBorder.value,
+          cream: els.tCream.value,
+          creamSoftHex: els.tCreamSoft.value
+        });
+      }
+
+      function syncThemeInputs(theme){
+        els.tWidgetBg.value = theme.widgetBg;
+        els.tCardBg.value = theme.cardBg;
+        els.tFieldBg.value = theme.fieldBg;
+        els.tText.value = theme.text;
+        els.tMuted.value = theme.muted;
+        els.tBorder.value = theme.borderHex;
+        els.tCream.value = theme.cream;
+        els.tCreamSoft.value = theme.creamSoftHex;
+      }
+
+      function readBgInputs(){
+        return safeBg({
+          tint: els.bgColor.value,
+          strength: Number(els.bgStrength.value),
+          blur: Number(els.bgBlur.value)
+        });
+      }
+
+      function syncBgInputs(bg){
+        els.bgColor.value = bg.tint;
+        els.bgStrength.value = String(bg.strength);
+        els.bgBlur.value = String(bg.blur);
+      }
+
+      function setBoardImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      }
+
+      function applyBoardTint(colorHex, strengthPct){
+        const strength = clamp(Number(strengthPct), 0, 70) / 100;
+        const tint = normHex(colorHex, DEFAULT_BG.tint);
+
+        document.documentElement.style.setProperty("--board-tint", tint);
+        document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+        if (els.bgDot){
+          els.bgDot.style.background = tint;
+          els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+          els.bgDot.style.borderColor = hexToRgba((themeDraft && themeDraft.borderHex) ? themeDraft.borderHex : "#c9beb6", 0.75);
+        }
+        if (els.boardTintEl){
+          els.boardTintEl.style.background = hexToRgba(tint, strength);
         }
       }
 
-      function saveDay(date, data){
-        localStorage.setItem(keyFor(date), JSON.stringify(data));
+      function applyBgVisual(bg, imageDataUrl){
+        const b = safeBg(bg);
+        document.documentElement.style.setProperty("--board-blur", `${b.blur}px`);
+        applyBoardTint(b.tint, b.strength);
+        setBoardImage(imageDataUrl || null);
+
+        const overlayAlpha = clamp((b.strength / 100) + 0.08, 0.08, 0.55);
+        let overlayStyle = document.getElementById("diet_overlay_style");
+        if(!overlayStyle){
+          overlayStyle = document.createElement("style");
+          overlayStyle.id = "diet_overlay_style";
+          document.head.appendChild(overlayStyle);
+        }
+        overlayStyle.textContent = `.widgetBoard::after{background:${hexToRgba("#ffffff", overlayAlpha)} !important;}`;
       }
 
-      // ---------- State ----------
+      function applyTheme(theme){
+        const t = safeTheme(theme);
+
+        document.documentElement.style.setProperty("--page-bg", t.widgetBg);
+        document.documentElement.style.setProperty("--widget-bg", t.widgetBg);
+        document.documentElement.style.setProperty("--text", t.text);
+        document.documentElement.style.setProperty("--muted", t.muted);
+        document.documentElement.style.setProperty("--cream", t.cream);
+        document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
+        document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
+        document.documentElement.style.setProperty("--creamSoft", hexToRgba(t.creamSoftHex, 0.20));
+        document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, 0.88));
+        document.documentElement.style.setProperty("--field-bg", t.fieldBg);
+
+        els.themeDot.style.background = t.text;
+        els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
+        els.themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
+
+        return t;
+      }
+
+      async function saveTheme(theme){
+        saveJSON(KEYS.theme, safeTheme(theme));
+        broadcast("theme");
+      }
+
+      async function loadTheme(){
+        return safeTheme(loadJSON(KEYS.theme, DEFAULT_THEME));
+      }
+
+      async function saveBackground(bg, imageDataUrl){
+        saveJSON(KEYS.bg, safeBg(bg));
+        if(imageDataUrl){
+          await idbSet(KEYS.bgImage, imageDataUrl);
+        }else{
+          await idbRemove(KEYS.bgImage);
+        }
+        broadcast("background");
+      }
+
+      async function loadBackground(){
+        const bg = safeBg(loadJSON(KEYS.bg, DEFAULT_BG));
+        const imageDataUrl = await idbGet(KEYS.bgImage);
+        return {
+          bg,
+          imageDataUrl: (typeof imageDataUrl === "string" && imageDataUrl) ? imageDataUrl : null
+        };
+      }
+
+      async function loadPresets(){
+        const raw = loadJSON(KEYS.presets, []);
+        return Array.isArray(raw) ? raw : [];
+      }
+
+      async function savePresets(list){
+        saveJSON(KEYS.presets, Array.isArray(list) ? list : []);
+        broadcast("presets");
+      }
+
+      function presetImageKey(id){
+        return `diet_tracker_preset_image_v3__${id}`;
+      }
+
+      async function refreshPresetSelect(){
+        const list = await loadPresets();
+        const current = els.presetSelect.value;
+
+        els.presetSelect.innerHTML = `<option value="">—</option>`;
+        for(const p of list){
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name || "Untitled";
+          els.presetSelect.appendChild(opt);
+        }
+
+        if(current && list.some(x => x.id === current)){
+          els.presetSelect.value = current;
+        }
+      }
+
+      async function getPresetById(id){
+        const list = await loadPresets();
+        return list.find(x => x.id === id) || null;
+      }
+
+      function loadDay(date){
+        return sanitizeDayData(loadJSON(KEYS.day(isoDay(date)), defaultDayData()));
+      }
+
+      function saveDay(date, data){
+        saveJSON(KEYS.day(isoDay(date)), sanitizeDayData(data));
+        broadcast("day", { dayKey: isoDay(date) });
+      }
+
+      let bgDraft = safeBg(DEFAULT_BG);
+      let bgDraftImage = null;
+      let themeDraft = safeTheme(DEFAULT_THEME);
+
       let current = new Date();
       current.setHours(0,0,0,0);
       let data = loadDay(current);
-
-      // ---------- Elements ----------
-      const dayMeta = document.getElementById("dayMeta");
-      const mealList = document.getElementById("mealList");
-
-      const calTotalEl = document.getElementById("calTotal");
-      const proteinTotalEl = document.getElementById("proteinTotal");
-      const carbTotalEl = document.getElementById("carbTotal");
-      const fiberTotalEl = document.getElementById("fiberTotal");
-
-      const calBar = document.getElementById("calBar");
-      const proteinBar = document.getElementById("proteinBar");
-      const calHint = document.getElementById("calHint");
-      const proteinHint = document.getElementById("proteinHint");
-
-      const goalCalories = document.getElementById("goalCalories");
-      const goalProtein = document.getElementById("goalProtein");
-      const newGoalName = document.getElementById("newGoalName");
-      const addGoalBtn = document.getElementById("addGoal");
-      const goalList = document.getElementById("goalList");
-
-      const prevDayBtn = document.getElementById("prevDay");
-      const nextDayBtn = document.getElementById("nextDay");
-      const clearDayBtn = document.getElementById("clearDay");
-
-      // ---------- Rendering ----------
-      function render(){
-        dayMeta.textContent = niceDay(current);
-
-        goalCalories.value = data.goals.calories ? String(data.goals.calories) : "";
-        goalProtein.value = data.goals.protein ? String(data.goals.protein) : "";
-
-        mealList.innerHTML = "";
-        MEALS.forEach(m => mealList.appendChild(renderMeal(m.id, m.label)));
-
-        renderCustomGoals();
-        updateTotals();
-      }
 
       function renderMeal(mealId, label){
         const item = data.meals[mealId];
@@ -1156,7 +1546,6 @@
         const sel = document.createElement("select");
         sel.className = "select";
 
-        const currentTag = data.meals[mealId].tag || "";
         const opts = [
           { v:"", t:"Select…" },
           { v:"protein", t:"Protein" },
@@ -1165,11 +1554,12 @@
           { v:"fat", t:"Fats" },
           { v:"balanced", t:"Balanced" }
         ];
+
         opts.forEach(o => {
           const op = document.createElement("option");
           op.value = o.v;
           op.textContent = o.t;
-          if(o.v === currentTag) op.selected = true;
+          if(o.v === item.tag) op.selected = true;
           sel.appendChild(op);
         });
 
@@ -1204,12 +1594,10 @@
         row.appendChild(c1);
         row.appendChild(c2);
         row.appendChild(c3);
-
         wrap.appendChild(row);
 
         const row2 = document.createElement("div");
         row2.className = "row2";
-        row2.style.gridTemplateColumns = "1fr 1fr 1fr";
 
         row2.appendChild(macroField("Protein (g)", item.protein, (v)=>{ data.meals[mealId].protein = v; saveDay(current, data); updateTotals(); }));
         row2.appendChild(macroField("Carbs (g)", item.carbs, (v)=>{ data.meals[mealId].carbs = v; saveDay(current, data); updateTotals(); }));
@@ -1278,14 +1666,14 @@
       }
 
       function renderCustomGoals(){
-        goalList.innerHTML = "";
+        els.goalList.innerHTML = "";
         const custom = data.goals.custom || [];
 
         if(custom.length === 0){
           const p = document.createElement("p");
           p.className = "hint";
           p.textContent = "No extra goals yet.";
-          goalList.appendChild(p);
+          els.goalList.appendChild(p);
           return;
         }
 
@@ -1330,7 +1718,9 @@
           del.className = "iconBtn danger";
           del.title = "Remove goal";
           del.textContent = "✕";
-          del.addEventListener("click", () => {
+          del.addEventListener("click", async () => {
+            const ok = await askConfirm("Remove this goal?", { okText: "Remove", cancelText: "Cancel", danger: true });
+            if(!ok) return;
             data.goals.custom = (data.goals.custom || []).filter(x => x.id !== g.id);
             saveDay(current, data);
             renderCustomGoals();
@@ -1340,7 +1730,7 @@
           row.appendChild(valWrap);
           row.appendChild(del);
 
-          goalList.appendChild(row);
+          els.goalList.appendChild(row);
         });
       }
 
@@ -1354,86 +1744,395 @@
           f += Number(it.fiber || 0);
         });
 
-        calTotalEl.textContent = String(Math.round(cal));
-        proteinTotalEl.textContent = String(Math.round(p));
-        carbTotalEl.textContent = String(Math.round(c));
-        fiberTotalEl.textContent = String(Math.round(f));
+        els.calTotalEl.textContent = String(Math.round(cal));
+        els.proteinTotalEl.textContent = String(Math.round(p));
+        els.carbTotalEl.textContent = String(Math.round(c));
+        els.fiberTotalEl.textContent = String(Math.round(f));
 
         const calGoal = Number(data.goals.calories || 0);
         const pGoal = Number(data.goals.protein || 0);
 
         if(calGoal > 0){
           const pct = clampPct((cal / calGoal) * 100);
-          calBar.style.width = pct + "%";
-          calHint.textContent = `${Math.round(cal)} / ${Math.round(calGoal)} kcal`;
+          els.calBar.style.width = pct + "%";
+          els.calHint.textContent = `${Math.round(cal)} / ${Math.round(calGoal)} kcal`;
         }else{
-          calBar.style.width = "0%";
-          calHint.textContent = "Set a calorie goal to see progress.";
+          els.calBar.style.width = "0%";
+          els.calHint.textContent = "Set a calorie goal to see progress.";
         }
 
         if(pGoal > 0){
           const pct = clampPct((p / pGoal) * 100);
-          proteinBar.style.width = pct + "%";
-          proteinHint.textContent = `${Math.round(p)} / ${Math.round(pGoal)} g protein`;
+          els.proteinBar.style.width = pct + "%";
+          els.proteinHint.textContent = `${Math.round(p)} / ${Math.round(pGoal)} g protein`;
         }else{
-          proteinBar.style.width = "0%";
-          proteinHint.textContent = "Set a protein goal to see progress.";
+          els.proteinBar.style.width = "0%";
+          els.proteinHint.textContent = "Set a protein goal to see progress.";
         }
       }
 
-      // ---------- Events: Goals ----------
-      goalCalories.addEventListener("input", () => {
-        data.goals.calories = Number(goalCalories.value || 0);
-        saveDay(current, data);
-        updateTotals();
-      });
+      function render(){
+        els.dayMeta.textContent = niceDay(current);
 
-      goalProtein.addEventListener("input", () => {
-        data.goals.protein = Number(goalProtein.value || 0);
-        saveDay(current, data);
-        updateTotals();
-      });
+        els.goalCalories.value = data.goals.calories ? String(data.goals.calories) : "";
+        els.goalProtein.value = data.goals.protein ? String(data.goals.protein) : "";
 
-      addGoalBtn.addEventListener("click", () => {
-        const name = (newGoalName.value || "").trim();
-        if(!name) return;
+        els.mealList.innerHTML = "";
+        MEALS.forEach(m => els.mealList.appendChild(renderMeal(m.id, m.label)));
 
-        const id = "g_" + Math.random().toString(16).slice(2) + "_" + Date.now();
-        data.goals.custom = data.goals.custom || [];
-        data.goals.custom.push({ id, name, value: 0 });
-
-        newGoalName.value = "";
-        saveDay(current, data);
         renderCustomGoals();
-      });
+        updateTotals();
+        saveDay(current, data);
+      }
 
-      newGoalName.addEventListener("keydown", (e) => {
-        if(e.key === "Enter"){
-          e.preventDefault();
-          addGoalBtn.click();
+      function closePanels(){
+        els.bgPanel.classList.remove("open");
+        els.themePanel.classList.remove("open");
+      }
+
+      async function hardReloadTheme(){
+        const saved = await loadTheme();
+        themeDraft = applyTheme(saved);
+        syncThemeInputs(themeDraft);
+      }
+
+      async function hardReloadBackground(){
+        const saved = await loadBackground();
+        bgDraft = saved.bg;
+        bgDraftImage = saved.imageDataUrl;
+        syncBgInputs(bgDraft);
+        applyBgVisual(bgDraft, bgDraftImage);
+      }
+
+      async function initSettings(){
+        const savedTheme = await loadTheme();
+        themeDraft = applyTheme(savedTheme);
+        syncThemeInputs(themeDraft);
+
+        const savedBg = await loadBackground();
+        bgDraft = savedBg.bg;
+        bgDraftImage = savedBg.imageDataUrl;
+        syncBgInputs(bgDraft);
+        applyBgVisual(bgDraft, bgDraftImage);
+
+        await refreshPresetSelect();
+      }
+
+      function attachPopoverEvents(){
+        els.bgBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          els.bgPanel.classList.toggle("open");
+          els.themePanel.classList.remove("open");
+        });
+
+        els.themeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          els.themePanel.classList.toggle("open");
+          els.bgPanel.classList.remove("open");
+        });
+
+        document.addEventListener("click", (e) => {
+          const inBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          const inTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if(!inBg) els.bgPanel.classList.remove("open");
+          if(!inTheme) els.themePanel.classList.remove("open");
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if(e.key === "Escape") closePanels();
+        });
+      }
+
+      function attachBackgroundEvents(){
+        els.bgColor.addEventListener("input", () => {
+          bgDraft = readBgInputs();
+          applyBgVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgStrength.addEventListener("input", () => {
+          bgDraft = readBgInputs();
+          applyBgVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgBlur.addEventListener("input", () => {
+          bgDraft = readBgInputs();
+          applyBgVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgImage.addEventListener("change", async () => {
+          const file = els.bgImage.files && els.bgImage.files[0];
+          if(!file) return;
+          try{
+            bgDraftImage = await fileToDataUrl(file);
+            applyBgVisual(bgDraft, bgDraftImage);
+            setStatus("");
+          }catch{
+            setStatus("Could not load image.");
+          }
+        });
+
+        els.removeImage.addEventListener("click", () => {
+          bgDraftImage = null;
+          els.bgImage.value = "";
+          applyBgVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgApply.addEventListener("click", async () => {
+          bgDraft = readBgInputs();
+          applyBgVisual(bgDraft, bgDraftImage);
+          await saveBackground(bgDraft, bgDraftImage);
+          setStatus("Background applied.");
+        });
+
+        els.bgReset.addEventListener("click", async () => {
+          bgDraft = safeBg(DEFAULT_BG);
+          bgDraftImage = null;
+          els.bgImage.value = "";
+          syncBgInputs(bgDraft);
+          applyBgVisual(bgDraft, bgDraftImage);
+          await saveBackground(bgDraft, bgDraftImage);
+          setStatus("Background reset.");
+        });
+      }
+
+      function attachThemeEvents(){
+        [
+          els.tWidgetBg,
+          els.tCardBg,
+          els.tFieldBg,
+          els.tText,
+          els.tMuted,
+          els.tBorder,
+          els.tCream,
+          els.tCreamSoft
+        ].forEach(el => {
+          el.addEventListener("input", () => {
+            themeDraft = applyTheme(readThemeFromUI());
+            setStatus("");
+          });
+        });
+
+        els.themeApply.addEventListener("click", async () => {
+          themeDraft = applyTheme(readThemeFromUI());
+          await saveTheme(themeDraft);
+          syncThemeInputs(themeDraft);
+          setStatus("Theme applied.");
+        });
+
+        els.resetTheme.addEventListener("click", async () => {
+          themeDraft = applyTheme(DEFAULT_THEME);
+          syncThemeInputs(themeDraft);
+          await saveTheme(themeDraft);
+          setStatus("Theme reset.");
+        });
+      }
+
+      function attachPresetEvents(){
+        els.presetSave.addEventListener("click", async () => {
+          const name = String(els.presetName.value || "").trim();
+          if(!name){
+            setStatus("Type a preset name first.");
+            return;
+          }
+
+          const list = await loadPresets();
+          const id = makeId();
+
+          list.unshift({
+            id,
+            name,
+            theme: readThemeFromUI(),
+            bg: readBgInputs(),
+            hasImage: !!bgDraftImage
+          });
+
+          if(bgDraftImage){
+            await idbSet(presetImageKey(id), bgDraftImage);
+          }
+
+          await savePresets(list);
+          els.presetName.value = "";
+          await refreshPresetSelect();
+          els.presetSelect.value = id;
+          setStatus("Preset saved.");
+        });
+
+        els.presetApply.addEventListener("click", async () => {
+          const id = String(els.presetSelect.value || "");
+          if(!id){
+            setStatus("Choose a preset first.");
+            return;
+          }
+
+          const p = await getPresetById(id);
+          if(!p){
+            setStatus("Preset not found.");
+            return;
+          }
+
+          const newTheme = safeTheme(p.theme || DEFAULT_THEME);
+          const newBg = safeBg(p.bg || DEFAULT_BG);
+          const presetImage = p.hasImage ? await idbGet(presetImageKey(id)) : null;
+
+          themeDraft = applyTheme(newTheme);
+          syncThemeInputs(themeDraft);
+          await saveTheme(themeDraft);
+
+          bgDraft = newBg;
+          bgDraftImage = (typeof presetImage === "string" && presetImage) ? presetImage : null;
+          syncBgInputs(bgDraft);
+          applyBgVisual(bgDraft, bgDraftImage);
+          await saveBackground(bgDraft, bgDraftImage);
+
+          setStatus("Preset applied.");
+        });
+
+        els.presetDelete.addEventListener("click", async () => {
+          const id = String(els.presetSelect.value || "");
+          if(!id){
+            setStatus("Choose a preset first.");
+            return;
+          }
+
+          const ok = await askConfirm("Delete this preset?", { okText: "Delete", cancelText: "Cancel", danger: true });
+          if(!ok) return;
+
+          const list = await loadPresets();
+          const next = list.filter(x => x.id !== id);
+          await idbRemove(presetImageKey(id));
+          await savePresets(next);
+          await refreshPresetSelect();
+          els.presetSelect.value = "";
+          setStatus("Preset deleted.");
+        });
+      }
+
+      function attachAppEvents(){
+        els.goalCalories.addEventListener("input", () => {
+          data.goals.calories = Number(els.goalCalories.value || 0);
+          saveDay(current, data);
+          updateTotals();
+        });
+
+        els.goalProtein.addEventListener("input", () => {
+          data.goals.protein = Number(els.goalProtein.value || 0);
+          saveDay(current, data);
+          updateTotals();
+        });
+
+        els.addGoalBtn.addEventListener("click", () => {
+          const name = String(els.newGoalName.value || "").trim();
+          if(!name) return;
+
+          data.goals.custom = data.goals.custom || [];
+          data.goals.custom.push(sanitizeCustomGoal({ id: "g_" + makeId(), name, value: 0 }));
+
+          els.newGoalName.value = "";
+          saveDay(current, data);
+          renderCustomGoals();
+        });
+
+        els.newGoalName.addEventListener("keydown", (e) => {
+          if(e.key === "Enter"){
+            e.preventDefault();
+            els.addGoalBtn.click();
+          }
+        });
+
+        function go(deltaDays){
+          current = new Date(current.getTime() + deltaDays * 86400000);
+          current.setHours(0,0,0,0);
+          data = loadDay(current);
+          render();
         }
-      });
 
-      // ---------- Day navigation ----------
-      function go(deltaDays){
-        current = new Date(current.getTime() + deltaDays * 86400000);
-        current.setHours(0,0,0,0);
+        els.prevDayBtn.addEventListener("click", () => go(-1));
+        els.nextDayBtn.addEventListener("click", () => go(1));
+
+        els.clearDayBtn.addEventListener("click", async () => {
+          const ok = await askConfirm("Clear this day?", { okText: "Clear", cancelText: "Cancel", danger: true });
+          if(!ok) return;
+
+          lsRemove(KEYS.day(isoDay(current)));
+          data = loadDay(current);
+          render();
+          broadcast("day", { dayKey: isoDay(current) });
+        });
+
+        window.addEventListener("pagehide", () => {
+          saveDay(current, data);
+        });
+
+        document.addEventListener("visibilitychange", () => {
+          if(document.visibilityState === "hidden"){
+            saveDay(current, data);
+          }
+        });
+      }
+
+      function attachSyncEvents(){
+        window.addEventListener("storage", async (e) => {
+          if(!e.key) return;
+
+          if(e.key === KEYS.theme){
+            await hardReloadTheme();
+          }
+          if(e.key === KEYS.bg){
+            await hardReloadBackground();
+          }
+          if(e.key === KEYS.presets){
+            await refreshPresetSelect();
+          }
+          if(e.key === KEYS.day(isoDay(current))){
+            data = loadDay(current);
+            render();
+          }
+        });
+
+        if(channel){
+          channel.onmessage = async (event) => {
+            const msg = event.data || {};
+            if(!msg.type) return;
+
+            if(msg.type === "theme"){
+              await hardReloadTheme();
+            }
+            if(msg.type === "background"){
+              await hardReloadBackground();
+            }
+            if(msg.type === "presets"){
+              await refreshPresetSelect();
+            }
+            if(msg.type === "day"){
+              const dayKey = msg.payload && msg.payload.dayKey;
+              if(dayKey === isoDay(current)){
+                data = loadDay(current);
+                render();
+              }
+            }
+          };
+        }
+      }
+
+      async function init(){
+        attachPopoverEvents();
+        attachBackgroundEvents();
+        attachThemeEvents();
+        attachPresetEvents();
+        attachAppEvents();
+        attachSyncEvents();
+
+        await initSettings();
         data = loadDay(current);
         render();
       }
 
-      prevDayBtn.addEventListener("click", () => go(-1));
-      nextDayBtn.addEventListener("click", () => go(1));
-
-      clearDayBtn.addEventListener("click", () => {
-        localStorage.removeItem(keyFor(current));
-        data = loadDay(current);
-        render();
-      });
-
-      // ---------- Init ----------
-      render();
-    });
+      init();
+    })();
   </script>
 </body>
 </html>

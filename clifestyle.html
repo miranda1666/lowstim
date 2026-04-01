@@ -137,8 +137,6 @@
       padding:10px 12px;
       outline:none;
       -webkit-tap-highlight-color: transparent;
-      appearance:none;
-      -webkit-appearance:none;
     }
 
     textarea{
@@ -312,7 +310,8 @@
     }
 
     .bgRow input[type="color"]{
-      width:36px; height:28px;
+      width:36px;
+      height:28px;
       border-radius:10px;
       padding:0;
       border:1px solid var(--stroke);
@@ -320,7 +319,14 @@
       cursor:pointer;
     }
 
-    .bgRow input[type="range"]{ width:160px; }
+    .bgRow input[type="range"]{
+      width:160px;
+      padding:0;
+      border:0;
+      background:transparent;
+      border-radius:0;
+    }
+
     .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
 
     .bgMiniBtn{
@@ -1054,10 +1060,14 @@
     document.documentElement.style.setProperty("--accent", accent);
 
     document.documentElement.style.setProperty("--stroke", stroke);
-    document.documentElement.style.setProperty("--card", hexToRgba(card, cardA));
-    document.documentElement.style.setProperty("--panel-bg", hexToRgba(card, panelA));
-    document.documentElement.style.setProperty("--field-bg", field);
 
+    /* Card color affects only the main widget card */
+    document.documentElement.style.setProperty("--card", hexToRgba(card, cardA));
+
+    /* Theme/background settings panel stays independent from card color */
+    document.documentElement.style.setProperty("--panel-bg", `rgba(255,255,255,${panelA})`);
+
+    document.documentElement.style.setProperty("--field-bg", field);
     document.documentElement.style.setProperty("--theme-dot", ink);
 
     const dot = $("themeDot");

@@ -16,7 +16,6 @@
       --r:18px;
 
       --board-tint:#efe7e1;
-      --board-tint-a:0.12;
       --board-image:none;
       --bg-blur:0px;
     }
@@ -40,14 +39,19 @@
     }
 
     .wrap{ max-width:980px; margin:0 auto; }
-    h1{ margin:0; font-size:18px; }
+
+    h1{
+      margin:0;
+      font-size:18px;
+      font-weight:700;
+    }
 
     .widgetBoard{
       position:relative;
-      border-radius: var(--r);
+      border-radius:var(--r);
       overflow:hidden;
       border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
+      box-shadow:var(--shadow);
       isolation:isolate;
     }
 
@@ -55,26 +59,28 @@
       content:"";
       position:absolute;
       inset:0;
-      background-image: var(--board-image);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      transform: translateZ(0);
+      background-image:var(--board-image);
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
       z-index:0;
       pointer-events:none;
+      transform:translateZ(0);
       filter: blur(var(--bg-blur)) saturate(1.08) contrast(1.04) brightness(1.02);
-      will-change: filter;
     }
 
     .boardTint{
       position:absolute;
       inset:0;
-      pointer-events:none;
       z-index:1;
+      pointer-events:none;
       background: rgba(0,0,0,0);
     }
 
-    .boardContent{ position:relative; z-index:2; }
+    .boardContent{
+      position:relative;
+      z-index:2;
+    }
 
     .card{
       background:var(--card);
@@ -95,7 +101,12 @@
       flex-wrap:wrap;
     }
 
-    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .title h2{
+      margin:0;
+      font-size:14px;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
 
     .row{
       display:flex;
@@ -121,6 +132,7 @@
       resize:vertical;
       -webkit-appearance:none;
       appearance:none;
+      line-height:1.35;
     }
 
     button{
@@ -133,21 +145,41 @@
     button.primary{ background: rgba(239,231,225,0.9); }
     button:active{ transform:translateY(1px); }
 
-    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+    .divider{
+      height:1px;
+      background:var(--stroke);
+      margin:12px 0;
+    }
 
-    .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
+    .kpi{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
     .kpi .box{
-      flex:1; min-width:200px;
+      flex:1;
+      min-width:200px;
       background:var(--soft);
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:10px;
     }
-    .kpi .num{ font-weight:750; font-size:16px; }
-    .kpi .lab{ font-size:12px; color:var(--muted); }
+
+    .kpi .num{
+      font-weight:750;
+      font-size:16px;
+    }
+
+    .kpi .lab{
+      font-size:12px;
+      color:var(--muted);
+    }
 
     .pill{
-      display:inline-flex; align-items:center; gap:8px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
       border:1px solid var(--stroke);
       background:#fff;
       border-radius:999px;
@@ -156,13 +188,20 @@
       white-space:nowrap;
     }
 
-    .tiny{ font-size:12px; color:var(--muted); }
+    .tiny{
+      font-size:12px;
+      color:var(--muted);
+    }
 
-    .list{ display:flex; flex-direction:column; gap:8px; }
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
 
     .item{
       display:grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns:1fr auto;
       gap:10px;
       align-items:center;
       padding:10px 12px;
@@ -171,9 +210,25 @@
       background:#fff;
     }
 
-    .meta{ display:flex; flex-direction:column; gap:2px; min-width:0; }
-    .meta b{ font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .meta span{ font-size:12px; color:var(--muted); }
+    .meta{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+
+    .meta b{
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .meta span{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
 
     .right{
       display:flex;
@@ -193,13 +248,27 @@
       white-space:nowrap;
     }
 
-    .smallbtn{ padding:8px 10px; border-radius:12px; }
-    .danger{ border-color:#efc2c2; }
+    .smallbtn{
+      padding:8px 10px;
+      border-radius:12px;
+    }
 
-    .ctrls{ display:flex; gap:8px; align-items:center; margin-left:auto; }
-    .bgWrap{ position:relative; }
+    .danger{
+      border-color:#efc2c2;
+    }
 
-    .bgBtn{
+    .ctrls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-left:auto;
+    }
+
+    .panelWrap{
+      position:relative;
+    }
+
+    .panelBtn{
       width:34px;
       height:34px;
       border-radius:999px;
@@ -211,45 +280,49 @@
       box-shadow: 0 3px 12px rgba(30,20,10,.08);
     }
 
-    .bgDot{
-      width:14px; height:14px;
+    .bgDot,
+    .themeDot{
+      width:14px;
+      height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
-      background: var(--board-tint);
+    }
+
+    .bgDot{
+      background:var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
     }
 
     .themeDot{
-      width:14px; height:14px;
-      border-radius:999px;
-      border:1px solid rgba(233,228,221,0.95);
-      background: var(--ink);
+      background:var(--ink);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
     }
 
-    .bgPanel{
+    .panel{
       position:absolute;
-      top: 44px;
-      right: 0;
-      width: min(290px, calc(100vw - 36px));
-      border-radius: 16px;
-      border: 1px solid var(--stroke);
+      top:44px;
+      right:0;
+      width:min(320px, calc(100vw - 32px));
+      border-radius:16px;
+      border:1px solid var(--stroke);
       background: rgba(255,255,255,0.92);
-      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      box-shadow:0 18px 40px rgba(30,20,10,.12);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      padding: 12px;
+      padding:12px;
       display:none;
-      z-index: 50;
-      max-height: 70vh;
+      z-index:9999;
+      max-height:min(82vh, 720px);
       overflow:auto;
       overscroll-behavior:contain;
-      -webkit-overflow-scrolling: touch;
+      -webkit-overflow-scrolling:touch;
     }
 
-    .bgPanel.open{ display:block; }
+    .panel.open{
+      display:block;
+    }
 
-    .bgTitle{
+    .panelTitle{
       margin:0 0 10px 0;
       font-size:12px;
       font-weight:700;
@@ -258,19 +331,23 @@
       color: rgba(43,42,40,0.72);
     }
 
-    .bgRow{
+    .panelRow{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding: 7px 0;
+      padding:7px 0;
       flex-wrap:wrap;
     }
 
-    .bgRow label{ font-size:12px; color:var(--muted); }
+    .panelRow label{
+      font-size:12px;
+      color:var(--muted);
+    }
 
-    .bgRow input[type="color"]{
-      width:36px; height:28px;
+    .panelRow input[type="color"]{
+      width:36px;
+      height:28px;
       border-radius:10px;
       padding:0;
       border:1px solid var(--stroke);
@@ -278,15 +355,19 @@
       cursor:pointer;
     }
 
-    .bgRow input[type="range"]{
-      width: 150px;
+    .panelRow input[type="range"]{
+      width:150px;
       max-width:46vw;
       touch-action:pan-y;
     }
 
-    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .panelFile{
+      width:100%;
+      font-size:12px;
+      color: rgba(43,42,40,0.75);
+    }
 
-    .bgMiniBtn{
+    .panelBtnFull{
       width:100%;
       border-radius:12px;
       border:1px solid var(--stroke);
@@ -300,9 +381,22 @@
       box-shadow: 0 2px 8px rgba(30,20,10,.06);
     }
 
-    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+    .panelDivider{
+      height:1px;
+      background:var(--stroke);
+      margin:8px 0;
+    }
 
-    .themePanel{ right: 42px; }
+    .presetName{
+      width:100%;
+    }
+
+    .status{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+      min-height:16px;
+    }
 
     .confirm{
       margin-top:10px;
@@ -327,23 +421,15 @@
       line-height:1.25;
     }
 
-    .presetName{ width:100%; }
-    .status{
-      font-size:12px;
-      color: var(--muted);
-      margin-top:6px;
-      min-height:16px;
-    }
-
-    @media (max-width: 760px){
-      .bgPanel{
+    @media (max-width:900px){
+      .panel{
         position:fixed;
         top:auto;
-        right:18px;
-        left:18px;
+        right:16px;
+        left:16px;
         bottom:max(16px, env(safe-area-inset-bottom));
         width:auto;
-        max-height:min(76vh, 640px);
+        max-height:min(78vh, 720px);
       }
     }
   </style>
@@ -364,131 +450,129 @@
             </div>
 
             <div class="ctrls">
-              <!-- THEME -->
-              <div class="bgWrap" id="themeWrap">
-                <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+              <div class="panelWrap">
+                <button class="panelBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
                   <span class="themeDot" id="themeDot" aria-hidden="true"></span>
                 </button>
 
-                <div class="bgPanel themePanel" id="themePanel" role="dialog" aria-label="Theme settings">
-                  <div class="bgTitle">Theme</div>
+                <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+                  <div class="panelTitle">Theme</div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="tBg">Page bg</label>
                     <input id="tBg" type="color" value="#ffffff" />
                   </div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="tCard">Card</label>
                     <input id="tCard" type="color" value="#ffffff" />
                   </div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="tCardA">Card opacity</label>
                     <input id="tCardA" type="range" min="20" max="95" value="84" />
                   </div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="tStroke">Borders</label>
                     <input id="tStroke" type="color" value="#e9e4dd" />
                   </div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="tInk">Text</label>
                     <input id="tInk" type="color" value="#2b2a28" />
                   </div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="tMuted">Muted</label>
                     <input id="tMuted" type="color" value="#6a665f" />
                   </div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="tSoft">Secondary</label>
                     <input id="tSoft" type="color" value="#f3efe9" />
                   </div>
 
-                  <div class="bgDiv"></div>
+                  <div class="panelDivider"></div>
 
-                  <div class="bgRow" style="justify-content:space-between;">
-                    <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
+                  <div class="panelRow">
+                    <button id="themeApply" class="panelBtnFull" type="button">Apply theme</button>
                   </div>
 
-                  <div class="bgRow" style="justify-content:space-between;">
-                    <button id="themeReset" class="bgMiniBtn" type="button">Reset theme</button>
+                  <div class="panelRow">
+                    <button id="themeReset" class="panelBtnFull" type="button">Reset theme</button>
                   </div>
 
-                  <div class="bgDiv"></div>
+                  <div class="panelDivider"></div>
 
-                  <div class="bgTitle" style="margin-top:2px;">Presets</div>
+                  <div class="panelTitle" style="margin-top:2px;">Presets</div>
 
-                  <div class="bgRow" style="align-items:flex-start; flex-direction:column; gap:8px;">
+                  <div class="panelRow" style="align-items:flex-start; flex-direction:column; gap:8px;">
                     <input id="presetName" class="presetName" placeholder="Preset name" />
-                    <button id="presetSave" class="bgMiniBtn" type="button">Save current as preset</button>
+                    <button id="presetSave" class="panelBtnFull" type="button">Save current as preset</button>
                   </div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="presetSelect">Choose</label>
                     <select id="presetSelect" style="width:170px;">
                       <option value="">—</option>
                     </select>
                   </div>
 
-                  <div class="bgRow" style="gap:8px;">
-                    <button id="presetApply" class="bgMiniBtn" type="button">Apply preset</button>
+                  <div class="panelRow">
+                    <button id="presetApply" class="panelBtnFull" type="button">Apply preset</button>
                   </div>
 
-                  <div class="bgRow" style="gap:8px;">
-                    <button id="presetDelete" class="bgMiniBtn" type="button">Delete preset</button>
+                  <div class="panelRow">
+                    <button id="presetDelete" class="panelBtnFull" type="button">Delete preset</button>
                   </div>
 
                   <div class="status" id="presetStatus" aria-live="polite"></div>
                 </div>
               </div>
 
-              <!-- BACKGROUND -->
-              <div class="bgWrap" id="bgWrap">
-                <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+              <div class="panelWrap">
+                <button class="panelBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
                   <span class="bgDot" id="bgDot" aria-hidden="true"></span>
                 </button>
 
-                <div class="bgPanel" id="bgPanel" role="dialog" aria-label="Background settings">
-                  <div class="bgTitle">Background</div>
+                <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+                  <div class="panelTitle">Background</div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="bgColor">Tint</label>
                     <input id="bgColor" type="color" value="#efe7e1" />
                   </div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="bgStrength">Strength</label>
                     <input id="bgStrength" type="range" min="0" max="70" value="12" />
                   </div>
 
-                  <div class="bgRow">
+                  <div class="panelRow">
                     <label for="bgBlur">Image blur</label>
                     <input id="bgBlur" type="range" min="0" max="24" value="0" />
                   </div>
 
-                  <div class="bgDiv"></div>
+                  <div class="panelDivider"></div>
 
-                  <div class="bgRow" style="align-items:flex-start;">
+                  <div class="panelRow" style="align-items:flex-start;">
                     <label for="bgImage">Image</label>
-                    <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+                    <input id="bgImage" class="panelFile" type="file" accept="image/*" />
                   </div>
 
-                  <div class="bgRow">
-                    <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+                  <div class="panelRow">
+                    <button id="bgRemove" class="panelBtnFull" type="button">Remove image</button>
                   </div>
 
-                  <div class="bgDiv"></div>
+                  <div class="panelDivider"></div>
 
-                  <div class="bgRow">
-                    <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
+                  <div class="panelRow">
+                    <button id="bgApply" class="panelBtnFull" type="button">Apply background</button>
                   </div>
 
-                  <div class="bgRow">
-                    <button id="bgReset" class="bgMiniBtn" type="button">Reset background</button>
+                  <div class="panelRow">
+                    <button id="bgReset" class="panelBtnFull" type="button">Reset background</button>
                   </div>
                 </div>
               </div>
@@ -594,10 +678,9 @@
     imageDataUrl:null
   };
 
-  const APP_VERSION = 9;
-  const STORAGE_NS = "career_goals_v9";
-  const CHANNEL_NAME = "career-goals-sync-v9";
-
+  const APP_VERSION = 10;
+  const STORAGE_NS = "career_goals_v10";
+  const CHANNEL_NAME = "career-goals-sync-v10";
   const $ = (id)=>document.getElementById(id);
 
   function clamp(n, min, max){
@@ -812,18 +895,11 @@
   }
 
   function captureDraftInputs(){
-    const goalTitle = $("goalTitle");
-    const goalPriority = $("goalPriority");
-    const goalDeadline = $("goalDeadline");
-    const goalNext = $("goalNext");
-
-    if (!goalTitle || !goalPriority || !goalDeadline || !goalNext) return;
-
     state.goalsState.draft = {
-      goalTitle: goalTitle.value || "",
-      goalPriority: goalPriority.value || "mid",
-      goalDeadline: goalDeadline.value || "",
-      goalNext: goalNext.value || ""
+      goalTitle: $("goalTitle").value || "",
+      goalPriority: $("goalPriority").value || "mid",
+      goalDeadline: $("goalDeadline").value || "",
+      goalNext: $("goalNext").value || ""
     };
   }
 
@@ -852,7 +928,7 @@
     }
   }
 
-  function syncThemeInputsFromDraft(){
+  function syncThemeInputs(){
     $("tBg").value = themeDraft.bg;
     $("tCard").value = themeDraft.card;
     $("tCardA").value = String(themeDraft.cardA);
@@ -875,26 +951,20 @@
   }
 
   function applyBg(bgState){
-    const boardTintEl = $("boardTint");
-    const bgDot = $("bgDot");
     const bg = normalizeBg(bgState);
 
     document.documentElement.style.setProperty("--board-tint", bg.tint);
-    document.documentElement.style.setProperty("--board-tint-a", String(bg.strength / 100));
     document.documentElement.style.setProperty("--board-image", bg.imageDataUrl ? `url("${bg.imageDataUrl}")` : "none");
     document.documentElement.style.setProperty("--bg-blur", `${bg.blur}px`);
 
-    if(boardTintEl){
-      boardTintEl.style.background = rgbaFromHex(bg.tint, bg.strength / 100);
-    }
+    $("boardTint").style.background = rgbaFromHex(bg.tint, bg.strength / 100);
 
-    if(bgDot){
-      bgDot.style.background = bg.tint;
-      bgDot.style.boxShadow = `0 0 0 6px ${rgbaFromHex(bg.tint, Math.min(0.28, (bg.strength / 100) + 0.10))}`;
-    }
+    const bgDot = $("bgDot");
+    bgDot.style.background = bg.tint;
+    bgDot.style.boxShadow = `0 0 0 6px ${rgbaFromHex(bg.tint, Math.min(0.28, (bg.strength / 100) + 0.10))}`;
   }
 
-  function syncBgInputsFromDraft(){
+  function syncBgInputs(){
     $("bgColor").value = bgDraft.tint;
     $("bgStrength").value = String(bgDraft.strength);
     $("bgBlur").value = String(bgDraft.blur);
@@ -910,12 +980,19 @@
     });
   }
 
-  function filtered(){
+  function priorityLabel(p){
+    if(p === "high") return "High";
+    if(p === "low") return "Low";
+    return "Medium";
+  }
+
+  function filteredGoals(){
     let list = [...state.goalsState.goals];
+
     if(state.goalsState.ui.view === "active") list = list.filter(g => !g.done);
     if(state.goalsState.ui.view === "done") list = list.filter(g => g.done);
 
-    const order = { high: 0, mid: 1, low: 2 };
+    const order = { high:0, mid:1, low:2 };
     list.sort((a,b) => {
       if(a.done !== b.done) return a.done ? 1 : -1;
       if((order[a.priority] ?? 9) !== (order[b.priority] ?? 9)) return (order[a.priority] ?? 9) - (order[b.priority] ?? 9);
@@ -926,12 +1003,6 @@
     });
 
     return list;
-  }
-
-  function priorityLabel(p){
-    if(p === "high") return "High";
-    if(p === "low") return "Low";
-    return "Medium";
   }
 
   function renderKPIs(){
@@ -946,7 +1017,7 @@
 
   function renderList(){
     const root = $("goalList");
-    const list = filtered();
+    const list = filteredGoals();
     root.innerHTML = "";
 
     if(list.length === 0){
@@ -1040,14 +1111,11 @@
     const nextAction = ($("goalNext").value || "").trim();
     if(!title) return;
 
-    const priority = $("goalPriority").value || "mid";
-    const deadline = $("goalDeadline").value || "";
-
     state.goalsState.goals.unshift(normalizeGoal({
       id: uid(),
       title,
-      priority,
-      deadline,
+      priority: $("goalPriority").value || "mid",
+      deadline: $("goalDeadline").value || "",
       nextAction,
       done:false,
       createdAt: Date.now()
@@ -1065,61 +1133,54 @@
   }
 
   function refreshPresetSelect(){
-    const presetSelect = $("presetSelect");
-    const current = presetSelect.value;
-    presetSelect.innerHTML = `<option value="">—</option>`;
+    const select = $("presetSelect");
+    const current = select.value;
+    select.innerHTML = `<option value="">—</option>`;
     for(const p of state.presets){
       const opt = document.createElement("option");
       opt.value = p.id;
       opt.textContent = p.name || "Untitled";
-      presetSelect.appendChild(opt);
+      select.appendChild(opt);
     }
     if(current && state.presets.some(p => p.id === current)){
-      presetSelect.value = current;
+      select.value = current;
     }
   }
 
   function initPanels(){
-    const themeBtn = $("themeBtn");
-    const themePanel = $("themePanel");
-    const bgBtn = $("bgBtn");
-    const bgPanel = $("bgPanel");
-
     function closeAll(except){
-      if(except !== "theme") themePanel.classList.remove("open");
-      if(except !== "bg") bgPanel.classList.remove("open");
+      if(except !== "theme") $("themePanel").classList.remove("open");
+      if(except !== "bg") $("bgPanel").classList.remove("open");
     }
 
-    themeBtn.addEventListener("click", (e)=>{
+    $("themeBtn").addEventListener("click", (e)=>{
       e.stopPropagation();
-      const open = !themePanel.classList.contains("open");
+      const open = !$("themePanel").classList.contains("open");
       closeAll(open ? "theme" : null);
-      themePanel.classList.toggle("open", open);
+      $("themePanel").classList.toggle("open", open);
     });
 
-    bgBtn.addEventListener("click", (e) => {
+    $("bgBtn").addEventListener("click", (e)=>{
       e.stopPropagation();
-      const open = !bgPanel.classList.contains("open");
+      const open = !$("bgPanel").classList.contains("open");
       closeAll(open ? "bg" : null);
-      bgPanel.classList.toggle("open", open);
+      $("bgPanel").classList.toggle("open", open);
     });
 
     document.addEventListener("click", (e) => {
-      const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-
-      if(!insideBg) bgPanel.classList.remove("open");
-      if(!insideTheme) themePanel.classList.remove("open");
+      const inside =
+        e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
+        e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+      if(!inside) closeAll(null);
     });
   }
 
   function initThemeModule(){
     themeDraft = normalizeTheme(state.theme);
     applyTheme(themeDraft);
-    syncThemeInputsFromDraft();
+    syncThemeInputs();
 
-    const themeInputs = ["tBg","tCard","tCardA","tStroke","tInk","tMuted","tSoft"];
-    themeInputs.forEach(id => {
+    ["tBg","tCard","tCardA","tStroke","tInk","tMuted","tSoft"].forEach(id => {
       $(id).addEventListener("input", () => {
         themeDraft = readThemeInputs();
         applyTheme(themeDraft);
@@ -1138,7 +1199,7 @@
     $("themeReset").addEventListener("click", async ()=>{
       themeDraft = normalizeTheme(DEFAULT_THEME);
       state.theme = normalizeTheme(DEFAULT_THEME);
-      syncThemeInputsFromDraft();
+      syncThemeInputs();
       applyTheme(themeDraft);
       await flushSave();
       setStatus("Theme reset.");
@@ -1148,7 +1209,7 @@
   function initBackgroundModule(){
     bgDraft = normalizeBg(state.background);
     applyBg(bgDraft);
-    syncBgInputsFromDraft();
+    syncBgInputs();
 
     function previewBg(){
       bgDraft = readBgInputs();
@@ -1163,6 +1224,7 @@
     $("bgImage").addEventListener("change", async () => {
       const file = $("bgImage").files && $("bgImage").files[0];
       if(!file) return;
+
       try{
         const dataUrl = await new Promise((resolve, reject) => {
           const r = new FileReader();
@@ -1198,7 +1260,7 @@
     $("bgReset").addEventListener("click", async ()=>{
       bgDraft = normalizeBg(DEFAULT_BG);
       state.background = normalizeBg(DEFAULT_BG);
-      syncBgInputsFromDraft();
+      syncBgInputs();
       applyBg(bgDraft);
       await flushSave();
       setStatus("Background reset.");
@@ -1245,12 +1307,12 @@
 
       themeDraft = normalizeTheme(p.theme);
       state.theme = normalizeTheme(p.theme);
-      syncThemeInputsFromDraft();
+      syncThemeInputs();
       applyTheme(themeDraft);
 
       bgDraft = normalizeBg(p.bg);
       state.background = normalizeBg(p.bg);
-      syncBgInputsFromDraft();
+      syncBgInputs();
       applyBg(bgDraft);
 
       await flushSave();
@@ -1281,18 +1343,22 @@
   function initGoalsModule(){
     const resetConfirm = $("resetConfirm");
 
-    function hideReset(){ resetConfirm.style.display = "none"; }
+    function hideReset(){
+      resetConfirm.style.display = "none";
+    }
+
     function showReset(){
       resetConfirm.style.display = "block";
-      $("bgPanel").classList.remove("open");
       $("themePanel").classList.remove("open");
+      $("bgPanel").classList.remove("open");
     }
 
     restoreDraftInputs();
 
     $("addGoal").addEventListener("click", addGoal);
+
     $("goalTitle").addEventListener("keydown", (e)=>{
-      if(e.key==="Enter"){
+      if(e.key === "Enter"){
         e.preventDefault();
         addGoal();
       }
@@ -1309,13 +1375,13 @@
       renderAll();
     });
 
-    $("resetAll").addEventListener("click", ()=> {
+    $("resetAll").addEventListener("click", ()=>{
       resetConfirm.style.display === "block" ? hideReset() : showReset();
     });
 
     $("resetNo").addEventListener("click", hideReset);
 
-    $("resetYes").addEventListener("click", async ()=> {
+    $("resetYes").addEventListener("click", async ()=>{
       state.goalsState = {
         goals: [],
         ui: { view: "all" },
@@ -1333,10 +1399,9 @@
     });
 
     ["goalTitle","goalPriority","goalDeadline","goalNext"].forEach(id => {
-      const el = $(id);
-      el.addEventListener("input", debouncedSave);
-      el.addEventListener("change", debouncedSave);
-      el.addEventListener("blur", debouncedSave);
+      $(id).addEventListener("input", debouncedSave);
+      $(id).addEventListener("change", debouncedSave);
+      $(id).addEventListener("blur", debouncedSave);
     });
 
     renderAll();
@@ -1355,9 +1420,9 @@
         themeDraft = normalizeTheme(state.theme);
         bgDraft = normalizeBg(state.background);
         applyTheme(themeDraft);
-        syncThemeInputsFromDraft();
+        syncThemeInputs();
         applyBg(bgDraft);
-        syncBgInputsFromDraft();
+        syncBgInputs();
         restoreDraftInputs();
         refreshPresetSelect();
         renderAll();
@@ -1374,9 +1439,9 @@
         themeDraft = normalizeTheme(state.theme);
         bgDraft = normalizeBg(state.background);
         applyTheme(themeDraft);
-        syncThemeInputsFromDraft();
+        syncThemeInputs();
         applyBg(bgDraft);
-        syncBgInputsFromDraft();
+        syncBgInputs();
         restoreDraftInputs();
         refreshPresetSelect();
         renderAll();
@@ -1415,9 +1480,9 @@
   initGoalsModule();
 
   applyTheme(themeDraft);
-  syncThemeInputsFromDraft();
+  syncThemeInputs();
   applyBg(bgDraft);
-  syncBgInputsFromDraft();
+  syncBgInputs();
   restoreDraftInputs();
   refreshPresetSelect();
   renderAll();

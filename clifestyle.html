@@ -2,44 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Lifestyle Goals</title>
   <style>
     :root{
       --bg:#ffffff;
-      --card: rgba(255,255,255,0.84);
-      --stroke:#e9e4dd;
       --ink:#2b2a28;
       --muted:#6a665f;
       --soft:#f3efe9;
-      --shadow:0 10px 30px rgba(30,20,10,.06);
-      --r:18px;
+      --stroke:#e9e4dd;
 
-      /* Board background controls */
+      --card: rgba(255,255,255,0.92);
+      --panel-bg: rgba(255,255,255,0.94);
+      --field-bg: rgba(255,255,255,1);
+      --accent: #efe7e1;
+
+      --r:18px;
+      --shadow: 0 10px 30px rgba(30,20,10,.06);
+
       --board-tint:#efe7e1;
-      --board-tint-a:0.12;
       --board-image:none;
+      --board-img-opacity:1;
+      --board-image-blur:0px;
+
+      --theme-dot: var(--ink);
     }
+
     *{ box-sizing:border-box; }
+
+    html, body{
+      width:100%;
+      min-height:100%;
+    }
+
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
       color:var(--ink);
       background:var(--bg);
       padding:28px 18px;
+      -webkit-text-size-adjust:100%;
+      text-size-adjust:100%;
     }
+
     .wrap{ max-width:980px; margin:0 auto; }
     h1{ margin:0; font-size:18px; }
-    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
 
-    /* Board */
     .widgetBoard{
       position:relative;
       border-radius: var(--r);
-      overflow:hidden;
+      overflow:visible;
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
+      isolation:isolate;
     }
+
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -48,28 +65,45 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      transform: scale(1.01);
       z-index:0;
       pointer-events:none;
-      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+      border-radius: var(--r);
+      opacity: var(--board-img-opacity);
+      filter: blur(var(--board-image-blur));
+      transform: translateZ(0);
     }
+
+    .widgetBoard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.18), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.12), transparent 62%);
+      pointer-events:none;
+      z-index:1;
+      border-radius: var(--r);
+    }
+
     .boardTint{
       position:absolute;
       inset:0;
       pointer-events:none;
-      z-index:1;
+      z-index:2;
       background: rgba(0,0,0,0);
+      border-radius: var(--r);
     }
-    .boardContent{ position:relative; z-index:2; }
+
+    .boardContent{ position:relative; z-index:3; }
 
     .card{
       background:var(--card);
       border:0;
-      border-radius:0;
+      border-radius: var(--r);
       box-shadow:none;
       padding:14px;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter:none;
+      -webkit-backdrop-filter:none;
     }
 
     .title{
@@ -79,35 +113,60 @@
       gap:10px;
       margin-bottom:10px;
     }
-    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
-    .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
+
+    .title h2{
+      margin:0;
+      font-size:14px;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+
     .row{
       display:flex;
       gap:10px;
       align-items:center;
       flex-wrap:wrap;
     }
+
     button, input, select, textarea{
       font:inherit;
       border:1px solid var(--stroke);
-      background:#fff;
+      background:var(--field-bg);
       color:var(--ink);
       border-radius:12px;
       padding:10px 12px;
       outline:none;
       -webkit-tap-highlight-color: transparent;
+      appearance:none;
+      -webkit-appearance:none;
     }
-    textarea{ width:100%; min-height:90px; resize:vertical; }
-    button{ cursor:pointer; user-select:none; }
-    button.soft{ background:var(--soft); }
-    button.primary{ background: rgba(239,231,225,0.9); }
+
+    textarea{
+      width:100%;
+      min-height:90px;
+      resize:vertical;
+    }
+
+    button{
+      cursor:pointer;
+      user-select:none;
+      touch-action:manipulation;
+    }
+
     button:active{ transform:translateY(1px); }
     .divider{ height:1px; background:var(--stroke); margin:12px 0; }
 
+    button.soft{ background: color-mix(in srgb, var(--soft) 92%, white 8%); }
+    button.primary{
+      background: color-mix(in srgb, var(--accent) 82%, white 18%);
+      border-color: color-mix(in srgb, var(--stroke) 82%, var(--accent) 18%);
+    }
+
     .kpi{ display:flex; gap:12px; flex-wrap:wrap; }
     .kpi .box{
-      flex:1; min-width:200px;
-      background:var(--soft);
+      flex:1;
+      min-width:200px;
+      background: color-mix(in srgb, var(--soft) 92%, white 8%);
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:10px;
@@ -116,17 +175,21 @@
     .kpi .lab{ font-size:12px; color:var(--muted); }
 
     .pill{
-      display:inline-flex; align-items:center; gap:8px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
       border:1px solid var(--stroke);
-      background:#fff;
+      background:var(--field-bg);
       border-radius:999px;
       padding:8px 12px;
       font-size:13px;
       white-space:nowrap;
     }
+
     .tiny{ font-size:12px; color:var(--muted); }
 
     .list{ display:flex; flex-direction:column; gap:8px; }
+
     .item{
       display:grid;
       grid-template-columns: 1fr auto;
@@ -135,27 +198,54 @@
       padding:10px 12px;
       border-radius:14px;
       border:1px solid var(--stroke);
-      background:#fff;
+      background:var(--field-bg);
     }
+
     .meta{ display:flex; flex-direction:column; gap:2px; min-width:0; }
-    .meta b{ font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .meta span{ font-size:12px; color:var(--muted); }
-    .right{ display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+    .meta b{
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .meta span{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+      word-break:break-word;
+      white-space:normal;
+    }
+
+    .right{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
     .tag{
       font-size:11px;
       padding:6px 10px;
       border-radius:999px;
       border:1px solid var(--stroke);
-      background:var(--soft);
+      background: color-mix(in srgb, var(--accent) 55%, white 45%);
       user-select:none;
       white-space:nowrap;
     }
+
     .smallbtn{ padding:8px 10px; border-radius:12px; }
     .danger{ border-color:#efc2c2; }
 
-    /* Background settings */
-    .bgWrap{ position:relative; margin-left:auto; display:flex; gap:8px; align-items:center; }
-    .bgBtn{
+    .bgWrap{
+      position:relative;
+      margin-left:auto;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .bgBtn, .themeBtn{
       width:34px; height:34px;
       border-radius:999px;
       border:1px solid var(--stroke);
@@ -165,29 +255,40 @@
       place-items:center;
       box-shadow: 0 3px 12px rgba(30,20,10,.08);
     }
-    .bgDot{
+
+    .bgDot, .themeDot{
       width:14px; height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
     }
+
+    .themeDot{
+      background: var(--theme-dot);
+      box-shadow: 0 0 0 6px rgba(233,228,221,0.35);
+    }
+
     .bgPanel{
       position:absolute;
       top: 44px;
       right: 0;
-      width: 270px;
+      width: 320px;
       border-radius: 16px;
       border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.88);
+      background: var(--panel-bg);
       box-shadow: 0 18px 40px rgba(30,20,10,.12);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       padding: 12px;
       display:none;
       z-index: 50;
+      max-height: calc(100vh - 140px);
+      overflow:auto;
     }
+
     .bgPanel.open{ display:block; }
+
     .bgTitle{
       margin:0 0 10px 0;
       font-size:12px;
@@ -196,14 +297,20 @@
       text-transform:uppercase;
       color: rgba(43,42,40,0.72);
     }
+
     .bgRow{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding: 7px 0;
+      padding:7px 0;
     }
-    .bgRow label{ font-size:12px; color:var(--muted); }
+
+    .bgRow label{
+      font-size:12px;
+      color:var(--muted);
+    }
+
     .bgRow input[type="color"]{
       width:36px; height:28px;
       border-radius:10px;
@@ -212,8 +319,10 @@
       background: transparent;
       cursor:pointer;
     }
-    .bgRow input[type="range"]{ width: 150px; }
+
+    .bgRow input[type="range"]{ width:160px; }
     .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+
     .bgMiniBtn{
       width:100%;
       border-radius:12px;
@@ -227,26 +336,39 @@
       color: rgba(43,42,40,0.82);
       box-shadow: 0 2px 8px rgba(30,20,10,.06);
     }
-    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
 
-    /* Theme settings (same UI pattern) */
-    .themePanel{ right: 42px; } /* sit beside bg panel; tweak if you want */
-    .themeSwatch{
-      width:14px; height:14px;
-      border-radius:999px;
-      border:1px solid rgba(233,228,221,0.95);
-      background: var(--ink);
-      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+    .bgDiv{
+      height:1px;
+      background: var(--stroke);
+      margin: 8px 0;
     }
 
-    /* Internal reset confirm */
+    .presetName{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.97);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+    }
+
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height:1.35;
+    }
+
+    .themePanel{ right:42px; }
+
     .confirm{
       margin-top:10px;
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:12px;
-      background:#fff;
+      background:var(--field-bg);
     }
+
     .confirmTop{
       display:flex;
       align-items:flex-start;
@@ -254,6 +376,7 @@
       gap:10px;
       margin-bottom:8px;
     }
+
     .confirmTitle{
       margin:0;
       font-weight:750;
@@ -261,9 +384,44 @@
       line-height:1.25;
     }
 
+    .savingBadge{
+      font-size:11px;
+      color:var(--muted);
+      margin-left:6px;
+      white-space:nowrap;
+    }
+
     @media (max-width: 720px){
+      body{ padding:16px 12px; }
       .kpi .box{ min-width:160px; }
-      .themePanel{ right: 0; } /* stack on small screens */
+      .themePanel{ right:0; }
+      .bgPanel{
+        width:min(92vw, 340px);
+        max-height: min(70vh, calc(100vh - 100px));
+      }
+      .item{
+        grid-template-columns: 1fr;
+        align-items:flex-start;
+      }
+      .right{
+        justify-content:flex-start;
+      }
+      .row > input[style*="min-width:220px"]{
+        min-width:0 !important;
+        width:100%;
+      }
+      .pill{
+        width:100%;
+        justify-content:space-between;
+      }
+      .pill select{
+        flex:1;
+        min-width:0;
+      }
+      .row button.primary,
+      .row button.soft{
+        width:100%;
+      }
     }
   </style>
 </head>
@@ -274,18 +432,17 @@
 
     <div class="widgetBoard" id="widgetBoard" aria-label="Lifestyle goals board">
       <div class="boardTint" id="boardTint"></div>
+
       <div class="boardContent">
         <section class="card">
-
           <div class="title">
             <div>
               <h2 style="margin:0;">Goals</h2>
             </div>
 
             <div class="bgWrap" id="bgWrap">
-              <!-- Theme button -->
-              <button class="bgBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
-                <span class="themeSwatch" id="themeSwatch" aria-hidden="true"></span>
+              <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                <span class="themeDot" id="themeDot" aria-hidden="true"></span>
               </button>
 
               <div class="bgPanel themePanel" id="themePanel" role="dialog" aria-label="Theme settings">
@@ -297,8 +454,23 @@
                 </div>
 
                 <div class="bgRow">
-                  <label for="tCard">Card tint</label>
+                  <label for="tCard">Card color</label>
                   <input id="tCard" type="color" value="#ffffff" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tCardA">Card opacity</label>
+                  <input id="tCardA" type="range" min="60" max="98" value="92" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tPanelA">Panel opacity</label>
+                  <input id="tPanelA" type="range" min="65" max="98" value="94" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tField">Field bg</label>
+                  <input id="tField" type="color" value="#ffffff" />
                 </div>
 
                 <div class="bgRow">
@@ -321,14 +493,36 @@
                   <input id="tSoft" type="color" value="#f3efe9" />
                 </div>
 
+                <div class="bgRow">
+                  <label for="tAccent">Accent</label>
+                  <input id="tAccent" type="color" value="#efe7e1" />
+                </div>
+
                 <div class="bgDiv"></div>
 
-                <div class="bgRow">
-                  <button id="themeReset" class="bgMiniBtn" type="button">Reset theme</button>
+                <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
+                <button id="themeReset" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgTitle" style="margin-top:0;">Presets</div>
+
+                <div class="bgRow" style="flex-direction:column; align-items:stretch; gap:10px;">
+                  <input id="presetName" class="presetName" placeholder="Preset name" />
+                  <button id="presetSave" class="bgMiniBtn" type="button">Save current as preset</button>
                 </div>
+
+                <div class="bgRow">
+                  <label for="presetSelect">Choose</label>
+                  <select id="presetSelect" style="width:160px;"></select>
+                </div>
+
+                <button id="presetApply" class="bgMiniBtn" type="button">Apply preset</button>
+                <button id="presetDelete" class="bgMiniBtn" type="button" style="margin-top:8px;">Delete preset</button>
+
+                <div class="status" id="presetStatus" aria-live="polite"></div>
               </div>
 
-              <!-- Background button -->
               <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
                 <span class="bgDot" id="bgDot" aria-hidden="true"></span>
               </button>
@@ -342,7 +536,7 @@
                 </div>
 
                 <div class="bgRow">
-                  <label for="bgStrength">Strength</label>
+                  <label for="bgStrength">Tint strength</label>
                   <input id="bgStrength" type="range" min="0" max="70" value="12" />
                 </div>
 
@@ -356,13 +550,31 @@
                 <div class="bgRow">
                   <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
                 </div>
+
+                <div class="bgDiv"></div>
+
+                <div id="bgImgControlsWrap" style="display:none;">
+                  <div class="bgRow">
+                    <label for="bgImgOpacity">Image opacity</label>
+                    <input id="bgImgOpacity" type="range" min="0" max="100" value="100" />
+                  </div>
+
+                  <div class="bgRow">
+                    <label for="bgImgBlur">Image blur</label>
+                    <input id="bgImgBlur" type="range" min="0" max="20" value="0" />
+                  </div>
+
+                  <div class="bgDiv"></div>
+                </div>
+
+                <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
+                <button id="bgReset" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset background</button>
               </div>
             </div>
           </div>
 
           <div class="divider"></div>
 
-          <!-- Add goal -->
           <div class="row" aria-label="Add goal">
             <input id="goalTitle" style="flex:1; min-width:220px;" placeholder="Goal title (e.g., Walk 3x/week)…" />
             <span class="pill">
@@ -394,8 +606,11 @@
 
           <div class="divider"></div>
 
-          <!-- Internal reset confirmation -->
           <div class="row" style="justify-content:space-between; align-items:center;">
+            <div class="tiny">
+              Saved locally on this device/browser
+              <span class="savingBadge" id="savingBadge">Saved</span>
+            </div>
             <button id="resetAll" class="danger" type="button">Reset</button>
           </div>
 
@@ -412,7 +627,6 @@
 
           <div class="divider"></div>
 
-          <!-- KPIs -->
           <div class="kpi" aria-label="Summary">
             <div class="box">
               <div class="num" id="kTotal">—</div>
@@ -430,7 +644,6 @@
 
           <div class="divider"></div>
 
-          <!-- Filter -->
           <div class="row" style="justify-content:space-between; align-items:flex-end;">
             <div class="tiny">Goals</div>
             <span class="pill">
@@ -454,329 +667,530 @@
 
 <script>
 (function(){
-  const THEME_KEY = "lifestyle_goals_theme_v1";
+  "use strict";
 
-  function clamp01(n){ n = Number(n); return isFinite(n) ? Math.max(0, Math.min(1, n)) : 0; }
+  const $ = (id) => document.getElementById(id);
 
-  function hexToRgb(hex){
-    const h = String(hex || "").replace("#","").trim();
-    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-    const num = parseInt(full || "000000", 16);
-    return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
   }
 
-  function rgbToHex({r,g,b}){
-    const to = (n)=>String(n.toString(16)).padStart(2,"0");
-    return `#${to(r)}${to(g)}${to(b)}`;
+  function clamp(n, min, max){
+    const x = Number(n);
+    if(!Number.isFinite(x)) return min;
+    return Math.max(min, Math.min(max, x));
   }
 
-  function applyCardAlpha(hex, alpha){
-    const {r,g,b} = hexToRgb(hex);
-    return `rgba(${r},${g},${b},${alpha})`;
+  function normHex(hex, fallback){
+    const s = String(hex || "").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
   }
 
-  function defaultTheme(){
-    return {
-      bg:"#ffffff",
-      card:"#ffffff",
-      stroke:"#e9e4dd",
-      ink:"#2b2a28",
-      muted:"#6a665f",
-      soft:"#f3efe9"
-    };
+  function hexToRgbTuple(hex){
+    const h = normHex(hex, "#ffffff").slice(1);
+    const r = parseInt(h.slice(0,2), 16);
+    const g = parseInt(h.slice(2,4), 16);
+    const b = parseInt(h.slice(4,6), 16);
+    return [r,g,b];
   }
-
-  function loadTheme(){
-    try{
-      const raw = localStorage.getItem(THEME_KEY);
-      if(!raw) return null;
-      return JSON.parse(raw) || null;
-    }catch{ return null; }
-  }
-
-  function saveTheme(t){
-    try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-  }
-
-  function applyTheme(t){
-    const base = defaultTheme();
-    const theme = Object.assign(base, t || {});
-    document.documentElement.style.setProperty("--bg", theme.bg);
-    document.documentElement.style.setProperty("--stroke", theme.stroke);
-    document.documentElement.style.setProperty("--ink", theme.ink);
-    document.documentElement.style.setProperty("--muted", theme.muted);
-    document.documentElement.style.setProperty("--soft", theme.soft);
-
-    const currentCardCss = getComputedStyle(document.documentElement).getPropertyValue("--card").trim();
-    let alpha = 0.84;
-    const m = currentCardCss.match(/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*([0-9.]+)\s*\)/i);
-    if(m) alpha = clamp01(m[1]);
-    document.documentElement.style.setProperty("--card", applyCardAlpha(theme.card, alpha));
-
-    const sw = document.getElementById("themeSwatch");
-    if(sw) sw.style.background = theme.ink;
-  }
-
-  function initThemeUI(){
-    const themeBtn = document.getElementById("themeBtn");
-    const themePanel = document.getElementById("themePanel");
-    const tBg = document.getElementById("tBg");
-    const tCard = document.getElementById("tCard");
-    const tStroke = document.getElementById("tStroke");
-    const tInk = document.getElementById("tInk");
-    const tMuted = document.getElementById("tMuted");
-    const tSoft = document.getElementById("tSoft");
-    const themeReset = document.getElementById("themeReset");
-    if(!themeBtn || !themePanel || !tBg || !tCard || !tStroke || !tInk || !tMuted || !tSoft || !themeReset) return;
-
-    const loaded = loadTheme() || defaultTheme();
-
-    tBg.value = loaded.bg;
-    tCard.value = loaded.card;
-    tStroke.value = loaded.stroke;
-    tInk.value = loaded.ink;
-    tMuted.value = loaded.muted;
-    tSoft.value = loaded.soft;
-
-    applyTheme(loaded);
-
-    function closeOtherPanels(){
-      const bgPanel = document.getElementById("bgPanel");
-      if(bgPanel) bgPanel.classList.remove("open");
-    }
-
-    themeBtn.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      closeOtherPanels();
-      themePanel.classList.toggle("open");
-    });
-
-    function onDocClick(e){
-      if(!themePanel.classList.contains("open")) return;
-      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-      if(!inside) themePanel.classList.remove("open");
-    }
-    document.addEventListener("click", onDocClick);
-
-    function update(){
-      const t = {
-        bg: tBg.value,
-        card: tCard.value,
-        stroke: tStroke.value,
-        ink: tInk.value,
-        muted: tMuted.value,
-        soft: tSoft.value
-      };
-      applyTheme(t);
-      saveTheme(t);
-    }
-
-    [tBg,tCard,tStroke,tInk,tMuted,tSoft].forEach(inp=>{
-      inp.addEventListener("input", update);
-    });
-
-    themeReset.addEventListener("click", ()=>{
-      localStorage.removeItem(THEME_KEY);
-      const def = defaultTheme();
-      tBg.value = def.bg;
-      tCard.value = def.card;
-      tStroke.value = def.stroke;
-      tInk.value = def.ink;
-      tMuted.value = def.muted;
-      tSoft.value = def.soft;
-      applyTheme(def);
-      saveTheme(def);
-    });
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", initThemeUI);
-  }else{
-    initThemeUI();
-  }
-})();
-
-
-/* --------------------------
-   Background settings module
---------------------------- */
-(function(){
-  const BG_KEY = "lifestyle_goals_bg_v1";
 
   function hexToRgba(hex, a){
-    const h = String(hex || "").replace("#","").trim();
-    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-    const num = parseInt(full || "efe7e1", 16);
-    const r = (num >> 16) & 255;
-    const g = (num >> 8) & 255;
-    const b = num & 255;
+    const [r,g,b] = hexToRgbTuple(hex);
     return `rgba(${r},${g},${b},${a})`;
   }
-  function loadBg(){
+
+  function safeJsonParse(raw, fallback){
     try{
-      const raw = localStorage.getItem(BG_KEY);
-      if(raw) return JSON.parse(raw) || null;
-    }catch{}
-    return null;
-  }
-  function saveBg(bg){
-    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-  }
-  function fileToDataUrl(file){
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
-
-  function init(){
-    const boardTintEl = document.getElementById("boardTint");
-    const bgBtn = document.getElementById("bgBtn");
-    const bgPanel = document.getElementById("bgPanel");
-    const bgColor = document.getElementById("bgColor");
-    const bgStrength = document.getElementById("bgStrength");
-    const bgImage = document.getElementById("bgImage");
-    const bgRemove = document.getElementById("bgRemove");
-    const bgDot = document.getElementById("bgDot");
-
-    if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
-
-    const bgState = loadBg() || { tint:"#efe7e1", strength:12, imageDataUrl:null };
-
-    function applyBg(){
-      const tint = bgState.tint || "#efe7e1";
-      const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
-
-      document.documentElement.style.setProperty("--board-tint", tint);
-      document.documentElement.style.setProperty("--board-tint-a", String(strength));
-      document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
-
-      boardTintEl.style.background = hexToRgba(tint, strength);
-
-      if(bgDot){
-        bgDot.style.background = tint;
-        bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
-      }
+      return raw ? JSON.parse(raw) : fallback;
+    }catch{
+      return fallback;
     }
-
-    bgColor.value = bgState.tint;
-    bgStrength.value = String(bgState.strength);
-    applyBg();
-
-    bgBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const themePanel = document.getElementById("themePanel");
-      if(themePanel) themePanel.classList.remove("open");
-      bgPanel.classList.toggle("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      const openTheme = document.getElementById("themePanel")?.classList.contains("open");
-      if(!bgPanel.classList.contains("open") && !openTheme) return;
-
-      const insideBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      const insideTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-
-      if(bgPanel.classList.contains("open") && !insideBg) bgPanel.classList.remove("open");
-      if(document.getElementById("themePanel")?.classList.contains("open") && !insideTheme){
-        document.getElementById("themePanel").classList.remove("open");
-      }
-    });
-
-    bgColor.addEventListener("input", () => {
-      bgState.tint = bgColor.value;
-      applyBg();
-      saveBg(bgState);
-    });
-
-    bgStrength.addEventListener("input", () => {
-      bgState.strength = Number(bgStrength.value);
-      applyBg();
-      saveBg(bgState);
-    });
-
-    bgImage.addEventListener("change", async () => {
-      const file = bgImage.files && bgImage.files[0];
-      if(!file) return;
-      const dataUrl = await fileToDataUrl(file);
-      bgState.imageDataUrl = dataUrl;
-      applyBg();
-      saveBg(bgState);
-    });
-
-    bgRemove.addEventListener("click", () => {
-      bgState.imageDataUrl = null;
-      bgImage.value = "";
-      applyBg();
-      saveBg(bgState);
-    });
   }
 
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init);
-  }else{
-    init();
-  }
-})();
-
-
-/* --------------------------
-   Lifestyle goals module
---------------------------- */
-(function(){
-  const KEY = "lifestyle_goals_v1";
-  const $ = (id)=>document.getElementById(id);
-
-  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
-
-  function defaultState(){
-    return {
-      goals: [], // {id,title,category,cadence,nextStep,done,createdAt}
-      ui: { view:"all" }
+  function debounce(fn, wait){
+    let t = null;
+    return function(...args){
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), wait);
     };
   }
 
-  function load(){
-    try{
-      const raw = localStorage.getItem(KEY);
-      if(!raw) return defaultState();
-      const parsed = JSON.parse(raw) || {};
-      const base = defaultState();
-      base.goals = Array.isArray(parsed.goals) ? parsed.goals : [];
-      base.ui.view = parsed?.ui?.view || "all";
-      return base;
-    }catch{
-      return defaultState();
+  const savingBadge = $("savingBadge");
+  let savingTimer = null;
+  function showSaving(text){
+    if(!savingBadge) return;
+    savingBadge.textContent = text || "Saving...";
+    clearTimeout(savingTimer);
+    if(text !== "Saved"){
+      savingTimer = setTimeout(() => {
+        if(savingBadge) savingBadge.textContent = "Saved";
+      }, 700);
     }
   }
 
-  let state = load();
+  function getStableWidgetId(){
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = (sp.get("wid") || "").trim();
+      if(wid) return wid;
+    }catch{}
 
-  function save(){
-    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch{}
+    const path = String(location.pathname || "lifestyle-goals")
+      .replace(/\/+/g, "_")
+      .replace(/[^\w.-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .toLowerCase();
+
+    return path || "lifestyle-goals";
+  }
+
+  const WIDGET_ID = getStableWidgetId();
+
+  const LS = {
+    available: (function(){
+      try{
+        const k = "__test__" + Math.random().toString(16).slice(2);
+        localStorage.setItem(k, "1");
+        localStorage.removeItem(k);
+        return true;
+      }catch{
+        return false;
+      }
+    })(),
+    get(key){
+      try{
+        return this.available ? localStorage.getItem(key) : null;
+      }catch{
+        return null;
+      }
+    },
+    set(key, value){
+      try{
+        if(this.available) localStorage.setItem(key, value);
+        return true;
+      }catch{
+        return false;
+      }
+    },
+    remove(key){
+      try{
+        if(this.available) localStorage.removeItem(key);
+      }catch{}
+    }
+  };
+
+  const DB_NAME = "notion_widget_store_v4";
+  const DB_STORE = "kv";
+
+  function idbOpen(){
+    return new Promise((resolve, reject) => {
+      if(!("indexedDB" in window)){
+        resolve(null);
+        return;
+      }
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(DB_STORE)){
+          db.createObjectStore(DB_STORE);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error("IndexedDB open failed"));
+    });
+  }
+
+  async function idbGet(key){
+    try{
+      const db = await idbOpen();
+      if(!db) return null;
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(DB_STORE, "readonly");
+        const store = tx.objectStore(DB_STORE);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result ?? null);
+        req.onerror = () => reject(req.error || new Error("IndexedDB get failed"));
+      });
+    }catch{
+      return null;
+    }
+  }
+
+  async function idbSet(key, value){
+    try{
+      const db = await idbOpen();
+      if(!db) return false;
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(DB_STORE, "readwrite");
+        const store = tx.objectStore(DB_STORE);
+        const req = store.put(value, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error || new Error("IndexedDB put failed"));
+      });
+    }catch{
+      return false;
+    }
+  }
+
+  async function idbRemove(key){
+    try{
+      const db = await idbOpen();
+      if(!db) return false;
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(DB_STORE, "readwrite");
+        const store = tx.objectStore(DB_STORE);
+        const req = store.delete(key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error || new Error("IndexedDB delete failed"));
+      });
+    }catch{
+      return false;
+    }
+  }
+
+  const THEME_KEY = `lifestyle_goals_theme_v4__${WIDGET_ID}`;
+  const BG_KEY = `lifestyle_goals_bg_v4__${WIDGET_ID}`;
+  const BG_IMAGE_KEY = `lifestyle_goals_bg_image_v4__${WIDGET_ID}`;
+  const STATE_KEY = `lifestyle_goals_state_v4__${WIDGET_ID}`;
+  const PRESETS_KEY = `lifestyle_goals_presets_v4`;
+
+  const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("lifestyle_goals_widget_sync_v4") : null;
+  function broadcast(type){
+    try{
+      if(bc) bc.postMessage({ type, widgetId: WIDGET_ID, ts: Date.now() });
+    }catch{}
+  }
+
+  function setStatus(msg){
+    const el = $("presetStatus");
+    if(el) el.textContent = msg || "";
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error || new Error("File read failed"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function closePanels(){
+    $("bgPanel")?.classList.remove("open");
+    $("themePanel")?.classList.remove("open");
+  }
+
+  function initPanels(){
+    const themeBtn = $("themeBtn");
+    const themePanel = $("themePanel");
+    const bgBtn = $("bgBtn");
+    const bgPanel = $("bgPanel");
+
+    if(themeBtn && themePanel && bgBtn && bgPanel){
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.remove("open");
+        themePanel.classList.toggle("open");
+      });
+
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        themePanel.classList.remove("open");
+        bgPanel.classList.toggle("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        const target = e.target;
+        const insideTheme = target.closest("#themePanel") || target.closest("#themeBtn");
+        const insideBg = target.closest("#bgPanel") || target.closest("#bgBtn");
+        if(themePanel.classList.contains("open") && !insideTheme) themePanel.classList.remove("open");
+        if(bgPanel.classList.contains("open") && !insideBg) bgPanel.classList.remove("open");
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Escape") closePanels();
+      });
+    }
+  }
+
+  const DEFAULT_THEME = {
+    bg:"#ffffff",
+    card:"#ffffff",
+    cardA:92,
+    panelA:94,
+    field:"#ffffff",
+    stroke:"#e9e4dd",
+    ink:"#2b2a28",
+    muted:"#6a665f",
+    soft:"#f3efe9",
+    accent:"#efe7e1"
+  };
+
+  const DEFAULT_BG = {
+    tint:"#efe7e1",
+    strength:12,
+    imgOpacity:100,
+    imgBlur:0,
+    imageDataUrl:null
+  };
+
+  const DEFAULT_STATE = {
+    goals: [],
+    ui: {
+      view: "all",
+      editingId: null,
+      draft: {
+        title: "",
+        category: "health",
+        cadence: "weekly",
+        nextStep: ""
+      }
+    }
+  };
+
+  function loadTheme(){
+    const raw = safeJsonParse(LS.get(THEME_KEY), null);
+    return Object.assign({}, DEFAULT_THEME, raw || {});
+  }
+
+  function saveTheme(theme){
+    LS.set(THEME_KEY, JSON.stringify(theme));
+    broadcast("theme");
+  }
+
+  async function loadBg(){
+    const meta = Object.assign({}, DEFAULT_BG, safeJsonParse(LS.get(BG_KEY), null) || {});
+    const imageDataUrl = await idbGet(BG_IMAGE_KEY);
+    meta.imageDataUrl = typeof imageDataUrl === "string" && imageDataUrl ? imageDataUrl : null;
+    return meta;
+  }
+
+  async function saveBg(bg){
+    const clean = Object.assign({}, DEFAULT_BG, bg || {});
+    const imageDataUrl = clean.imageDataUrl || null;
+    const meta = Object.assign({}, clean, { imageDataUrl: null });
+
+    LS.set(BG_KEY, JSON.stringify(meta));
+
+    if(imageDataUrl){
+      const ok = await idbSet(BG_IMAGE_KEY, imageDataUrl);
+      if(!ok){
+        setStatus("Image is too large for this browser storage. Try a smaller image.");
+      }
+    }else{
+      await idbRemove(BG_IMAGE_KEY);
+    }
+
+    broadcast("bg");
+  }
+
+  function loadState(){
+    const parsed = safeJsonParse(LS.get(STATE_KEY), null);
+    if(!parsed || typeof parsed !== "object"){
+      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    }
+
+    const state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    state.goals = Array.isArray(parsed.goals) ? parsed.goals : [];
+    state.ui.view = parsed?.ui?.view || "all";
+    state.ui.editingId = parsed?.ui?.editingId || null;
+    state.ui.draft.title = parsed?.ui?.draft?.title || "";
+    state.ui.draft.category = parsed?.ui?.draft?.category || "health";
+    state.ui.draft.cadence = parsed?.ui?.draft?.cadence || "weekly";
+    state.ui.draft.nextStep = parsed?.ui?.draft?.nextStep || "";
+    return state;
+  }
+
+  function saveState(state){
+    LS.set(STATE_KEY, JSON.stringify(state));
+    broadcast("state");
+    showSaving("Saved");
+  }
+
+  async function loadPresets(){
+    const list = await idbGet(PRESETS_KEY);
+    return Array.isArray(list) ? list.map(normalizePreset).filter(Boolean) : [];
+  }
+
+  async function savePresets(list){
+    await idbSet(PRESETS_KEY, list.map(normalizePreset).filter(Boolean));
+    broadcast("presets");
+  }
+
+  function normalizePreset(p){
+    if(!p || typeof p !== "object") return null;
+    return {
+      id: String(p.id || uid()),
+      name: String(p.name || "Untitled"),
+      theme: Object.assign({}, DEFAULT_THEME, p.theme || {}),
+      bg: Object.assign({}, DEFAULT_BG, p.bg || {})
+    };
+  }
+
+  function bgControlsVisibility(bgDraft){
+    const wrap = $("bgImgControlsWrap");
+    if(wrap) wrap.style.display = bgDraft.imageDataUrl ? "block" : "none";
+  }
+
+  function themeApplyToCSS(t){
+    const x = Object.assign({}, DEFAULT_THEME, t || {});
+
+    const bg = normHex(x.bg, DEFAULT_THEME.bg);
+    const card = normHex(x.card, DEFAULT_THEME.card);
+    const field = normHex(x.field, DEFAULT_THEME.field);
+    const stroke = normHex(x.stroke, DEFAULT_THEME.stroke);
+    const ink = normHex(x.ink, DEFAULT_THEME.ink);
+    const muted = normHex(x.muted, DEFAULT_THEME.muted);
+    const soft = normHex(x.soft, DEFAULT_THEME.soft);
+    const accent = normHex(x.accent, DEFAULT_THEME.accent);
+
+    const cardA = clamp(x.cardA, 60, 98) / 100;
+    const panelA = clamp(x.panelA, 65, 98) / 100;
+
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.setProperty("--ink", ink);
+    document.documentElement.style.setProperty("--muted", muted);
+    document.documentElement.style.setProperty("--soft", soft);
+    document.documentElement.style.setProperty("--accent", accent);
+
+    document.documentElement.style.setProperty("--stroke", stroke);
+    document.documentElement.style.setProperty("--card", hexToRgba(card, cardA));
+    document.documentElement.style.setProperty("--panel-bg", hexToRgba(card, panelA));
+    document.documentElement.style.setProperty("--field-bg", field);
+
+    document.documentElement.style.setProperty("--theme-dot", ink);
+
+    const dot = $("themeDot");
+    if(dot){
+      dot.style.background = ink;
+      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(stroke, 0.35)}`;
+      dot.style.borderColor = hexToRgba(stroke, 0.95);
+    }
+  }
+
+  function bgApplyToCSS(bg){
+    const x = Object.assign({}, DEFAULT_BG, bg || {});
+    const tint = normHex(x.tint, DEFAULT_BG.tint);
+    const strength = clamp(x.strength, 0, 70) / 100;
+    const imgOpacity = clamp(x.imgOpacity, 0, 100) / 100;
+    const imgBlur = clamp(x.imgBlur, 0, 20);
+
+    document.documentElement.style.setProperty("--board-tint", tint);
+    document.documentElement.style.setProperty("--board-image", x.imageDataUrl ? `url("${x.imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-img-opacity", String(imgOpacity));
+    document.documentElement.style.setProperty("--board-image-blur", `${imgBlur}px`);
+
+    const boardTintEl = $("boardTint");
+    if(boardTintEl){
+      boardTintEl.style.background = hexToRgba(tint, strength);
+    }
+
+    const bgDot = $("bgDot");
+    if(bgDot){
+      bgDot.style.background = tint;
+      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+      bgDot.style.borderColor = hexToRgba(tint, 0.95);
+    }
+
+    bgControlsVisibility(x);
+  }
+
+  function themeSyncInputs(theme){
+    const x = Object.assign({}, DEFAULT_THEME, theme || {});
+    $("tBg").value = normHex(x.bg, DEFAULT_THEME.bg);
+    $("tCard").value = normHex(x.card, DEFAULT_THEME.card);
+    $("tCardA").value = String(clamp(x.cardA, 60, 98));
+    $("tPanelA").value = String(clamp(x.panelA, 65, 98));
+    $("tField").value = normHex(x.field, DEFAULT_THEME.field);
+    $("tStroke").value = normHex(x.stroke, DEFAULT_THEME.stroke);
+    $("tInk").value = normHex(x.ink, DEFAULT_THEME.ink);
+    $("tMuted").value = normHex(x.muted, DEFAULT_THEME.muted);
+    $("tSoft").value = normHex(x.soft, DEFAULT_THEME.soft);
+    $("tAccent").value = normHex(x.accent, DEFAULT_THEME.accent);
+  }
+
+  function themeReadFromInputs(){
+    return {
+      bg: $("tBg").value,
+      card: $("tCard").value,
+      cardA: Number($("tCardA").value),
+      panelA: Number($("tPanelA").value),
+      field: $("tField").value,
+      stroke: $("tStroke").value,
+      ink: $("tInk").value,
+      muted: $("tMuted").value,
+      soft: $("tSoft").value,
+      accent: $("tAccent").value
+    };
+  }
+
+  function bgSyncInputs(bg){
+    const x = Object.assign({}, DEFAULT_BG, bg || {});
+    $("bgColor").value = normHex(x.tint, DEFAULT_BG.tint);
+    $("bgStrength").value = String(clamp(x.strength, 0, 70));
+    $("bgImgOpacity").value = String(clamp(x.imgOpacity, 0, 100));
+    $("bgImgBlur").value = String(clamp(x.imgBlur, 0, 20));
+    bgControlsVisibility(x);
   }
 
   function catLabel(c){
-    const map = { health:"Health", home:"Home", relationships:"Relationships", learning:"Learning", fun:"Fun", other:"Other" };
+    const map = {
+      health:"Health",
+      home:"Home",
+      relationships:"Relationships",
+      learning:"Learning",
+      fun:"Fun",
+      other:"Other"
+    };
     return map[c] || "Other";
   }
+
   function cadenceLabel(c){
-    const map = { daily:"Daily", weekly:"Weekly", monthly:"Monthly", "one-off":"One-off" };
+    const map = {
+      daily:"Daily",
+      weekly:"Weekly",
+      monthly:"Monthly",
+      "one-off":"One-off"
+    };
     return map[c] || "Weekly";
   }
 
-  function filtered(){
+  let themeDraft = loadTheme();
+  let bgDraft = DEFAULT_BG;
+  let state = loadState();
+
+  function syncDraftInputsFromState(){
+    $("goalTitle").value = state.ui.draft.title || "";
+    $("goalCategory").value = state.ui.draft.category || "health";
+    $("goalCadence").value = state.ui.draft.cadence || "weekly";
+    $("goalNext").value = state.ui.draft.nextStep || "";
+    $("addGoal").textContent = state.ui.editingId ? "Save" : "Add";
+  }
+
+  function captureDraftFromInputs(){
+    state.ui.draft.title = $("goalTitle").value || "";
+    state.ui.draft.category = $("goalCategory").value || "health";
+    state.ui.draft.cadence = $("goalCadence").value || "weekly";
+    state.ui.draft.nextStep = $("goalNext").value || "";
+  }
+
+  const saveDraftInputsDebounced = debounce(() => {
+    captureDraftFromInputs();
+    saveState(state);
+  }, 180);
+
+  function filteredGoals(){
     let list = [...state.goals];
     if(state.ui.view === "active") list = list.filter(g => !g.done);
     if(state.ui.view === "done") list = list.filter(g => g.done);
 
     const cadenceOrder = { daily:0, weekly:1, monthly:2, "one-off":3 };
     list.sort((a,b) => {
-      if(a.done !== b.done) return a.done ? 1 : -1;
-      if((cadenceOrder[a.cadence] ?? 9) !== (cadenceOrder[b.cadence] ?? 9)) return (cadenceOrder[a.cadence] ?? 9) - (cadenceOrder[b.cadence] ?? 9);
-      return (b.createdAt||0) - (a.createdAt||0);
+      if(!!a.done !== !!b.done) return a.done ? 1 : -1;
+      const aOrder = cadenceOrder[a.cadence] ?? 9;
+      const bOrder = cadenceOrder[b.cadence] ?? 9;
+      if(aOrder !== bOrder) return aOrder - bOrder;
+      return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
     });
     return list;
   }
@@ -791,9 +1205,37 @@
     $("kDone").textContent = String(done);
   }
 
+  function clearEditor(keepDraftSave){
+    state.ui.editingId = null;
+    state.ui.draft = {
+      title: "",
+      category: "health",
+      cadence: "weekly",
+      nextStep: ""
+    };
+    syncDraftInputsFromState();
+    if(!keepDraftSave) saveState(state);
+  }
+
+  function startEditingGoal(goalId){
+    const g = state.goals.find(x => x.id === goalId);
+    if(!g) return;
+    state.ui.editingId = g.id;
+    state.ui.draft = {
+      title: g.title || "",
+      category: g.category || "health",
+      cadence: g.cadence || "weekly",
+      nextStep: g.nextStep || ""
+    };
+    syncDraftInputsFromState();
+    saveState(state);
+    $("goalTitle").focus();
+    $("goalTitle").setSelectionRange($("goalTitle").value.length, $("goalTitle").value.length);
+  }
+
   function renderList(){
     const root = $("goalList");
-    const list = filtered();
+    const list = filteredGoals();
     root.innerHTML = "";
 
     if(list.length === 0){
@@ -815,7 +1257,7 @@
         b.style.opacity = "0.72";
       }
 
-      const nextTxt = (g.nextStep || "").trim() ? ` next: ${g.nextStep}` : "";
+      const nextTxt = (g.nextStep || "").trim() ? ` · notes: ${g.nextStep}` : "";
       const s = document.createElement("span");
       s.textContent = `${catLabel(g.category)} · ${cadenceLabel(g.cadence)}${nextTxt}`;
 
@@ -835,20 +1277,16 @@
       doneBtn.textContent = g.done ? "Undo" : "Done";
       doneBtn.addEventListener("click", () => {
         g.done = !g.done;
-        save();
+        g.updatedAt = Date.now();
+        saveState(state);
         renderAll();
       });
 
       const editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "smallbtn soft";
-      editBtn.textContent = "Edit";
-      editBtn.addEventListener("click", () => {
-        $("goalTitle").value = g.title || "";
-        $("goalCategory").value = g.category || "health";
-        $("goalCadence").value = g.cadence || "weekly";
-        $("goalNext").value = g.nextStep || "";
-      });
+      editBtn.textContent = state.ui.editingId === g.id ? "Editing" : "Edit";
+      editBtn.addEventListener("click", () => startEditingGoal(g.id));
 
       const delBtn = document.createElement("button");
       delBtn.type = "button";
@@ -857,7 +1295,10 @@
       delBtn.title = "Remove";
       delBtn.addEventListener("click", () => {
         state.goals = state.goals.filter(x => x.id !== g.id);
-        save();
+        if(state.ui.editingId === g.id){
+          clearEditor(true);
+        }
+        saveState(state);
         renderAll();
       });
 
@@ -874,83 +1315,411 @@
 
   function renderAll(){
     $("viewFilter").value = state.ui.view;
+    syncDraftInputsFromState();
     renderKPIs();
     renderList();
-    save();
   }
 
-  function addGoal(){
+  function addOrUpdateGoal(){
     const title = ($("goalTitle").value || "").trim();
     const nextStep = ($("goalNext").value || "").trim();
-    if(!title) return;
-
     const category = $("goalCategory").value || "health";
     const cadence = $("goalCadence").value || "weekly";
 
-    state.goals.unshift({
-      id: uid(),
-      title,
-      category,
-      cadence,
-      nextStep,
-      done:false,
-      createdAt: Date.now()
-    });
+    if(!title) return;
 
-    $("goalTitle").value = "";
-    $("goalNext").value = "";
-    $("goalTitle").focus();
-    renderAll();
-  }
-
-  function init(){
-    const required = ["goalTitle","goalCategory","goalCadence","goalNext","addGoal","clearDone","resetAll","resetConfirm","resetYes","resetNo","kTotal","kActive","kDone","viewFilter","goalList"];
-    for(const id of required){ if(!$(id)) return; }
-
-    const resetConfirm = $("resetConfirm");
-    const resetYes = $("resetYes");
-    const resetNo = $("resetNo");
-
-    function hideReset(){ resetConfirm.style.display = "none"; }
-    function showReset(){
-      resetConfirm.style.display = "block";
-      const bgPanel = document.getElementById("bgPanel");
-      if(bgPanel) bgPanel.classList.remove("open");
-      const themePanel = document.getElementById("themePanel");
-      if(themePanel) themePanel.classList.remove("open");
+    if(state.ui.editingId){
+      const existing = state.goals.find(g => g.id === state.ui.editingId);
+      if(existing){
+        existing.title = title;
+        existing.category = category;
+        existing.cadence = cadence;
+        existing.nextStep = nextStep;
+        existing.updatedAt = Date.now();
+      }
+    }else{
+      state.goals.unshift({
+        id: uid(),
+        title,
+        category,
+        cadence,
+        nextStep,
+        done:false,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
     }
 
-    $("addGoal").addEventListener("click", addGoal);
-    $("goalTitle").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); addGoal(); } });
+    clearEditor(true);
+    saveState(state);
+    renderAll();
+    $("goalTitle").focus();
+  }
 
-    $("viewFilter").addEventListener("change", ()=>{ state.ui.view = $("viewFilter").value; renderAll(); });
+  async function refreshPresetSelect(selectedId){
+    const sel = $("presetSelect");
+    if(!sel) return;
+    const list = await loadPresets();
+    const prev = selectedId || sel.value;
 
-    $("clearDone").addEventListener("click", ()=> {
-      state.goals = state.goals.filter(g => !g.done);
-      save();
+    sel.innerHTML = `<option value="">—</option>`;
+    for(const p of list){
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled";
+      sel.appendChild(opt);
+    }
+
+    if(prev && list.some(x => x.id === prev)){
+      sel.value = prev;
+    }
+  }
+
+  async function applyPresetToThisWidget(preset){
+    const normalized = normalizePreset(preset);
+    if(!normalized) return;
+
+    themeDraft = Object.assign({}, DEFAULT_THEME, normalized.theme || {});
+    bgDraft = Object.assign({}, DEFAULT_BG, normalized.bg || {});
+
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+
+    bgSyncInputs(bgDraft);
+    bgApplyToCSS(bgDraft);
+
+    saveTheme(themeDraft);
+    await saveBg(bgDraft);
+  }
+
+  function bindThemeUI(){
+    const themePreviewIds = ["tBg","tCard","tCardA","tPanelA","tField","tStroke","tInk","tMuted","tSoft","tAccent"];
+    themePreviewIds.forEach(id => {
+      const el = $(id);
+      if(!el) return;
+      const handler = () => {
+        themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+        themeApplyToCSS(themeDraft);
+        setStatus("");
+      };
+      el.addEventListener("input", handler);
+      el.addEventListener("change", handler);
+    });
+
+    $("themeApply").addEventListener("click", () => {
+      themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+      themeApplyToCSS(themeDraft);
+      saveTheme(themeDraft);
+      setStatus("Theme applied.");
+    });
+
+    $("themeReset").addEventListener("click", () => {
+      themeDraft = Object.assign({}, DEFAULT_THEME);
+      themeSyncInputs(themeDraft);
+      themeApplyToCSS(themeDraft);
+      saveTheme(themeDraft);
+      setStatus("Theme reset.");
+    });
+  }
+
+  function bindBgUI(){
+    const previewTint = () => {
+      bgDraft.tint = $("bgColor").value;
+      bgApplyToCSS(bgDraft);
+      setStatus("");
+    };
+
+    const previewStrength = () => {
+      bgDraft.strength = Number($("bgStrength").value);
+      bgApplyToCSS(bgDraft);
+      setStatus("");
+    };
+
+    const previewOpacity = () => {
+      bgDraft.imgOpacity = Number($("bgImgOpacity").value);
+      bgApplyToCSS(bgDraft);
+      setStatus("");
+    };
+
+    const previewBlur = () => {
+      bgDraft.imgBlur = Number($("bgImgBlur").value);
+      bgApplyToCSS(bgDraft);
+      setStatus("");
+    };
+
+    $("bgColor").addEventListener("input", previewTint);
+    $("bgColor").addEventListener("change", previewTint);
+
+    $("bgStrength").addEventListener("input", previewStrength);
+    $("bgStrength").addEventListener("change", previewStrength);
+
+    $("bgImgOpacity").addEventListener("input", previewOpacity);
+    $("bgImgOpacity").addEventListener("change", previewOpacity);
+
+    $("bgImgBlur").addEventListener("input", previewBlur);
+    $("bgImgBlur").addEventListener("change", previewBlur);
+
+    $("bgImage").addEventListener("change", async () => {
+      const input = $("bgImage");
+      const file = input.files && input.files[0];
+      if(!file) return;
+
+      try{
+        const dataUrl = await fileToDataUrl(file);
+        bgDraft.imageDataUrl = dataUrl;
+        bgDraft.imgOpacity = clamp(bgDraft.imgOpacity, 0, 100);
+        bgDraft.imgBlur = clamp(bgDraft.imgBlur, 0, 20);
+        bgApplyToCSS(bgDraft);
+        setStatus("Preview ready. Click “Apply background” to save it.");
+      }catch{
+        setStatus("Could not read that image.");
+      }
+    });
+
+    $("bgRemove").addEventListener("click", () => {
+      bgDraft.imageDataUrl = null;
+      bgDraft.imgOpacity = 100;
+      bgDraft.imgBlur = 0;
+      $("bgImage").value = "";
+      bgApplyToCSS(bgDraft);
+      setStatus("Image removed from preview. Click “Apply background” to save.");
+    });
+
+    $("bgApply").addEventListener("click", async () => {
+      bgDraft.tint = $("bgColor").value;
+      bgDraft.strength = Number($("bgStrength").value);
+      bgDraft.imgOpacity = Number($("bgImgOpacity").value);
+      bgDraft.imgBlur = Number($("bgImgBlur").value);
+
+      bgApplyToCSS(bgDraft);
+      await saveBg(bgDraft);
+      setStatus("Background applied.");
+    });
+
+    $("bgReset").addEventListener("click", async () => {
+      bgDraft = Object.assign({}, DEFAULT_BG);
+      $("bgImage").value = "";
+      bgSyncInputs(bgDraft);
+      bgApplyToCSS(bgDraft);
+      await saveBg(bgDraft);
+      setStatus("Background reset.");
+    });
+  }
+
+  async function bindPresetUI(){
+    await refreshPresetSelect();
+
+    $("presetSave").addEventListener("click", async () => {
+      const name = ($("presetName").value || "").trim();
+      if(!name){
+        setStatus("Type a preset name first.");
+        return;
+      }
+
+      themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+      bgDraft.tint = $("bgColor").value;
+      bgDraft.strength = Number($("bgStrength").value);
+      bgDraft.imgOpacity = Number($("bgImgOpacity").value);
+      bgDraft.imgBlur = Number($("bgImgBlur").value);
+
+      const list = await loadPresets();
+      const entry = normalizePreset({
+        id: uid(),
+        name,
+        theme: Object.assign({}, themeDraft),
+        bg: Object.assign({}, bgDraft)
+      });
+
+      list.unshift(entry);
+      await savePresets(list);
+
+      $("presetName").value = "";
+      await refreshPresetSelect(entry.id);
+      setStatus("Preset saved.");
+    });
+
+    $("presetApply").addEventListener("click", async () => {
+      const id = $("presetSelect").value;
+      if(!id){
+        setStatus("Choose a preset first.");
+        return;
+      }
+      const list = await loadPresets();
+      const found = list.find(x => x.id === id);
+      if(!found){
+        setStatus("Preset not found.");
+        return;
+      }
+      await applyPresetToThisWidget(found);
+      setStatus("Preset applied.");
+    });
+
+    $("presetDelete").addEventListener("click", async () => {
+      const id = $("presetSelect").value;
+      if(!id){
+        setStatus("Choose a preset first.");
+        return;
+      }
+      const list = await loadPresets();
+      const next = list.filter(x => x.id !== id);
+      if(next.length === list.length){
+        setStatus("Preset not found.");
+        return;
+      }
+      await savePresets(next);
+      await refreshPresetSelect("");
+      $("presetSelect").value = "";
+      setStatus("Preset deleted.");
+    });
+  }
+
+  function bindStateUI(){
+    const resetConfirm = $("resetConfirm");
+
+    function hideReset(){
+      resetConfirm.style.display = "none";
+    }
+
+    function showReset(){
+      resetConfirm.style.display = "block";
+      closePanels();
+    }
+
+    $("addGoal").addEventListener("click", addOrUpdateGoal);
+
+    $("goalTitle").addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){
+        e.preventDefault();
+        addOrUpdateGoal();
+      }
+    });
+
+    ["goalTitle","goalCategory","goalCadence","goalNext"].forEach(id => {
+      const el = $(id);
+      if(!el) return;
+      el.addEventListener("input", () => {
+        showSaving("Saving...");
+        saveDraftInputsDebounced();
+      });
+      el.addEventListener("change", () => {
+        captureDraftFromInputs();
+        saveState(state);
+      });
+      el.addEventListener("blur", () => {
+        captureDraftFromInputs();
+        saveState(state);
+      });
+    });
+
+    $("viewFilter").addEventListener("change", () => {
+      state.ui.view = $("viewFilter").value;
+      saveState(state);
       renderAll();
     });
 
-    $("resetAll").addEventListener("click", ()=> {
-      resetConfirm.style.display === "block" ? hideReset() : showReset();
+    $("clearDone").addEventListener("click", () => {
+      state.goals = state.goals.filter(g => !g.done);
+      saveState(state);
+      renderAll();
     });
 
-    resetNo.addEventListener("click", hideReset);
-    resetYes.addEventListener("click", ()=> {
-      localStorage.removeItem(KEY);
-      state = defaultState();
-      save();
+    $("resetAll").addEventListener("click", () => {
+      if(resetConfirm.style.display === "block"){
+        hideReset();
+      }else{
+        showReset();
+      }
+    });
+
+    $("resetNo").addEventListener("click", hideReset);
+
+    $("resetYes").addEventListener("click", async () => {
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      syncDraftInputsFromState();
+      saveState(state);
       hideReset();
       renderAll();
     });
 
+    window.addEventListener("pagehide", () => {
+      captureDraftFromInputs();
+      saveState(state);
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "hidden"){
+        captureDraftFromInputs();
+        saveState(state);
+      }
+    });
+  }
+
+  async function reloadThemeFromStorage(){
+    themeDraft = loadTheme();
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+  }
+
+  async function reloadBgFromStorage(){
+    bgDraft = await loadBg();
+    bgSyncInputs(bgDraft);
+    bgApplyToCSS(bgDraft);
+  }
+
+  function reloadStateFromStorage(){
+    state = loadState();
     renderAll();
   }
 
+  async function initSyncListeners(){
+    window.addEventListener("storage", async (e) => {
+      if(!e.key) return;
+      if(e.key === THEME_KEY) await reloadThemeFromStorage();
+      if(e.key === BG_KEY) await reloadBgFromStorage();
+      if(e.key === STATE_KEY) reloadStateFromStorage();
+    });
+
+    if(bc){
+      bc.addEventListener("message", async (evt) => {
+        const data = evt.data || {};
+        if(!data || data.widgetId !== WIDGET_ID) return;
+        if(data.type === "theme") await reloadThemeFromStorage();
+        if(data.type === "bg") await reloadBgFromStorage();
+        if(data.type === "state") reloadStateFromStorage();
+        if(data.type === "presets") await refreshPresetSelect();
+      });
+    }
+  }
+
+  async function boot(){
+    initPanels();
+
+    themeDraft = loadTheme();
+    bgDraft = await loadBg();
+    state = loadState();
+
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+
+    bgSyncInputs(bgDraft);
+    bgApplyToCSS(bgDraft);
+
+    syncDraftInputsFromState();
+    renderAll();
+
+    bindThemeUI();
+    bindBgUI();
+    await bindPresetUI();
+    bindStateUI();
+    await initSyncListeners();
+
+    showSaving("Saved");
+  }
+
   if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", () => { boot(); }, { once:true });
   }else{
-    init();
+    boot();
   }
 })();
 </script>

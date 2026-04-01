@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Water Tracker</title>
   <style>
     :root{
-      --bg:#ffffff;
+      --page-bg:#ffffff;
+      --widget-bg:#ffffff;
       --cream:#e6d8cc;
-      --stone:#c9beb6;
       --text:#1f1f1f;
       --muted:#6b625c;
 
@@ -27,7 +27,6 @@
       --fsLabel: 11px;
       --fsBody: 13px;
 
-      /* Pastel water */
       --waterA: #bfe6ff;
       --waterB: #a8dbff;
       --waterC: #8fcfff;
@@ -35,11 +34,22 @@
       --board-tint: #ffffff;
       --board-tint-a: 0.30;
       --board-image: none;
+      --board-blur: 0px;
+
+      --card-bg: rgba(255,255,255,0.88);
+      --field-bg: #ffffff;
     }
+
     *{ box-sizing:border-box; }
+
+    html, body{
+      width:100%;
+      min-height:100%;
+    }
+
     body{
       margin:0;
-      background:var(--bg);
+      background:var(--page-bg);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       padding:26px;
@@ -47,9 +57,19 @@
       justify-content:center;
       align-items:center;
       min-height:100vh;
+      -webkit-text-size-adjust:100%;
+    }
+
+    button, input, select, textarea{
+      font: inherit;
+    }
+
+    input, textarea, select{
+      color: var(--text);
     }
 
     .wrap{ width:100%; max-width:760px; }
+
     .top{
       display:flex;
       align-items:flex-start;
@@ -58,6 +78,7 @@
       margin-bottom:14px;
       flex-wrap:wrap;
     }
+
     .kicker{
       font-size:var(--fsKicker);
       letter-spacing:.12em;
@@ -65,7 +86,22 @@
       color:var(--muted);
       padding-top:4px;
     }
-    .btns{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .btn,
+    .mini-btn,
+    .bg-btn,
+    .iconBtn{
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     .btn{
       appearance:none;
@@ -82,12 +118,28 @@
       transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
       user-select:none;
       white-space:nowrap;
-      -webkit-tap-highlight-color: transparent;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
     }
-    .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+
+    .btn svg{
+      width:14px;
+      height:14px;
+      display:block;
+      flex:0 0 auto;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 18px rgba(0,0,0,0.08);
+    }
+
     .btn.primary{ background:var(--cream); }
 
     .popover{ position:relative; }
+
     .icon-pill{
       display:inline-flex;
       align-items:center;
@@ -100,6 +152,7 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     .bg-btn{
       width:34px;
       height:34px;
@@ -109,11 +162,15 @@
       cursor:pointer;
       display:grid;
       place-items:center;
-      -webkit-tap-highlight-color: transparent;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       transition: transform 140ms ease, box-shadow 140ms ease;
     }
-    .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
+
+    .bg-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 14px 22px rgba(0,0,0,0.10);
+    }
+
     .bg-btn:active{ transform: translateY(0px); }
 
     .bg-dot{
@@ -138,17 +195,20 @@
       position:absolute;
       top: 46px;
       right: 0;
-      width: 270px;
+      width: 310px;
       border-radius: 16px;
       border: 1px solid var(--borderSoft);
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.94);
       box-shadow: 0 18px 40px rgba(0,0,0,0.10);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       padding: 12px;
       display:none;
       z-index: 80;
+      max-height: min(76vh, 680px);
+      overflow:auto;
     }
+
     .panel.open{ display:block; }
 
     .panel h2{
@@ -160,39 +220,47 @@
       color: rgba(31,31,31,0.72);
     }
 
-    .panel .rowT{
+    .rowT{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
       padding: 8px 0;
     }
-    .panel .rowT label{
+
+    .rowT label{
       font-size: 12px;
       color: var(--muted);
     }
+
     input[type="color"]{
-      width: 36px;
-      height: 28px;
+      width: 42px;
+      height: 32px;
       border: 1px solid var(--borderSoft);
       border-radius: 10px;
       padding: 0;
       background: transparent;
       cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      flex: 0 0 auto;
     }
-    input[type="range"]{ width: 150px; }
+
+    input[type="range"]{
+      width: 150px;
+      max-width:100%;
+    }
+
     .file{
       width:100%;
       font-size: 12px;
       color: rgba(31,31,31,0.75);
     }
+
     .mini-btn{
       width: 100%;
       border: 1px solid var(--borderSoft);
       background: rgba(255,255,255,0.95);
       border-radius: 12px;
-      padding: 9px 10px;
+      padding: 10px 12px;
       cursor: pointer;
       font-weight: 700;
       letter-spacing: .06em;
@@ -200,19 +268,38 @@
       font-size: 11px;
       color: rgba(31,31,31,0.80);
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      -webkit-tap-highlight-color: transparent;
+      user-select:none;
     }
+
     .mini-btn:active{ transform: translateY(1px); }
+
     .divider{
       height: 1px;
       background: rgba(201,190,182,0.35);
       margin: 8px 0;
     }
-    .hintSmall{
-      margin-top: 8px;
-      font-size: 11px;
+
+    .presetName, .presetSelect{
+      width:100%;
+      border:1px solid var(--borderSoft);
+      background: rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:13px;
+      color: var(--text);
+      outline:none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .presetSelect{
+      min-height:40px;
+    }
+
+    .status{
+      font-size:12px;
       color: var(--muted);
-      line-height: 1.35;
+      margin-top: 6px;
+      min-height: 16px;
     }
 
     .widgetBoard{
@@ -222,8 +309,10 @@
       border: 1px solid var(--borderSoft);
       box-shadow: var(--shadow);
       padding: 14px;
-      background: transparent;
+      background: var(--widget-bg);
+      width:100%;
     }
+
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -232,19 +321,21 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      filter: saturate(0.95);
-      transform: scale(1.02);
+      filter: blur(var(--board-blur)) saturate(1);
+      transform: scale(1.03);
       z-index:0;
+      will-change: transform, filter;
     }
+
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
-      background:
-      background-blend-mode: screen;
       pointer-events: none;
       z-index:0;
+      background: rgba(255,255,255,0.30);
     }
+
     .boardTint{
       position:absolute;
       inset:0;
@@ -262,15 +353,16 @@
     }
 
     .card{
-      background: rgba(255,255,255,0.88);
+      background: var(--card-bg);
       border:1px solid var(--border);
       border-radius:var(--rOuter);
-      box-shadow: none; 
+      box-shadow: none;
       padding:14px;
       min-width:0;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
+
     .cardHead{
       display:flex;
       align-items:flex-end;
@@ -278,6 +370,7 @@
       gap:12px;
       margin-bottom:12px;
     }
+
     .cardTitle{
       font-size:14px;
       letter-spacing:.14em;
@@ -285,6 +378,7 @@
       color:var(--muted);
       margin:0;
     }
+
     .meta{
       font-size:12px;
       color:var(--muted);
@@ -292,23 +386,24 @@
       white-space:nowrap;
     }
 
-    /* Cup */
     .cupWrap{
       display:flex;
       align-items:center;
       justify-content:center;
       padding:10px 0 4px;
     }
+
     .cup{
       width:170px;
       height:260px;
       border-radius: 18px 18px 26px 26px;
       border:1px solid var(--border);
-      background: linear-gradient(180deg, rgba(230,216,204,0.14), rgba(255,255,255,0));
+      background: var(--creamSoft);
       box-shadow: var(--shadowSoft);
       position:relative;
       overflow:hidden;
     }
+
     .cup::before{
       content:"";
       position:absolute;
@@ -318,7 +413,6 @@
       pointer-events:none;
     }
 
-    /* Water */
     .water{
       position:absolute;
       left:0;
@@ -328,11 +422,13 @@
       transition: height 420ms ease;
       overflow:hidden;
     }
+
     .waterFill{
       position:absolute;
       inset:0;
       background: linear-gradient(180deg, var(--waterA), var(--waterB) 55%, var(--waterC));
     }
+
     .wave{
       position:absolute;
       left:-40px;
@@ -348,6 +444,7 @@
       border-radius: 999px;
       animation: wave 3.2s ease-in-out infinite;
     }
+
     @keyframes wave{
       0%   { transform: translateX(-6px); }
       50%  { transform: translateX(6px); }
@@ -366,11 +463,13 @@
       text-align:center;
       padding:18px;
     }
+
     .big{
       font-size:30px;
       font-weight:760;
       letter-spacing:-0.02em;
     }
+
     .small{
       font-size:12px;
       letter-spacing:.12em;
@@ -378,18 +477,19 @@
       color:var(--muted);
     }
 
-    /* Controls */
     .controls{
       display:grid;
       gap:12px;
       margin-top:6px;
     }
+
     .row{
       display:grid;
       grid-template-columns: 1fr 1fr;
       gap:10px;
       align-items:end;
     }
+
     .label{
       display:block;
       font-size:var(--fsLabel);
@@ -398,17 +498,19 @@
       color:var(--muted);
       margin:0 0 6px 0;
     }
+
     .input, .select{
       width:100%;
       border:1px solid var(--border);
-      background:#fff;
+      background: var(--field-bg);
       border-radius:12px;
       padding:9px 10px;
       font-size:var(--fsBody);
       outline:none;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      height:36px;
+      min-height:36px;
     }
+
     .input:focus, .select:focus{
       border-color: rgba(201,190,182,1);
       box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
@@ -422,35 +524,40 @@
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
       padding:12px;
-      background: linear-gradient(180deg, var(--creamSoft), rgba(255,255,255,0));
+      background: var(--creamSoft);
       margin-top:8px;
     }
+
     .stepperLeft{
       display:flex;
       flex-direction:column;
       gap:6px;
     }
+
     .stepperTitle{
       font-size:12px;
       letter-spacing:.14em;
       text-transform:uppercase;
       color:var(--muted);
     }
+
     .stepperHint{
       font-size:12px;
       color:#7a716a;
       line-height:1.4;
       margin:0;
     }
+
     .stepperBtns{
       display:flex;
       gap:10px;
       align-items:center;
     }
+
     .iconBtn{
       appearance:none;
       border:1px solid var(--border);
-      background:#fff;
+      background: var(--field-bg);
       border-radius:12px;
       width:44px;
       height:40px;
@@ -460,18 +567,24 @@
       user-select:none;
       font-size:18px;
       line-height:1;
-      -webkit-tap-highlight-color: transparent;
+      color: var(--text);
     }
-    .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 10px 18px rgba(0,0,0,0.08); }
+
+    .iconBtn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 18px rgba(0,0,0,0.08);
+    }
+
     .iconBtn.primary{ background:var(--cream); }
 
     .barWrap{
       border:1px solid var(--borderSoft);
       border-radius:var(--rInner);
       padding:12px;
-      background:#fff;
+      background: var(--field-bg);
       margin-top:12px;
     }
+
     .barTop{
       display:flex;
       align-items:flex-start;
@@ -479,23 +592,26 @@
       gap:10px;
       margin-bottom:10px;
     }
+
     .barTitle{
       font-size:12px;
       letter-spacing:.14em;
       text-transform:uppercase;
       color:var(--muted);
     }
+
     .pill{
       font-size:11px;
       color:var(--muted);
       border:1px solid var(--borderSoft);
       border-radius:var(--rPill);
       padding:6px 10px;
-      background:#fff;
+      background: var(--field-bg);
       line-height:1;
       user-select:none;
       white-space:nowrap;
     }
+
     .bar{
       height:12px;
       border-radius:var(--rPill);
@@ -503,6 +619,7 @@
       border:1px solid var(--borderSoft);
       overflow:hidden;
     }
+
     .bar > div{
       height:100%;
       width:0%;
@@ -520,6 +637,49 @@
     @media (max-width: 860px){
       .grid{ grid-template-columns: 1fr; }
     }
+
+    @media (max-width: 720px){
+      body{
+        padding:14px;
+        align-items:flex-start;
+      }
+
+      .top{ gap:12px; }
+      .btns{ width:100%; }
+
+      .panel{
+        position: fixed;
+        top: 14px;
+        left: 14px;
+        right: 14px;
+        width: auto;
+        max-height: calc(100dvh - 28px);
+        z-index: 999;
+      }
+
+      .widgetBoard{ padding:10px; }
+      .card{ padding:10px; }
+
+      .input,
+      .select,
+      .presetName,
+      .presetSelect{
+        font-size:16px;
+      }
+
+      .row{
+        grid-template-columns: 1fr;
+      }
+
+      .stepper{
+        flex-direction:column;
+        align-items:stretch;
+      }
+
+      .stepperBtns{
+        justify-content:flex-end;
+      }
+    }
   </style>
 </head>
 
@@ -527,27 +687,36 @@
   <main class="wrap">
     <div class="top">
       <div class="kicker">Water Tracker</div>
-      <div class="btns">
 
-        <!-- Background settings -->
+      <div class="btns">
         <div class="popover" id="bgPopover">
           <div class="icon-pill">
             <button class="bg-btn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
-              <span class="bg-dot" aria-hidden="true"></span>
+              <span class="bg-dot" id="bgDot" aria-hidden="true"></span>
             </button>
           </div>
 
           <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
             <h2>Background</h2>
 
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+            <div class="divider"></div>
+
             <div class="rowT">
               <label for="bgColor">Tint</label>
-              <input id="bgColor" type="color" value="#efe7e1" />
+              <input id="bgColor" type="color" value="#ffffff" />
             </div>
 
             <div class="rowT">
               <label for="bgStrength">Tint strength</label>
               <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="rowT">
+              <label for="bgBlur">Image blur</label>
+              <input id="bgBlur" type="range" min="0" max="20" value="0" />
             </div>
 
             <div class="divider"></div>
@@ -563,7 +732,6 @@
           </div>
         </div>
 
-        <!-- NEW: Theme settings -->
         <div class="popover" id="themePopover">
           <div class="icon-pill">
             <button class="bg-btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
@@ -573,6 +741,11 @@
 
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
             <h2>Theme</h2>
+
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="resetTheme" type="button" style="margin-top:8px;">Reset theme</button>
+
+            <div class="divider"></div>
 
             <div class="rowT">
               <label for="tWidgetBg">Page bg</label>
@@ -609,19 +782,12 @@
             </div>
 
             <div class="rowT">
-              <label for="tStone">Accent</label>
-              <input id="tStone" type="color" value="#c9beb6" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="rowT">
               <label for="tCream">Highlight</label>
               <input id="tCream" type="color" value="#e6d8cc" />
             </div>
 
             <div class="rowT">
-              <label for="tCreamSoft">Highlight soft</label>
+              <label for="tCreamSoft">Panels tint</label>
               <input id="tCreamSoft" type="color" value="#e6d8cc" />
             </div>
 
@@ -642,18 +808,38 @@
 
             <div class="divider"></div>
 
-            <div class="rowT">
-              <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
-            </div>
+            <h2 style="margin-top:4px;">Presets</h2>
 
-            <div class="hintSmall">
-            </div>
+            <input class="presetName" id="presetName" placeholder="Preset name" />
+
+            <button class="mini-btn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+            <div class="divider"></div>
+
+            <select class="presetSelect" id="presetSelect"></select>
+
+            <button class="mini-btn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
           </div>
         </div>
 
-        <button id="prevDay" class="btn" type="button">◀ PREV</button>
-        <button id="nextDay" class="btn" type="button">NEXT ▶</button>
-        <button id="resetDay" class="btn primary" type="button">RESET</button>
+        <button id="prevDay" class="btn" type="button" aria-label="Previous day">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <span>Prev</span>
+        </button>
+
+        <button id="nextDay" class="btn" type="button" aria-label="Next day">
+          <span>Next</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+
+        <button id="resetDay" class="btn primary" type="button">Reset</button>
       </div>
     </div>
 
@@ -661,7 +847,6 @@
       <div class="boardTint" id="boardTint"></div>
 
       <div class="grid">
-        <!-- Left: Cup -->
         <section class="card" aria-label="Cup">
           <div class="cardHead">
             <h2 class="cardTitle">Today</h2>
@@ -688,14 +873,12 @@
               <p class="stepperHint">Use + / – to track cups. Adjust cup size if you need to.</p>
             </div>
             <div class="stepperBtns">
-              <button id="minus" class="iconBtn" type="button">–</button>
-              <button id="plus" class="iconBtn primary" type="button">+</button>
+              <button id="minus" class="iconBtn" type="button" aria-label="Subtract one cup">–</button>
+              <button id="plus" class="iconBtn primary" type="button" aria-label="Add one cup">+</button>
             </div>
           </div>
-
         </section>
 
-        <!-- Right: Settings + Bar -->
         <aside class="card" aria-label="Settings and progress">
           <div class="cardHead">
             <h2 class="cardTitle">Settings</h2>
@@ -737,107 +920,237 @@
   </main>
 
   <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      const pad2 = (n) => String(n).padStart(2,"0");
-      const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-      const niceDay = (d) => d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
-      const clampPct = (p) => Math.max(0, Math.min(100, p));
+    (function(){
+      "use strict";
 
-      /* ---------------------------
-         BACKGROUND SETTINGS (existing)
-      ---------------------------- */
-      const BG_KEY = "water_tracker_bg_v1";
-
-      const bgBtn = document.getElementById("bgBtn");
-      const bgPanel = document.getElementById("bgPanel");
-      const bgColor = document.getElementById("bgColor");
-      const bgStrength = document.getElementById("bgStrength");
-      const bgImage = document.getElementById("bgImage");
-      const removeImage = document.getElementById("removeImage");
-      const boardTintEl = document.getElementById("boardTint");
-      const bgDot = document.querySelector(".bg-dot");
-
-      function loadBg(){
+      function canUseLocalStorage(){
         try{
-          const raw = localStorage.getItem(BG_KEY);
-          if(raw) return JSON.parse(raw) || null;
-        }catch{}
-        return null;
+          const k = "__t__" + Math.random().toString(16).slice(2);
+          localStorage.setItem(k, "1");
+          localStorage.removeItem(k);
+          return true;
+        }catch{
+          return false;
+        }
       }
-      function saveBg(bg){
-        try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-      }
-      function hexToRgba(hex, a){
-        const h = String(hex || "").replace("#","").trim();
-        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-        const num = parseInt(full || "efe7e1", 16);
-        const r = (num >> 16) & 255;
-        const g = (num >> 8) & 255;
-        const b = num & 255;
-        return `rgba(${r},${g},${b},${a})`;
-      }
-      function setBoardImage(dataUrlOrNull){
-        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-      }
-      function applyBoardTint(colorHex, strengthPct){
-        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
-        document.documentElement.style.setProperty("--board-tint", colorHex);
-        document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
-        if (bgDot){
-          bgDot.style.background = colorHex;
-          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
-        }
-        if (boardTintEl){
-          boardTintEl.style.background = hexToRgba(colorHex, strength);
+      const hasLS = canUseLocalStorage();
+      const mem = Object.create(null);
+
+      function lsGet(key){
+        try{
+          return hasLS ? localStorage.getItem(key) : (mem[key] ?? null);
+        }catch{
+          return mem[key] ?? null;
         }
       }
-      async function fileToDataUrl(file){
-        return new Promise((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(String(r.result));
-          r.onerror = reject;
-          r.readAsDataURL(file);
+
+      function lsSet(key, value){
+        try{
+          if(hasLS) localStorage.setItem(key, value);
+          else mem[key] = String(value);
+        }catch{
+          mem[key] = String(value);
+        }
+      }
+
+      function lsRemove(key){
+        try{
+          if(hasLS) localStorage.removeItem(key);
+          else delete mem[key];
+        }catch{
+          delete mem[key];
+        }
+      }
+
+      function loadJSON(key, fallback = null){
+        try{
+          const raw = lsGet(key);
+          return raw ? JSON.parse(raw) : fallback;
+        }catch{
+          return fallback;
+        }
+      }
+
+      function saveJSON(key, value){
+        lsSet(key, JSON.stringify(value));
+      }
+
+      function sanitizeId(value){
+        return String(value || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "default";
+      }
+
+      function getWidgetId(){
+        try{
+          const params = new URLSearchParams(location.search);
+          const fromQuery = sanitizeId(params.get("wid"));
+          if(fromQuery && fromQuery !== "default") return fromQuery;
+        }catch{}
+
+        const fromPath = sanitizeId(location.pathname.replace(/\.[^/.]+$/, ""));
+        return fromPath || "default";
+      }
+
+      const WID = getWidgetId();
+      const BC_NAME = "water-tracker-sync";
+      const channel = ("BroadcastChannel" in window) ? new BroadcastChannel(BC_NAME) : null;
+
+      function broadcast(type, payload){
+        try{
+          if(channel) channel.postMessage({ type, payload, wid: WID, ts: Date.now() });
+        }catch{}
+      }
+
+      const DB_NAME = "water_tracker_db_v3";
+      const DB_STORE = "kv";
+      let dbPromise = null;
+
+      function openDB(){
+        if(dbPromise) return dbPromise;
+
+        dbPromise = new Promise((resolve) => {
+          if(!("indexedDB" in window)){
+            resolve(null);
+            return;
+          }
+
+          const request = indexedDB.open(DB_NAME, 1);
+
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if(!db.objectStoreNames.contains(DB_STORE)){
+              db.createObjectStore(DB_STORE);
+            }
+          };
+
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => resolve(null);
+        });
+
+        return dbPromise;
+      }
+
+      async function idbGet(key){
+        const db = await openDB();
+        if(!db) return null;
+
+        return new Promise((resolve) => {
+          try{
+            const tx = db.transaction(DB_STORE, "readonly");
+            const store = tx.objectStore(DB_STORE);
+            const req = store.get(key);
+            req.onsuccess = () => resolve(req.result ?? null);
+            req.onerror = () => resolve(null);
+          }catch{
+            resolve(null);
+          }
         });
       }
 
-      const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
-      bgColor.value = bgState.tint;
-      bgStrength.value = String(bgState.strength);
-      applyBoardTint(bgState.tint, bgState.strength);
-      setBoardImage(bgState.imageDataUrl);
+      async function idbSet(key, value){
+        const db = await openDB();
+        if(!db) return false;
 
-      /* ---------------------------
-         THEME SETTINGS (NEW)
-      ---------------------------- */
-      const THEME_KEY = "water_tracker_theme_v1";
+        return new Promise((resolve) => {
+          try{
+            const tx = db.transaction(DB_STORE, "readwrite");
+            const store = tx.objectStore(DB_STORE);
+            const req = store.put(value, key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+          }catch{
+            resolve(false);
+          }
+        });
+      }
 
-      const themeBtn = document.getElementById("themeBtn");
-      const themePanel = document.getElementById("themePanel");
-      const themeDot = document.getElementById("themeDot");
+      async function idbRemove(key){
+        const db = await openDB();
+        if(!db) return false;
 
-      const tWidgetBg = document.getElementById("tWidgetBg");
-      const tCardBg   = document.getElementById("tCardBg");
-      const tFieldBg  = document.getElementById("tFieldBg");
-      const tText     = document.getElementById("tText");
-      const tMuted    = document.getElementById("tMuted");
-      const tBorder   = document.getElementById("tBorder");
-      const tStone    = document.getElementById("tStone");
-      const tCream    = document.getElementById("tCream");
-      const tCreamSoft= document.getElementById("tCreamSoft");
-      const tWaterA   = document.getElementById("tWaterA");
-      const tWaterB   = document.getElementById("tWaterB");
-      const tWaterC   = document.getElementById("tWaterC");
-      const resetTheme= document.getElementById("resetTheme");
+        return new Promise((resolve) => {
+          try{
+            const tx = db.transaction(DB_STORE, "readwrite");
+            const store = tx.objectStore(DB_STORE);
+            const req = store.delete(key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+          }catch{
+            resolve(false);
+          }
+        });
+      }
+
+      function clamp(n, min, max){
+        const x = Number(n);
+        if(!Number.isFinite(x)) return min;
+        return Math.max(min, Math.min(max, x));
+      }
+
+      function normHex(hex, fallback){
+        const s = String(hex || "").trim();
+        return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+      }
+
+      function hexToRgba(hex, alpha){
+        const h = normHex(hex, "#ffffff").replace("#", "");
+        const num = parseInt(h, 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
+
+      function clampPct(p){
+        return Math.max(0, Math.min(100, p));
+      }
+
+      function pad2(n){
+        return String(n).padStart(2, "0");
+      }
+
+      function isoDay(d){
+        return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      }
+
+      function niceDay(d){
+        return d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
+      }
+
+      function fileToDataUrl(file){
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const KEYS = {
+        bg: `water_tracker_bg_v3__${WID}`,
+        bgImage: `water_tracker_bg_image_v3__${WID}`,
+        theme: `water_tracker_theme_v3__${WID}`,
+        presets: `water_tracker_presets_v3`,
+        day: (dateKey) => `water_tracker_day_v3__${WID}__${dateKey}`
+      };
+
+      const DEFAULT_BG = {
+        tint: "#ffffff",
+        strength: 30,
+        blur: 0
+      };
 
       const DEFAULT_THEME = {
-        bg: "#ffffff",
+        widgetBg: "#ffffff",
         cardBg: "#ffffff",
         fieldBg: "#ffffff",
         text: "#1f1f1f",
         muted: "#6b625c",
         borderHex: "#c9beb6",
-        stone: "#c9beb6",
         cream: "#e6d8cc",
         creamSoftHex: "#e6d8cc",
         waterA: "#bfe6ff",
@@ -845,284 +1158,663 @@
         waterC: "#8fcfff"
       };
 
-      function loadTheme(){
-        try{
-          const raw = localStorage.getItem(THEME_KEY);
-          if(raw) return JSON.parse(raw) || null;
-        }catch{}
-        return null;
-      }
-      function saveTheme(t){
-        try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+      function defaultDayData(){
+        return {
+          cups: 0,
+          goalCups: 8,
+          cupSizeMl: 250
+        };
       }
 
-      function applyTheme(t){
-        // Base page background + core palette
-        document.documentElement.style.setProperty("--bg", t.bg);
+      const els = {
+        bgBtn: document.getElementById("bgBtn"),
+        bgPanel: document.getElementById("bgPanel"),
+        bgColor: document.getElementById("bgColor"),
+        bgStrength: document.getElementById("bgStrength"),
+        bgBlur: document.getElementById("bgBlur"),
+        bgImage: document.getElementById("bgImage"),
+        removeImage: document.getElementById("removeImage"),
+        bgApply: document.getElementById("bgApply"),
+        bgReset: document.getElementById("bgReset"),
+        bgDot: document.getElementById("bgDot"),
+        boardTint: document.getElementById("boardTint"),
+
+        themeBtn: document.getElementById("themeBtn"),
+        themePanel: document.getElementById("themePanel"),
+        themeDot: document.getElementById("themeDot"),
+        themeApply: document.getElementById("themeApply"),
+        resetTheme: document.getElementById("resetTheme"),
+
+        tWidgetBg: document.getElementById("tWidgetBg"),
+        tCardBg: document.getElementById("tCardBg"),
+        tFieldBg: document.getElementById("tFieldBg"),
+        tText: document.getElementById("tText"),
+        tMuted: document.getElementById("tMuted"),
+        tBorder: document.getElementById("tBorder"),
+        tCream: document.getElementById("tCream"),
+        tCreamSoft: document.getElementById("tCreamSoft"),
+        tWaterA: document.getElementById("tWaterA"),
+        tWaterB: document.getElementById("tWaterB"),
+        tWaterC: document.getElementById("tWaterC"),
+
+        presetName: document.getElementById("presetName"),
+        presetSelect: document.getElementById("presetSelect"),
+        presetSave: document.getElementById("presetSave"),
+        presetApply: document.getElementById("presetApply"),
+        presetDelete: document.getElementById("presetDelete"),
+        presetStatus: document.getElementById("presetStatus"),
+
+        dayMeta: document.getElementById("dayMeta"),
+        water: document.getElementById("water"),
+        bigAmt: document.getElementById("bigAmt"),
+        smallAmt: document.getElementById("smallAmt"),
+
+        goalCups: document.getElementById("goalCups"),
+        cupSize: document.getElementById("cupSize"),
+        barFill: document.getElementById("barFill"),
+        progressPill: document.getElementById("progressPill"),
+        mlHint: document.getElementById("mlHint"),
+
+        minus: document.getElementById("minus"),
+        plus: document.getElementById("plus"),
+        prevDay: document.getElementById("prevDay"),
+        nextDay: document.getElementById("nextDay"),
+        resetDay: document.getElementById("resetDay")
+      };
+
+      function setStatus(msg){
+        els.presetStatus.textContent = msg || "";
+      }
+
+      function safeTheme(input){
+        const t = { ...DEFAULT_THEME, ...(input || {}) };
+        return {
+          widgetBg: normHex(t.widgetBg, DEFAULT_THEME.widgetBg),
+          cardBg: normHex(t.cardBg, DEFAULT_THEME.cardBg),
+          fieldBg: normHex(t.fieldBg, DEFAULT_THEME.fieldBg),
+          text: normHex(t.text, DEFAULT_THEME.text),
+          muted: normHex(t.muted, DEFAULT_THEME.muted),
+          borderHex: normHex(t.borderHex, DEFAULT_THEME.borderHex),
+          cream: normHex(t.cream, DEFAULT_THEME.cream),
+          creamSoftHex: normHex(t.creamSoftHex, DEFAULT_THEME.creamSoftHex),
+          waterA: normHex(t.waterA, DEFAULT_THEME.waterA),
+          waterB: normHex(t.waterB, DEFAULT_THEME.waterB),
+          waterC: normHex(t.waterC, DEFAULT_THEME.waterC)
+        };
+      }
+
+      function safeBg(input){
+        const b = { ...DEFAULT_BG, ...(input || {}) };
+        return {
+          tint: normHex(b.tint, DEFAULT_BG.tint),
+          strength: clamp(b.strength, 0, 70),
+          blur: clamp(b.blur, 0, 20)
+        };
+      }
+
+      function readThemeInputs(){
+        return safeTheme({
+          widgetBg: els.tWidgetBg.value,
+          cardBg: els.tCardBg.value,
+          fieldBg: els.tFieldBg.value,
+          text: els.tText.value,
+          muted: els.tMuted.value,
+          borderHex: els.tBorder.value,
+          cream: els.tCream.value,
+          creamSoftHex: els.tCreamSoft.value,
+          waterA: els.tWaterA.value,
+          waterB: els.tWaterB.value,
+          waterC: els.tWaterC.value
+        });
+      }
+
+      function syncThemeInputs(theme){
+        els.tWidgetBg.value = theme.widgetBg;
+        els.tCardBg.value = theme.cardBg;
+        els.tFieldBg.value = theme.fieldBg;
+        els.tText.value = theme.text;
+        els.tMuted.value = theme.muted;
+        els.tBorder.value = theme.borderHex;
+        els.tCream.value = theme.cream;
+        els.tCreamSoft.value = theme.creamSoftHex;
+        els.tWaterA.value = theme.waterA;
+        els.tWaterB.value = theme.waterB;
+        els.tWaterC.value = theme.waterC;
+      }
+
+      function readBgInputs(){
+        return safeBg({
+          tint: els.bgColor.value,
+          strength: Number(els.bgStrength.value),
+          blur: Number(els.bgBlur.value)
+        });
+      }
+
+      function syncBgInputs(bg){
+        els.bgColor.value = bg.tint;
+        els.bgStrength.value = String(bg.strength);
+        els.bgBlur.value = String(bg.blur);
+      }
+
+      function applyTheme(theme){
+        const t = safeTheme(theme);
+
+        document.documentElement.style.setProperty("--page-bg", t.widgetBg);
+        document.documentElement.style.setProperty("--widget-bg", t.widgetBg);
         document.documentElement.style.setProperty("--text", t.text);
         document.documentElement.style.setProperty("--muted", t.muted);
-
-        // Accents / highlights
-        document.documentElement.style.setProperty("--stone", t.stone);
         document.documentElement.style.setProperty("--cream", t.cream);
 
-        // Borders derived from a single hex
         document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
         document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
-
-        // Cream soft used in gradients
         document.documentElement.style.setProperty("--creamSoft", hexToRgba(t.creamSoftHex, 0.20));
 
-        // Water palette
         document.documentElement.style.setProperty("--waterA", t.waterA);
         document.documentElement.style.setProperty("--waterB", t.waterB);
         document.documentElement.style.setProperty("--waterC", t.waterC);
 
-        // Custom vars for patching hard-coded whites
         document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, 0.88));
         document.documentElement.style.setProperty("--field-bg", t.fieldBg);
 
-        // Theme dot preview
-        if(themeDot){
-          themeDot.style.background = t.text;
-          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
-          themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
+        els.themeDot.style.background = t.text;
+        els.themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
+        els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
+
+        return t;
+      }
+
+      function applyBackgroundVisual(bg, imageDataUrl){
+        const b = safeBg(bg);
+
+        document.documentElement.style.setProperty("--board-tint", b.tint);
+        document.documentElement.style.setProperty("--board-tint-a", String(b.strength / 100));
+        document.documentElement.style.setProperty("--board-blur", `${b.blur}px`);
+        document.documentElement.style.setProperty("--board-image", imageDataUrl ? `url("${imageDataUrl}")` : "none");
+
+        els.boardTint.style.background = hexToRgba(b.tint, b.strength / 100);
+
+        const overlayAlpha = clamp((b.strength / 100) + 0.08, 0.08, 0.55);
+        let overlayStyle = document.getElementById("wt_overlay_style");
+        if(!overlayStyle){
+          overlayStyle = document.createElement("style");
+          overlayStyle.id = "wt_overlay_style";
+          document.head.appendChild(overlayStyle);
+        }
+        overlayStyle.textContent = `.widgetBoard::after{background:${hexToRgba("#ffffff", overlayAlpha)} !important;}`;
+
+        els.bgDot.style.background = b.tint;
+        els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(b.tint, Math.min(0.35, (b.strength / 100) + 0.12))}`;
+      }
+
+      async function saveTheme(theme){
+        saveJSON(KEYS.theme, safeTheme(theme));
+        broadcast("theme");
+      }
+
+      async function loadTheme(){
+        return safeTheme(loadJSON(KEYS.theme, DEFAULT_THEME));
+      }
+
+      async function saveBackground(bg, imageDataUrl){
+        saveJSON(KEYS.bg, safeBg(bg));
+        if(imageDataUrl){
+          await idbSet(KEYS.bgImage, imageDataUrl);
+        }else{
+          await idbRemove(KEYS.bgImage);
+        }
+        broadcast("background");
+      }
+
+      async function loadBackground(){
+        const bg = safeBg(loadJSON(KEYS.bg, DEFAULT_BG));
+        const imageDataUrl = await idbGet(KEYS.bgImage);
+        return {
+          bg,
+          imageDataUrl: (typeof imageDataUrl === "string" && imageDataUrl) ? imageDataUrl : null
+        };
+      }
+
+      async function loadPresets(){
+        const raw = loadJSON(KEYS.presets, []);
+        return Array.isArray(raw) ? raw : [];
+      }
+
+      async function savePresets(list){
+        saveJSON(KEYS.presets, Array.isArray(list) ? list : []);
+        broadcast("presets");
+      }
+
+      function presetImageKey(id){
+        return `water_tracker_preset_image_v3__${id}`;
+      }
+
+      function makeId(){
+        return Math.random().toString(16).slice(2) + Date.now().toString(16);
+      }
+
+      async function refreshPresetSelect(){
+        const presets = await loadPresets();
+        const currentValue = els.presetSelect.value;
+
+        els.presetSelect.innerHTML = `<option value="">—</option>`;
+
+        for(const p of presets){
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name || "Untitled";
+          els.presetSelect.appendChild(opt);
+        }
+
+        if(currentValue && presets.some(p => p.id === currentValue)){
+          els.presetSelect.value = currentValue;
         }
       }
 
-      // Inject minimal overrides so you don't have to refactor the whole CSS
-      const injected = document.createElement("style");
-      injected.textContent = `
-        .card{ background: var(--card-bg, rgba(255,255,255,0.88)); }
-        .input, .select{ background: var(--field-bg, #fff); }
-        .iconBtn{ background: var(--field-bg, #fff); }
-        .pill{ background: var(--field-bg, #fff); }
-        .barWrap{ background: var(--field-bg, #fff); }
-      `;
-      document.head.appendChild(injected);
+      async function getPresetById(id){
+        const presets = await loadPresets();
+        return presets.find(p => p && p.id === id) || null;
+      }
 
-      const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
+      function sanitizeDayData(data){
+        const d = { ...defaultDayData(), ...(data || {}) };
+        return {
+          cups: Math.max(0, Math.round(Number(d.cups || 0))),
+          goalCups: Math.max(0, Math.round(Number(d.goalCups || 0))),
+          cupSizeMl: [250, 300, 330, 500].includes(Number(d.cupSizeMl)) ? Number(d.cupSizeMl) : 250
+        };
+      }
 
-      // Initialize inputs
-      tWidgetBg.value = themeState.bg;
-      tCardBg.value = themeState.cardBg;
-      tFieldBg.value = themeState.fieldBg;
-      tText.value = themeState.text;
-      tMuted.value = themeState.muted;
-      tBorder.value = themeState.borderHex;
-      tStone.value = themeState.stone;
-      tCream.value = themeState.cream;
-      tCreamSoft.value = themeState.creamSoftHex;
-      tWaterA.value = themeState.waterA;
-      tWaterB.value = themeState.waterB;
-      tWaterC.value = themeState.waterC;
+      function loadDay(dateKey){
+        return sanitizeDayData(loadJSON(KEYS.day(dateKey), defaultDayData()));
+      }
 
-      applyTheme(themeState);
+      function saveDay(dateKey, data){
+        saveJSON(KEYS.day(dateKey), sanitizeDayData(data));
+        broadcast("day", { dateKey });
+      }
 
-      function wireThemeInput(inputEl, key){
-        inputEl.addEventListener("input", () => {
-          themeState[key] = inputEl.value;
-          applyTheme(themeState);
-          saveTheme(themeState);
-          // keep bg dot + board tint visuals consistent if border changed
-          applyBoardTint(bgState.tint, bgState.strength);
+      let currentDate = new Date();
+      currentDate.setHours(0,0,0,0);
+
+      let currentDayKey = isoDay(currentDate);
+      let dayState = loadDay(currentDayKey);
+
+      let themeDraft = safeTheme(DEFAULT_THEME);
+      let bgDraft = safeBg(DEFAULT_BG);
+      let bgDraftImage = null;
+
+      function renderDay(){
+        currentDayKey = isoDay(currentDate);
+        els.dayMeta.textContent = niceDay(currentDate);
+
+        els.goalCups.value = dayState.goalCups ? String(dayState.goalCups) : "";
+        els.cupSize.value = String(dayState.cupSizeMl);
+
+        const cups = Math.max(0, Math.round(dayState.cups));
+        const goal = Math.max(0, Math.round(dayState.goalCups || 0));
+
+        els.bigAmt.textContent = String(cups);
+        els.smallAmt.textContent = cups === 1 ? "cup" : "cups";
+
+        const waterDenom = goal > 0 ? goal : 8;
+        const waterPct = (cups / waterDenom) * 100;
+        els.water.style.height = clampPct(waterPct <= 120 ? waterPct : 120) + "%";
+
+        const barPct = goal > 0 ? clampPct((cups / goal) * 100) : 0;
+        els.barFill.style.width = barPct + "%";
+        els.progressPill.textContent = goal > 0 ? `${cups} / ${goal} cups` : `${cups} cups`;
+
+        const ml = cups * dayState.cupSizeMl;
+        els.mlHint.textContent = `${ml} ml today`;
+
+        saveDay(currentDayKey, dayState);
+      }
+
+      function closePanels(){
+        els.bgPanel.classList.remove("open");
+        els.themePanel.classList.remove("open");
+      }
+
+      async function hardReloadTheme(){
+        const saved = await loadTheme();
+        themeDraft = applyTheme(saved);
+        syncThemeInputs(themeDraft);
+      }
+
+      async function hardReloadBackground(){
+        const saved = await loadBackground();
+        bgDraft = saved.bg;
+        bgDraftImage = saved.imageDataUrl;
+        syncBgInputs(bgDraft);
+        applyBackgroundVisual(bgDraft, bgDraftImage);
+      }
+
+      async function initSettings(){
+        const savedTheme = await loadTheme();
+        themeDraft = applyTheme(savedTheme);
+        syncThemeInputs(themeDraft);
+
+        const savedBg = await loadBackground();
+        bgDraft = savedBg.bg;
+        bgDraftImage = savedBg.imageDataUrl;
+        syncBgInputs(bgDraft);
+        applyBackgroundVisual(bgDraft, bgDraftImage);
+
+        await refreshPresetSelect();
+      }
+
+      function attachPopoverEvents(){
+        els.bgBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          els.bgPanel.classList.toggle("open");
+          els.themePanel.classList.remove("open");
+        });
+
+        els.themeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          els.themePanel.classList.toggle("open");
+          els.bgPanel.classList.remove("open");
+        });
+
+        document.addEventListener("click", (e) => {
+          const inBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+          const inTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+          if(!inBg) els.bgPanel.classList.remove("open");
+          if(!inTheme) els.themePanel.classList.remove("open");
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if(e.key === "Escape") closePanels();
         });
       }
 
-      wireThemeInput(tWidgetBg, "bg");
-      wireThemeInput(tCardBg, "cardBg");
-      wireThemeInput(tFieldBg, "fieldBg");
-      wireThemeInput(tText, "text");
-      wireThemeInput(tMuted, "muted");
-      wireThemeInput(tBorder, "borderHex");
-      wireThemeInput(tStone, "stone");
-      wireThemeInput(tCream, "cream");
-      wireThemeInput(tCreamSoft, "creamSoftHex");
-      wireThemeInput(tWaterA, "waterA");
-      wireThemeInput(tWaterB, "waterB");
-      wireThemeInput(tWaterC, "waterC");
+      function attachThemeEvents(){
+        [
+          els.tWidgetBg,
+          els.tCardBg,
+          els.tFieldBg,
+          els.tText,
+          els.tMuted,
+          els.tBorder,
+          els.tCream,
+          els.tCreamSoft,
+          els.tWaterA,
+          els.tWaterB,
+          els.tWaterC
+        ].forEach(el => {
+          el.addEventListener("input", () => {
+            themeDraft = applyTheme(readThemeInputs());
+            setStatus("");
+          });
+        });
 
-      resetTheme.addEventListener("click", () => {
-        Object.assign(themeState, DEFAULT_THEME);
+        els.themeApply.addEventListener("click", async () => {
+          themeDraft = applyTheme(readThemeInputs());
+          await saveTheme(themeDraft);
+          syncThemeInputs(themeDraft);
+          setStatus("Theme applied.");
+        });
 
-        tWidgetBg.value = themeState.bg;
-        tCardBg.value = themeState.cardBg;
-        tFieldBg.value = themeState.fieldBg;
-        tText.value = themeState.text;
-        tMuted.value = themeState.muted;
-        tBorder.value = themeState.borderHex;
-        tStone.value = themeState.stone;
-        tCream.value = themeState.cream;
-        tCreamSoft.value = themeState.creamSoftHex;
-        tWaterA.value = themeState.waterA;
-        tWaterB.value = themeState.waterB;
-        tWaterC.value = themeState.waterC;
-
-        applyTheme(themeState);
-        saveTheme(themeState);
-        applyBoardTint(bgState.tint, bgState.strength);
-      });
-
-      /* ---------------------------
-         POPOVER OPEN/CLOSE (both panels)
-      ---------------------------- */
-      bgBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        bgPanel.classList.toggle("open");
-        themePanel.classList.remove("open");
-      });
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        bgPanel.classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        const bgOpen = bgPanel.classList.contains("open");
-        const thOpen = themePanel.classList.contains("open");
-
-        if(bgOpen){
-          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-          if (!inside) bgPanel.classList.remove("open");
-        }
-        if(thOpen){
-          const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-          if (!inside) themePanel.classList.remove("open");
-        }
-      });
-
-      /* ---------------------------
-         BACKGROUND HANDLERS (existing)
-      ---------------------------- */
-      bgColor.addEventListener("input", () => {
-        bgState.tint = bgColor.value;
-        applyBoardTint(bgState.tint, bgStrength.value);
-        saveBg(bgState);
-      });
-
-      bgStrength.addEventListener("input", () => {
-        bgState.strength = Number(bgStrength.value);
-        applyBoardTint(bgState.tint, bgState.strength);
-        saveBg(bgState);
-      });
-
-      bgImage.addEventListener("change", async () => {
-        const file = bgImage.files && bgImage.files[0];
-        if(!file) return;
-        const dataUrl = await fileToDataUrl(file);
-        bgState.imageDataUrl = dataUrl;
-        setBoardImage(dataUrl);
-        saveBg(bgState);
-      });
-
-      removeImage.addEventListener("click", () => {
-        bgState.imageDataUrl = null;
-        setBoardImage(null);
-        bgImage.value = "";
-        saveBg(bgState);
-      });
-
-      /* ---------------------------
-         WATER TRACKER (existing)
-      ---------------------------- */
-      const STORAGE_PREFIX = "water_tracker_v2_";
-      const keyFor = (date) => STORAGE_PREFIX + isoDay(date);
-
-      function defaultData(){
-        return { cups: 0, goalCups: 8, cupSizeMl: 250 };
+        els.resetTheme.addEventListener("click", async () => {
+          themeDraft = applyTheme(DEFAULT_THEME);
+          syncThemeInputs(themeDraft);
+          await saveTheme(themeDraft);
+          setStatus("Theme reset.");
+        });
       }
-      function load(date){
-        const raw = localStorage.getItem(keyFor(date));
-        if(!raw) return defaultData();
-        try{
-          const parsed = JSON.parse(raw) || {};
-          return {
-            cups: Number(parsed.cups || 0),
-            goalCups: Number(parsed.goalCups || 8),
-            cupSizeMl: Number(parsed.cupSizeMl || 250)
+
+      function attachBackgroundEvents(){
+        els.bgColor.addEventListener("input", () => {
+          bgDraft = readBgInputs();
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgStrength.addEventListener("input", () => {
+          bgDraft = readBgInputs();
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgBlur.addEventListener("input", () => {
+          bgDraft = readBgInputs();
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgImage.addEventListener("change", async () => {
+          const file = els.bgImage.files && els.bgImage.files[0];
+          if(!file) return;
+          try{
+            bgDraftImage = await fileToDataUrl(file);
+            applyBackgroundVisual(bgDraft, bgDraftImage);
+            setStatus("");
+          }catch{
+            setStatus("Could not load image.");
+          }
+        });
+
+        els.removeImage.addEventListener("click", () => {
+          bgDraftImage = null;
+          els.bgImage.value = "";
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          setStatus("");
+        });
+
+        els.bgApply.addEventListener("click", async () => {
+          bgDraft = readBgInputs();
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          await saveBackground(bgDraft, bgDraftImage);
+          setStatus("Background applied.");
+        });
+
+        els.bgReset.addEventListener("click", async () => {
+          bgDraft = safeBg(DEFAULT_BG);
+          bgDraftImage = null;
+          els.bgImage.value = "";
+          syncBgInputs(bgDraft);
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          await saveBackground(bgDraft, bgDraftImage);
+          setStatus("Background reset.");
+        });
+      }
+
+      function attachPresetEvents(){
+        els.presetSave.addEventListener("click", async () => {
+          const name = String(els.presetName.value || "").trim();
+          if(!name){
+            setStatus("Type a preset name first.");
+            return;
+          }
+
+          const presets = await loadPresets();
+          const id = makeId();
+
+          presets.unshift({
+            id,
+            name,
+            theme: readThemeInputs(),
+            bg: readBgInputs(),
+            hasImage: !!bgDraftImage
+          });
+
+          if(bgDraftImage){
+            await idbSet(presetImageKey(id), bgDraftImage);
+          }
+
+          await savePresets(presets);
+          els.presetName.value = "";
+          await refreshPresetSelect();
+          els.presetSelect.value = id;
+          setStatus("Preset saved.");
+        });
+
+        els.presetApply.addEventListener("click", async () => {
+          const id = String(els.presetSelect.value || "");
+          if(!id){
+            setStatus("Choose a preset first.");
+            return;
+          }
+
+          const preset = await getPresetById(id);
+          if(!preset){
+            setStatus("Preset not found.");
+            return;
+          }
+
+          const newTheme = safeTheme(preset.theme || DEFAULT_THEME);
+          const newBg = safeBg(preset.bg || DEFAULT_BG);
+          const presetImage = preset.hasImage ? await idbGet(presetImageKey(id)) : null;
+
+          themeDraft = applyTheme(newTheme);
+          syncThemeInputs(themeDraft);
+          await saveTheme(themeDraft);
+
+          bgDraft = newBg;
+          bgDraftImage = (typeof presetImage === "string" && presetImage) ? presetImage : null;
+          syncBgInputs(bgDraft);
+          applyBackgroundVisual(bgDraft, bgDraftImage);
+          await saveBackground(bgDraft, bgDraftImage);
+
+          setStatus("Preset applied.");
+        });
+
+        els.presetDelete.addEventListener("click", async () => {
+          const id = String(els.presetSelect.value || "");
+          if(!id){
+            setStatus("Choose a preset first.");
+            return;
+          }
+
+          const presets = await loadPresets();
+          const next = presets.filter(p => p.id !== id);
+          if(next.length === presets.length){
+            setStatus("Preset not found.");
+            return;
+          }
+
+          await idbRemove(presetImageKey(id));
+          await savePresets(next);
+          await refreshPresetSelect();
+          els.presetSelect.value = "";
+          setStatus("Preset deleted.");
+        });
+      }
+
+      function attachDayEvents(){
+        els.plus.addEventListener("click", () => {
+          dayState.cups = Number(dayState.cups || 0) + 1;
+          renderDay();
+        });
+
+        els.minus.addEventListener("click", () => {
+          dayState.cups = Math.max(0, Number(dayState.cups || 0) - 1);
+          renderDay();
+        });
+
+        els.goalCups.addEventListener("input", () => {
+          dayState.goalCups = Number(els.goalCups.value || 0);
+          renderDay();
+        });
+
+        els.goalCups.addEventListener("change", () => {
+          dayState.goalCups = Number(els.goalCups.value || 0);
+          renderDay();
+        });
+
+        els.cupSize.addEventListener("change", () => {
+          dayState.cupSizeMl = Number(els.cupSize.value || 250);
+          renderDay();
+        });
+
+        function go(delta){
+          currentDate = new Date(currentDate.getTime() + delta * 86400000);
+          currentDate.setHours(0,0,0,0);
+          currentDayKey = isoDay(currentDate);
+          dayState = loadDay(currentDayKey);
+          renderDay();
+        }
+
+        els.prevDay.addEventListener("click", () => go(-1));
+        els.nextDay.addEventListener("click", () => go(1));
+
+        els.resetDay.addEventListener("click", () => {
+          lsRemove(KEYS.day(currentDayKey));
+          dayState = loadDay(currentDayKey);
+          renderDay();
+          broadcast("day", { dateKey: currentDayKey });
+        });
+
+        window.addEventListener("pagehide", () => {
+          saveDay(currentDayKey, dayState);
+        });
+
+        document.addEventListener("visibilitychange", () => {
+          if(document.visibilityState === "hidden"){
+            saveDay(currentDayKey, dayState);
+          }
+        });
+      }
+
+      function attachSyncEvents(){
+        window.addEventListener("storage", async (e) => {
+          if(!e.key) return;
+
+          if(e.key === KEYS.theme){
+            await hardReloadTheme();
+          }
+          if(e.key === KEYS.bg){
+            await hardReloadBackground();
+          }
+          if(e.key === KEYS.presets){
+            await refreshPresetSelect();
+          }
+          if(e.key === KEYS.day(currentDayKey)){
+            dayState = loadDay(currentDayKey);
+            renderDay();
+          }
+        });
+
+        if(channel){
+          channel.onmessage = async (event) => {
+            const msg = event.data || {};
+            if(!msg.type) return;
+
+            if(msg.type === "theme"){
+              await hardReloadTheme();
+            }
+            if(msg.type === "background"){
+              await hardReloadBackground();
+            }
+            if(msg.type === "presets"){
+              await refreshPresetSelect();
+            }
+            if(msg.type === "day"){
+              const targetKey = msg.payload && msg.payload.dateKey;
+              if(targetKey === currentDayKey){
+                dayState = loadDay(currentDayKey);
+                renderDay();
+              }
+            }
           };
-        }catch{
-          localStorage.removeItem(keyFor(date));
-          return defaultData();
         }
       }
-      function save(date, data){
-        localStorage.setItem(keyFor(date), JSON.stringify(data));
+
+      async function init(){
+        attachPopoverEvents();
+        attachThemeEvents();
+        attachBackgroundEvents();
+        attachPresetEvents();
+        attachDayEvents();
+        attachSyncEvents();
+
+        await initSettings();
+        dayState = loadDay(currentDayKey);
+        renderDay();
       }
 
-      let current = new Date();
-      current.setHours(0,0,0,0);
-      let state = load(current);
-
-      const dayMeta = document.getElementById("dayMeta");
-      const waterEl = document.getElementById("water");
-      const bigAmt = document.getElementById("bigAmt");
-      const smallAmt = document.getElementById("smallAmt");
-
-      const goalCups = document.getElementById("goalCups");
-      const cupSize = document.getElementById("cupSize");
-
-      const barFill = document.getElementById("barFill");
-      const progressPill = document.getElementById("progressPill");
-      const mlHint = document.getElementById("mlHint");
-
-      const minus = document.getElementById("minus");
-      const plus = document.getElementById("plus");
-
-      const prevDay = document.getElementById("prevDay");
-      const nextDay = document.getElementById("nextDay");
-      const resetDay = document.getElementById("resetDay");
-
-      function render(){
-        dayMeta.textContent = niceDay(current);
-
-        goalCups.value = state.goalCups ? String(state.goalCups) : "";
-        cupSize.value = String(state.cupSizeMl);
-
-        const cups = Math.max(0, Math.round(state.cups));
-        const goal = Math.max(0, Math.round(state.goalCups || 0));
-
-        bigAmt.textContent = String(cups);
-        smallAmt.textContent = cups === 1 ? "cup" : "cups";
-
-        const denom = goal > 0 ? goal : 8;
-        const pct = (cups / denom) * 100;
-        waterEl.style.height = clampPct(pct <= 120 ? pct : 120) + "%";
-
-        const barPct = goal > 0 ? clampPct((cups / goal) * 100) : 0;
-        barFill.style.width = barPct + "%";
-        progressPill.textContent = goal > 0 ? `${cups} / ${goal} cups` : `${cups} cups`;
-
-        const ml = cups * state.cupSizeMl;
-        mlHint.textContent = `${ml} ml today`;
-
-        save(current, state);
-      }
-
-      plus.addEventListener("click", () => { state.cups = Number(state.cups || 0) + 1; render(); });
-      minus.addEventListener("click", () => { state.cups = Math.max(0, Number(state.cups || 0) - 1); render(); });
-
-      goalCups.addEventListener("input", () => { state.goalCups = Number(goalCups.value || 0); render(); });
-      cupSize.addEventListener("change", () => { state.cupSizeMl = Number(cupSize.value || 250); render(); });
-
-      function go(delta){
-        current = new Date(current.getTime() + delta * 86400000);
-        current.setHours(0,0,0,0);
-        state = load(current);
-        render();
-      }
-      prevDay.addEventListener("click", () => go(-1));
-      nextDay.addEventListener("click", () => go(1));
-
-      resetDay.addEventListener("click", () => {
-        localStorage.removeItem(keyFor(current));
-        state = load(current);
-        render();
-      });
-
-      render();
-    });
+      init();
+    })();
   </script>
 </body>
 </html>

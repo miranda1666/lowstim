@@ -722,7 +722,6 @@
     <div class="top">
       <div class="title">
         <h1>Mistake Museum</h1>
-        <p>The best way to learn is from your mistakes, so drop them here and address them one by one!</p>
       </div>
 
       <div class="actions">
@@ -908,7 +907,7 @@
 
         <div class="formGrid">
           <div class="field">
-            <label for="mTitle">Mistake (title)</label>
+            <label for="mTitle">Mistake</label>
             <input class="input2" id="mTitle" required maxlength="90" placeholder="e.g., Misread the question and solved the wrong thing" />
           </div>
 
@@ -938,23 +937,18 @@
 
         <div class="field">
           <label for="mWhat">What happened?</label>
-          <textarea class="textarea" id="mWhat" placeholder="Describe the mistake briefly. What triggered it?"></textarea>
         </div>
 
         <div class="field">
           <label for="mLesson">Lesson learned</label>
-          <textarea class="textarea" id="mLesson" placeholder="Advice for future you"></textarea>
         </div>
 
         <div class="field">
-          <label for="mFix">Prevention routine (next time)</label>
-          <textarea class="textarea" id="mFix" placeholder="A tiny repeatable action: e.g., underline keywords, estimate first, check units, do a 30s sanity check."></textarea>
-          <div class="help">Make it simple enough you’ll actually do it under stress.</div>
+          <label for="mFix">Prevention routine</label>
         </div>
 
         <div class="modalFoot">
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <span class="tiny"><a class="link" href="#" id="seedDemo">Add example set</a></span>
             <button class="btn" type="button" id="cancelBtn">Cancel</button>
             <button class="btn primary" type="submit" id="saveBtn">Save</button>
           </div>
@@ -1803,7 +1797,6 @@
         <div class="empty">
           <div class="big" aria-hidden="true">⟡</div>
           <h2>No exhibits yet</h2>
-          <p>Add a mistake when it happens—then write the lesson learned and a simple prevention routine. Your future self will thank you!</p>
           <button class="btn primary" type="button" id="emptyAddBtn">＋ Add your first exhibit</button>
         </div>
       `;

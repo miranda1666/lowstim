@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Subscriptions Tracker</title>
   <style>
     :root{
-      --bg:#ffffff;
+      --page-bg:#ffffff;
       --card:#ffffffcc;
       --stroke:#e9e4dd;
       --ink:#2b2a28;
@@ -15,26 +15,29 @@
       --shadow:0 10px 30px rgba(30,20,10,.06);
       --r:18px;
 
-      /* theme extras (so we can cover "everything") */
       --item-bg:#ffffff;
       --input-bg:#ffffff;
-      --accent:#cbb8ae; /* theme dot */
+      --accent:#cbb8ae;
 
-      /* Board background */
-      --board-tint:#ffffff;
+      --board-tint:#efe7e1;
       --board-tint-a:0.30;
       --board-image:none;
+      --board-blur:0px;
     }
 
-    *{box-sizing:border-box}
-    html,body{width:100%; max-width:100%; overflow-x:hidden;}
+    *{ box-sizing:border-box; }
+    html, body{ width:100%; max-width:100%; min-height:100%; overflow-x:hidden; }
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       color:var(--ink);
-      background: var(--bg);
+      background: var(--page-bg);
       padding:28px 18px;
+      -webkit-text-size-adjust:100%;
     }
+
+    button, input, select, textarea{ font:inherit; }
 
     .wrap{max-width:900px; margin:0 auto;}
     h1{margin:0; font-size:18px}
@@ -46,7 +49,9 @@
       overflow:hidden;
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
+      background: transparent;
     }
+
     .widgetBoard::before{
       content:"";
       position:absolute;
@@ -55,24 +60,28 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      transform: scale(1.02);
+      transform: scale(1.03);
       z-index:0;
       pointer-events:none;
+      filter: blur(var(--board-blur)) saturate(1.02);
     }
+
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
       pointer-events:none;
       z-index:0;
-      /* set by JS (overlay) if you ever want it; left blank intentionally */
+      background: rgba(255,255,255,0.24);
     }
+
     .boardTint{
       position:absolute;
       inset:0;
       pointer-events:none;
       z-index:1;
     }
+
     .boardContent{
       position:relative;
       z-index:2;
@@ -85,6 +94,7 @@
       box-shadow:none;
       padding:14px;
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .title{
@@ -93,14 +103,20 @@
       justify-content:space-between;
       gap:10px;
       margin-bottom:10px;
+      flex-wrap:wrap;
     }
+
     .title h2{margin:0; font-size:14px; font-weight:650; letter-spacing:.2px}
     .hint{color:var(--muted); font-size:12px}
 
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
 
     button, input, select{
-      font:inherit;
       border:1px solid var(--stroke);
       background: var(--input-bg);
       color:var(--ink);
@@ -109,8 +125,20 @@
       outline:none;
       -webkit-tap-highlight-color: transparent;
     }
-    button{cursor:pointer}
+
+    input:focus, select:focus{
+      box-shadow: 0 0 0 3px rgba(203,184,174,0.25);
+    }
+
+    button{
+      cursor:pointer;
+      touch-action: manipulation;
+    }
+
     button.soft{background:var(--soft)}
+    button.primary{
+      background: color-mix(in srgb, var(--accent) 45%, white);
+    }
     button:active{transform:translateY(1px)}
     .divider{height:1px; background:var(--stroke); margin:12px 0}
 
@@ -134,27 +162,67 @@
       border-radius:14px;
       border:1px solid var(--stroke);
       background: var(--item-bg);
+      flex-wrap:wrap;
     }
-    .item .meta{display:flex; flex-direction:column; gap:2px}
-    .item .meta b{font-size:13px}
-    .item .meta span{font-size:12px; color:var(--muted)}
+    .item .meta{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .item .meta b{
+      font-size:13px;
+      word-break:break-word;
+    }
+    .item .meta span{
+      font-size:12px;
+      color:var(--muted);
+      word-break:break-word;
+    }
+
     .tag{
       font-size:11px;
       padding:6px 10px;
       border-radius:999px;
       border:1px solid var(--stroke);
-      background:var(--soft);
+      background: color-mix(in srgb, var(--accent) 22%, white);
       cursor:pointer;
       user-select:none;
+      white-space:nowrap;
     }
-    .tag.off{opacity:.65}
-    .right{display:flex; gap:8px; align-items:center}
-    .smallbtn{padding:8px 10px; border-radius:12px}
+    .tag.off{
+      opacity:.70;
+      background:var(--soft);
+    }
+
+    .right{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .smallbtn{
+      padding:8px 10px;
+      border-radius:12px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:40px;
+      height:36px;
+    }
+
+    .smallbtn svg{
+      width:16px;
+      height:16px;
+      display:block;
+      flex:0 0 auto;
+    }
+
     .danger{border-color:#efc2c2}
     .tiny{font-size:12px; color:var(--muted)}
     label.tiny{display:inline-flex; align-items:center; gap:8px}
 
-    /* ===== Popovers (Background + Theme) ===== */
     .tools{
       display:flex;
       gap:10px;
@@ -175,6 +243,7 @@
       place-items:center;
       box-shadow: 0 3px 12px rgba(30,20,10,.08);
       cursor:pointer;
+      touch-action: manipulation;
     }
 
     .dot{
@@ -184,6 +253,7 @@
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.30);
     }
+
     .themeDot{
       background: var(--accent);
       box-shadow: 0 0 0 6px rgba(203,184,174,0.25);
@@ -193,21 +263,20 @@
       position:absolute;
       top: 44px;
       right: 0;
-      width: 300px;
+      width: 320px;
       border-radius: 16px;
       border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.94);
       box-shadow: 0 18px 40px rgba(30,20,10,.12);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       padding: 12px;
       display:none;
       z-index: 50;
-
-      /* ✅ never cut off */
-      max-height: min(70vh, 520px);
+      max-height: min(76vh, 680px);
       overflow:auto;
     }
+
     .panel.open{ display:block; }
 
     .panelTitle{
@@ -226,23 +295,28 @@
       gap:10px;
       padding: 7px 0;
     }
+
     .pRow label{ font-size:12px; color:var(--muted); }
+
     .pRow input[type="color"]{
-      width:36px; height:28px;
+      width:42px; height:32px;
       border-radius:10px;
       padding:0;
       border:1px solid var(--stroke);
       background: transparent;
       cursor:pointer;
+      flex:0 0 auto;
     }
-    .pRow input[type="range"]{ width: 160px; }
+
+    .pRow input[type="range"]{ width: 160px; max-width:100%; }
     .pFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+
     .miniBtn{
       width:100%;
       border-radius:12px;
       border:1px solid var(--stroke);
       background: rgba(255,255,255,0.95);
-      padding:9px 10px;
+      padding:10px 12px;
       font-weight:700;
       letter-spacing:.06em;
       text-transform:uppercase;
@@ -251,7 +325,54 @@
       box-shadow: 0 2px 8px rgba(30,20,10,.06);
       cursor:pointer;
     }
+
+    .miniBtn:active{ transform: translateY(1px); }
     .pDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    .presetName{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color: var(--ink);
+      outline:none;
+    }
+
+    .presetSelect{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color: var(--ink);
+      outline:none;
+      height:38px;
+    }
+
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+      min-height: 16px;
+    }
+
+    @media (max-width: 760px){
+      body{ padding:14px; }
+      .row{ flex-direction:column; align-items:stretch; }
+      .item .right{ width:100%; justify-content:flex-end; }
+      .panel{
+        position: fixed !important;
+        top: 14px !important;
+        left: 14px !important;
+        right: 14px !important;
+        width: auto !important;
+        max-height: calc(100dvh - 28px);
+      }
+      input, select, textarea{ font-size:16px; }
+    }
   </style>
 </head>
 
@@ -259,6 +380,7 @@
   <div class="wrap">
     <h1>Subscriptions</h1>
 
+    <div class="widgetBoard">
       <div class="boardTint" id="boardTint"></div>
       <div class="boardContent">
         <section class="card">
@@ -266,7 +388,6 @@
             <h2>Add a subscription</h2>
 
             <div class="tools">
-              <!-- THEME -->
               <div class="popWrap" id="themeWrap">
                 <button class="iconBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
                   <span class="dot themeDot" id="themeDot" aria-hidden="true"></span>
@@ -274,6 +395,11 @@
 
                 <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
                   <div class="panelTitle">Theme</div>
+
+                  <button class="miniBtn" id="themeApply" type="button">Apply theme</button>
+                  <button class="miniBtn" id="themeReset" type="button" style="margin-top:8px;">Reset theme</button>
+
+                  <div class="pDiv"></div>
 
                   <div class="pRow"><label for="tBg">App background</label><input id="tBg" type="color" value="#ffffff"></div>
                   <div class="pRow"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2a28"></div>
@@ -299,11 +425,22 @@
 
                   <div class="pDiv"></div>
 
-                  <button class="miniBtn" id="themeReset" type="button">Reset theme</button>
+                  <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
+
+                  <input class="presetName" id="presetName" placeholder="Preset name">
+                  <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+                  <div class="pDiv"></div>
+
+                  <select class="presetSelect" id="presetSelect"></select>
+
+                  <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+                  <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+                  <div class="status" id="presetStatus" aria-live="polite"></div>
                 </div>
               </div>
 
-              <!-- BACKGROUND -->
               <div class="popWrap" id="bgWrap">
                 <button class="iconBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
                   <span class="dot" id="bgDot" aria-hidden="true"></span>
@@ -311,6 +448,11 @@
 
                 <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
                   <div class="panelTitle">Background</div>
+
+                  <button class="miniBtn" id="bgApply" type="button">Apply background</button>
+                  <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+                  <div class="pDiv"></div>
 
                   <div class="pRow">
                     <label for="bgColor">Tint</label>
@@ -320,6 +462,11 @@
                   <div class="pRow">
                     <label for="bgStrength">Strength</label>
                     <input id="bgStrength" type="range" min="0" max="70" value="30" />
+                  </div>
+
+                  <div class="pRow">
+                    <label for="bgBlur">Image blur</label>
+                    <input id="bgBlur" type="range" min="0" max="20" value="0" />
                   </div>
 
                   <div class="pDiv"></div>
@@ -333,9 +480,7 @@
                     <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
                   </div>
 
-                  <div class="pDiv"></div>
-
-                  <button class="miniBtn" id="bgReset" type="button">Reset background</button>
+                  <div class="status" id="bgStatus" aria-live="polite"></div>
                 </div>
               </div>
             </div>
@@ -361,7 +506,7 @@
               </select>
             </label>
 
-            <button id="subAdd">Add</button>
+            <button id="subAdd" class="primary">Add</button>
             <button class="danger" id="resetBtn" type="button">Reset</button>
           </div>
 
@@ -391,10 +536,145 @@
   </div>
 
 <script>
-/* =========================
-   Small utils
-========================= */
 (function(){
+  "use strict";
+
+  function canUseLocalStorage(){
+    try{
+      const k="__subs__"+Math.random().toString(16).slice(2);
+      localStorage.setItem(k,"1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{
+      return false;
+    }
+  }
+
+  const hasLS = canUseLocalStorage();
+  const mem = Object.create(null);
+
+  function storageGet(key){
+    try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+    catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{ if(hasLS) localStorage.setItem(key, value); else mem[key]=String(value); }
+    catch{ mem[key]=String(value); }
+  }
+  function storageRemove(key){
+    try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+    catch{ delete mem[key]; }
+  }
+
+  function sanitizeId(value){
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "default";
+  }
+
+  function getWidgetId(){
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = sanitizeId(sp.get("wid"));
+      if(wid && wid !== "default") return wid;
+    }catch{}
+    const fromPath = sanitizeId(location.pathname.replace(/\.[^/.]+$/, ""));
+    return fromPath || "default";
+  }
+
+  const WID = getWidgetId();
+  const PRESETS_KEY = "subscriptions_presets_v4";
+  const BC_NAME = "subscriptions-tracker-sync";
+  const channel = ("BroadcastChannel" in window) ? new BroadcastChannel(BC_NAME) : null;
+
+  function broadcast(type, payload){
+    try{
+      if(channel) channel.postMessage({ type, payload, wid: WID, ts: Date.now() });
+    }catch{}
+  }
+
+  const DB_NAME = "subscriptions_tracker_db_v4";
+  const DB_STORE = "kv";
+  let dbPromise = null;
+
+  function openDB(){
+    if(dbPromise) return dbPromise;
+
+    dbPromise = new Promise((resolve) => {
+      if(!("indexedDB" in window)){
+        resolve(null);
+        return;
+      }
+
+      const request = indexedDB.open(DB_NAME, 1);
+
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if(!db.objectStoreNames.contains(DB_STORE)){
+          db.createObjectStore(DB_STORE);
+        }
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => resolve(null);
+    });
+
+    return dbPromise;
+  }
+
+  async function idbGet(key){
+    const db = await openDB();
+    if(!db) return null;
+
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(DB_STORE, "readonly");
+        const store = tx.objectStore(DB_STORE);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result ?? null);
+        req.onerror = () => resolve(null);
+      }catch{
+        resolve(null);
+      }
+    });
+  }
+
+  async function idbSet(key, value){
+    const db = await openDB();
+    if(!db) return false;
+
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(DB_STORE, "readwrite");
+        const store = tx.objectStore(DB_STORE);
+        const req = store.put(value, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      }catch{
+        resolve(false);
+      }
+    });
+  }
+
+  async function idbRemove(key){
+    const db = await openDB();
+    if(!db) return false;
+
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(DB_STORE, "readwrite");
+        const store = tx.objectStore(DB_STORE);
+        const req = store.delete(key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      }catch{
+        resolve(false);
+      }
+    });
+  }
+
   function hexToRgba(hex, a){
     const h = String(hex || "").replace("#","").trim();
     const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
@@ -404,285 +684,49 @@
     const b = num & 255;
     return `rgba(${r},${g},${b},${a})`;
   }
+
   function clamp(n,min,max){
     n = Number(n);
     if(!Number.isFinite(n)) return min;
     return Math.max(min, Math.min(max, n));
   }
+
   function normHex(hex, fallback){
     const s = String(hex||"").trim();
     return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
   }
 
-  window.__subsUtils = { hexToRgba, clamp, normHex };
-})();
-
-/* =========================
-   Popovers (theme + bg)
-========================= */
-(function(){
-  const $ = (id)=>document.getElementById(id);
-
-  const themeBtn = $("themeBtn");
-  const themePanel = $("themePanel");
-  const bgBtn = $("bgBtn");
-  const bgPanel = $("bgPanel");
-
-  function closeAll(except){
-    [themePanel, bgPanel].forEach(p=>{
-      if(!p) return;
-      if(p !== except) p.classList.remove("open");
-    });
+  function loadJSON(key, fallback = null){
+    try{
+      const raw = storageGet(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch{
+      return fallback;
+    }
   }
 
-  themeBtn?.addEventListener("click", (e)=>{
-    e.stopPropagation();
-    const open = !themePanel.classList.contains("open");
-    closeAll(open ? themePanel : null);
-    themePanel.classList.toggle("open", open);
-  });
-
-  bgBtn?.addEventListener("click", (e)=>{
-    e.stopPropagation();
-    const open = !bgPanel.classList.contains("open");
-    closeAll(open ? bgPanel : null);
-    bgPanel.classList.toggle("open", open);
-  });
-
-  document.addEventListener("click",(e)=>{
-    const inside =
-      e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
-      e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-    if(!inside) closeAll(null);
-  });
-})();
-
-/* =========================
-   Background (your existing logic + reset)
-========================= */
-(function(){
-  const BG_KEY = "subscriptions_bg_v1";
-  const { hexToRgba, clamp, normHex } = window.__subsUtils;
-
-  function loadBg(){
-    try{ return JSON.parse(localStorage.getItem(BG_KEY) || "null"); }catch{ return null; }
+  function saveJSON(key, val){
+    storageSet(key, JSON.stringify(val));
   }
-  function saveBg(bg){
-    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
+
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
   }
-  function fileToDataUrl(file){
+
+  async function fileToDataUrl(file){
     return new Promise((resolve, reject) => {
       const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
+      r.onload = () => resolve(String(r.result || ""));
       r.onerror = reject;
       r.readAsDataURL(file);
     });
   }
 
-  const boardTintEl = document.getElementById("boardTint");
-  const bgColor = document.getElementById("bgColor");
-  const bgStrength = document.getElementById("bgStrength");
-  const bgImage = document.getElementById("bgImage");
-  const bgRemove = document.getElementById("bgRemove");
-  const bgReset = document.getElementById("bgReset");
-  const bgDot = document.getElementById("bgDot");
-
-  if(!bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
-
-  const DEFAULT_BG = { tint:"#efe7e1", strength:30, imageDataUrl:null };
-  const bgState = Object.assign({}, DEFAULT_BG, loadBg() || {});
-
-  function applyBg(){
-    const tint = normHex(bgState.tint, DEFAULT_BG.tint);
-    const strength = clamp(bgState.strength, 0, 70) / 100;
-
-    document.documentElement.style.setProperty("--board-tint", tint);
-    document.documentElement.style.setProperty("--board-tint-a", String(strength));
-    document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
-
-    boardTintEl.style.background = hexToRgba(tint, strength);
-
-    if(bgDot){
-      bgDot.style.background = tint;
-      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
-    }
-  }
-
-  bgColor.value = bgState.tint;
-  bgStrength.value = String(bgState.strength);
-  applyBg();
-
-  bgColor.addEventListener("input", () => {
-    bgState.tint = bgColor.value;
-    applyBg();
-    saveBg(bgState);
-  });
-
-  bgStrength.addEventListener("input", () => {
-    bgState.strength = Number(bgStrength.value);
-    applyBg();
-    saveBg(bgState);
-  });
-
-  bgImage.addEventListener("change", async () => {
-    const file = bgImage.files && bgImage.files[0];
-    if(!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    bgState.imageDataUrl = dataUrl;
-    applyBg();
-    saveBg(bgState);
-  });
-
-  bgRemove.addEventListener("click", () => {
-    bgState.imageDataUrl = null;
-    bgImage.value = "";
-    applyBg();
-    saveBg(bgState);
-  });
-
-  bgReset?.addEventListener("click", () => {
-    localStorage.removeItem(BG_KEY);
-    bgState.tint = DEFAULT_BG.tint;
-    bgState.strength = DEFAULT_BG.strength;
-    bgState.imageDataUrl = DEFAULT_BG.imageDataUrl;
-    bgColor.value = DEFAULT_BG.tint;
-    bgStrength.value = String(DEFAULT_BG.strength);
-    bgImage.value = "";
-    applyBg();
-  });
-})();
-
-/* =========================
-   Theme (NEW)
-========================= */
-(function(){
-  const THEME_KEY = "subscriptions_theme_v1";
-  const { hexToRgba, clamp, normHex } = window.__subsUtils;
-  const $ = (id)=>document.getElementById(id);
-
-  const DEFAULT_THEME = {
-    bg:"#ffffff",
-    ink:"#2b2a28",
-    muted:"#6a665f",
-    accent:"#cbb8ae",
-
-    stroke:"#e9e4dd",
-    soft:"#f3efe9",
-    itemBg:"#ffffff",
-    inputBg:"#ffffff",
-
-    card:"#ffffff",
-    cardA: 0.80,
-
-    radius:18,
-    shadow:6
-  };
-
-  function loadTheme(){
-    try{ return JSON.parse(localStorage.getItem(THEME_KEY) || "null"); }catch{ return null; }
-  }
-  function saveTheme(t){
-    try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-  }
-
-  function applyTheme(t){
-    const x = Object.assign({}, DEFAULT_THEME, t || {});
-    const r = document.documentElement.style;
-
-    r.setProperty("--bg", normHex(x.bg, DEFAULT_THEME.bg));
-    r.setProperty("--ink", normHex(x.ink, DEFAULT_THEME.ink));
-    r.setProperty("--muted", normHex(x.muted, DEFAULT_THEME.muted));
-    r.setProperty("--accent", normHex(x.accent, DEFAULT_THEME.accent));
-
-    r.setProperty("--stroke", normHex(x.stroke, DEFAULT_THEME.stroke));
-    r.setProperty("--soft", normHex(x.soft, DEFAULT_THEME.soft));
-    r.setProperty("--item-bg", normHex(x.itemBg, DEFAULT_THEME.itemBg));
-    r.setProperty("--input-bg", normHex(x.inputBg, DEFAULT_THEME.inputBg));
-
-    const cardHex = normHex(x.card, DEFAULT_THEME.card);
-    const cardA = clamp(x.cardA, 0.40, 1.00);
-    r.setProperty("--card", hexToRgba(cardHex, cardA));
-
-    r.setProperty("--r", String(clamp(x.radius, 10, 28)) + "px");
-
-    const sh = clamp(x.shadow, 0, 30) / 100; // 0..0.30
-    r.setProperty("--shadow", `0 10px 30px rgba(30,20,10,${(0.02 + sh).toFixed(3)})`);
-
-    const dot = $("themeDot");
-    if(dot){
-      dot.style.background = normHex(x.accent, DEFAULT_THEME.accent);
-      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(normHex(x.accent, DEFAULT_THEME.accent), 0.25)}`;
-    }
-  }
-
-  function syncInputs(t){
-    const x = Object.assign({}, DEFAULT_THEME, t || {});
-    $("tBg").value = normHex(x.bg, DEFAULT_THEME.bg);
-    $("tInk").value = normHex(x.ink, DEFAULT_THEME.ink);
-    $("tMuted").value = normHex(x.muted, DEFAULT_THEME.muted);
-    $("tAccent").value = normHex(x.accent, DEFAULT_THEME.accent);
-
-    $("tCard").value = normHex(x.card, DEFAULT_THEME.card);
-    $("tCardA").value = String(Math.round(clamp(x.cardA,0.40,1.00)*100));
-
-    $("tStroke").value = normHex(x.stroke, DEFAULT_THEME.stroke);
-    $("tSoft").value = normHex(x.soft, DEFAULT_THEME.soft);
-    $("tItemBg").value = normHex(x.itemBg, DEFAULT_THEME.itemBg);
-    $("tInputBg").value = normHex(x.inputBg, DEFAULT_THEME.inputBg);
-
-    $("tRadius").value = String(clamp(x.radius,10,28));
-    $("tShadow").value = String(clamp(x.shadow,0,30));
-  }
-
-  function readInputs(){
-    return {
-      bg: $("tBg").value,
-      ink: $("tInk").value,
-      muted: $("tMuted").value,
-      accent: $("tAccent").value,
-
-      card: $("tCard").value,
-      cardA: clamp(Number($("tCardA").value)/100, 0.40, 1.00),
-
-      stroke: $("tStroke").value,
-      soft: $("tSoft").value,
-      itemBg: $("tItemBg").value,
-      inputBg: $("tInputBg").value,
-
-      radius: clamp(Number($("tRadius").value), 10, 28),
-      shadow: clamp(Number($("tShadow").value), 0, 30),
-    };
-  }
-
-  const saved = loadTheme() || DEFAULT_THEME;
-  applyTheme(saved);
-  syncInputs(saved);
-
-  const ids = ["tBg","tInk","tMuted","tAccent","tCard","tCardA","tStroke","tSoft","tItemBg","tInputBg","tRadius","tShadow"];
-  ids.forEach(id=>{
-    const el = $(id);
-    el?.addEventListener("input", ()=>{
-      const t = readInputs();
-      applyTheme(t);
-      saveTheme(t);
-    });
-  });
-
-  $("themeReset")?.addEventListener("click", ()=>{
-    localStorage.removeItem(THEME_KEY);
-    applyTheme(DEFAULT_THEME);
-    syncInputs(DEFAULT_THEME);
-    saveTheme(DEFAULT_THEME);
-  });
-})();
-
-/* =========================
-   Your subscriptions tracker logic (unchanged)
-========================= */
-(function(){
-  const KEY = "subscriptions_tracker_v1";
-  const CUR_KEY = "subscriptions_currency_pref_v1";
-  const $ = (id)=>document.getElementById(id);
+  const KEY = "subscriptions_tracker_v4__" + WID;
+  const CUR_KEY = "subscriptions_currency_pref_v4__" + WID;
+  const BG_KEY = "subscriptions_bg_v4__" + WID;
+  const BG_IMAGE_KEY = "subscriptions_bg_image_v4__" + WID;
+  const THEME_KEY = "subscriptions_theme_v4__" + WID;
 
   const REGION_TO_CURRENCY = {
     GB:"GBP", US:"USD", CA:"CAD", AU:"AUD", NZ:"NZD",
@@ -700,7 +744,7 @@
         const loc = new Intl.Locale(locale);
         if (loc.region) return loc.region.toUpperCase();
       }
-    }catch(e){}
+    }catch{}
     const norm = String(locale || "").replace("_","-");
     const parts = norm.split("-");
     return (parts[1] || "").toUpperCase();
@@ -716,7 +760,7 @@
     const v = Number(n||0);
     if(!isFinite(v)) return "0";
     const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || undefined;
-    const pref = localStorage.getItem(CUR_KEY) || "AUTO";
+    const pref = storageGet(CUR_KEY) || "AUTO";
     const cur = (pref === "AUTO") ? autoCurrency() : pref;
 
     try{
@@ -724,12 +768,10 @@
         return new Intl.NumberFormat(locale, { style:"currency", currency: cur }).format(v);
       }
       return new Intl.NumberFormat(locale, { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v);
-    }catch(e){
+    }catch{
       return v.toFixed(2);
     }
   }
-
-  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
 
   function ordinal(n){
     const s = ["th","st","nd","rd"];
@@ -741,19 +783,277 @@
     return { subs: [] };
   }
 
-  function load(){
-    try{
-      const raw = localStorage.getItem(KEY);
-      return raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState();
-    }catch(e){
-      return defaultState();
+  function sanitizeSub(sub){
+    return {
+      id: String(sub?.id || uid()),
+      name: String(sub?.name || "").trim(),
+      cost: Math.max(0, Number(sub?.cost || 0)),
+      renewDay: clamp(sub?.renewDay, 1, 31),
+      worthIt: sub?.worthIt !== false
+    };
+  }
+
+  function sanitizeState(state){
+    const src = state && typeof state === "object" ? state : {};
+    return {
+      subs: Array.isArray(src.subs) ? src.subs.map(sanitizeSub).filter(s => s.name && s.cost > 0) : []
+    };
+  }
+
+  const DEFAULT_BG = { tint:"#efe7e1", strength:30, blur:0 };
+  const DEFAULT_THEME = {
+    bg:"#ffffff",
+    ink:"#2b2a28",
+    muted:"#6a665f",
+    accent:"#cbb8ae",
+    stroke:"#e9e4dd",
+    soft:"#f3efe9",
+    itemBg:"#ffffff",
+    inputBg:"#ffffff",
+    card:"#ffffff",
+    cardA: 0.80,
+    radius:18,
+    shadow:6
+  };
+
+  const $ = (id)=>document.getElementById(id);
+
+  const els = {
+    themeBtn:$("themeBtn"),
+    themePanel:$("themePanel"),
+    bgBtn:$("bgBtn"),
+    bgPanel:$("bgPanel"),
+
+    themeDot:$("themeDot"),
+    bgDot:$("bgDot"),
+    boardTint:$("boardTint"),
+
+    tBg:$("tBg"),
+    tInk:$("tInk"),
+    tMuted:$("tMuted"),
+    tAccent:$("tAccent"),
+    tCard:$("tCard"),
+    tCardA:$("tCardA"),
+    tStroke:$("tStroke"),
+    tSoft:$("tSoft"),
+    tItemBg:$("tItemBg"),
+    tInputBg:$("tInputBg"),
+    tRadius:$("tRadius"),
+    tShadow:$("tShadow"),
+    themeApply:$("themeApply"),
+    themeReset:$("themeReset"),
+
+    presetName:$("presetName"),
+    presetSelect:$("presetSelect"),
+    presetSave:$("presetSave"),
+    presetApply:$("presetApply"),
+    presetDelete:$("presetDelete"),
+    presetStatus:$("presetStatus"),
+
+    bgColor:$("bgColor"),
+    bgStrength:$("bgStrength"),
+    bgBlur:$("bgBlur"),
+    bgImage:$("bgImage"),
+    bgRemove:$("bgRemove"),
+    bgApply:$("bgApply"),
+    bgReset:$("bgReset"),
+    bgStatus:$("bgStatus"),
+
+    subName:$("subName"),
+    subCost:$("subCost"),
+    subRenew:$("subRenew"),
+    currency:$("currency"),
+    subAdd:$("subAdd"),
+    resetBtn:$("resetBtn"),
+    kTotal:$("kTotal"),
+    kCount:$("kCount"),
+    kSoon:$("kSoon"),
+    subsList:$("subsList")
+  };
+
+  function setStatus(msg){
+    els.presetStatus.textContent = msg || "";
+    els.bgStatus.textContent = msg || "";
+  }
+
+  function safeBg(bg){
+    const x = Object.assign({}, DEFAULT_BG, bg || {});
+    return {
+      tint: normHex(x.tint, DEFAULT_BG.tint),
+      strength: clamp(x.strength, 0, 70),
+      blur: clamp(x.blur, 0, 20)
+    };
+  }
+
+  function safeTheme(t){
+    const x = Object.assign({}, DEFAULT_THEME, t || {});
+    return {
+      bg: normHex(x.bg, DEFAULT_THEME.bg),
+      ink: normHex(x.ink, DEFAULT_THEME.ink),
+      muted: normHex(x.muted, DEFAULT_THEME.muted),
+      accent: normHex(x.accent, DEFAULT_THEME.accent),
+      stroke: normHex(x.stroke, DEFAULT_THEME.stroke),
+      soft: normHex(x.soft, DEFAULT_THEME.soft),
+      itemBg: normHex(x.itemBg, DEFAULT_THEME.itemBg),
+      inputBg: normHex(x.inputBg, DEFAULT_THEME.inputBg),
+      card: normHex(x.card, DEFAULT_THEME.card),
+      cardA: clamp(x.cardA, 0.40, 1.00),
+      radius: clamp(x.radius, 10, 28),
+      shadow: clamp(x.shadow, 0, 30)
+    };
+  }
+
+  function applyTheme(t){
+    const x = safeTheme(t);
+    const r = document.documentElement.style;
+
+    r.setProperty("--page-bg", x.bg);
+    r.setProperty("--bg", x.bg);
+    r.setProperty("--ink", x.ink);
+    r.setProperty("--muted", x.muted);
+    r.setProperty("--accent", x.accent);
+    r.setProperty("--stroke", x.stroke);
+    r.setProperty("--soft", x.soft);
+    r.setProperty("--item-bg", x.itemBg);
+    r.setProperty("--input-bg", x.inputBg);
+    r.setProperty("--card", hexToRgba(x.card, x.cardA));
+    r.setProperty("--r", x.radius + "px");
+    r.setProperty("--shadow", `0 10px 30px rgba(30,20,10,${(0.02 + (x.shadow / 100)).toFixed(3)})`);
+
+    els.themeDot.style.background = x.accent;
+    els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(x.accent, 0.25)}`;
+    return x;
+  }
+
+  function syncThemeInputs(t){
+    els.tBg.value = t.bg;
+    els.tInk.value = t.ink;
+    els.tMuted.value = t.muted;
+    els.tAccent.value = t.accent;
+    els.tCard.value = t.card;
+    els.tCardA.value = String(Math.round(t.cardA * 100));
+    els.tStroke.value = t.stroke;
+    els.tSoft.value = t.soft;
+    els.tItemBg.value = t.itemBg;
+    els.tInputBg.value = t.inputBg;
+    els.tRadius.value = String(t.radius);
+    els.tShadow.value = String(t.shadow);
+  }
+
+  function readThemeInputs(){
+    return safeTheme({
+      bg: els.tBg.value,
+      ink: els.tInk.value,
+      muted: els.tMuted.value,
+      accent: els.tAccent.value,
+      card: els.tCard.value,
+      cardA: clamp(Number(els.tCardA.value) / 100, 0.40, 1.00),
+      stroke: els.tStroke.value,
+      soft: els.tSoft.value,
+      itemBg: els.tItemBg.value,
+      inputBg: els.tInputBg.value,
+      radius: Number(els.tRadius.value),
+      shadow: Number(els.tShadow.value)
+    });
+  }
+
+  function applyBackground(bg, imageDataUrl){
+    const x = safeBg(bg);
+    const strength = x.strength / 100;
+
+    document.documentElement.style.setProperty("--board-tint", x.tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", imageDataUrl ? `url("${imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-blur", `${x.blur}px`);
+
+    els.boardTint.style.background = hexToRgba(x.tint, strength);
+    els.bgDot.style.background = x.tint;
+    els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(x.tint, Math.min(0.35, strength + 0.12))}`;
+
+    const overlayAlpha = clamp(strength + 0.08, 0.08, 0.55);
+    let st = document.getElementById("subs_overlay_style");
+    if(!st){
+      st = document.createElement("style");
+      st.id = "subs_overlay_style";
+      document.head.appendChild(st);
+    }
+    st.textContent = `.widgetBoard::after{background:${hexToRgba("#ffffff", overlayAlpha)} !important;}`;
+  }
+
+  function syncBackgroundInputs(bg){
+    els.bgColor.value = bg.tint;
+    els.bgStrength.value = String(bg.strength);
+    els.bgBlur.value = String(bg.blur);
+  }
+
+  function readBackgroundInputs(){
+    return safeBg({
+      tint: els.bgColor.value,
+      strength: Number(els.bgStrength.value),
+      blur: Number(els.bgBlur.value)
+    });
+  }
+
+  async function saveBackground(bg, imageDataUrl){
+    saveJSON(BG_KEY, safeBg(bg));
+    if(imageDataUrl){
+      await idbSet(BG_IMAGE_KEY, imageDataUrl);
+    }else{
+      await idbRemove(BG_IMAGE_KEY);
+    }
+    broadcast("background");
+  }
+
+  async function loadBackground(){
+    const bg = safeBg(loadJSON(BG_KEY, DEFAULT_BG));
+    const image = await idbGet(BG_IMAGE_KEY);
+    return {
+      bg,
+      imageDataUrl: (typeof image === "string" && image) ? image : null
+    };
+  }
+
+  async function saveTheme(theme){
+    saveJSON(THEME_KEY, safeTheme(theme));
+    broadcast("theme");
+  }
+
+  async function loadTheme(){
+    return safeTheme(loadJSON(THEME_KEY, DEFAULT_THEME));
+  }
+
+  async function loadPresets(){
+    const list = loadJSON(PRESETS_KEY, []);
+    return Array.isArray(list) ? list : [];
+  }
+
+  async function savePresets(list){
+    saveJSON(PRESETS_KEY, Array.isArray(list) ? list : []);
+    broadcast("presets");
+  }
+
+  function presetImageKey(id){
+    return `subscriptions_preset_image_v4__${id}`;
+  }
+
+  async function refreshPresetSelect(){
+    const list = await loadPresets();
+    const cur = els.presetSelect.value;
+    els.presetSelect.innerHTML = `<option value="">—</option>`;
+    for(const p of list){
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled";
+      els.presetSelect.appendChild(opt);
+    }
+    if(cur && list.some(x => x.id === cur)){
+      els.presetSelect.value = cur;
     }
   }
 
-  let state = load();
-
-  function save(){
-    localStorage.setItem(KEY, JSON.stringify(state));
+  async function getPresetById(id){
+    const list = await loadPresets();
+    return list.find(x => x.id === id) || null;
   }
 
   function daysUntilRenew(renewDay){
@@ -770,25 +1070,24 @@
 
   function renderKPIs(sorted){
     const total = sorted.reduce((a,s)=>a + Number(s.cost||0), 0);
-    $("kTotal").textContent = money(total);
-    $("kCount").textContent = String(sorted.length);
+    els.kTotal.textContent = money(total);
+    els.kCount.textContent = String(sorted.length);
 
     if(sorted.length === 0){
-      $("kSoon").textContent = "—";
+      els.kSoon.textContent = "—";
       return;
     }
     const next = sorted[0];
     const inDays = daysUntilRenew(next.renewDay);
     const soonTxt = inDays === 0 ? "Today" : inDays === 1 ? "Tomorrow" : `In ${inDays} days`;
-    $("kSoon").textContent = `${next.name} · ${soonTxt}`;
+    els.kSoon.textContent = `${next.name} · ${soonTxt}`;
   }
 
   function renderList(sorted){
-    const root = $("subsList");
-    root.innerHTML = "";
+    els.subsList.innerHTML = "";
 
     if(sorted.length === 0){
-      root.innerHTML = `<div class="tiny">No subscriptions added yet.</div>`;
+      els.subsList.innerHTML = `<div class="tiny">No subscriptions added yet.</div>`;
       return;
     }
 
@@ -806,28 +1105,32 @@
           <span class="tag ${s.worthIt ? "" : "off"}" data-toggle="${s.id}">
             ${s.worthIt ? "Still worth it" : "Not sure"}
           </span>
-          <button class="smallbtn" data-del="${s.id}" title="Remove" type="button">✕</button>
+          <button class="smallbtn" data-del="${s.id}" title="Remove" type="button" aria-label="Remove subscription">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+          </button>
         </div>
       `;
-      root.appendChild(el);
+      els.subsList.appendChild(el);
     }
 
-    root.querySelectorAll("[data-toggle]").forEach(btn=>{
+    els.subsList.querySelectorAll("[data-toggle]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         const id = btn.getAttribute("data-toggle");
         const sub = state.subs.find(x=>x.id===id);
         if(!sub) return;
         sub.worthIt = !sub.worthIt;
-        save();
+        saveState();
         renderAll();
       });
     });
 
-    root.querySelectorAll("[data-del]").forEach(btn=>{
+    els.subsList.querySelectorAll("[data-del]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         const id = btn.getAttribute("data-del");
         state.subs = state.subs.filter(x=>x.id!==id);
-        save();
+        saveState();
         renderAll();
       });
     });
@@ -839,48 +1142,327 @@
     renderList(sorted);
   }
 
-  function init(){
-    const savedCur = localStorage.getItem(CUR_KEY) || "AUTO";
-    $("currency").value = savedCur;
-    $("currency").addEventListener("change", ()=>{
-      localStorage.setItem(CUR_KEY, $("currency").value);
-      renderAll();
+  function saveState(){
+    saveJSON(KEY, sanitizeState(state));
+    broadcast("subscriptions");
+  }
+
+  let state = sanitizeState(loadJSON(KEY, defaultState()));
+  let themeDraft = safeTheme(DEFAULT_THEME);
+  let bgDraft = safeBg(DEFAULT_BG);
+  let bgDraftImage = null;
+
+  function closeAllPanels(except){
+    [els.themePanel, els.bgPanel].forEach(p=>{
+      if(!p) return;
+      if(p !== except) p.classList.remove("open");
+    });
+  }
+
+  els.themeBtn.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const open = !els.themePanel.classList.contains("open");
+    closeAllPanels(open ? els.themePanel : null);
+    els.themePanel.classList.toggle("open", open);
+  });
+
+  els.bgBtn.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const open = !els.bgPanel.classList.contains("open");
+    closeAllPanels(open ? els.bgPanel : null);
+    els.bgPanel.classList.toggle("open", open);
+  });
+
+  document.addEventListener("click",(e)=>{
+    const inside =
+      e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
+      e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+    if(!inside) closeAllPanels(null);
+  });
+
+  [els.tBg, els.tInk, els.tMuted, els.tAccent, els.tCard, els.tCardA, els.tStroke, els.tSoft, els.tItemBg, els.tInputBg, els.tRadius, els.tShadow].forEach(el=>{
+    el.addEventListener("input", ()=>{
+      themeDraft = applyTheme(readThemeInputs());
+      setStatus("");
+    });
+  });
+
+  els.themeApply.addEventListener("click", async ()=>{
+    themeDraft = applyTheme(readThemeInputs());
+    syncThemeInputs(themeDraft);
+    await saveTheme(themeDraft);
+    setStatus("Theme applied.");
+  });
+
+  els.themeReset.addEventListener("click", async ()=>{
+    themeDraft = applyTheme(DEFAULT_THEME);
+    syncThemeInputs(themeDraft);
+    await saveTheme(themeDraft);
+    setStatus("Theme reset.");
+  });
+
+  els.bgColor.addEventListener("input", ()=>{
+    bgDraft = readBackgroundInputs();
+    applyBackground(bgDraft, bgDraftImage);
+    setStatus("");
+  });
+
+  els.bgStrength.addEventListener("input", ()=>{
+    bgDraft = readBackgroundInputs();
+    applyBackground(bgDraft, bgDraftImage);
+    setStatus("");
+  });
+
+  els.bgBlur.addEventListener("input", ()=>{
+    bgDraft = readBackgroundInputs();
+    applyBackground(bgDraft, bgDraftImage);
+    setStatus("");
+  });
+
+  els.bgImage.addEventListener("change", async ()=>{
+    const file = els.bgImage.files && els.bgImage.files[0];
+    if(!file) return;
+    try{
+      bgDraftImage = await fileToDataUrl(file);
+      applyBackground(bgDraft, bgDraftImage);
+      setStatus("");
+    }catch{
+      setStatus("Could not load image.");
+    }
+  });
+
+  els.bgRemove.addEventListener("click", ()=>{
+    bgDraftImage = null;
+    els.bgImage.value = "";
+    applyBackground(bgDraft, bgDraftImage);
+    setStatus("");
+  });
+
+  els.bgApply.addEventListener("click", async ()=>{
+    bgDraft = readBackgroundInputs();
+    applyBackground(bgDraft, bgDraftImage);
+    await saveBackground(bgDraft, bgDraftImage);
+    setStatus("Background applied.");
+  });
+
+  els.bgReset.addEventListener("click", async ()=>{
+    bgDraft = safeBg(DEFAULT_BG);
+    bgDraftImage = null;
+    els.bgImage.value = "";
+    syncBackgroundInputs(bgDraft);
+    applyBackground(bgDraft, bgDraftImage);
+    await saveBackground(bgDraft, bgDraftImage);
+    setStatus("Background reset.");
+  });
+
+  els.presetSave.addEventListener("click", async ()=>{
+    const name = (els.presetName.value || "").trim();
+    if(!name){
+      setStatus("Type a preset name first.");
+      return;
+    }
+
+    const list = await loadPresets();
+    const id = uid();
+
+    list.unshift({
+      id,
+      name,
+      theme: readThemeInputs(),
+      bg: readBackgroundInputs(),
+      hasImage: !!bgDraftImage
     });
 
-    $("subAdd").addEventListener("click", ()=>{
-      const name = $("subName").value.trim();
-      const cost = Number($("subCost").value);
-      const renewDay = Number($("subRenew").value);
+    if(bgDraftImage){
+      await idbSet(presetImageKey(id), bgDraftImage);
+    }
 
-      if(!name) return alert("Name is required.");
-      if(!isFinite(cost) || cost <= 0) return alert("Enter a valid monthly cost.");
-      if(!Number.isFinite(renewDay) || renewDay < 1 || renewDay > 31) return alert("Renew date must be 1–31.");
+    await savePresets(list);
+    els.presetName.value = "";
+    await refreshPresetSelect();
+    els.presetSelect.value = id;
+    setStatus("Preset saved.");
+  });
 
-      state.subs.unshift({ id: uid(), name, cost, renewDay, worthIt: true });
-      save();
+  els.presetApply.addEventListener("click", async ()=>{
+    const id = els.presetSelect.value || "";
+    if(!id){
+      setStatus("Choose a preset first.");
+      return;
+    }
 
-      $("subName").value = "";
-      $("subCost").value = "";
-      $("subRenew").value = "";
+    const p = await getPresetById(id);
+    if(!p){
+      setStatus("Preset not found.");
+      return;
+    }
 
-      renderAll();
+    themeDraft = applyTheme(safeTheme(p.theme || DEFAULT_THEME));
+    syncThemeInputs(themeDraft);
+    await saveTheme(themeDraft);
+
+    bgDraft = safeBg(p.bg || DEFAULT_BG);
+    bgDraftImage = p.hasImage ? await idbGet(presetImageKey(id)) : null;
+    syncBackgroundInputs(bgDraft);
+    applyBackground(bgDraft, bgDraftImage);
+    await saveBackground(bgDraft, bgDraftImage);
+
+    setStatus("Preset applied.");
+  });
+
+  els.presetDelete.addEventListener("click", async ()=>{
+    const id = els.presetSelect.value || "";
+    if(!id){
+      setStatus("Choose a preset first.");
+      return;
+    }
+
+    const list = await loadPresets();
+    const next = list.filter(x=>x.id!==id);
+    if(next.length === list.length){
+      setStatus("Preset not found.");
+      return;
+    }
+
+    await idbRemove(presetImageKey(id));
+    await savePresets(next);
+    await refreshPresetSelect();
+    els.presetSelect.value = "";
+    setStatus("Preset deleted.");
+  });
+
+  els.currency.value = storageGet(CUR_KEY) || "AUTO";
+  els.currency.addEventListener("change", ()=>{
+    storageSet(CUR_KEY, els.currency.value);
+    renderAll();
+    broadcast("currency");
+  });
+
+  els.subAdd.addEventListener("click", ()=>{
+    const name = els.subName.value.trim();
+    const cost = Number(els.subCost.value);
+    const renewDay = Number(els.subRenew.value);
+
+    if(!name) return alert("Name is required.");
+    if(!isFinite(cost) || cost <= 0) return alert("Enter a valid monthly cost.");
+    if(!Number.isFinite(renewDay) || renewDay < 1 || renewDay > 31) return alert("Renew date must be 1–31.");
+
+    state.subs.unshift(sanitizeSub({ id: uid(), name, cost, renewDay, worthIt: true }));
+    saveState();
+
+    els.subName.value = "";
+    els.subCost.value = "";
+    els.subRenew.value = "";
+
+    renderAll();
+  });
+
+  [els.subName, els.subCost, els.subRenew].forEach(el => {
+    el.addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){
+        e.preventDefault();
+        els.subAdd.click();
+      }
     });
+  });
 
-    $("resetBtn").addEventListener("click", ()=>{
-      localStorage.removeItem(KEY);
-      state = defaultState();
-      save();
+  els.resetBtn.addEventListener("click", ()=>{
+    storageRemove(KEY);
+    state = defaultState();
+    saveState();
+    renderAll();
+  });
+
+  window.addEventListener("pagehide", () => {
+    saveJSON(KEY, sanitizeState(state));
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if(document.visibilityState === "hidden"){
+      saveJSON(KEY, sanitizeState(state));
+    }
+  });
+
+  window.addEventListener("storage", async (e) => {
+    if(!e.key) return;
+
+    if(e.key === THEME_KEY){
+      themeDraft = applyTheme(await loadTheme());
+      syncThemeInputs(themeDraft);
+    }
+
+    if(e.key === BG_KEY){
+      const savedBg = await loadBackground();
+      bgDraft = savedBg.bg;
+      bgDraftImage = savedBg.imageDataUrl;
+      syncBackgroundInputs(bgDraft);
+      applyBackground(bgDraft, bgDraftImage);
+    }
+
+    if(e.key === PRESETS_KEY){
+      await refreshPresetSelect();
+    }
+
+    if(e.key === KEY){
+      state = sanitizeState(loadJSON(KEY, defaultState()));
       renderAll();
-    });
+    }
 
+    if(e.key === CUR_KEY){
+      els.currency.value = storageGet(CUR_KEY) || "AUTO";
+      renderAll();
+    }
+  });
+
+  if(channel){
+    channel.onmessage = async (event) => {
+      const msg = event.data || {};
+      if(!msg.type) return;
+
+      if(msg.type === "theme"){
+        themeDraft = applyTheme(await loadTheme());
+        syncThemeInputs(themeDraft);
+      }
+
+      if(msg.type === "background"){
+        const savedBg = await loadBackground();
+        bgDraft = savedBg.bg;
+        bgDraftImage = savedBg.imageDataUrl;
+        syncBackgroundInputs(bgDraft);
+        applyBackground(bgDraft, bgDraftImage);
+      }
+
+      if(msg.type === "presets"){
+        await refreshPresetSelect();
+      }
+
+      if(msg.type === "subscriptions"){
+        state = sanitizeState(loadJSON(KEY, defaultState()));
+        renderAll();
+      }
+
+      if(msg.type === "currency"){
+        els.currency.value = storageGet(CUR_KEY) || "AUTO";
+        renderAll();
+      }
+    };
+  }
+
+  async function init(){
+    themeDraft = applyTheme(await loadTheme());
+    syncThemeInputs(themeDraft);
+
+    const savedBg = await loadBackground();
+    bgDraft = savedBg.bg;
+    bgDraftImage = savedBg.imageDataUrl;
+    syncBackgroundInputs(bgDraft);
+    applyBackground(bgDraft, bgDraftImage);
+
+    await refreshPresetSelect();
     renderAll();
   }
 
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init);
-  }else{
-    init();
-  }
+  init();
 })();
 </script>
 </body>

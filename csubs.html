@@ -39,9 +39,14 @@
 
     button, input, select, textarea{ font:inherit; }
 
-    .wrap{max-width:900px; margin:0 auto;}
-    h1{margin:0; font-size:18px}
-    .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
+    .wrap{ max-width:900px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; }
+
+    .widgetShell{
+      position:relative;
+      overflow:visible;
+    }
 
     .widgetBoard{
       position:relative;
@@ -106,8 +111,8 @@
       flex-wrap:wrap;
     }
 
-    .title h2{margin:0; font-size:14px; font-weight:650; letter-spacing:.2px}
-    .hint{color:var(--muted); font-size:12px}
+    .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
+    .hint{ color:var(--muted); font-size:12px; }
 
     .row{
       display:flex;
@@ -135,45 +140,57 @@
       touch-action: manipulation;
     }
 
-    button.soft{background:var(--soft)}
-    button.primary{
-      background: color-mix(in srgb, var(--accent) 45%, white);
-    }
-    button:active{transform:translateY(1px)}
-    .divider{height:1px; background:var(--stroke); margin:12px 0}
+    button.soft{ background:var(--soft); }
+    button.primary{ background: color-mix(in srgb, var(--accent) 45%, white); }
+    button:active{ transform:translateY(1px); }
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
 
     .kpi{
-      display:flex; gap:12px; flex-wrap:wrap;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
     }
     .kpi .box{
-      flex:1; min-width:180px;
+      flex:1;
+      min-width:180px;
       background:var(--soft);
       border:1px solid var(--stroke);
       border-radius:14px;
       padding:10px;
     }
-    .kpi .num{font-weight:750; font-size:16px}
-    .kpi .lab{font-size:12px; color:var(--muted)}
+    .kpi .num{ font-weight:750; font-size:16px; }
+    .kpi .lab{ font-size:12px; color:var(--muted); }
 
-    .list{display:flex; flex-direction:column; gap:8px}
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
     .item{
-      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
       padding:10px 12px;
       border-radius:14px;
       border:1px solid var(--stroke);
       background: var(--item-bg);
       flex-wrap:wrap;
     }
+
     .item .meta{
       display:flex;
       flex-direction:column;
       gap:2px;
       min-width:0;
     }
+
     .item .meta b{
       font-size:13px;
       word-break:break-word;
     }
+
     .item .meta span{
       font-size:12px;
       color:var(--muted);
@@ -190,6 +207,7 @@
       user-select:none;
       white-space:nowrap;
     }
+
     .tag.off{
       opacity:.70;
       background:var(--soft);
@@ -219,9 +237,9 @@
       flex:0 0 auto;
     }
 
-    .danger{border-color:#efc2c2}
-    .tiny{font-size:12px; color:var(--muted)}
-    label.tiny{display:inline-flex; align-items:center; gap:8px}
+    .danger{ border-color:#efc2c2; }
+    .tiny{ font-size:12px; color:var(--muted); }
+    label.tiny{ display:inline-flex; align-items:center; gap:8px; }
 
     .tools{
       display:flex;
@@ -247,7 +265,8 @@
     }
 
     .dot{
-      width:14px; height:14px;
+      width:14px;
+      height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
       background: var(--board-tint);
@@ -261,19 +280,17 @@
 
     .panel{
       position:absolute;
-      top: 44px;
-      right: 0;
-      width: 320px;
-      border-radius: 16px;
-      border: 1px solid var(--stroke);
+      width:320px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
       background: rgba(255,255,255,0.94);
       box-shadow: 0 18px 40px rgba(30,20,10,.12);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      padding: 12px;
+      padding:12px;
       display:none;
-      z-index: 50;
-      max-height: min(76vh, 680px);
+      z-index:9999;
+      max-height:min(76vh, 680px);
       overflow:auto;
     }
 
@@ -293,13 +310,14 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding: 7px 0;
+      padding:7px 0;
     }
 
     .pRow label{ font-size:12px; color:var(--muted); }
 
     .pRow input[type="color"]{
-      width:42px; height:32px;
+      width:42px;
+      height:32px;
       border-radius:10px;
       padding:0;
       border:1px solid var(--stroke);
@@ -308,7 +326,7 @@
       flex:0 0 auto;
     }
 
-    .pRow input[type="range"]{ width: 160px; max-width:100%; }
+    .pRow input[type="range"]{ width:160px; max-width:100%; }
     .pFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
 
     .miniBtn{
@@ -327,7 +345,7 @@
     }
 
     .miniBtn:active{ transform: translateY(1px); }
-    .pDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+    .pDiv{ height:1px; background: var(--stroke); margin:8px 0; }
 
     .presetName{
       width:100%;
@@ -355,22 +373,24 @@
     .status{
       font-size:12px;
       color: var(--muted);
-      margin-top: 6px;
-      min-height: 16px;
+      margin-top:6px;
+      min-height:16px;
     }
 
     @media (max-width: 760px){
       body{ padding:14px; }
       .row{ flex-direction:column; align-items:stretch; }
       .item .right{ width:100%; justify-content:flex-end; }
+
       .panel{
-        position: fixed !important;
-        top: 14px !important;
-        left: 14px !important;
-        right: 14px !important;
-        width: auto !important;
-        max-height: calc(100dvh - 28px);
+        position:fixed !important;
+        top:14px !important;
+        left:14px !important;
+        right:14px !important;
+        width:auto !important;
+        max-height:calc(100dvh - 28px);
       }
+
       input, select, textarea{ font-size:16px; }
     }
   </style>
@@ -380,157 +400,159 @@
   <div class="wrap">
     <h1>Subscriptions</h1>
 
-    <div class="widgetBoard">
-      <div class="boardTint" id="boardTint"></div>
-      <div class="boardContent">
-        <section class="card">
-          <div class="title">
-            <h2>Add a subscription</h2>
+    <div class="widgetShell" id="widgetShell">
+      <div class="widgetBoard">
+        <div class="boardTint" id="boardTint"></div>
+        <div class="boardContent">
+          <section class="card">
+            <div class="title">
+              <h2>Add a subscription</h2>
 
-            <div class="tools">
-              <div class="popWrap" id="themeWrap">
-                <button class="iconBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
-                  <span class="dot themeDot" id="themeDot" aria-hidden="true"></span>
-                </button>
-
-                <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
-                  <div class="panelTitle">Theme</div>
-
-                  <button class="miniBtn" id="themeApply" type="button">Apply theme</button>
-                  <button class="miniBtn" id="themeReset" type="button" style="margin-top:8px;">Reset theme</button>
-
-                  <div class="pDiv"></div>
-
-                  <div class="pRow"><label for="tBg">App background</label><input id="tBg" type="color" value="#ffffff"></div>
-                  <div class="pRow"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2a28"></div>
-                  <div class="pRow"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#6a665f"></div>
-                  <div class="pRow"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae"></div>
-
-                  <div class="pDiv"></div>
-
-                  <div class="pRow"><label for="tCard">Card background</label><input id="tCard" type="color" value="#ffffff"></div>
-                  <div class="pRow"><label for="tCardA">Card opacity</label><input id="tCardA" type="range" min="40" max="100" value="80"></div>
-
-                  <div class="pDiv"></div>
-
-                  <div class="pRow"><label for="tStroke">Borders</label><input id="tStroke" type="color" value="#e9e4dd"></div>
-                  <div class="pRow"><label for="tSoft">Soft panels</label><input id="tSoft" type="color" value="#f3efe9"></div>
-                  <div class="pRow"><label for="tItemBg">List item bg</label><input id="tItemBg" type="color" value="#ffffff"></div>
-                  <div class="pRow"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff"></div>
-
-                  <div class="pDiv"></div>
-
-                  <div class="pRow"><label for="tRadius">Roundness</label><input id="tRadius" type="range" min="10" max="28" value="18"></div>
-                  <div class="pRow"><label for="tShadow">Shadow strength</label><input id="tShadow" type="range" min="0" max="30" value="6"></div>
-
-                  <div class="pDiv"></div>
-
-                  <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
-
-                  <input class="presetName" id="presetName" placeholder="Preset name">
-                  <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
-
-                  <div class="pDiv"></div>
-
-                  <select class="presetSelect" id="presetSelect"></select>
-
-                  <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
-                  <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
-
-                  <div class="status" id="presetStatus" aria-live="polite"></div>
+              <div class="tools">
+                <div class="popWrap" id="themeWrap">
+                  <button class="iconBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                    <span class="dot themeDot" id="themeDot" aria-hidden="true"></span>
+                  </button>
                 </div>
-              </div>
 
-              <div class="popWrap" id="bgWrap">
-                <button class="iconBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
-                  <span class="dot" id="bgDot" aria-hidden="true"></span>
-                </button>
-
-                <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
-                  <div class="panelTitle">Background</div>
-
-                  <button class="miniBtn" id="bgApply" type="button">Apply background</button>
-                  <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
-
-                  <div class="pDiv"></div>
-
-                  <div class="pRow">
-                    <label for="bgColor">Tint</label>
-                    <input id="bgColor" type="color" value="#efe7e1" />
-                  </div>
-
-                  <div class="pRow">
-                    <label for="bgStrength">Strength</label>
-                    <input id="bgStrength" type="range" min="0" max="70" value="30" />
-                  </div>
-
-                  <div class="pRow">
-                    <label for="bgBlur">Image blur</label>
-                    <input id="bgBlur" type="range" min="0" max="20" value="0" />
-                  </div>
-
-                  <div class="pDiv"></div>
-
-                  <div class="pRow" style="align-items:flex-start;">
-                    <label for="bgImage">Image</label>
-                    <input id="bgImage" class="pFile" type="file" accept="image/*" />
-                  </div>
-
-                  <div class="pRow">
-                    <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
-                  </div>
-
-                  <div class="status" id="bgStatus" aria-live="polite"></div>
+                <div class="popWrap" id="bgWrap">
+                  <button class="iconBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                    <span class="dot" id="bgDot" aria-hidden="true"></span>
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="row">
-            <input id="subName" placeholder="Name (e.g., Spotify)">
-            <input id="subCost" type="number" step="0.01" placeholder="Monthly cost">
-            <input id="subRenew" type="number" min="1" max="31" placeholder="Renew date (1–31)">
+            <div class="row">
+              <input id="subName" placeholder="Name (e.g., Spotify)">
+              <input id="subCost" type="number" step="0.01" placeholder="Monthly cost">
+              <input id="subRenew" type="number" min="1" max="31" placeholder="Renew date (1–31)">
 
-            <label class="tiny">
-              Currency
-              <select id="currency">
-                <option value="AUTO">Auto (from locale)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="NGN">NGN (₦)</option>
-                <option value="CAD">CAD ($)</option>
-                <option value="AUD">AUD ($)</option>
-                <option value="JPY">JPY (¥)</option>
-                <option value="ZAR">ZAR (R)</option>
-              </select>
-            </label>
+              <label class="tiny">
+                Currency
+                <select id="currency">
+                  <option value="AUTO">Auto (from locale)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="NGN">NGN (₦)</option>
+                  <option value="CAD">CAD ($)</option>
+                  <option value="AUD">AUD ($)</option>
+                  <option value="JPY">JPY (¥)</option>
+                  <option value="ZAR">ZAR (R)</option>
+                </select>
+              </label>
 
-            <button id="subAdd" class="primary">Add</button>
-            <button class="danger" id="resetBtn" type="button">Reset</button>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="kpi">
-            <div class="box">
-              <div class="num" id="kTotal">—</div>
-              <div class="lab">Total monthly cost</div>
+              <button id="subAdd" class="primary">Add</button>
+              <button class="danger" id="resetBtn" type="button">Reset</button>
             </div>
-            <div class="box">
-              <div class="num" id="kCount">—</div>
-              <div class="lab">Subscriptions</div>
-            </div>
-            <div class="box">
-              <div class="num" id="kSoon">—</div>
-              <div class="lab">Next renewal</div>
-            </div>
-          </div>
 
-          <div class="divider"></div>
+            <div class="divider"></div>
 
-          <div class="list" id="subsList"></div>
-        </section>
+            <div class="kpi">
+              <div class="box">
+                <div class="num" id="kTotal">—</div>
+                <div class="lab">Total monthly cost</div>
+              </div>
+              <div class="box">
+                <div class="num" id="kCount">—</div>
+                <div class="lab">Subscriptions</div>
+              </div>
+              <div class="box">
+                <div class="num" id="kSoon">—</div>
+                <div class="lab">Next renewal</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="list" id="subsList"></div>
+          </section>
+        </div>
+      </div>
+
+      <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+        <div class="panelTitle">Theme</div>
+
+        <button class="miniBtn" id="themeApply" type="button">Apply theme</button>
+        <button class="miniBtn" id="themeReset" type="button" style="margin-top:8px;">Reset theme</button>
+
+        <div class="pDiv"></div>
+
+        <div class="pRow"><label for="tBg">App background</label><input id="tBg" type="color" value="#ffffff"></div>
+        <div class="pRow"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2a28"></div>
+        <div class="pRow"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#6a665f"></div>
+        <div class="pRow"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae"></div>
+
+        <div class="pDiv"></div>
+
+        <div class="pRow"><label for="tCard">Card background</label><input id="tCard" type="color" value="#ffffff"></div>
+        <div class="pRow"><label for="tCardA">Card opacity</label><input id="tCardA" type="range" min="40" max="100" value="80"></div>
+
+        <div class="pDiv"></div>
+
+        <div class="pRow"><label for="tStroke">Borders</label><input id="tStroke" type="color" value="#e9e4dd"></div>
+        <div class="pRow"><label for="tSoft">Soft panels</label><input id="tSoft" type="color" value="#f3efe9"></div>
+        <div class="pRow"><label for="tItemBg">List item bg</label><input id="tItemBg" type="color" value="#ffffff"></div>
+        <div class="pRow"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff"></div>
+
+        <div class="pDiv"></div>
+
+        <div class="pRow"><label for="tRadius">Roundness</label><input id="tRadius" type="range" min="10" max="28" value="18"></div>
+        <div class="pRow"><label for="tShadow">Shadow strength</label><input id="tShadow" type="range" min="0" max="30" value="6"></div>
+
+        <div class="pDiv"></div>
+
+        <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
+
+        <input class="presetName" id="presetName" placeholder="Preset name">
+        <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+        <div class="pDiv"></div>
+
+        <select class="presetSelect" id="presetSelect"></select>
+
+        <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+        <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+        <div class="status" id="presetStatus" aria-live="polite"></div>
+      </div>
+
+      <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+        <div class="panelTitle">Background</div>
+
+        <button class="miniBtn" id="bgApply" type="button">Apply background</button>
+        <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+        <div class="pDiv"></div>
+
+        <div class="pRow">
+          <label for="bgColor">Tint</label>
+          <input id="bgColor" type="color" value="#efe7e1" />
+        </div>
+
+        <div class="pRow">
+          <label for="bgStrength">Strength</label>
+          <input id="bgStrength" type="range" min="0" max="70" value="30" />
+        </div>
+
+        <div class="pRow">
+          <label for="bgBlur">Image blur</label>
+          <input id="bgBlur" type="range" min="0" max="20" value="0" />
+        </div>
+
+        <div class="pDiv"></div>
+
+        <div class="pRow" style="align-items:flex-start;">
+          <label for="bgImage">Image</label>
+          <input id="bgImage" class="pFile" type="file" accept="image/*" />
+        </div>
+
+        <div class="pRow">
+          <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
+        </div>
+
+        <div class="status" id="bgStatus" aria-live="polite"></div>
       </div>
     </div>
   </div>
@@ -819,9 +841,12 @@
   const $ = (id)=>document.getElementById(id);
 
   const els = {
+    widgetShell:$("widgetShell"),
     themeBtn:$("themeBtn"),
+    themeWrap:$("themeWrap"),
     themePanel:$("themePanel"),
     bgBtn:$("bgBtn"),
+    bgWrap:$("bgWrap"),
     bgPanel:$("bgPanel"),
 
     themeDot:$("themeDot"),
@@ -1159,11 +1184,28 @@
     });
   }
 
+  function placePanel(btn, panel){
+    if(window.innerWidth <= 760) return;
+
+    const shellRect = els.widgetShell.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    const pad = 10;
+
+    let top = (btnRect.bottom - shellRect.top) + pad;
+    let left = (btnRect.right - shellRect.left) - panel.offsetWidth;
+
+    left = Math.max(pad, Math.min(els.widgetShell.clientWidth - panel.offsetWidth - pad, left));
+
+    panel.style.left = left + "px";
+    panel.style.top = top + "px";
+  }
+
   els.themeBtn.addEventListener("click", (e)=>{
     e.stopPropagation();
     const open = !els.themePanel.classList.contains("open");
     closeAllPanels(open ? els.themePanel : null);
     els.themePanel.classList.toggle("open", open);
+    if(open) requestAnimationFrame(() => placePanel(els.themeBtn, els.themePanel));
   });
 
   els.bgBtn.addEventListener("click", (e)=>{
@@ -1171,6 +1213,7 @@
     const open = !els.bgPanel.classList.contains("open");
     closeAllPanels(open ? els.bgPanel : null);
     els.bgPanel.classList.toggle("open", open);
+    if(open) requestAnimationFrame(() => placePanel(els.bgBtn, els.bgPanel));
   });
 
   document.addEventListener("click",(e)=>{
@@ -1178,6 +1221,11 @@
       e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
       e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
     if(!inside) closeAllPanels(null);
+  });
+
+  window.addEventListener("resize", () => {
+    if(els.themePanel.classList.contains("open")) placePanel(els.themeBtn, els.themePanel);
+    if(els.bgPanel.classList.contains("open")) placePanel(els.bgBtn, els.bgPanel);
   });
 
   [els.tBg, els.tInk, els.tMuted, els.tAccent, els.tCard, els.tCardA, els.tStroke, els.tSoft, els.tItemBg, els.tInputBg, els.tRadius, els.tShadow].forEach(el=>{

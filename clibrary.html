@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Library Widget</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <style>
     :root{
-      /* Base theme tokens */
       --bg:#ffffff;
       --card: rgba(255,255,255,0.84);
+      --card-a: 0.84;
       --stroke:#e9e4dd;
       --ink:#2b2a28;
       --muted:#6a665f;
@@ -19,62 +19,63 @@
       --shadow:0 10px 30px rgba(30,20,10,.06);
       --r:18px;
 
-      /* Board background controls */
       --board-tint:#efe7e1;
       --board-tint-a:0.12;
       --board-image:none;
+      --board-image-a:0.92;
+      --board-image-blur:0px;
 
-      /* NEW: override-friendly “whites” + panel bg */
       --panel-bg: rgba(255,255,255,0.88);
-      --field-bg: #ffffff;
-
-      /* NEW: theme dot color */
+      --field-bg:#ffffff;
       --theme-dot: var(--ink);
     }
 
     *{ box-sizing:border-box; }
+    html, body{ min-height:100%; }
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
       color:var(--ink);
       background:var(--bg);
       padding:28px 18px;
+      -webkit-text-size-adjust:100%;
+      text-size-adjust:100%;
+      overflow-x:hidden;
     }
     .wrap{ max-width:1100px; margin:0 auto; }
     h1{ margin:0; font-size:18px; }
     .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
 
-    /* Board */
     .widgetBoard{
       position:relative;
-      border-radius: var(--r);
+      border-radius:var(--r);
       overflow:hidden;
       border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
+      box-shadow:var(--shadow);
+      isolation:isolate;
     }
     .widgetBoard::before{
       content:"";
       position:absolute;
       inset:0;
-      background-image: var(--board-image);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      transform: scale(1.01);
+      background-image:var(--board-image);
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
       z-index:0;
       pointer-events:none;
-      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+      opacity:var(--board-image-a);
+      filter:blur(var(--board-image-blur)) saturate(1.02) contrast(1.01) brightness(1.01);
+      transform:scale(1.02);
+      transform-origin:center;
     }
-    /* FIX: add a subtle highlight overlay like your other widgets */
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
       background:
-        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.35), transparent 60%),
-        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.22), transparent 62%),
-        rgba(255,255,255,0.22);
-      background-blend-mode: screen;
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.18), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.12), transparent 62%);
       pointer-events:none;
       z-index:0;
     }
@@ -84,7 +85,7 @@
       inset:0;
       pointer-events:none;
       z-index:1;
-      background: rgba(0,0,0,0);
+      background:rgba(0,0,0,0);
     }
     .boardContent{ position:relative; z-index:2; }
 
@@ -94,8 +95,8 @@
       border-radius:0;
       box-shadow:none;
       padding:14px;
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter:none;
+      -webkit-backdrop-filter:none;
     }
 
     .title{
@@ -104,6 +105,7 @@
       justify-content:space-between;
       gap:10px;
       margin-bottom:10px;
+      flex-wrap:wrap;
     }
     .title h2{ margin:0; font-size:14px; font-weight:650; letter-spacing:.2px; }
     .hint{ color:var(--muted); font-size:12px; line-height:1.35; }
@@ -113,7 +115,8 @@
       align-items:center;
       flex-wrap:wrap;
     }
-    button, input, select{
+
+    button, input, select, textarea{
       font:inherit;
       border:1px solid var(--stroke);
       background:var(--field-bg);
@@ -121,17 +124,23 @@
       border-radius:12px;
       padding:10px 12px;
       outline:none;
-      -webkit-tap-highlight-color: transparent;
+      -webkit-tap-highlight-color:transparent;
     }
-    button{ cursor:pointer; user-select:none; }
+    button{
+      cursor:pointer;
+      user-select:none;
+      touch-action:manipulation;
+    }
     button.soft{ background:var(--soft); }
-    button.primary{ background: rgba(239,231,225,0.92); }
+    button.primary{ background:rgba(239,231,225,0.92); }
     button.danger{ border-color:#efc2c2; }
     button:active{ transform:translateY(1px); }
     .divider{ height:1px; background:var(--stroke); margin:12px 0; }
 
     .pill{
-      display:inline-flex; align-items:center; gap:8px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
       border:1px solid var(--stroke);
       background:var(--field-bg);
       border-radius:999px;
@@ -141,59 +150,54 @@
     }
     .tiny{ font-size:12px; color:var(--muted); }
 
-    /* Background settings */
-    .bgWrap{ position:relative; margin-left:auto; display:flex; gap:10px; align-items:center; }
-    .bgBtn{
-      width:34px; height:34px;
+    .bgWrap{
+      position:relative;
+      margin-left:auto;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .bgBtn, .themeBtn{
+      width:34px;
+      height:34px;
       border-radius:999px;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.92);
+      background:rgba(255,255,255,0.92);
       padding:0;
       display:grid;
       place-items:center;
-      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+      box-shadow:0 3px 12px rgba(30,20,10,.08);
+      flex:0 0 auto;
     }
-    .bgDot{
-      width:14px; height:14px;
+    .bgDot, .themeDot{
+      width:14px;
+      height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
-      background: var(--board-tint);
-      box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
-    }
-
-    /* NEW: Theme button (same pattern) */
-    .themeBtn{
-      width:34px; height:34px;
-      border-radius:999px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.92);
-      padding:0;
-      display:grid;
-      place-items:center;
-      box-shadow: 0 3px 12px rgba(30,20,10,.08);
+      background:var(--board-tint);
+      box-shadow:0 0 0 6px rgba(239,231,225,0.22);
     }
     .themeDot{
-      width:14px; height:14px;
-      border-radius:999px;
-      border:1px solid rgba(233,228,221,0.95);
-      background: var(--theme-dot);
-      box-shadow: 0 0 0 6px rgba(233,228,221,0.35);
+      background:var(--theme-dot);
+      box-shadow:0 0 0 6px rgba(233,228,221,0.35);
     }
 
     .bgPanel{
       position:absolute;
-      top: 44px;
-      right: 0;
-      width: 290px;
-      border-radius: 16px;
-      border: 1px solid var(--stroke);
-      background: var(--panel-bg);
-      box-shadow: 0 18px 40px rgba(30,20,10,.12);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-      padding: 12px;
+      top:44px;
+      right:0;
+      width:min(310px, calc(100vw - 36px));
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:var(--panel-bg);
+      box-shadow:0 18px 40px rgba(30,20,10,.12);
+      backdrop-filter:none;
+      -webkit-backdrop-filter:none;
+      padding:12px;
       display:none;
-      z-index: 50;
+      z-index:50;
+      max-height:calc(100vh - 140px);
+      overflow:auto;
     }
     .bgPanel.open{ display:block; }
     .bgTitle{
@@ -202,42 +206,61 @@
       font-weight:700;
       letter-spacing:.12em;
       text-transform:uppercase;
-      color: rgba(43,42,40,0.72);
+      color:rgba(43,42,40,0.72);
     }
     .bgRow{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding: 7px 0;
+      padding:7px 0;
     }
     .bgRow label{ font-size:12px; color:var(--muted); }
     .bgRow input[type="color"]{
-      width:36px; height:28px;
+      width:36px;
+      height:28px;
       border-radius:10px;
       padding:0;
       border:1px solid var(--stroke);
-      background: transparent;
+      background:transparent;
       cursor:pointer;
     }
-    .bgRow input[type="range"]{ width: 150px; }
-    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgRow input[type="range"]{ width:150px; }
+    .bgFile{
+      width:100%;
+      font-size:12px;
+      color:rgba(43,42,40,0.75);
+    }
     .bgMiniBtn{
       width:100%;
       border-radius:12px;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.97);
+      background:rgba(255,255,255,0.97);
       padding:9px 10px;
       font-weight:700;
       letter-spacing:.06em;
       text-transform:uppercase;
       font-size:11px;
-      color: rgba(43,42,40,0.82);
-      box-shadow: 0 2px 8px rgba(30,20,10,.06);
+      color:rgba(43,42,40,0.82);
+      box-shadow:0 2px 8px rgba(30,20,10,.06);
     }
-    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+    .bgDiv{ height:1px; background:var(--stroke); margin:8px 0; }
 
-    /* Library / shelves */
+    .presetName{
+      width:100%;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,0.97);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+    }
+    .status{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+      min-height:16px;
+    }
+
     .shelfBar{
       display:flex;
       align-items:center;
@@ -254,7 +277,7 @@
     .shelf{
       border:1px solid var(--stroke);
       border-radius:16px;
-      background: rgba(255,255,255,0.92);
+      background:rgba(255,255,255,0.92);
       overflow:hidden;
     }
     .shelfHead{
@@ -263,8 +286,9 @@
       align-items:center;
       justify-content:space-between;
       padding:10px 12px;
-      background: rgba(243,239,233,0.75);
+      background:rgba(243,239,233,0.75);
       border-bottom:1px solid var(--stroke);
+      flex-wrap:wrap;
     }
     .shelfName{
       display:flex;
@@ -272,6 +296,7 @@
       align-items:center;
       min-width:0;
       flex:1;
+      flex-wrap:wrap;
     }
     .shelfName input{
       border-radius:10px;
@@ -292,6 +317,7 @@
       padding:12px;
       overflow:auto;
       scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;
     }
 
     .book{
@@ -306,8 +332,8 @@
       height:160px;
       border-radius:14px;
       border:1px solid var(--stroke);
-      background: var(--field-bg);
-      box-shadow: 0 10px 18px rgba(30,20,10,.08);
+      background:var(--field-bg);
+      box-shadow:0 10px 18px rgba(30,20,10,.08);
       overflow:hidden;
       position:relative;
       display:grid;
@@ -324,7 +350,7 @@
       text-align:left;
       width:100%;
       height:100%;
-      background: linear-gradient(135deg, rgba(239,231,225,0.9), rgba(255,255,255,1));
+      background:linear-gradient(135deg, rgba(239,231,225,0.9), rgba(255,255,255,1));
       display:flex;
       flex-direction:column;
       justify-content:space-between;
@@ -334,7 +360,7 @@
       font-weight:800;
       font-size:12px;
       line-height:1.25;
-      color: rgba(43,42,40,0.9);
+      color:rgba(43,42,40,0.9);
       overflow:hidden;
       display:-webkit-box;
       -webkit-line-clamp:4;
@@ -342,7 +368,7 @@
     }
     .fallback .fmeta{
       font-size:10px;
-      color: rgba(106,102,95,0.95);
+      color:rgba(106,102,95,0.95);
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
@@ -350,7 +376,7 @@
     .bookLabel{
       margin-top:8px;
       font-size:12px;
-      color: rgba(43,42,40,0.9);
+      color:rgba(43,42,40,0.9);
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
@@ -359,21 +385,21 @@
       display:flex;
       gap:6px;
       margin-top:6px;
+      flex-wrap:wrap;
     }
     .miniBtn{
       padding:6px 8px;
       border-radius:10px;
       font-size:11px;
       border:1px solid var(--stroke);
-      background: rgba(243,239,233,0.9);
+      background:rgba(243,239,233,0.9);
     }
     .miniBtn.danger{ border-color:#efc2c2; }
 
-    /* Modal reader */
     .modal{
       position:fixed;
       inset:0;
-      background: rgba(0,0,0,0.35);
+      background:rgba(0,0,0,0.35);
       display:none;
       z-index:200;
       padding:20px;
@@ -383,15 +409,15 @@
       margin:auto;
       width:min(1100px, 96vw);
       height:min(740px, 92vh);
-      background: rgba(255,255,255,0.96);
+      background:rgba(255,255,255,0.96);
       border:1px solid var(--stroke);
       border-radius:18px;
-      box-shadow: 0 30px 70px rgba(0,0,0,0.22);
+      box-shadow:0 30px 70px rgba(0,0,0,0.22);
       display:flex;
       flex-direction:column;
       overflow:hidden;
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter:none;
+      -webkit-backdrop-filter:none;
     }
     .modalTop{
       display:flex;
@@ -400,7 +426,8 @@
       gap:10px;
       padding:10px 12px;
       border-bottom:1px solid var(--stroke);
-      background: rgba(243,239,233,0.75);
+      background:rgba(243,239,233,0.75);
+      flex-wrap:wrap;
     }
     .modalTitle{
       font-weight:800;
@@ -408,11 +435,13 @@
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
-      max-width: 70%;
+      max-width:70%;
     }
     .modalBody{
       flex:1;
       background:var(--field-bg);
+      min-height:0;
+      position:relative;
     }
     .modalBody iframe,
     .modalBody embed{
@@ -422,10 +451,100 @@
       display:block;
     }
 
-    /* Upload panel */
+    .pdfShell{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .pdfToolbar{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--stroke);
+      background:rgba(243,239,233,0.55);
+      flex-wrap:wrap;
+    }
+    .pdfToolbar .spacer{ flex:1; }
+    .pdfInfo{
+      font-size:12px;
+      color:var(--muted);
+      min-width:82px;
+      text-align:center;
+    }
+    .pdfViewport{
+      flex:1;
+      overflow:auto;
+      padding:16px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      background:#f7f4ef;
+      -webkit-overflow-scrolling:touch;
+    }
+    .pdfCanvasWrap{
+      background:#fff;
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      box-shadow:0 12px 28px rgba(0,0,0,.08);
+      overflow:hidden;
+      max-width:100%;
+    }
+    .pdfCanvas{
+      display:block;
+      max-width:100%;
+      height:auto;
+    }
+    .readerFallback{
+      width:100%;
+      height:100%;
+      overflow:auto;
+      padding:16px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .readerFallback img{
+      display:block;
+      max-width:100%;
+      height:auto;
+      margin:0 auto;
+      border-radius:12px;
+    }
+    .readerText{
+      white-space:pre-wrap;
+      word-break:break-word;
+      font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      margin:0;
+    }
+    .readerEmpty{
+      padding:16px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .modalCard.moveCard{
+      width:min(520px, 96vw);
+      height:auto;
+      max-height:92vh;
+    }
+    .moveBody{
+      padding:14px;
+      background:var(--field-bg);
+    }
+    .moveBody label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .moveBody select{
+      width:100%;
+      margin-bottom:10px;
+    }
+
     .uploadGrid{
       display:grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns:1fr 1fr;
       gap:10px;
       width:100%;
     }
@@ -444,9 +563,16 @@
     .uploadGrid input[type="file"]{ width:100%; }
 
     @media (max-width: 820px){
-      .uploadGrid{ grid-template-columns: 1fr; }
+      body{ padding:14px; }
+      .uploadGrid{ grid-template-columns:1fr; }
       .book{ width:110px; }
       .cover{ width:110px; height:150px; }
+      .bgWrap{ margin-left:0; }
+      .modal{ padding:10px; }
+      .modalCard{ width:100%; height:min(92vh, 100%); }
+      .pdfToolbar{ padding:8px; }
+      .pdfViewport{ padding:10px; }
+      .modalTitle{ max-width:100%; }
     }
   </style>
 </head>
@@ -465,11 +591,9 @@
             </div>
 
             <div class="bgWrap" id="bgWrap">
-
               <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
                 <span class="bgDot" id="bgDot" aria-hidden="true"></span>
               </button>
-
 
               <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
                 <span class="themeDot" id="themeDot" aria-hidden="true"></span>
@@ -484,8 +608,18 @@
                 </div>
 
                 <div class="bgRow">
-                  <label for="bgStrength">Strength</label>
+                  <label for="bgStrength">Tint strength</label>
                   <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgImageA">Image visibility</label>
+                  <input id="bgImageA" type="range" min="0" max="100" value="92" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgBlur">Image blur</label>
+                  <input id="bgBlur" type="range" min="0" max="24" value="0" />
                 </div>
 
                 <div class="bgDiv"></div>
@@ -498,8 +632,12 @@
                 <div class="bgRow">
                   <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
                 </div>
-              </div>
 
+                <div class="bgDiv"></div>
+
+                <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
+                <button id="bgReset" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset background</button>
+              </div>
 
               <div class="bgPanel" id="themePanel" role="dialog" aria-label="Theme settings">
                 <div class="bgTitle">Theme</div>
@@ -532,25 +670,44 @@
                 </div>
 
                 <div class="bgRow">
+                  <label for="tCardA">Card opacity</label>
+                  <input id="tCardA" type="range" min="40" max="95" value="84" />
+                </div>
+
+                <div class="bgRow">
                   <label for="tSoft">Buttons</label>
                   <input id="tSoft" type="color" value="#f3efe9" />
                 </div>
 
                 <div class="bgDiv"></div>
 
-                <div class="bgRow">
-                  <button id="resetTheme" class="bgMiniBtn" type="button">Reset theme</button>
+                <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
+                <button id="resetTheme" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgTitle" style="margin-top:0;">Presets</div>
+
+                <div class="bgRow" style="flex-direction:column; align-items:stretch; gap:10px;">
+                  <input id="presetName" class="presetName" placeholder="Preset name" />
+                  <button id="presetSave" class="bgMiniBtn" type="button">Save current as preset</button>
                 </div>
 
-                <div class="hint" style="margin-top:6px;">
+                <div class="bgRow">
+                  <label for="presetSelect">Choose</label>
+                  <select id="presetSelect" style="width:160px;"></select>
                 </div>
+
+                <button id="presetApply" class="bgMiniBtn" type="button">Apply preset</button>
+                <button id="presetDelete" class="bgMiniBtn" type="button" style="margin-top:8px;">Delete preset</button>
+
+                <div class="status" id="presetStatus" aria-live="polite"></div>
               </div>
             </div>
           </div>
 
           <div class="divider"></div>
 
-          <!-- Upload + shelf controls -->
           <div class="shelfBar">
             <div class="uploadGrid" aria-label="Upload a book">
               <div class="col">
@@ -565,7 +722,7 @@
 
               <div class="col">
                 <label for="bookTitle">Title (optional)</label>
-                <input id="bookTitle" type="text" placeholder="e.g., Deep Work" />
+                <input id="bookTitle" type="text" placeholder="" />
               </div>
 
               <div class="col">
@@ -583,11 +740,9 @@
             </div>
           </div>
 
-          <!-- internal reset confirm -->
           <div id="resetConfirm" class="confirm" style="display:none; margin-top:10px; border:1px solid var(--stroke); border-radius:14px; padding:12px; background:var(--field-bg);">
             <div class="confirmTop" style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px;">
               <p class="confirmTitle" style="margin:0; font-weight:750; font-size:13px; line-height:1.25;">Reset entire library?</p>
-              <span class="tiny">This removes shelves + books (and stored files).</span>
             </div>
             <div class="row">
               <button id="resetYes" class="danger" type="button">Yes, reset</button>
@@ -600,15 +755,12 @@
           <div class="shelves" id="shelves"></div>
 
           <div class="divider"></div>
-          <div class="tiny">
-            Note: Books are stored in your browser (IndexedDB). If you clear site data, the library resets.
-          </div>
+          <div class="tiny"></div>
         </section>
       </div>
     </div>
   </div>
 
-  <!-- Reader modal -->
   <div class="modal" id="readerModal" role="dialog" aria-label="Book reader">
     <div class="modalCard">
       <div class="modalTop">
@@ -617,20 +769,33 @@
           <button id="readerClose" class="soft" type="button">Close</button>
         </div>
       </div>
-      <div class="modalBody" id="readerBody">
-        <!-- iframe injected -->
+      <div class="modalBody" id="readerBody"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="moveModal" role="dialog" aria-label="Move book">
+    <div class="modalCard moveCard">
+      <div class="modalTop">
+        <div class="modalTitle" id="moveTitle">Move book</div>
+        <div class="row" style="gap:8px;">
+          <button id="moveClose" class="soft" type="button">Close</button>
+        </div>
+      </div>
+      <div class="moveBody">
+        <label for="moveShelfSelect">Choose shelf</label>
+        <select id="moveShelfSelect"></select>
+        <div class="row" style="justify-content:flex-end;">
+          <button id="moveCancel" class="soft" type="button">Cancel</button>
+          <button id="moveConfirm" class="primary" type="button">Move</button>
+        </div>
       </div>
     </div>
   </div>
 
 <script>
-/* --------------------------
-   Helpers
---------------------------- */
 (function initPdfJsWorker(){
-  // PDF.js worker (CDN)
   try{
-    if (window.pdfjsLib){
+    if(window.pdfjsLib){
       pdfjsLib.GlobalWorkerOptions.workerSrc =
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     }
@@ -638,41 +803,665 @@
 })();
 
 (function(){
-  const $ = (id)=>document.getElementById(id);
+  const memoryStore = Object.create(null);
 
-  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+  function canUseLocalStorage(){
+    try{
+      const k = "__t__" + Math.random().toString(16).slice(2);
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{
+      return false;
+    }
+  }
 
+  const hasLS = canUseLocalStorage();
+
+  function storageGet(key){
+    try{
+      return hasLS ? localStorage.getItem(key) : (memoryStore[key] ?? null);
+    }catch{
+      return memoryStore[key] ?? null;
+    }
+  }
+  function storageSet(key, value){
+    try{
+      if(hasLS) localStorage.setItem(key, value);
+      else memoryStore[key] = String(value);
+    }catch{
+      memoryStore[key] = String(value);
+    }
+  }
+  function storageRemove(key){
+    try{
+      if(hasLS) localStorage.removeItem(key);
+      else delete memoryStore[key];
+    }catch{
+      delete memoryStore[key];
+    }
+  }
+
+  function hashString(str){
+    let h = 2166136261;
+    for(let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+    }
+    return "w" + (h >>> 0).toString(16);
+  }
+
+  function getWidgetId(){
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = (sp.get("wid") || "").trim();
+      if(wid) return wid;
+    }catch{}
+
+    try{
+      const el = document.getElementById("widgetBoard");
+      const explicit = (el?.getAttribute("data-widget-id") || "").trim();
+      if(explicit) return explicit;
+    }catch{}
+
+    const stableSource =
+      location.origin + "|" +
+      location.pathname + "|" +
+      document.title + "|" +
+      "library_widget";
+
+    return hashString(stableSource);
+  }
+
+  window.__LW__ = {
+    wid: getWidgetId(),
+    get: storageGet,
+    set: storageSet,
+    remove: storageRemove
+  };
+})();
+
+const WID = window.__LW__?.wid || "default";
+const META_KEY = `library_widget_meta_v3__${WID}`;
+const THEME_KEY = `library_widget_theme_v3__${WID}`;
+const BG_KEY = `library_widget_bg_v3__${WID}`;
+const PRESETS_KEY = `library_widget_presets_v3__${WID}`;
+
+const $ = (id)=>document.getElementById(id);
+
+function clamp(n, min, max){
+  const x = Number(n);
+  if(!Number.isFinite(x)) return min;
+  return Math.max(min, Math.min(max, x));
+}
+function normHex(hex, fallback){
+  const s = String(hex || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+}
+function hexToRgbTuple(hex){
+  const h = normHex(hex, "#ffffff").slice(1);
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  return [r,g,b];
+}
+function hexToRgba(hex, a){
+  const [r,g,b] = hexToRgbTuple(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function loadJSON(key){
+  try{
+    const raw = window.__LW__.get(key);
+    return raw ? JSON.parse(raw) : null;
+  }catch{
+    return null;
+  }
+}
+function saveJSON(key, value){
+  try{
+    window.__LW__.set(key, JSON.stringify(value));
+  }catch{}
+}
+function uid(){
+  return Math.random().toString(16).slice(2) + Date.now().toString(16);
+}
+function fileToDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+function setStatus(msg){
+  const el = $("presetStatus");
+  if(el) el.textContent = msg || "";
+}
+
+const syncChannel = (() => {
+  try{
+    return ("BroadcastChannel" in window) ? new BroadcastChannel(`library_widget_sync__${WID}`) : null;
+  }catch{
+    return null;
+  }
+})();
+
+function broadcastSync(kind){
+  try{
+    if(syncChannel) syncChannel.postMessage({ kind, ts: Date.now() });
+  }catch{}
+}
+
+if(syncChannel){
+  syncChannel.onmessage = (event) => {
+    const kind = event?.data?.kind;
+    if(kind === "theme"){
+      const next = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+      themeDraft = next;
+      themeSyncInputs(next);
+      themeApplyToCSS(next);
+    }
+    if(kind === "background"){
+      const next = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+      bgDraft = next;
+      bgSyncInputs(next);
+      bgApplyToCSS(next);
+    }
+    if(kind === "presets"){
+      refreshPresetSelect();
+    }
+    if(kind === "library"){
+      if(window.__LIBRARY_APP__ && typeof window.__LIBRARY_APP__.reloadStateFromStorage === "function"){
+        window.__LIBRARY_APP__.reloadStateFromStorage();
+      }
+    }
+  };
+}
+
+window.addEventListener("storage", (e) => {
+  if(!e || !e.key) return;
+
+  if(e.key === THEME_KEY){
+    const next = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+    themeDraft = next;
+    themeSyncInputs(next);
+    themeApplyToCSS(next);
+  }
+  if(e.key === BG_KEY){
+    const next = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+    bgDraft = next;
+    bgSyncInputs(next);
+    bgApplyToCSS(next);
+  }
+  if(e.key === PRESETS_KEY){
+    refreshPresetSelect();
+  }
+  if(e.key === META_KEY){
+    if(window.__LIBRARY_APP__ && typeof window.__LIBRARY_APP__.reloadStateFromStorage === "function"){
+      window.__LIBRARY_APP__.reloadStateFromStorage();
+    }
+  }
+});
+
+/* =========================
+   Theme
+========================= */
+const DEFAULT_THEME = {
+  pageBg:"#ffffff",
+  ink:"#2b2a28",
+  muted:"#6a665f",
+  stroke:"#e9e4dd",
+  cardBase:"#ffffff",
+  cardA:84,
+  soft:"#f3efe9"
+};
+
+function themeLoad(){ return loadJSON(THEME_KEY); }
+function themeSave(t){
+  saveJSON(THEME_KEY, t);
+  broadcastSync("theme");
+}
+
+let themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+
+function themeApplyToCSS(t){
+  const x = Object.assign({}, DEFAULT_THEME, t || {});
+  const pageBg = normHex(x.pageBg, DEFAULT_THEME.pageBg);
+  const ink = normHex(x.ink, DEFAULT_THEME.ink);
+  const muted = normHex(x.muted, DEFAULT_THEME.muted);
+  const stroke = normHex(x.stroke, DEFAULT_THEME.stroke);
+  const cardBase = normHex(x.cardBase, DEFAULT_THEME.cardBase);
+  const soft = normHex(x.soft, DEFAULT_THEME.soft);
+  const cardA = clamp(Number(x.cardA), 40, 95) / 100;
+  const panelA = Math.min(0.98, Math.max(cardA, 0.84));
+
+  document.documentElement.style.setProperty("--bg", pageBg);
+  document.documentElement.style.setProperty("--ink", ink);
+  document.documentElement.style.setProperty("--muted", muted);
+  document.documentElement.style.setProperty("--soft", soft);
+  document.documentElement.style.setProperty("--stroke", hexToRgba(stroke, 0.95));
+  document.documentElement.style.setProperty("--card-a", String(cardA));
+  document.documentElement.style.setProperty("--card", hexToRgba(cardBase, cardA));
+  document.documentElement.style.setProperty("--panel-bg", hexToRgba(cardBase, panelA));
+  document.documentElement.style.setProperty("--field-bg", "#ffffff");
+  document.documentElement.style.setProperty("--theme-dot", ink);
+
+  const dot = $("themeDot");
+  if(dot){
+    dot.style.background = ink;
+    dot.style.boxShadow = `0 0 0 6px ${hexToRgba(stroke, 0.35)}`;
+    dot.style.borderColor = hexToRgba(stroke, 0.95);
+  }
+}
+
+function themeSyncInputs(t){
+  const x = Object.assign({}, DEFAULT_THEME, t || {});
+  if($("tPageBg")) $("tPageBg").value = normHex(x.pageBg, DEFAULT_THEME.pageBg);
+  if($("tText")) $("tText").value = normHex(x.ink, DEFAULT_THEME.ink);
+  if($("tMuted")) $("tMuted").value = normHex(x.muted, DEFAULT_THEME.muted);
+  if($("tStroke")) $("tStroke").value = normHex(x.stroke, DEFAULT_THEME.stroke);
+  if($("tCard")) $("tCard").value = normHex(x.cardBase, DEFAULT_THEME.cardBase);
+  if($("tCardA")) $("tCardA").value = String(clamp(x.cardA, 40, 95));
+  if($("tSoft")) $("tSoft").value = normHex(x.soft, DEFAULT_THEME.soft);
+}
+
+function themeReadFromInputs(){
+  return {
+    pageBg: $("tPageBg")?.value,
+    ink: $("tText")?.value,
+    muted: $("tMuted")?.value,
+    stroke: $("tStroke")?.value,
+    cardBase: $("tCard")?.value,
+    cardA: Number($("tCardA")?.value),
+    soft: $("tSoft")?.value
+  };
+}
+
+/* =========================
+   Background
+========================= */
+const DEFAULT_BG = {
+  tint:"#efe7e1",
+  strength:12,
+  imageA:92,
+  blur:0,
+  imageDataUrl:null
+};
+
+function bgLoad(){ return loadJSON(BG_KEY); }
+function bgSave(bg){
+  saveJSON(BG_KEY, bg);
+  broadcastSync("background");
+}
+
+let bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+
+function bgApplyToCSS(bg){
+  const x = Object.assign({}, DEFAULT_BG, bg || {});
+  const tint = normHex(x.tint, DEFAULT_BG.tint);
+  const strength = clamp(Number(x.strength), 0, 70) / 100;
+  const imageA = clamp(Number(x.imageA), 0, 100) / 100;
+  const blurPx = clamp(Number(x.blur), 0, 24);
+
+  document.documentElement.style.setProperty("--board-tint", tint);
+  document.documentElement.style.setProperty("--board-tint-a", String(strength));
+  document.documentElement.style.setProperty("--board-image", x.imageDataUrl ? `url("${x.imageDataUrl}")` : "none");
+  document.documentElement.style.setProperty("--board-image-a", String(imageA));
+  document.documentElement.style.setProperty("--board-image-blur", `${blurPx}px`);
+
+  const boardTintEl = $("boardTint");
+  if(boardTintEl) boardTintEl.style.background = hexToRgba(tint, strength);
+
+  const bgDot = $("bgDot");
+  if(bgDot){
+    bgDot.style.background = tint;
+    bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+  }
+}
+
+function bgSyncInputs(bg){
+  const x = Object.assign({}, DEFAULT_BG, bg || {});
+  if($("bgColor")) $("bgColor").value = normHex(x.tint, DEFAULT_BG.tint);
+  if($("bgStrength")) $("bgStrength").value = String(clamp(x.strength, 0, 70));
+  if($("bgImageA")) $("bgImageA").value = String(clamp(x.imageA, 0, 100));
+  if($("bgBlur")) $("bgBlur").value = String(clamp(x.blur, 0, 24));
+}
+
+/* =========================
+   Presets
+========================= */
+function loadPresets(){
+  const list = loadJSON(PRESETS_KEY);
+  return Array.isArray(list) ? list : [];
+}
+function savePresets(list){
+  saveJSON(PRESETS_KEY, list);
+  broadcastSync("presets");
+}
+function refreshPresetSelect(){
+  const sel = $("presetSelect");
+  if(!sel) return;
+
+  const current = sel.value;
+  const list = loadPresets();
+
+  sel.innerHTML = `<option value="">—</option>`;
+  for(const p of list){
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name || "Untitled";
+    sel.appendChild(opt);
+  }
+  if(current && list.some(x => x.id === current)) sel.value = current;
+}
+
+function getThemeSnapshot(){
+  return Object.assign({}, DEFAULT_THEME, themeDraft, themeReadFromInputs());
+}
+function getBackgroundSnapshot(){
+  return Object.assign({}, DEFAULT_BG, bgDraft, {
+    tint: $("bgColor")?.value || bgDraft.tint,
+    strength: Number($("bgStrength")?.value ?? bgDraft.strength),
+    imageA: Number($("bgImageA")?.value ?? bgDraft.imageA),
+    blur: Number($("bgBlur")?.value ?? bgDraft.blur),
+    imageDataUrl: bgDraft.imageDataUrl || null
+  });
+}
+
+function initThemeUI(){
+  const themeBtn = $("themeBtn");
+  const themePanel = $("themePanel");
+  const bgPanel = $("bgPanel");
+  const resetTheme = $("resetTheme");
+  const themeApply = $("themeApply");
+
+  if(!themeBtn || !themePanel || !resetTheme || !themeApply) return;
+
+  themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+  themeSyncInputs(themeDraft);
+  themeApplyToCSS(themeDraft);
+
+  ["tPageBg","tText","tMuted","tStroke","tCard","tCardA","tSoft"].forEach(id => {
+    const el = $(id);
+    if(!el) return;
+    el.addEventListener("input", () => {
+      themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+      themeApplyToCSS(themeDraft);
+      setStatus("");
+    });
+    el.addEventListener("change", () => {
+      themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+      themeApplyToCSS(themeDraft);
+      setStatus("");
+    });
+  });
+
+  themeApply.addEventListener("click", () => {
+    themeDraft = getThemeSnapshot();
+    themeApplyToCSS(themeDraft);
+    themeSave(themeDraft);
+    setStatus("Theme applied.");
+  });
+
+  resetTheme.addEventListener("click", () => {
+    window.__LW__.remove(THEME_KEY);
+    themeDraft = Object.assign({}, DEFAULT_THEME);
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+    broadcastSync("theme");
+    setStatus("Theme reset.");
+  });
+
+  themeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    themePanel.classList.toggle("open");
+    if(bgPanel) bgPanel.classList.remove("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(!themePanel.classList.contains("open")) return;
+    const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+    if(!inside) themePanel.classList.remove("open");
+  });
+}
+
+function initBackgroundUI(){
+  const bgBtn = $("bgBtn");
+  const bgPanel = $("bgPanel");
+  const bgColor = $("bgColor");
+  const bgStrength = $("bgStrength");
+  const bgImageA = $("bgImageA");
+  const bgBlur = $("bgBlur");
+  const bgImage = $("bgImage");
+  const bgRemove = $("bgRemove");
+  const bgApply = $("bgApply");
+  const bgReset = $("bgReset");
+  const themePanel = $("themePanel");
+
+  if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImageA || !bgBlur || !bgImage || !bgRemove || !bgApply || !bgReset) return;
+
+  bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+  bgSyncInputs(bgDraft);
+  bgApplyToCSS(bgDraft);
+
+  bgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    bgPanel.classList.toggle("open");
+    if(themePanel) themePanel.classList.remove("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(!bgPanel.classList.contains("open")) return;
+    const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+    if(!inside) bgPanel.classList.remove("open");
+  });
+
+  function updateDraftFromInputs(){
+    bgDraft = Object.assign({}, bgDraft, {
+      tint: bgColor.value,
+      strength: Number(bgStrength.value),
+      imageA: Number(bgImageA.value),
+      blur: Number(bgBlur.value)
+    });
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  }
+
+  bgColor.addEventListener("input", updateDraftFromInputs);
+  bgStrength.addEventListener("input", updateDraftFromInputs);
+  bgImageA.addEventListener("input", updateDraftFromInputs);
+  bgBlur.addEventListener("input", updateDraftFromInputs);
+  bgColor.addEventListener("change", updateDraftFromInputs);
+  bgStrength.addEventListener("change", updateDraftFromInputs);
+  bgImageA.addEventListener("change", updateDraftFromInputs);
+  bgBlur.addEventListener("change", updateDraftFromInputs);
+
+  bgImage.addEventListener("change", async () => {
+    const file = bgImage.files && bgImage.files[0];
+    if(!file) return;
+    try{
+      bgDraft.imageDataUrl = await fileToDataUrl(file);
+      bgApplyToCSS(bgDraft);
+      setStatus("");
+    }catch{
+      setStatus("Could not read that image.");
+    }
+  });
+
+  bgRemove.addEventListener("click", () => {
+    bgDraft.imageDataUrl = null;
+    bgImage.value = "";
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  });
+
+  bgApply.addEventListener("click", () => {
+    bgDraft = getBackgroundSnapshot();
+    bgApplyToCSS(bgDraft);
+    bgSave(bgDraft);
+    setStatus("Background applied.");
+  });
+
+  bgReset.addEventListener("click", () => {
+    window.__LW__.remove(BG_KEY);
+    bgDraft = Object.assign({}, DEFAULT_BG);
+    bgSyncInputs(bgDraft);
+    bgApplyToCSS(bgDraft);
+    broadcastSync("background");
+    setStatus("Background reset.");
+  });
+}
+
+function initPresetsUI(){
+  const presetName = $("presetName");
+  const presetSaveBtn = $("presetSave");
+  const presetSelect = $("presetSelect");
+  const presetApplyBtn = $("presetApply");
+  const presetDeleteBtn = $("presetDelete");
+
+  if(!presetName || !presetSaveBtn || !presetSelect || !presetApplyBtn || !presetDeleteBtn) return;
+
+  refreshPresetSelect();
+
+  presetSaveBtn.addEventListener("click", () => {
+    const name = (presetName.value || "").trim();
+    if(!name){
+      setStatus("Type a preset name first.");
+      return;
+    }
+
+    const themeSnapshot = getThemeSnapshot();
+    const bgSnapshot = getBackgroundSnapshot();
+
+    const list = loadPresets();
+    const entry = {
+      id: uid(),
+      name,
+      theme: themeSnapshot,
+      bg: bgSnapshot
+    };
+
+    list.unshift(entry);
+    savePresets(list);
+
+    presetName.value = "";
+    refreshPresetSelect();
+    presetSelect.value = entry.id;
+    setStatus("Preset saved.");
+  });
+
+  presetApplyBtn.addEventListener("click", () => {
+    const id = presetSelect.value;
+    if(!id){
+      setStatus("Choose a preset first.");
+      return;
+    }
+
+    const list = loadPresets();
+    const p = list.find(x => x.id === id);
+    if(!p){
+      setStatus("Preset not found.");
+      return;
+    }
+
+    themeDraft = Object.assign({}, DEFAULT_THEME, p.theme || {});
+    bgDraft = Object.assign({}, DEFAULT_BG, p.bg || {});
+
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+    bgSyncInputs(bgDraft);
+    bgApplyToCSS(bgDraft);
+
+    themeSave(themeDraft);
+    bgSave(bgDraft);
+
+    setStatus("Preset applied.");
+  });
+
+  presetDeleteBtn.addEventListener("click", () => {
+    const id = presetSelect.value;
+    if(!id){
+      setStatus("Choose a preset first.");
+      return;
+    }
+
+    const before = loadPresets();
+    const next = before.filter(x => x.id !== id);
+
+    if(next.length === before.length){
+      setStatus("Preset not found.");
+      return;
+    }
+
+    savePresets(next);
+    refreshPresetSelect();
+    presetSelect.value = "";
+    setStatus("Preset deleted.");
+  });
+}
+
+(function bootUI(){
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", () => {
+      initThemeUI();
+      initBackgroundUI();
+      initPresetsUI();
+    });
+  }else{
+    initThemeUI();
+    initBackgroundUI();
+    initPresetsUI();
+  }
+})();
+
+/* =========================
+   Library app
+========================= */
+(function(){
   function safeName(name){
     return String(name || "").trim() || "Untitled";
   }
-
   function extFromName(name){
     const n = String(name || "");
     const m = n.match(/\.([a-z0-9]+)$/i);
     return m ? m[1].toLowerCase() : "";
   }
-
   function mimeLabel(mime, name){
-    if (mime === "application/pdf") return "PDF";
-    if (mime && mime.startsWith("image/")) return "Image";
-    if (mime === "text/plain") return "Text";
+    if(mime === "application/pdf") return "PDF";
+    if(mime && mime.startsWith("image/")) return "Image";
+    if(mime === "text/plain") return "Text";
     const ext = extFromName(name);
     return ext ? ext.toUpperCase() : (mime || "File");
   }
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
 
-  /* --------------------------
-     IndexedDB (store blobs)
-  --------------------------- */
-  const DB_NAME = "library_widget_v1";
+  const DB_NAME = "library_widget_books_v2";
   const DB_STORE = "books";
+
+  function storageIdForBook(bookId){
+    return `${WID}::${bookId}`;
+  }
 
   function idbOpen(){
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
+      const req = indexedDB.open(DB_NAME, 2);
       req.onupgradeneeded = () => {
         const db = req.result;
-        if (!db.objectStoreNames.contains(DB_STORE)){
-          db.createObjectStore(DB_STORE, { keyPath: "id" });
+        let store;
+        if(!db.objectStoreNames.contains(DB_STORE)){
+          store = db.createObjectStore(DB_STORE, { keyPath: "storageId" });
+        }else{
+          store = req.transaction.objectStore(DB_STORE);
+        }
+        if(store && !store.indexNames.contains("widgetId")){
+          store.createIndex("widgetId", "widgetId", { unique:false });
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -690,310 +1479,92 @@
     });
   }
 
-  async function idbGet(id){
+  async function idbGet(bookId){
     const db = await idbOpen();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(DB_STORE, "readonly");
-      const req = tx.objectStore(DB_STORE).get(id);
+      const req = tx.objectStore(DB_STORE).get(storageIdForBook(bookId));
       req.onsuccess = () => resolve(req.result || null);
       req.onerror = () => reject(req.error);
     });
   }
 
-  async function idbDelete(id){
+  async function idbDelete(bookId){
     const db = await idbOpen();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(DB_STORE, "readwrite");
-      tx.objectStore(DB_STORE).delete(id);
+      tx.objectStore(DB_STORE).delete(storageIdForBook(bookId));
       tx.oncomplete = () => resolve(true);
       tx.onerror = () => reject(tx.error);
     });
   }
 
-  async function idbClear(){
+  async function idbClearWidgetOnly(){
     const db = await idbOpen();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(DB_STORE, "readwrite");
-      tx.objectStore(DB_STORE).clear();
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  /* --------------------------
-     Theme settings module (NEW)
-  --------------------------- */
-  (function(){
-    const THEME_KEY = "library_widget_theme_v1";
-
-    function hexToRgba(hex, a){
-      const h = String(hex || "").replace("#","").trim();
-      const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-      const num = parseInt(full || "e9e4dd", 16);
-      const r = (num >> 16) & 255;
-      const g = (num >> 8) & 255;
-      const b = num & 255;
-      return `rgba(${r},${g},${b},${a})`;
-    }
-
-    function loadTheme(){
-      try{
-        const raw = localStorage.getItem(THEME_KEY);
-        if(raw) return JSON.parse(raw) || null;
-      }catch{}
-      return null;
-    }
-
-    function saveTheme(t){
-      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-    }
-
-    const DEFAULT_THEME = {
-      pageBg: "#ffffff",
-      ink: "#2b2a28",
-      muted: "#6a665f",
-      stroke: "#e9e4dd",
-      cardBase: "#ffffff",
-      soft: "#f3efe9"
-    };
-
-    function applyTheme(t){
-      document.documentElement.style.setProperty("--bg", t.pageBg);
-      document.documentElement.style.setProperty("--ink", t.ink);
-      document.documentElement.style.setProperty("--muted", t.muted);
-      document.documentElement.style.setProperty("--soft", t.soft);
-
-      /* Stroke is used in borders; keep the original alpha vibe by deriving from hex */
-      document.documentElement.style.setProperty("--stroke", hexToRgba(t.stroke, 0.95));
-
-      /* Card: keep alpha consistent (0.84) but change base color */
-      document.documentElement.style.setProperty("--card", hexToRgba(t.cardBase, 0.84));
-
-      /* Also update the theme dot */
-      document.documentElement.style.setProperty("--theme-dot", t.ink);
-      const dot = $("themeDot");
-      if(dot){
-        dot.style.background = t.ink;
-        dot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.stroke, 0.35)}`;
-        dot.style.borderColor = hexToRgba(t.stroke, 0.95);
-      }
-    }
-
-    function init(){
-      const themeBtn = $("themeBtn");
-      const themePanel = $("themePanel");
-      const bgPanel = $("bgPanel");
-
-      const tPageBg = $("tPageBg");
-      const tText = $("tText");
-      const tMuted = $("tMuted");
-      const tStroke = $("tStroke");
-      const tCard = $("tCard");
-      const tSoft = $("tSoft");
-      const resetTheme = $("resetTheme");
-
-      if(!themeBtn || !themePanel || !tPageBg || !tText || !tMuted || !tStroke || !tCard || !tSoft || !resetTheme) return;
-
-      const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
-
-      // seed UI
-      tPageBg.value = themeState.pageBg;
-      tText.value = themeState.ink;
-      tMuted.value = themeState.muted;
-      tStroke.value = themeState.stroke;
-      tCard.value = themeState.cardBase;
-      tSoft.value = themeState.soft;
-
-      applyTheme(themeState);
-
-      function wire(el, key){
-        el.addEventListener("input", () => {
-          themeState[key] = el.value;
-          applyTheme(themeState);
-          saveTheme(themeState);
-        });
-      }
-
-      wire(tPageBg, "pageBg");
-      wire(tText, "ink");
-      wire(tMuted, "muted");
-      wire(tStroke, "stroke");
-      wire(tCard, "cardBase");
-      wire(tSoft, "soft");
-
-      resetTheme.addEventListener("click", () => {
-        Object.assign(themeState, DEFAULT_THEME);
-
-        tPageBg.value = themeState.pageBg;
-        tText.value = themeState.ink;
-        tMuted.value = themeState.muted;
-        tStroke.value = themeState.stroke;
-        tCard.value = themeState.cardBase;
-        tSoft.value = themeState.soft;
-
-        applyTheme(themeState);
-        saveTheme(themeState);
-      });
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        if(bgPanel) bgPanel.classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        if(!themePanel.classList.contains("open")) return;
-        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-        if(!inside) themePanel.classList.remove("open");
-      });
-    }
-
-    if(document.readyState === "loading"){
-      document.addEventListener("DOMContentLoaded", init);
-    }else{
-      init();
-    }
-  })();
-
-  /* --------------------------
-     Background settings module
-  --------------------------- */
-  (function(){
-    const BG_KEY = "library_widget_bg_v1";
-
-    function hexToRgba(hex, a){
-      const h = String(hex || "").replace("#","").trim();
-      const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-      const num = parseInt(full || "efe7e1", 16);
-      const r = (num >> 16) & 255;
-      const g = (num >> 8) & 255;
-      const b = num & 255;
-      return `rgba(${r},${g},${b},${a})`;
-    }
-    function loadBg(){
-      try{
-        const raw = localStorage.getItem(BG_KEY);
-        if(raw) return JSON.parse(raw) || null;
-      }catch{}
-      return null;
-    }
-    function saveBg(bg){
-      try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-    }
-    function fileToDataUrl(file){
-      return new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(String(r.result));
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
-    }
-
-    function init(){
-      const boardTintEl = $("boardTint");
-      const bgBtn = $("bgBtn");
-      const bgPanel = $("bgPanel");
-      const bgColor = $("bgColor");
-      const bgStrength = $("bgStrength");
-      const bgImage = $("bgImage");
-      const bgRemove = $("bgRemove");
-      const bgDot = $("bgDot");
-      const themePanel = $("themePanel");
-
-      if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
-
-      const bgState = loadBg() || { tint:"#efe7e1", strength:12, imageDataUrl:null };
-
-      function applyBg(){
-        const tint = bgState.tint || "#efe7e1";
-        const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
-
-        document.documentElement.style.setProperty("--board-tint", tint);
-        document.documentElement.style.setProperty("--board-tint-a", String(strength));
-        document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
-
-        boardTintEl.style.background = hexToRgba(tint, strength);
-        if(bgDot){
-          bgDot.style.background = tint;
-          bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+      const store = tx.objectStore(DB_STORE);
+      const index = store.index("widgetId");
+      const req = index.openCursor(IDBKeyRange.only(WID));
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if(cursor){
+          cursor.delete();
+          cursor.continue();
         }
-      }
-
-      bgColor.value = bgState.tint;
-      bgStrength.value = String(bgState.strength);
-      applyBg();
-
-      bgBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        bgPanel.classList.toggle("open");
-        if(themePanel) themePanel.classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        if(!bgPanel.classList.contains("open")) return;
-        const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-        if(!inside) bgPanel.classList.remove("open");
-      });
-
-      bgColor.addEventListener("input", () => {
-        bgState.tint = bgColor.value;
-        applyBg();
-        saveBg(bgState);
-      });
-
-      bgStrength.addEventListener("input", () => {
-        bgState.strength = Number(bgStrength.value);
-        applyBg();
-        saveBg(bgState);
-      });
-
-      bgImage.addEventListener("change", async () => {
-        const file = bgImage.files && bgImage.files[0];
-        if(!file) return;
-        const dataUrl = await fileToDataUrl(file);
-        bgState.imageDataUrl = dataUrl;
-        applyBg();
-        saveBg(bgState);
-      });
-
-      bgRemove.addEventListener("click", () => {
-        bgState.imageDataUrl = null;
-        bgImage.value = "";
-        applyBg();
-        saveBg(bgState);
-      });
-    }
-
-    if(document.readyState === "loading"){
-      document.addEventListener("DOMContentLoaded", init);
-    }else{
-      init();
-    }
-  })();
-
-  const META_KEY = "library_widget_meta_v1";
+      };
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
 
   function defaultState(){
     const s1 = uid(), s2 = uid();
     return {
       shelves: [
-        { id: s1, name: "To Read" },
-        { id: s2, name: "Finished" }
+        { id:s1, name:"To Read" },
+        { id:s2, name:"Finished" }
       ],
       books: []
     };
   }
 
+  function normalizeState(parsed){
+    const base = defaultState();
+    base.shelves = Array.isArray(parsed?.shelves) ? parsed.shelves : base.shelves;
+    base.books = Array.isArray(parsed?.books) ? parsed.books : [];
+    if(!base.shelves.length) base.shelves = defaultState().shelves;
+
+    base.shelves = base.shelves.map(s => ({
+      id: String(s?.id || uid()),
+      name: String(s?.name || "Shelf")
+    }));
+
+    base.books = base.books
+      .filter(Boolean)
+      .map(b => ({
+        id: String(b.id || uid()),
+        shelfId: String(b.shelfId || base.shelves[0].id),
+        title: String(b.title || ""),
+        fileName: String(b.fileName || "file"),
+        mime: String(b.mime || "application/octet-stream"),
+        coverDataUrl: b.coverDataUrl || null,
+        createdAt: Number(b.createdAt || Date.now())
+      }));
+
+    const shelfIds = new Set(base.shelves.map(s => s.id));
+    base.books.forEach(b => {
+      if(!shelfIds.has(b.shelfId)) b.shelfId = base.shelves[0].id;
+    });
+
+    return base;
+  }
+
   function loadState(){
     try{
-      const raw = localStorage.getItem(META_KEY);
+      const raw = window.__LW__.get(META_KEY);
       if(!raw) return defaultState();
-      const parsed = JSON.parse(raw) || {};
-      const base = defaultState();
-      base.shelves = Array.isArray(parsed.shelves) ? parsed.shelves : base.shelves;
-      base.books = Array.isArray(parsed.books) ? parsed.books : [];
-      if(!base.shelves.length) base.shelves = defaultState().shelves;
-      return base;
+      return normalizeState(JSON.parse(raw));
     }catch{
       return defaultState();
     }
@@ -1002,53 +1573,12 @@
   let state = loadState();
 
   function saveState(){
-    try{ localStorage.setItem(META_KEY, JSON.stringify(state)); }catch{}
-  }
-
-  /* --------------------------
-     Cover generation (PDF first page)
-  --------------------------- */
-  async function pdfFirstPageCover(blob){
-    if(!window.pdfjsLib) return null;
     try{
-      const ab = await blob.arrayBuffer();
-      const doc = await pdfjsLib.getDocument({ data: ab }).promise;
-      const page = await doc.getPage(1);
-      const viewport = page.getViewport({ scale: 1.2 });
-
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      canvas.width = Math.floor(viewport.width);
-      canvas.height = Math.floor(viewport.height);
-
-      await page.render({ canvasContext: ctx, viewport }).promise;
-
-      const out = document.createElement("canvas");
-      const w = 300, h = 400;
-      out.width = w; out.height = h;
-      const octx = out.getContext("2d");
-
-      const sx = 0, sy = 0, sw = canvas.width, sh = canvas.height;
-      octx.drawImage(canvas, sx, sy, sw, sh, 0, 0, w, h);
-
-      return out.toDataURL("image/jpeg", 0.86);
-    }catch(e){
-      return null;
-    }
+      window.__LW__.set(META_KEY, JSON.stringify(state));
+      broadcastSync("library");
+    }catch{}
   }
 
-  async function fileToDataUrl(file){
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
-
-  /* --------------------------
-     Object URL cache (for reading)
-  --------------------------- */
   const objectUrlById = new Map();
 
   async function ensureObjectUrl(bookId){
@@ -1060,18 +1590,53 @@
     return url;
   }
 
-  function revokeAllObjectUrls(){
-    for(const url of objectUrlById.values()){
+  function revokeObjectUrl(bookId){
+    const url = objectUrlById.get(bookId);
+    if(url){
       try{ URL.revokeObjectURL(url); }catch{}
+      objectUrlById.delete(bookId);
     }
-    objectUrlById.clear();
   }
 
-  /* --------------------------
-     UI rendering
-  --------------------------- */
+  function revokeAllObjectUrls(){
+    for(const [bookId, url] of objectUrlById.entries()){
+      try{ URL.revokeObjectURL(url); }catch{}
+      objectUrlById.delete(bookId);
+    }
+  }
+
+  async function pdfFirstPageCover(blob){
+    if(!window.pdfjsLib) return null;
+    try{
+      const ab = await blob.arrayBuffer();
+      const doc = await pdfjsLib.getDocument({ data:ab }).promise;
+      const page = await doc.getPage(1);
+      const viewport = page.getViewport({ scale:1.2 });
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+
+      await page.render({ canvasContext:ctx, viewport }).promise;
+
+      const out = document.createElement("canvas");
+      out.width = 300;
+      out.height = 400;
+      const octx = out.getContext("2d");
+      octx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, out.width, out.height);
+
+      try{ doc.destroy(); }catch{}
+      return out.toDataURL("image/jpeg", 0.86);
+    }catch{
+      return null;
+    }
+  }
+
   function renderShelfSelect(){
     const sel = $("shelfSelect");
+    if(!sel) return;
+    const current = sel.value;
     sel.innerHTML = "";
     for(const s of state.shelves){
       const opt = document.createElement("option");
@@ -1079,6 +1644,48 @@
       opt.textContent = s.name || "Shelf";
       sel.appendChild(opt);
     }
+    if(current && state.shelves.some(s => s.id === current)) sel.value = current;
+  }
+
+  let moveBookId = null;
+
+  function openMoveModal(bookId){
+    const book = state.books.find(b => b.id === bookId);
+    if(!book) return;
+
+    moveBookId = bookId;
+    const sel = $("moveShelfSelect");
+    sel.innerHTML = "";
+
+    for(const s of state.shelves){
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.name || "Shelf";
+      sel.appendChild(opt);
+    }
+    sel.value = book.shelfId;
+    $("moveTitle").textContent = `Move: ${book.title || book.fileName || "Untitled"}`;
+    $("moveModal").classList.add("open");
+  }
+
+  function closeMoveModal(){
+    $("moveModal").classList.remove("open");
+    moveBookId = null;
+  }
+
+  function confirmMove(){
+    if(!moveBookId) return closeMoveModal();
+
+    const book = state.books.find(b => b.id === moveBookId);
+    if(!book) return closeMoveModal();
+
+    const targetId = $("moveShelfSelect").value;
+    if(!targetId) return;
+
+    book.shelfId = targetId;
+    saveState();
+    renderAll();
+    closeMoveModal();
   }
 
   function renderShelves(){
@@ -1099,6 +1706,12 @@
       const nameInput = document.createElement("input");
       nameInput.value = shelf.name || "";
       nameInput.placeholder = "Shelf name";
+      nameInput.autocomplete = "off";
+      nameInput.addEventListener("input", () => {
+        shelf.name = nameInput.value.trim() || "Shelf";
+        saveState();
+        renderShelfSelect();
+      });
       nameInput.addEventListener("change", () => {
         shelf.name = nameInput.value.trim() || "Shelf";
         saveState();
@@ -1120,19 +1733,24 @@
       delShelf.className = "soft";
       delShelf.type = "button";
       delShelf.textContent = "Remove shelf";
-      delShelf.addEventListener("click", async () => {
-        if(state.shelves.length <= 1) return alert("You need at least one shelf.");
-        const target = state.shelves.find(x => x.id !== shelf.id);
-        for(const b of state.books){
-          if(b.shelfId === shelf.id) b.shelfId = target.id;
+      delShelf.addEventListener("click", () => {
+        if(state.shelves.length <= 1){
+          alert("You need at least one shelf.");
+          return;
         }
+        const target = state.shelves.find(x => x.id !== shelf.id);
+        if(!target) return;
+
+        state.books.forEach(b => {
+          if(b.shelfId === shelf.id) b.shelfId = target.id;
+        });
+
         state.shelves = state.shelves.filter(x => x.id !== shelf.id);
         saveState();
         renderAll();
       });
 
       actions.appendChild(delShelf);
-
       head.appendChild(nameWrap);
       head.appendChild(actions);
 
@@ -1186,20 +1804,27 @@
           coverBtn.className = "miniBtn";
           coverBtn.type = "button";
           coverBtn.textContent = "Cover";
-          coverBtn.addEventListener("click", () => promptCoverChange(book.id));
+          coverBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            promptCoverChange(book.id);
+          });
 
           const moveBtn = document.createElement("button");
           moveBtn.className = "miniBtn";
           moveBtn.type = "button";
           moveBtn.textContent = "Move";
-          moveBtn.addEventListener("click", () => promptMove(book.id));
+          moveBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openMoveModal(book.id);
+          });
 
           const delBtn = document.createElement("button");
           delBtn.className = "miniBtn danger";
           delBtn.type = "button";
           delBtn.textContent = "✕";
           delBtn.title = "Remove book";
-          delBtn.addEventListener("click", async () => {
+          delBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
             await removeBook(book.id);
           });
 
@@ -1221,80 +1846,223 @@
     }
   }
 
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
   function renderAll(){
     renderShelfSelect();
     renderShelves();
     saveState();
   }
 
-  /* --------------------------
-     Reader modal
-  --------------------------- */
+  let currentPdfDoc = null;
+  let currentPdfRenderTask = null;
+  let currentPdfState = null;
+
+  async function destroyPdfViewer(){
+    try{
+      if(currentPdfRenderTask && currentPdfRenderTask.cancel) currentPdfRenderTask.cancel();
+    }catch{}
+    currentPdfRenderTask = null;
+
+    try{
+      if(currentPdfDoc && currentPdfDoc.destroy) currentPdfDoc.destroy();
+    }catch{}
+    currentPdfDoc = null;
+    currentPdfState = null;
+  }
+
+  async function openPdfReader(book, rec){
+    await destroyPdfViewer();
+
+    const body = $("readerBody");
+    body.innerHTML = `
+      <div class="pdfShell">
+        <div class="pdfToolbar">
+          <button type="button" class="soft" id="pdfPrev">Prev</button>
+          <div class="pdfInfo" id="pdfPageInfo">Page 1 / 1</div>
+          <button type="button" class="soft" id="pdfNext">Next</button>
+          <div class="spacer"></div>
+          <button type="button" class="soft" id="pdfZoomOut">−</button>
+          <div class="pdfInfo" id="pdfZoomInfo">100%</div>
+          <button type="button" class="soft" id="pdfZoomIn">+</button>
+        </div>
+        <div class="pdfViewport" id="pdfViewport">
+          <div class="pdfCanvasWrap">
+            <canvas id="pdfCanvas" class="pdfCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const data = await rec.blob.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data }).promise;
+    currentPdfDoc = pdf;
+    currentPdfState = {
+      page:1,
+      pages:pdf.numPages,
+      scale:1.2
+    };
+
+    const canvas = $("pdfCanvas");
+    const ctx = canvas.getContext("2d");
+
+    async function renderPdfPage(){
+      if(!currentPdfDoc || !currentPdfState) return;
+      const page = await currentPdfDoc.getPage(currentPdfState.page);
+      const viewport = page.getViewport({ scale: currentPdfState.scale });
+
+      const outputScale = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(viewport.width * outputScale);
+      canvas.height = Math.floor(viewport.height * outputScale);
+      canvas.style.width = `${Math.floor(viewport.width)}px`;
+      canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+      ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+      currentPdfRenderTask = page.render({ canvasContext:ctx, viewport });
+      try{
+        await currentPdfRenderTask.promise;
+      }catch(e){
+        if(e?.name !== "RenderingCancelledException") throw e;
+      }
+
+      $("pdfPageInfo").textContent = `Page ${currentPdfState.page} / ${currentPdfState.pages}`;
+      $("pdfZoomInfo").textContent = `${Math.round(currentPdfState.scale * 100)}%`;
+    }
+
+    $("pdfPrev").addEventListener("click", async () => {
+      if(!currentPdfState || currentPdfState.page <= 1) return;
+      currentPdfState.page -= 1;
+      await renderPdfPage();
+    });
+
+    $("pdfNext").addEventListener("click", async () => {
+      if(!currentPdfState || currentPdfState.page >= currentPdfState.pages) return;
+      currentPdfState.page += 1;
+      await renderPdfPage();
+    });
+
+    $("pdfZoomIn").addEventListener("click", async () => {
+      if(!currentPdfState) return;
+      currentPdfState.scale = clamp(currentPdfState.scale + 0.2, 0.6, 3);
+      await renderPdfPage();
+    });
+
+    $("pdfZoomOut").addEventListener("click", async () => {
+      if(!currentPdfState) return;
+      currentPdfState.scale = clamp(currentPdfState.scale - 0.2, 0.6, 3);
+      await renderPdfPage();
+    });
+
+    await renderPdfPage();
+  }
+
   async function openReader(bookId){
     const book = state.books.find(b => b.id === bookId);
     if(!book) return;
 
-    const url = await ensureObjectUrl(bookId);
-    if(!url) return alert("File not found. Try re-uploading.");
+    const rec = await idbGet(bookId);
+    if(!rec || !rec.blob){
+      alert("File not found. Try re-uploading.");
+      return;
+    }
 
     $("readerTitle").textContent = book.title || book.fileName || "Untitled";
-
     const body = $("readerBody");
     body.innerHTML = "";
+
+    if(book.mime === "application/pdf" && window.pdfjsLib){
+      try{
+        await openPdfReader(book, rec);
+        $("readerModal").classList.add("open");
+        return;
+      }catch{
+        body.innerHTML = `<div class="readerEmpty">Could not render that PDF in-page.</div>`;
+        $("readerModal").classList.add("open");
+        return;
+      }
+    }
+
+    if(book.mime && book.mime.startsWith("image/")){
+      const url = await ensureObjectUrl(bookId);
+      if(!url){
+        alert("File not found. Try re-uploading.");
+        return;
+      }
+      body.innerHTML = `<div class="readerFallback"><img src="${url}" alt=""></div>`;
+      $("readerModal").classList.add("open");
+      return;
+    }
+
+    if(book.mime === "text/plain"){
+      try{
+        const text = await rec.blob.text();
+        const pre = document.createElement("pre");
+        pre.className = "readerFallback readerText";
+        pre.textContent = text;
+        body.appendChild(pre);
+      }catch{
+        body.innerHTML = `<div class="readerEmpty">Could not read that text file.</div>`;
+      }
+      $("readerModal").classList.add("open");
+      return;
+    }
+
+    const url = await ensureObjectUrl(bookId);
+    if(!url){
+      alert("File not found. Try re-uploading.");
+      return;
+    }
 
     const iframe = document.createElement("iframe");
     iframe.src = url;
     iframe.setAttribute("title", "Reader");
     iframe.setAttribute("loading", "lazy");
     body.appendChild(iframe);
-
     $("readerModal").classList.add("open");
   }
 
-  function closeReader(){
+  async function closeReader(){
     $("readerModal").classList.remove("open");
     $("readerBody").innerHTML = "";
+    await destroyPdfViewer();
   }
 
-  /* --------------------------
-     Book operations
-  --------------------------- */
   async function addBook(){
     const file = $("fileInput").files && $("fileInput").files[0];
-    if(!file) return alert("Choose a file first.");
+    if(!file){
+      alert("Choose a file first.");
+      return;
+    }
 
     const shelfId = $("shelfSelect").value;
-
-    /* FIX: if user leaves title empty, keep it empty until we fallback to file.name
-       (previously safeName("") -> "Untitled", which overrode file name) */
     const rawTitle = ($("bookTitle").value || "").trim();
-    const title = rawTitle ? rawTitle : safeName(file.name);
-
+    const title = rawTitle || safeName(file.name);
     const bookId = uid();
     const mime = file.type || "application/octet-stream";
     const fileName = file.name || "file";
 
     let coverDataUrl = null;
-
     const coverFile = $("coverInput").files && $("coverInput").files[0];
+
     if(coverFile){
-      try{ coverDataUrl = await fileToDataUrl(coverFile); }catch{}
+      try{
+        coverDataUrl = await fileToDataUrl(coverFile);
+      }catch{}
     }else if(mime === "application/pdf"){
       coverDataUrl = await pdfFirstPageCover(file);
     }else if(mime.startsWith("image/")){
-      try{ coverDataUrl = await fileToDataUrl(file); }catch{}
+      try{
+        coverDataUrl = await fileToDataUrl(file);
+      }catch{}
     }
 
-    await idbPut({ id: bookId, blob: file, mime, fileName });
+    await idbPut({
+      storageId: storageIdForBook(bookId),
+      widgetId: WID,
+      bookId,
+      blob: file,
+      mime,
+      fileName,
+      createdAt: Date.now()
+    });
 
     state.books.unshift({
       id: bookId,
@@ -1319,13 +2087,7 @@
 
     await idbDelete(bookId);
     state.books = state.books.filter(b => b.id !== bookId);
-
-    const url = objectUrlById.get(bookId);
-    if(url){
-      try{ URL.revokeObjectURL(url); }catch{}
-      objectUrlById.delete(bookId);
-    }
-
+    revokeObjectUrl(bookId);
     renderAll();
   }
 
@@ -1352,30 +2114,9 @@
 
     document.body.appendChild(input);
     input.click();
-    setTimeout(()=> input.remove(), 0);
+    setTimeout(() => input.remove(), 0);
   }
 
-  function promptMove(bookId){
-    const book = state.books.find(b => b.id === bookId);
-    if(!book) return;
-
-    const targetName = prompt(
-      "Move to which shelf?\n\nType the shelf name exactly:\n" + state.shelves.map(s=>s.name).join("\n"),
-      state.shelves.find(s=>s.id===book.shelfId)?.name || ""
-    );
-    if(!targetName) return;
-
-    const target = state.shelves.find(s => (s.name || "").trim().toLowerCase() === targetName.trim().toLowerCase());
-    if(!target) return alert("Shelf not found. Please type the shelf name exactly.");
-
-    book.shelfId = target.id;
-    saveState();
-    renderAll();
-  }
-
-  /* --------------------------
-     Shelves ops + reset
-  --------------------------- */
   function addShelf(){
     state.shelves.push({ id: uid(), name: `Shelf ${state.shelves.length + 1}` });
     saveState();
@@ -1390,27 +2131,38 @@
     if(bgPanel) bgPanel.classList.remove("open");
     if(themePanel) themePanel.classList.remove("open");
   }
+
   function hideReset(){
     $("resetConfirm").style.display = "none";
   }
 
   async function doReset(){
-    localStorage.removeItem(META_KEY);
+    window.__LW__.remove(META_KEY);
     state = defaultState();
     saveState();
     revokeAllObjectUrls();
-    await idbClear();
+    await destroyPdfViewer();
+    await idbClearWidgetOnly();
     hideReset();
     renderAll();
+  }
+
+  function reloadStateFromStorage(){
+    state = loadState();
+    renderShelfSelect();
+    renderShelves();
   }
 
   function init(){
     const required = [
       "fileInput","coverInput","bookTitle","shelfSelect","addBook",
       "addShelf","resetAll","resetConfirm","resetYes","resetNo",
-      "shelves","readerModal","readerTitle","readerBody","readerClose"
+      "shelves","readerModal","readerTitle","readerBody","readerClose",
+      "moveModal","moveShelfSelect","moveConfirm","moveCancel","moveClose"
     ];
-    for(const id of required){ if(!$(id)) return; }
+    for(const id of required){
+      if(!$(id)) return;
+    }
 
     $("addBook").addEventListener("click", addBook);
     $("addShelf").addEventListener("click", addShelf);
@@ -1426,8 +2178,29 @@
       if(e.target && e.target.id === "readerModal") closeReader();
     });
 
+    $("moveClose").addEventListener("click", closeMoveModal);
+    $("moveCancel").addEventListener("click", closeMoveModal);
+    $("moveConfirm").addEventListener("click", confirmMove);
+    $("moveModal").addEventListener("click", (e) => {
+      if(e.target && e.target.id === "moveModal") closeMoveModal();
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "hidden"){
+        try{ saveState(); }catch{}
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      try{ saveState(); }catch{}
+    });
+
     renderAll();
   }
+
+  window.__LIBRARY_APP__ = {
+    reloadStateFromStorage
+  };
 
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", init);

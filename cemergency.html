@@ -2,85 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Emergency Fund Comfort Meter</title>
   <style>
     :root{
-      --bg:#ffffff; --card:#ffffffcc; --stroke:#e9e4dd; --ink:#2b2a28;
-      --muted:#6a665f; --soft:#f3efe9; --shadow:0 10px 30px rgba(30,20,10,.06);
+      --bg:#ffffff;
+      --card:#ffffffcc;
+      --stroke:#e9e4dd;
+      --ink:#2b2a28;
+      --muted:#6a665f;
+      --soft:#f3efe9;
+      --shadow:0 10px 30px rgba(30,20,10,.06);
       --r:18px;
 
       --board-tint:#ffffff;
       --board-tint-a:0.30;
       --board-image:none;
+      --board-blur:0px;
 
-      --panel-bg: rgba(255,255,255,0.92);
+      --panel-bg: rgba(255,255,255,0.96);
       --field-bg: #ffffff;
       --theme-dot: var(--ink);
     }
-    *{box-sizing:border-box}
+
+    *{ box-sizing:border-box; }
+    html, body{ width:100%; max-width:100%; min-height:100%; overflow-x:hidden; }
+
     body{
-      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      color:var(--ink); background: var(--bg);
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background: var(--bg);
       padding:28px 18px;
+      -webkit-text-size-adjust:100%;
     }
-    .wrap{max-width:800px; margin:0 auto;}
-    h1{margin:0; font-size:18px}
-    .sub{margin:6px 0 14px; color:var(--muted); font-size:13px}
+
+    .wrap{ max-width:800px; margin:0 auto; }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; }
 
     .widgetBoard{
-      max-width: 700px;
-      margin: 0 auto;
+      max-width:700px;
+      margin:0 auto;
       position:relative;
-      border-radius: var(--r);
-
-      /* FIX: allow panels to extend beyond the board without being clipped */
-      overflow: visible;
-
+      border-radius:var(--r);
+      overflow:visible;
       border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
+      box-shadow:var(--shadow);
+      background:transparent;
     }
+
     .widgetBoard::before{
       content:"";
       position:absolute;
       inset:0;
-      background-image: var(--board-image);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      transform: scale(1.02);
+      background-image:var(--board-image);
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+      transform:scale(1.02);
       z-index:0;
       pointer-events:none;
-      filter: saturate(1.1) contrast(1.06) brightness(1.03);
-
-      /* keep rounded corners on background layers */
-      border-radius: var(--r);
+      filter: blur(var(--board-blur)) saturate(1);
+      border-radius:var(--r);
     }
+
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
-      background:
-        radial-gradient(740px 480px at 18% 20%, rgba(255,255,255,0.34), transparent 62%),
-        radial-gradient(680px 520px at 86% 28%, rgba(255,255,255,0.20), transparent 65%),
-        rgba(255,255,255,0.20);
-      background-blend-mode: screen;
+      background: rgba(255,255,255,0.18);
       pointer-events:none;
       z-index:0;
-
-      /* keep rounded corners on background layers */
-      border-radius: var(--r);
+      border-radius:var(--r);
     }
+
     .boardTint{
       position:absolute;
       inset:0;
       pointer-events:none;
       z-index:1;
-      background: rgba(0,0,0,0);
-
-      /* keep rounded corners on background layers */
-      border-radius: var(--r);
+      background:rgba(0,0,0,0);
+      border-radius:var(--r);
     }
+
     .boardContent{
       position:relative;
       z-index:2;
@@ -96,11 +101,32 @@
       -webkit-backdrop-filter: blur(2px);
     }
 
-    .title{display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin-bottom:10px}
-    .title h2{margin:0; font-size:14px; font-weight:650; letter-spacing:.2px}
-    .hint{color:var(--muted); font-size:12px}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    button, input, select{
+    .title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+      flex-wrap:wrap;
+    }
+
+    .title h2{
+      margin:0;
+      font-size:14px;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+
+    .hint{ color:var(--muted); font-size:12px; }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    button, input, select, textarea{
       font:inherit;
       border:1px solid var(--stroke);
       background:var(--field-bg);
@@ -110,39 +136,83 @@
       outline:none;
       -webkit-tap-highlight-color: transparent;
     }
-    button{cursor:pointer}
-    button.soft{background:var(--soft)}
-    button:active{transform:translateY(1px)}
-    .divider{height:1px; background:var(--stroke); margin:12px 0}
-    .meter{
-      border:1px solid var(--stroke); border-radius:14px; padding:10px; background:var(--field-bg);
-    }
-    .track{
-      height:12px; border-radius:999px; background:var(--soft);
-      border:1px solid var(--stroke); overflow:hidden;
-    }
-    .fill{height:100%; width:0%; background:rgba(40,30,20,.12)}
-    .kpi{
-      display:flex; gap:12px; flex-wrap:wrap;
-    }
-    .kpi .box{
-      flex:1; min-width:180px; background:var(--soft);
-      border:1px solid var(--stroke); border-radius:14px; padding:10px;
-    }
-    .kpi .num{font-weight:750; font-size:16px}
-    .kpi .lab{font-size:12px; color:var(--muted)}
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      border:1px solid var(--stroke); background:var(--field-bg); border-radius:999px;
-      padding:8px 12px; font-size:13px;
-    }
-    .tiny{font-size:12px; color:var(--muted)}
-    .right{margin-left:auto; display:flex; gap:8px; align-items:center}
-    .danger{border-color:#efc2c2}
 
-    .controlsWrap{ position:relative; display:flex; gap:10px; align-items:center; margin-left:auto; }
+    input:focus, select:focus, textarea:focus{
+      box-shadow: 0 0 0 3px rgba(203,184,174,0.20);
+    }
+
+    textarea{ width:100%; }
+    button{ cursor:pointer; touch-action:manipulation; }
+    button.soft{ background:var(--soft); }
+    button:active{ transform:translateY(1px); }
+
+    .divider{ height:1px; background:var(--stroke); margin:12px 0; }
+
+    .meter{
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+      background:var(--field-bg);
+    }
+
+    .track{
+      height:12px;
+      border-radius:999px;
+      background:var(--soft);
+      border:1px solid var(--stroke);
+      overflow:hidden;
+    }
+
+    .fill{
+      height:100%;
+      width:0%;
+      background:rgba(40,30,20,.18);
+    }
+
+    .kpi{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .kpi .box{
+      flex:1;
+      min-width:180px;
+      background:var(--soft);
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px;
+    }
+
+    .kpi .num{ font-weight:750; font-size:16px; }
+    .kpi .lab{ font-size:12px; color:var(--muted); }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--stroke);
+      background:var(--field-bg);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+    }
+
+    .tiny{ font-size:12px; color:var(--muted); }
+    .right{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+    .danger{ border-color:#efc2c2; }
+
+    .controlsWrap{
+      position:relative;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-left:auto;
+    }
+
     .bgBtn, .themeBtn{
-      width:34px; height:34px;
+      width:34px;
+      height:34px;
       border-radius:999px;
       border:1px solid var(--stroke);
       background: rgba(255,255,255,0.92);
@@ -151,15 +221,19 @@
       place-items:center;
       box-shadow: 0 3px 12px rgba(30,20,10,.08);
     }
+
     .bgDot{
-      width:14px; height:14px;
+      width:14px;
+      height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.30);
     }
+
     .themeDot{
-      width:14px; height:14px;
+      width:14px;
+      height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
       background: var(--theme-dot);
@@ -167,25 +241,25 @@
     }
 
     .panel{
-      position:absolute;
-      top: 44px;
-      right: 0;
-      width: 270px;
-      border-radius: 16px;
-      border: 1px solid var(--stroke);
+      position:fixed;
+      width:300px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
       background: var(--panel-bg);
       box-shadow: 0 18px 40px rgba(30,20,10,.12);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      padding: 12px;
+      padding:12px;
       display:none;
-      z-index: 50;
-
-
-      max-height: min(70vh, 420px);
-      overflow: auto;
+      z-index:99999;
+      max-height:calc(100dvh - 24px);
+      overflow:auto;
+      top:12px;
+      left:12px;
     }
+
     .panel.open{ display:block; }
+
     .bgTitle{
       margin:0 0 10px 0;
       font-size:12px;
@@ -194,30 +268,39 @@
       text-transform:uppercase;
       color: rgba(43,42,40,0.72);
     }
+
     .bgRow{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding: 7px 0;
+      padding:7px 0;
     }
-    .bgRow label{ font-size:12px; color:var(--muted); }
+
+    .bgRow label{
+      font-size:12px;
+      color:var(--muted);
+    }
+
     .bgRow input[type="color"]{
-      width:36px; height:28px;
+      width:40px;
+      height:30px;
       border-radius:10px;
       padding:0;
       border:1px solid var(--stroke);
-      background: transparent;
+      background:transparent;
       cursor:pointer;
     }
-    .bgRow input[type="range"]{ width: 150px; }
+
+    .bgRow input[type="range"]{ width:150px; }
     .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+
     .bgMiniBtn{
       width:100%;
       border-radius:12px;
       border:1px solid var(--stroke);
       background: rgba(255,255,255,0.95);
-      padding:9px 10px;
+      padding:10px 12px;
       font-weight:700;
       letter-spacing:.06em;
       text-transform:uppercase;
@@ -225,12 +308,102 @@
       color: rgba(43,42,40,0.82);
       box-shadow: 0 2px 8px rgba(30,20,10,.06);
     }
-    .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
+
+    .bgDiv{ height:1px; background:var(--stroke); margin:8px 0; }
+
+    .presetName{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color:var(--ink);
+      outline:none;
+    }
+
+    .presetSelect{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      color:var(--ink);
+      outline:none;
+      height:38px;
+    }
+
+    .status{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+      min-height:16px;
+    }
+
+    .confirmBackdrop{
+      position:fixed;
+      inset:0;
+      display:none;
+      place-items:center;
+      padding:18px;
+      background: rgba(20,18,16,.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index:999999;
+    }
+
+    .confirmBackdrop.show{ display:grid; }
+
+    .confirmModal{
+      width:min(520px, 100%);
+      background: rgba(255,255,255,.96);
+      border:1px solid rgba(43,42,40,.14);
+      border-radius:20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.12);
+      overflow:hidden;
+    }
+
+    .confirmHead{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(43,42,40,.10);
+      font-weight:700;
+      letter-spacing:.02em;
+    }
+
+    .confirmBody{
+      padding:14px 16px;
+      line-height:1.45;
+      color: rgba(43,42,40,.92);
+      font-size:13px;
+    }
+
+    .confirmFoot{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      padding:12px 16px;
+      border-top:1px solid rgba(43,42,40,.10);
+    }
+
+    @media (max-width: 760px){
+      body{ padding:14px; }
+      .row{ flex-direction:column; align-items:stretch; }
+      .right{ margin-left:0; width:100%; justify-content:flex-end; }
+      .panel{
+        width:min(320px, calc(100vw - 20px));
+        left:10px !important;
+        top:10px !important;
+        max-height:calc(100dvh - 20px) !important;
+      }
+      input, select, textarea{ font-size:16px; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Emergency Fund Comfort Meter</h1>
+    <h1>Emergency Fund Meter</h1>
     <div class="sub"></div>
 
     <div class="widgetBoard" id="widgetBoard" aria-label="Emergency Fund widget board">
@@ -248,73 +421,6 @@
               <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
                 <span class="themeDot" id="themeDot" aria-hidden="true"></span>
               </button>
-
-              <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
-                <div class="bgTitle">Background</div>
-
-                <div class="bgRow">
-                  <label for="bgColor">Tint</label>
-                  <input id="bgColor" type="color" value="#efe7e1" />
-                </div>
-
-                <div class="bgRow">
-                  <label for="bgStrength">Strength</label>
-                  <input id="bgStrength" type="range" min="0" max="70" value="30" />
-                </div>
-
-                <div class="bgDiv"></div>
-
-                <div class="bgRow" style="align-items:flex-start;">
-                  <label for="bgImage">Image</label>
-                  <input id="bgImage" class="bgFile" type="file" accept="image/*" />
-                </div>
-
-                <div class="bgRow">
-                  <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
-                </div>
-              </div>
-
-              <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
-                <div class="bgTitle">Theme</div>
-
-                <div class="bgRow">
-                  <label for="tPageBg">Page bg</label>
-                  <input id="tPageBg" type="color" value="#ffffff" />
-                </div>
-
-                <div class="bgRow">
-                  <label for="tText">Text</label>
-                  <input id="tText" type="color" value="#2b2a28" />
-                </div>
-
-                <div class="bgRow">
-                  <label for="tMuted">Muted</label>
-                  <input id="tMuted" type="color" value="#6a665f" />
-                </div>
-
-                <div class="bgDiv"></div>
-
-                <div class="bgRow">
-                  <label for="tStroke">Borders</label>
-                  <input id="tStroke" type="color" value="#e9e4dd" />
-                </div>
-
-                <div class="bgRow">
-                  <label for="tCard">Card</label>
-                  <input id="tCard" type="color" value="#ffffff" />
-                </div>
-
-                <div class="bgRow">
-                  <label for="tSoft">Secondary</label>
-                  <input id="tSoft" type="color" value="#f3efe9" />
-                </div>
-
-                <div class="bgDiv"></div>
-
-                <div class="bgRow">
-                  <button id="resetTheme" class="bgMiniBtn" type="button">Reset theme</button>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -373,20 +479,386 @@
     </div>
   </div>
 
-<script>
-function hexToRgba(hex, a){
-  const h = String(hex || "").replace("#","").trim();
-  const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-  const num = parseInt(full || "efe7e1", 16);
-  const r = (num >> 16) & 255;
-  const g = (num >> 8) & 255;
-  const b = num & 255;
-  return `rgba(${r},${g},${b},${a})`;
-}
+  <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings">
+    <div class="bgTitle">Background</div>
 
-(function initTheme(){
-  const THEME_KEY = "emergency_fund_theme_v1";
-  const $ = (id)=>document.getElementById(id);
+    <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
+    <button id="bgReset" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset background</button>
+
+    <div class="bgDiv"></div>
+
+    <div class="bgRow">
+      <label for="bgColor">Tint</label>
+      <input id="bgColor" type="color" value="#efe7e1" />
+    </div>
+
+    <div class="bgRow">
+      <label for="bgStrength">Strength</label>
+      <input id="bgStrength" type="range" min="0" max="70" value="30" />
+    </div>
+
+    <div class="bgRow">
+      <label for="bgBlur">Image blur</label>
+      <input id="bgBlur" type="range" min="0" max="20" value="0" />
+    </div>
+
+    <div class="bgDiv"></div>
+
+    <div class="bgRow" style="align-items:flex-start;">
+      <label for="bgImage">Image</label>
+      <input id="bgImage" class="bgFile" type="file" accept="image/*" />
+    </div>
+
+    <div class="bgRow">
+      <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
+    </div>
+
+    <div class="status" id="bgStatus" aria-live="polite"></div>
+  </div>
+
+  <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
+    <div class="bgTitle">Theme</div>
+
+    <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
+    <button id="resetTheme" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+    <div class="bgDiv"></div>
+
+    <div class="bgRow">
+      <label for="tPageBg">Page bg</label>
+      <input id="tPageBg" type="color" value="#ffffff" />
+    </div>
+
+    <div class="bgRow">
+      <label for="tText">Text</label>
+      <input id="tText" type="color" value="#2b2a28" />
+    </div>
+
+    <div class="bgRow">
+      <label for="tMuted">Muted</label>
+      <input id="tMuted" type="color" value="#6a665f" />
+    </div>
+
+    <div class="bgDiv"></div>
+
+    <div class="bgRow">
+      <label for="tStroke">Borders</label>
+      <input id="tStroke" type="color" value="#e9e4dd" />
+    </div>
+
+    <div class="bgRow">
+      <label for="tCard">Card</label>
+      <input id="tCard" type="color" value="#ffffff" />
+    </div>
+
+    <div class="bgRow">
+      <label for="tSoft">Secondary</label>
+      <input id="tSoft" type="color" value="#f3efe9" />
+    </div>
+
+    <div class="bgDiv"></div>
+
+    <div class="bgTitle" style="margin-top:2px;">Presets</div>
+
+    <input id="presetName" class="presetName" placeholder="Preset name" />
+    <button class="bgMiniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+    <div class="bgDiv"></div>
+
+    <select id="presetSelect" class="presetSelect">
+      <option value="">—</option>
+    </select>
+
+    <button class="bgMiniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+    <button class="bgMiniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+    <div class="status" id="presetStatus" aria-live="polite"></div>
+  </div>
+
+  <div class="confirmBackdrop" id="confirmBackdrop" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="confirmModal">
+      <div class="confirmHead" id="confirmTitle">Confirm</div>
+      <div class="confirmBody" id="confirmBody"></div>
+      <div class="confirmFoot">
+        <button type="button" id="confirmCancel">Cancel</button>
+        <button type="button" id="confirmOk">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const num = parseInt(full || "efe7e1", 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function clamp(n, a, b){
+    n = Number(n);
+    if(!Number.isFinite(n)) return a;
+    return Math.max(a, Math.min(b, n));
+  }
+
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function normHex(hex, fallback){
+    const s = String(hex || "").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+  }
+
+  function canUseLocalStorage(){
+    try{
+      const k = "__ef__" + Math.random().toString(16).slice(2);
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{
+      return false;
+    }
+  }
+
+  const hasLS = canUseLocalStorage();
+  const mem = Object.create(null);
+
+  function storageGet(key){
+    try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+    catch{ return mem[key] ?? null; }
+  }
+
+  function storageSet(key, value){
+    try{ if(hasLS) localStorage.setItem(key, value); else mem[key] = String(value); }
+    catch{ mem[key] = String(value); }
+  }
+
+  function storageRemove(key){
+    try{ if(hasLS) localStorage.removeItem(key); else delete mem[key]; }
+    catch{ delete mem[key]; }
+  }
+
+  function sanitizeId(value){
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "default";
+  }
+
+  function getWidgetId(){
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = sanitizeId(sp.get("wid"));
+      if(wid && wid !== "default") return wid;
+    }catch{}
+    const fromPath = sanitizeId(location.pathname.replace(/\.[^/.]+$/, ""));
+    return fromPath || "default";
+  }
+
+  const WID = getWidgetId();
+  const PRESETS_KEY = "emergency_fund_presets_v2";
+  const KEY = "emergency_fund_meter_v2__" + WID;
+  const CUR_KEY = "emergency_fund_currency_pref_v2__" + WID;
+  const THEME_KEY = "emergency_fund_theme_v2__" + WID;
+  const BG_KEY = "emergency_fund_bg_v2__" + WID;
+  const BG_IMAGE_KEY = "emergency_fund_bg_image_v2__" + WID;
+
+  const DB_NAME = "emergency_fund_meter_db_v2";
+  const DB_STORE = "kv";
+  let dbPromise = null;
+
+  function openDB(){
+    if(dbPromise) return dbPromise;
+
+    dbPromise = new Promise((resolve) => {
+      if(!("indexedDB" in window)){
+        resolve(null);
+        return;
+      }
+
+      const request = indexedDB.open(DB_NAME, 1);
+
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if(!db.objectStoreNames.contains(DB_STORE)){
+          db.createObjectStore(DB_STORE);
+        }
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => resolve(null);
+    });
+
+    return dbPromise;
+  }
+
+  async function idbGet(key){
+    const db = await openDB();
+    if(!db) return null;
+
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(DB_STORE, "readonly");
+        const store = tx.objectStore(DB_STORE);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result ?? null);
+        req.onerror = () => resolve(null);
+      }catch{
+        resolve(null);
+      }
+    });
+  }
+
+  async function idbSet(key, value){
+    const db = await openDB();
+    if(!db) return false;
+
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(DB_STORE, "readwrite");
+        const store = tx.objectStore(DB_STORE);
+        const req = store.put(value, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      }catch{
+        resolve(false);
+      }
+    });
+  }
+
+  async function idbRemove(key){
+    const db = await openDB();
+    if(!db) return false;
+
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(DB_STORE, "readwrite");
+        const store = tx.objectStore(DB_STORE);
+        const req = store.delete(key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      }catch{
+        resolve(false);
+      }
+    });
+  }
+
+  function loadJSON(key, fallback = null){
+    try{
+      const raw = storageGet(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch{
+      return fallback;
+    }
+  }
+
+  function saveJSON(key, value){
+    storageSet(key, JSON.stringify(value));
+  }
+
+  const els = {
+    confirmBackdrop: document.getElementById("confirmBackdrop"),
+    confirmBody: document.getElementById("confirmBody"),
+    confirmOk: document.getElementById("confirmOk"),
+    confirmCancel: document.getElementById("confirmCancel"),
+
+    themeBtn: document.getElementById("themeBtn"),
+    bgBtn: document.getElementById("bgBtn"),
+    themePanel: document.getElementById("themePanel"),
+    bgPanel: document.getElementById("bgPanel"),
+
+    boardTint: document.getElementById("boardTint"),
+    bgDot: document.getElementById("bgDot"),
+    themeDot: document.getElementById("themeDot"),
+
+    tPageBg: document.getElementById("tPageBg"),
+    tText: document.getElementById("tText"),
+    tMuted: document.getElementById("tMuted"),
+    tStroke: document.getElementById("tStroke"),
+    tCard: document.getElementById("tCard"),
+    tSoft: document.getElementById("tSoft"),
+    themeApply: document.getElementById("themeApply"),
+    resetTheme: document.getElementById("resetTheme"),
+
+    bgColor: document.getElementById("bgColor"),
+    bgStrength: document.getElementById("bgStrength"),
+    bgBlur: document.getElementById("bgBlur"),
+    bgImage: document.getElementById("bgImage"),
+    bgRemove: document.getElementById("bgRemove"),
+    bgApply: document.getElementById("bgApply"),
+    bgReset: document.getElementById("bgReset"),
+    bgStatus: document.getElementById("bgStatus"),
+
+    presetName: document.getElementById("presetName"),
+    presetSave: document.getElementById("presetSave"),
+    presetSelect: document.getElementById("presetSelect"),
+    presetApply: document.getElementById("presetApply"),
+    presetDelete: document.getElementById("presetDelete"),
+    presetStatus: document.getElementById("presetStatus"),
+
+    efCurrent: document.getElementById("efCurrent"),
+    efTarget: document.getElementById("efTarget"),
+    saveBtn: document.getElementById("saveBtn"),
+    currency: document.getElementById("currency"),
+    resetBtn: document.getElementById("resetBtn"),
+
+    labelTxt: document.getElementById("labelTxt"),
+    detailTxt: document.getElementById("detailTxt"),
+    pctTxt: document.getElementById("pctTxt"),
+    fill: document.getElementById("fill"),
+    noteTxt: document.getElementById("noteTxt")
+  };
+
+  let confirmResolver = null;
+  function askConfirm(message, { okText="Confirm", cancelText="Cancel" } = {}){
+    return new Promise((resolve) => {
+      confirmResolver = resolve;
+      els.confirmBody.innerHTML = `<div>${escapeHtml(message)}</div>`;
+      els.confirmOk.textContent = okText;
+      els.confirmCancel.textContent = cancelText;
+      els.confirmBackdrop.classList.add("show");
+      setTimeout(() => els.confirmOk.focus(), 0);
+    });
+  }
+
+  function closeConfirm(val){
+    els.confirmBackdrop.classList.remove("show");
+    const r = confirmResolver;
+    confirmResolver = null;
+    if(r) r(val);
+  }
+
+  els.confirmOk.addEventListener("click", () => closeConfirm(true));
+  els.confirmCancel.addEventListener("click", () => closeConfirm(false));
+  els.confirmBackdrop.addEventListener("click", (e) => {
+    if(e.target === els.confirmBackdrop) closeConfirm(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if(els.confirmBackdrop.classList.contains("show") && e.key === "Escape"){
+      closeConfirm(false);
+    }
+  });
+
+  function setStatus(msg){
+    els.presetStatus.textContent = msg || "";
+    els.bgStatus.textContent = msg || "";
+  }
 
   const DEFAULT_THEME = {
     pageBg:"#ffffff",
@@ -397,211 +869,262 @@ function hexToRgba(hex, a){
     soft:"#f3efe9"
   };
 
-  function loadTheme(){
-    try{
-      const raw = localStorage.getItem(THEME_KEY);
-      if(raw) return JSON.parse(raw) || null;
-    }catch{}
-    return null;
-  }
-  function saveTheme(t){
-    try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+  const DEFAULT_BG = {
+    tint:"#efe7e1",
+    strength:30,
+    blur:0
+  };
+
+  function safeTheme(t){
+    const x = Object.assign({}, DEFAULT_THEME, t || {});
+    return {
+      pageBg: normHex(x.pageBg, DEFAULT_THEME.pageBg),
+      ink: normHex(x.ink, DEFAULT_THEME.ink),
+      muted: normHex(x.muted, DEFAULT_THEME.muted),
+      stroke: normHex(x.stroke, DEFAULT_THEME.stroke),
+      cardBase: normHex(x.cardBase, DEFAULT_THEME.cardBase),
+      soft: normHex(x.soft, DEFAULT_THEME.soft)
+    };
   }
 
-  function applyTheme(t){
+  function safeBg(bg){
+    const x = Object.assign({}, DEFAULT_BG, bg || {});
+    return {
+      tint: normHex(x.tint, DEFAULT_BG.tint),
+      strength: clamp(x.strength, 0, 70),
+      blur: clamp(x.blur, 0, 20)
+    };
+  }
+
+  function applyThemeToCSS(theme){
+    const t = safeTheme(theme);
     document.documentElement.style.setProperty("--bg", t.pageBg);
     document.documentElement.style.setProperty("--ink", t.ink);
     document.documentElement.style.setProperty("--muted", t.muted);
     document.documentElement.style.setProperty("--soft", t.soft);
-
     document.documentElement.style.setProperty("--stroke", hexToRgba(t.stroke, 0.95));
     document.documentElement.style.setProperty("--card", hexToRgba(t.cardBase, 0.80));
     document.documentElement.style.setProperty("--theme-dot", t.ink);
 
-    const dot = $("themeDot");
-    if(dot){
-      dot.style.background = t.ink;
-      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.stroke, 0.35)}`;
-      dot.style.borderColor = hexToRgba(t.stroke, 0.95);
+    els.themeDot.style.background = t.ink;
+    els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.stroke, 0.35)}`;
+    els.themeDot.style.borderColor = hexToRgba(t.stroke, 0.95);
+
+    return t;
+  }
+
+  function applyBgToCSS(bg, imageDataUrl){
+    const b = safeBg(bg);
+    const strength = b.strength / 100;
+
+    document.documentElement.style.setProperty("--board-tint", b.tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(strength));
+    document.documentElement.style.setProperty("--board-image", imageDataUrl ? `url("${imageDataUrl}")` : "none");
+    document.documentElement.style.setProperty("--board-blur", `${b.blur}px`);
+
+    els.boardTint.style.background = hexToRgba(b.tint, strength);
+    els.bgDot.style.background = b.tint;
+    els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(b.tint, Math.min(0.35, strength + 0.12))}`;
+
+    let st = document.getElementById("ef_overlay_style");
+    if(!st){
+      st = document.createElement("style");
+      st.id = "ef_overlay_style";
+      document.head.appendChild(st);
     }
+    st.textContent = `.widgetBoard::after{background:${hexToRgba("#ffffff", clamp(strength + 0.08, 0.08, 0.55))} !important;}`;
+    return b;
   }
 
-  function init(){
-    const themeBtn = $("themeBtn");
-    const themePanel = $("themePanel");
-    const bgPanel = $("bgPanel");
+  function syncThemeInputs(theme){
+    els.tPageBg.value = theme.pageBg;
+    els.tText.value = theme.ink;
+    els.tMuted.value = theme.muted;
+    els.tStroke.value = theme.stroke;
+    els.tCard.value = theme.cardBase;
+    els.tSoft.value = theme.soft;
+  }
 
-    const tPageBg = $("tPageBg");
-    const tText = $("tText");
-    const tMuted = $("tMuted");
-    const tStroke = $("tStroke");
-    const tCard = $("tCard");
-    const tSoft = $("tSoft");
-    const resetTheme = $("resetTheme");
+  function syncBgInputs(bg){
+    els.bgColor.value = bg.tint;
+    els.bgStrength.value = String(bg.strength);
+    els.bgBlur.value = String(bg.blur);
+  }
 
-    if(!themeBtn || !themePanel || !tPageBg || !tText || !tMuted || !tStroke || !tCard || !tSoft || !resetTheme) return;
-
-    const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
-
-    tPageBg.value = themeState.pageBg;
-    tText.value = themeState.ink;
-    tMuted.value = themeState.muted;
-    tStroke.value = themeState.stroke;
-    tCard.value = themeState.cardBase;
-    tSoft.value = themeState.soft;
-
-    applyTheme(themeState);
-
-    function wire(el, key){
-      el.addEventListener("input", () => {
-        themeState[key] = el.value;
-        applyTheme(themeState);
-        saveTheme(themeState);
-      });
-    }
-
-    wire(tPageBg, "pageBg");
-    wire(tText, "ink");
-    wire(tMuted, "muted");
-    wire(tStroke, "stroke");
-    wire(tCard, "cardBase");
-    wire(tSoft, "soft");
-
-    resetTheme.addEventListener("click", () => {
-      Object.assign(themeState, DEFAULT_THEME);
-
-      tPageBg.value = themeState.pageBg;
-      tText.value = themeState.ink;
-      tMuted.value = themeState.muted;
-      tStroke.value = themeState.stroke;
-      tCard.value = themeState.cardBase;
-      tSoft.value = themeState.soft;
-
-      applyTheme(themeState);
-      saveTheme(themeState);
-    });
-
-    themeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      themePanel.classList.toggle("open");
-      if(bgPanel) bgPanel.classList.remove("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      if(!themePanel.classList.contains("open")) return;
-      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-      if(!inside) themePanel.classList.remove("open");
+  function readThemeInputs(){
+    return safeTheme({
+      pageBg: els.tPageBg.value,
+      ink: els.tText.value,
+      muted: els.tMuted.value,
+      stroke: els.tStroke.value,
+      cardBase: els.tCard.value,
+      soft: els.tSoft.value
     });
   }
 
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init);
-  }else{
-    init();
+  function readBgInputs(){
+    return safeBg({
+      tint: els.bgColor.value,
+      strength: Number(els.bgStrength.value),
+      blur: Number(els.bgBlur.value)
+    });
   }
-})();
 
-(function initBackground(){
-  const BG_KEY = "emergency_fund_bg_v1";
-
-  function loadBg(){
-    try{
-      const raw = localStorage.getItem(BG_KEY);
-      if(raw) return JSON.parse(raw) || null;
-    }catch{}
-    return null;
-  }
-  function saveBg(bg){
-    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-  }
-  function fileToDataUrl(file){
+  async function fileToDataUrl(file){
     return new Promise((resolve, reject) => {
       const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
+      r.onload = () => resolve(String(r.result || ""));
       r.onerror = reject;
       r.readAsDataURL(file);
     });
   }
 
-  const boardTintEl = document.getElementById("boardTint");
-  const bgBtn = document.getElementById("bgBtn");
-  const bgPanel = document.getElementById("bgPanel");
-  const bgColor = document.getElementById("bgColor");
-  const bgStrength = document.getElementById("bgStrength");
-  const bgImage = document.getElementById("bgImage");
-  const bgRemove = document.getElementById("bgRemove");
-  const bgDot = document.getElementById("bgDot");
-  const themePanel = document.getElementById("themePanel");
+  async function loadBackground(){
+    const bg = safeBg(loadJSON(BG_KEY, DEFAULT_BG));
+    const image = await idbGet(BG_IMAGE_KEY);
+    return {
+      bg,
+      imageDataUrl: (typeof image === "string" && image) ? image : null
+    };
+  }
 
-  if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
-
-  const bgState = loadBg() || { tint:"#efe7e1", strength:30, imageDataUrl:null };
-
-  function applyBg(){
-    const tint = bgState.tint || "#efe7e1";
-    const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
-
-    document.documentElement.style.setProperty("--board-tint", tint);
-    document.documentElement.style.setProperty("--board-tint-a", String(strength));
-    document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
-
-    boardTintEl.style.background = hexToRgba(tint, strength);
-
-    if(bgDot){
-      bgDot.style.background = tint;
-      bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.35, strength + 0.12))}`;
+  async function saveBackground(bg, imageDataUrl){
+    saveJSON(BG_KEY, safeBg(bg));
+    if(imageDataUrl){
+      await idbSet(BG_IMAGE_KEY, imageDataUrl);
+    }else{
+      await idbRemove(BG_IMAGE_KEY);
     }
   }
 
-  bgColor.value = bgState.tint;
-  bgStrength.value = String(bgState.strength);
-  applyBg();
+  async function refreshPresetSelect(){
+    const list = loadJSON(PRESETS_KEY, []);
+    const current = els.presetSelect.value;
+    els.presetSelect.innerHTML = `<option value="">—</option>`;
+    if(Array.isArray(list)){
+      for(const p of list){
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || "Untitled";
+        els.presetSelect.appendChild(opt);
+      }
+      if(current && list.some(x => x.id === current)){
+        els.presetSelect.value = current;
+      }
+    }
+  }
 
-  bgBtn.addEventListener("click", (e) => {
+  function presetImageKey(id){
+    return `emergency_fund_preset_image_v2__${id}`;
+  }
+
+  function positionPanel(btn, panel){
+    if(window.innerWidth <= 760){
+      panel.style.left = "10px";
+      panel.style.top = "10px";
+      panel.style.width = "min(320px, calc(100vw - 20px))";
+      panel.style.maxHeight = "calc(100dvh - 20px)";
+      return;
+    }
+
+    const pad = 12;
+    const gap = 10;
+
+    panel.style.width = "300px";
+    panel.style.left = "0px";
+    panel.style.top = "0px";
+    panel.style.maxHeight = `calc(100dvh - ${pad * 2}px)`;
+
+    const btnRect = btn.getBoundingClientRect();
+    const panelWidth = panel.offsetWidth || 300;
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+
+    let left = btnRect.right - panelWidth;
+    left = Math.max(pad, Math.min(left, viewportW - panelWidth - pad));
+
+    let top = btnRect.bottom + gap;
+    let maxHeight = viewportH - top - pad;
+
+    if(maxHeight < 220){
+      top = Math.max(pad, btnRect.top - gap - Math.min(panel.scrollHeight, viewportH - pad * 2));
+      maxHeight = viewportH - top - pad;
+    }
+
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(top)}px`;
+    panel.style.maxHeight = `${Math.max(220, maxHeight)}px`;
+  }
+
+  function closeAllPanels(except){
+    [els.themePanel, els.bgPanel].forEach((panel) => {
+      if(panel !== except) panel.classList.remove("open");
+    });
+  }
+
+  function openPanel(btn, panel){
+    const isOpen = panel.classList.contains("open");
+    closeAllPanels(null);
+    if(isOpen) return;
+    panel.classList.add("open");
+    requestAnimationFrame(() => positionPanel(btn, panel));
+  }
+
+  els.themeBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    bgPanel.classList.toggle("open");
-    if(themePanel) themePanel.classList.remove("open");
+    openPanel(els.themeBtn, els.themePanel);
+  });
+
+  els.bgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openPanel(els.bgBtn, els.bgPanel);
   });
 
   document.addEventListener("click", (e) => {
-    if(!bgPanel.classList.contains("open")) return;
-    const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-    if(!inside) bgPanel.classList.remove("open");
+    const inside =
+      e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
+      e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+    if(!inside) closeAllPanels(null);
   });
 
-  bgColor.addEventListener("input", () => {
-    bgState.tint = bgColor.value;
-    applyBg();
-    saveBg(bgState);
+  window.addEventListener("resize", () => {
+    if(els.themePanel.classList.contains("open")) positionPanel(els.themeBtn, els.themePanel);
+    if(els.bgPanel.classList.contains("open")) positionPanel(els.bgBtn, els.bgPanel);
   });
 
-  bgStrength.addEventListener("input", () => {
-    bgState.strength = Number(bgStrength.value);
-    applyBg();
-    saveBg(bgState);
-  });
+  window.addEventListener("scroll", () => {
+    if(els.themePanel.classList.contains("open")) positionPanel(els.themeBtn, els.themePanel);
+    if(els.bgPanel.classList.contains("open")) positionPanel(els.bgBtn, els.bgPanel);
+  }, { passive:true });
 
-  bgImage.addEventListener("change", async () => {
-    const file = bgImage.files && bgImage.files[0];
-    if(!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    bgState.imageDataUrl = dataUrl;
-    applyBg();
-    saveBg(bgState);
-  });
+  let themeDraft = applyThemeToCSS(loadJSON(THEME_KEY, DEFAULT_THEME));
+  let bgDraft = safeBg(DEFAULT_BG);
+  let bgDraftImage = null;
 
-  bgRemove.addEventListener("click", () => {
-    bgState.imageDataUrl = null;
-    bgImage.value = "";
-    applyBg();
-    saveBg(bgState);
-  });
-})();
+  function defaultState(){
+    return { current: 0, target: 1000 };
+  }
 
-(function(){
-  const KEY = "emergency_fund_meter_v1";
-  const CUR_KEY = "emergency_fund_currency_pref_v1";
-  const $ = (id)=>document.getElementById(id);
+  function loadState(){
+    const raw = loadJSON(KEY, defaultState());
+    return {
+      current: Math.max(0, Number(raw?.current || 0)),
+      target: Math.max(1, Number(raw?.target || 1000))
+    };
+  }
+
+  let state = loadState();
+
+  function saveState(){
+    saveJSON(KEY, state);
+  }
+
+  function comfortLabel(r){
+    if(r >= 0.9) return {label:"Safe", note:"You’re close to (or at) your target emergency fund. So proud of you!"};
+    if(r >= 0.6) return {label:"Comfortable", note:"You have meaningful breathing room. Yay!"};
+    if(r >= 0.3) return {label:"Okay", note:"Some cushion — keep going!"};
+    return {label:"Barely", note:"It’s okay to start small. Any amount helps :)"}; 
+  }
 
   const REGION_TO_CURRENCY = {
     GB:"GBP", US:"USD", CA:"CAD", AU:"AUD", NZ:"NZD",
@@ -615,11 +1138,11 @@ function hexToRgba(hex, a){
 
   function getRegionFromLocale(locale){
     try{
-      if (typeof Intl !== "undefined" && Intl.Locale){
+      if(typeof Intl !== "undefined" && Intl.Locale){
         const loc = new Intl.Locale(locale);
-        if (loc.region) return loc.region.toUpperCase();
+        if(loc.region) return loc.region.toUpperCase();
       }
-    }catch(e){}
+    }catch{}
     const norm = String(locale || "").replace("_","-");
     const parts = norm.split("-");
     return (parts[1] || "").toUpperCase();
@@ -632,10 +1155,10 @@ function hexToRgba(hex, a){
   }
 
   function money(n){
-    const v = Number(n||0);
+    const v = Number(n || 0);
     if(!isFinite(v)) return "0";
     const locale = Intl.NumberFormat().resolvedOptions().locale || navigator.language || undefined;
-    const pref = localStorage.getItem(CUR_KEY) || "AUTO";
+    const pref = storageGet(CUR_KEY) || "AUTO";
     const cur = (pref === "AUTO") ? autoCurrency() : pref;
 
     try{
@@ -643,90 +1166,261 @@ function hexToRgba(hex, a){
         return new Intl.NumberFormat(locale, { style:"currency", currency: cur }).format(v);
       }
       return new Intl.NumberFormat(locale, { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v);
-    }catch(e){
+    }catch{
       return v.toFixed(2);
     }
   }
 
-  function defaultState(){
-    return { current: 0, target: 1000 };
-  }
-
-  function load(){
-    try{
-      const raw = localStorage.getItem(KEY);
-      return raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState();
-    }catch(e){
-      return defaultState();
-    }
-  }
-
-  let state = load();
-
-  function save(){
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }
-
-  function comfortLabel(r){
-    if(r >= 0.9) return {label:"Safe", note:"You’re close to (or at) your target emergency fund. So proud of you!"};
-    if(r >= 0.6) return {label:"Comfortable", note:"You have meaningful breathing room. Yay!"};
-    if(r >= 0.3) return {label:"Okay", note:"Some cushion — keep going!"};
-    return {label:"Barely", note:"It’s okay to start small. Any amount helps :)"};
-  }
-
   function render(){
-    const cur = Math.max(0, Number(state.current||0));
-    const tar = Math.max(1, Number(state.target||1));
-    const r = Math.min(1, cur / tar);
-    const pct = Math.round(r * 100);
+    const cur = Math.max(0, Number(state.current || 0));
+    const tar = Math.max(1, Number(state.target || 1));
+    const ratio = Math.min(1, cur / tar);
+    const pct = Math.round(ratio * 100);
+    const info = comfortLabel(ratio);
 
-    const {label, note} = comfortLabel(r);
-
-    $("efCurrent").value = String(cur);
-    $("efTarget").value = String(tar);
-
-    $("labelTxt").textContent = label;
-    $("detailTxt").textContent = `${money(cur)} of ${money(tar)}`;
-    $("pctTxt").textContent = `${pct}%`;
-
-    $("fill").style.width = Math.max(2, pct) + "%";
-    $("noteTxt").textContent = note;
+    els.efCurrent.value = String(cur);
+    els.efTarget.value = String(tar);
+    els.labelTxt.textContent = info.label;
+    els.detailTxt.textContent = `${money(cur)} of ${money(tar)}`;
+    els.pctTxt.textContent = `${pct}%`;
+    els.fill.style.width = Math.max(2, pct) + "%";
+    els.noteTxt.textContent = info.note;
   }
 
-  function init(){
-    const savedCur = localStorage.getItem(CUR_KEY) || "AUTO";
-    $("currency").value = savedCur;
-    $("currency").addEventListener("change", ()=>{
-      localStorage.setItem(CUR_KEY, $("currency").value);
-      render();
+  [els.tPageBg, els.tText, els.tMuted, els.tStroke, els.tCard, els.tSoft].forEach((el) => {
+    el.addEventListener("input", () => {
+      themeDraft = applyThemeToCSS(readThemeInputs());
+      setStatus("");
+    });
+  });
+
+  [els.bgColor, els.bgStrength, els.bgBlur].forEach((el) => {
+    el.addEventListener("input", () => {
+      bgDraft = readBgInputs();
+      applyBgToCSS(bgDraft, bgDraftImage);
+      setStatus("");
+    });
+  });
+
+  els.bgImage.addEventListener("change", async () => {
+    const file = els.bgImage.files && els.bgImage.files[0];
+    if(!file) return;
+    try{
+      bgDraftImage = await fileToDataUrl(file);
+      applyBgToCSS(bgDraft, bgDraftImage);
+      setStatus("");
+    }catch{
+      setStatus("Could not load image.");
+    }
+  });
+
+  els.bgRemove.addEventListener("click", () => {
+    bgDraftImage = null;
+    els.bgImage.value = "";
+    applyBgToCSS(bgDraft, bgDraftImage);
+    setStatus("");
+  });
+
+  els.themeApply.addEventListener("click", () => {
+    themeDraft = applyThemeToCSS(readThemeInputs());
+    syncThemeInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+    setStatus("Theme applied.");
+  });
+
+  els.resetTheme.addEventListener("click", () => {
+    themeDraft = applyThemeToCSS(DEFAULT_THEME);
+    syncThemeInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+    setStatus("Theme reset.");
+  });
+
+  els.bgApply.addEventListener("click", async () => {
+    bgDraft = readBgInputs();
+    applyBgToCSS(bgDraft, bgDraftImage);
+    syncBgInputs(bgDraft);
+    await saveBackground(bgDraft, bgDraftImage);
+    setStatus("Background applied.");
+  });
+
+  els.bgReset.addEventListener("click", async () => {
+    bgDraft = safeBg(DEFAULT_BG);
+    bgDraftImage = null;
+    syncBgInputs(bgDraft);
+    els.bgImage.value = "";
+    applyBgToCSS(bgDraft, bgDraftImage);
+    await saveBackground(bgDraft, bgDraftImage);
+    setStatus("Background reset.");
+  });
+
+  els.presetSave.addEventListener("click", async () => {
+    const name = (els.presetName.value || "").trim();
+    if(!name){
+      setStatus("Type a preset name first.");
+      return;
+    }
+
+    const list = loadJSON(PRESETS_KEY, []);
+    const id = uid();
+
+    list.unshift({
+      id,
+      name,
+      theme: readThemeInputs(),
+      bg: readBgInputs(),
+      hasImage: !!bgDraftImage
     });
 
-    $("saveBtn").addEventListener("click", ()=>{
-      const cur = Number($("efCurrent").value);
-      const tar = Number($("efTarget").value);
-      if(!isFinite(cur) || cur < 0) return;
-      if(!isFinite(tar) || tar <= 0) return;
-      state.current = cur;
-      state.target = tar;
-      save();
-      render();
-    });
+    if(bgDraftImage){
+      await idbSet(presetImageKey(id), bgDraftImage);
+    }
 
-    $("resetBtn").addEventListener("click", ()=>{
-      localStorage.removeItem(KEY);
-      state = defaultState();
-      save();
-      render();
-    });
+    saveJSON(PRESETS_KEY, list);
+    els.presetName.value = "";
+    await refreshPresetSelect();
+    els.presetSelect.value = id;
+    setStatus("Preset saved.");
+  });
 
+  els.presetApply.addEventListener("click", async () => {
+    const id = els.presetSelect.value || "";
+    if(!id){
+      setStatus("Choose a preset first.");
+      return;
+    }
+
+    const list = loadJSON(PRESETS_KEY, []);
+    const preset = Array.isArray(list) ? list.find(x => x.id === id) : null;
+    if(!preset){
+      setStatus("Preset not found.");
+      return;
+    }
+
+    themeDraft = applyThemeToCSS(preset.theme || DEFAULT_THEME);
+    syncThemeInputs(themeDraft);
+    saveJSON(THEME_KEY, themeDraft);
+
+    bgDraft = safeBg(preset.bg || DEFAULT_BG);
+    bgDraftImage = preset.hasImage ? await idbGet(presetImageKey(id)) : null;
+    syncBgInputs(bgDraft);
+    els.bgImage.value = "";
+    applyBgToCSS(bgDraft, bgDraftImage);
+    await saveBackground(bgDraft, bgDraftImage);
+
+    setStatus("Preset applied.");
+  });
+
+  els.presetDelete.addEventListener("click", async () => {
+    const id = els.presetSelect.value || "";
+    if(!id){
+      setStatus("Choose a preset first.");
+      return;
+    }
+
+    const list = loadJSON(PRESETS_KEY, []);
+    const preset = Array.isArray(list) ? list.find(x => x.id === id) : null;
+    if(!preset){
+      setStatus("Preset not found.");
+      return;
+    }
+
+    const ok = await askConfirm(`Delete preset "${preset.name || "Untitled"}"?`, { okText:"Delete", cancelText:"Cancel" });
+    if(!ok) return;
+
+    const next = list.filter(x => x.id !== id);
+    saveJSON(PRESETS_KEY, next);
+    await idbRemove(presetImageKey(id));
+    await refreshPresetSelect();
+    els.presetSelect.value = "";
+    setStatus("Preset deleted.");
+  });
+
+  els.currency.value = storageGet(CUR_KEY) || "AUTO";
+  els.currency.addEventListener("change", () => {
+    storageSet(CUR_KEY, els.currency.value);
+    render();
+  });
+
+  els.saveBtn.addEventListener("click", () => {
+    const cur = Number(els.efCurrent.value);
+    const tar = Number(els.efTarget.value);
+
+    if(!isFinite(cur) || cur < 0) return;
+    if(!isFinite(tar) || tar <= 0) return;
+
+    state.current = cur;
+    state.target = tar;
+    saveState();
+    render();
+  });
+
+  els.resetBtn.addEventListener("click", async () => {
+    const ok = await askConfirm("Reset this widget’s saved values?", { okText:"Reset", cancelText:"Cancel" });
+    if(!ok) return;
+    storageRemove(KEY);
+    state = defaultState();
+    saveState();
+    render();
+  });
+
+  window.addEventListener("pagehide", () => {
+    saveState();
+    saveJSON(THEME_KEY, themeDraft);
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if(document.visibilityState === "hidden"){
+      saveState();
+      saveJSON(THEME_KEY, themeDraft);
+    }
+  });
+
+  window.addEventListener("storage", async (e) => {
+    if(!e.key) return;
+
+    if(e.key === KEY){
+      state = loadState();
+      render();
+    }
+
+    if(e.key === CUR_KEY){
+      els.currency.value = storageGet(CUR_KEY) || "AUTO";
+      render();
+    }
+
+    if(e.key === THEME_KEY){
+      themeDraft = applyThemeToCSS(loadJSON(THEME_KEY, DEFAULT_THEME));
+      syncThemeInputs(themeDraft);
+    }
+
+    if(e.key === BG_KEY){
+      const savedBg = await loadBackground();
+      bgDraft = savedBg.bg;
+      bgDraftImage = savedBg.imageDataUrl;
+      syncBgInputs(bgDraft);
+      applyBgToCSS(bgDraft, bgDraftImage);
+    }
+
+    if(e.key === PRESETS_KEY){
+      refreshPresetSelect();
+    }
+  });
+
+  async function init(){
+    themeDraft = applyThemeToCSS(loadJSON(THEME_KEY, DEFAULT_THEME));
+    syncThemeInputs(themeDraft);
+
+    const savedBg = await loadBackground();
+    bgDraft = savedBg.bg;
+    bgDraftImage = savedBg.imageDataUrl;
+    syncBgInputs(bgDraft);
+    applyBgToCSS(bgDraft, bgDraftImage);
+
+    await refreshPresetSelect();
     render();
   }
 
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init);
-  }else{
-    init();
-  }
+  init();
 })();
 </script>
 </body>

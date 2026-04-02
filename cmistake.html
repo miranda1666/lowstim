@@ -505,22 +505,6 @@
     }
     a.link:hover{ border-bottom-color: rgba(43,43,43,.45); }
 
-    .floor{
-      height: 18px;
-      background: linear-gradient(180deg, rgba(212,199,188,.82), rgba(188,171,156,.78));
-      border-top: 1px solid var(--lineStrong);
-    }
-
-    kbd{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid var(--lineStrong);
-      background: rgba(255,255,255,.74);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.92);
-    }
-
     [data-mm-bg-board]{
       position: relative;
       border-radius: var(--radius);
@@ -937,14 +921,17 @@
 
         <div class="field">
           <label for="mWhat">What happened?</label>
+          <textarea class="textarea" id="mWhat" placeholder="Describe the mistake briefly. What triggered it?"></textarea>
         </div>
 
         <div class="field">
           <label for="mLesson">Lesson learned</label>
+          <textarea class="textarea" id="mLesson" placeholder="Advice for future you"></textarea>
         </div>
 
         <div class="field">
           <label for="mFix">Prevention routine</label>
+          <textarea class="textarea" id="mFix" placeholder="A tiny repeatable action to stop this happening again."></textarea>
         </div>
 
         <div class="modalFoot">
@@ -1036,7 +1023,6 @@
     mLesson: document.getElementById("mLesson"),
     mFix: document.getElementById("mFix"),
 
-    seedDemo: document.getElementById("seedDemo"),
     mmBgTint: document.getElementById("mmBgTint"),
     savingBadge: document.getElementById("savingBadge")
   };
@@ -2006,55 +1992,6 @@
     openModal();
   }
 
-  function seedDemo(){
-    const demo = [
-      {
-        title: "Forgot units and got a nonsense answer",
-        severity: 3,
-        context: "Physics • Kinematics • Quiz",
-        tags: ["units", "sanity-check", "careless"],
-        what: "I treated km/h as m/s and didn’t notice the magnitude was impossible.",
-        lesson: "Always do a quick units + magnitude check before submitting.",
-        fix: "Last 30 seconds: write the unit next to the final number, then estimate if the value is plausible."
-      },
-      {
-        title: "Sign error in derivative chain rule",
-        severity: 4,
-        context: "Calculus • Derivatives • Homework",
-        tags: ["sign-error", "chain-rule"],
-        what: "I differentiated inside but forgot the negative sign from the inner function.",
-        lesson: "Don’t simplify too early—carry structure until the end.",
-        fix: "Box the inner function, write d/dx(inner) explicitly on the next line, then simplify."
-      },
-      {
-        title: "Misread ‘at most’ as ‘at least’",
-        severity: 5,
-        context: "Probability • Word Problems • Exam",
-        tags: ["reading", "rushing", "wording"],
-        what: "I rushed and inverted the condition, solving the complement without realizing.",
-        lesson: "Underline constraint words (at most, at least, exactly, unless).",
-        fix: "Before solving: rewrite the condition as a short inequality in symbols."
-      }
-    ];
-
-    const existing = new Set(appState.items.map(x => (x.title || "").toLowerCase().trim()));
-    demo.forEach(d => {
-      if (existing.has(d.title.toLowerCase().trim())) return;
-      appState.items.unshift({
-        id: uid(),
-        title: d.title,
-        severity: d.severity,
-        context: d.context,
-        tags: d.tags,
-        what: d.what,
-        lesson: d.lesson,
-        fix: d.fix,
-        createdAt: nowISO(),
-        updatedAt: nowISO(),
-      });
-    });
-  }
-
   async function refreshFromStorage(){
     const saved = await Storage.getJSON(DATA_KEY);
     if (!saved) return;
@@ -2107,14 +2044,6 @@
       };
 
       await upsert(payload);
-      closeModal();
-    });
-
-    if (els.seedDemo) els.seedDemo.addEventListener("click", async (e) => {
-      e.preventDefault();
-      seedDemo();
-      await persistState("Example set added");
-      render();
       closeModal();
     });
 

@@ -486,11 +486,6 @@
       user-select:none;
     }
 
-    .habit.selected{
-      outline: 4px solid rgba(0,0,0,0);
-      outline-offset: 3px;
-    }
-
     .habit-head{
       display:flex;
       align-items:flex-start;
@@ -547,46 +542,6 @@
       appearance: none;
     }
     .icon-btn:active{ transform: translateY(1px); }
-
-    .swatch{
-      position:relative;
-      width:38px;
-      height:38px;
-      border-radius:12px;
-      border:1.5px solid rgba(var(--border-rgb), 0.14);
-      background: rgba(255,255,255,0.76);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-      overflow:hidden;
-      cursor:pointer;
-    }
-
-    .swatch::before{
-      content:"";
-      position:absolute;
-      width:14px;
-      height:14px;
-      border-radius:999px;
-      border:1px solid rgba(var(--border-rgb), 0.18);
-      background: var(--sw, var(--accent));
-      box-shadow: 0 0 0 6px rgba(0,0,0,0.06);
-      left:50%;
-      top:50%;
-      transform: translate(-50%, -50%);
-      pointer-events:none;
-    }
-
-    .swatch input{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      opacity:0;
-      cursor:pointer;
-      border:0;
-      margin:0;
-      padding:0;
-    }
 
     .habit-body{
       padding: 14px 14px 16px;
@@ -706,6 +661,7 @@
     <div class="titlebar">
       <div class="title">
         <h1>Habit Builder</h1>
+        <div class="sync-badge" id="syncBadge">Saving locally on this device.</div>
       </div>
 
       <div class="controls">
@@ -988,12 +944,12 @@
 
     const WID = window.__HB__?.wid || "default";
 
-    const APP_KEY   = "notion_habit_builder_v8__" + WID;
-    const THEME_KEY = "habit_builder_theme_v8__" + WID;
-    const BG_KEY    = "habit_builder_bg_v8__" + WID;
-    const PRESETS_KEY = "habit_builder_presets_v8__" + WID;
-    const META_KEY = "habit_builder_meta_v8__" + WID;
-    const BG_IMAGE_IDB_KEY = "habit_builder_bg_image_v8__" + WID;
+    const APP_KEY   = "notion_habit_builder_v9__" + WID;
+    const THEME_KEY = "habit_builder_theme_v9__" + WID;
+    const BG_KEY    = "habit_builder_bg_v9__" + WID;
+    const PRESETS_KEY = "habit_builder_presets_v9__" + WID;
+    const META_KEY = "habit_builder_meta_v9__" + WID;
+    const BG_IMAGE_IDB_KEY = "habit_builder_bg_image_v9__" + WID;
 
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -1172,8 +1128,7 @@
         theme: deepCopy(themeCommitted),
         bg: deepCopy(bgCommitted),
         app: deepCopy(app),
-        selectedHabitId,
-        meta: {}
+        selectedHabitId
       };
     }
 
@@ -1309,22 +1264,6 @@
       inputBgA: 0.97
     };
 
-    function setSelectionRingFromAccent(accentHex){
-      const accent = normHex(accentHex, DEFAULT_THEME.accent);
-      let st = document.getElementById("accentRingStyle");
-      if(!st){
-        st = document.createElement("style");
-        st.id = "accentRingStyle";
-        document.head.appendChild(st);
-      }
-      st.textContent = `
-        .habit.selected{
-          outline-color: ${hexToRgba(accent, 0.62)} !important;
-          box-shadow: 0 0 0 1px ${hexToRgba(accent, 0.22)} inset;
-        }
-      `;
-    }
-
     function themeApplyToCSS(t){
       const theme = Object.assign({}, DEFAULT_THEME, t || {});
       const r = document.documentElement.style;
@@ -1349,8 +1288,6 @@
         dot.style.background = accent;
         dot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
       }
-
-      setSelectionRingFromAccent(theme.accent);
 
       const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
       const overlayA = clamp(theme.overlayA, 0.00, 0.70);
@@ -1863,22 +1800,6 @@
             </div>
 
             <div class="habit-actions" aria-label="Habit controls">
-              <div class="swatch" title="Card background" style="--sw:${habitBg}">
-                <input data-action="habitBg" type="color" value="${habitBg}" aria-label="Card background">
-              </div>
-              <div class="swatch" title="Text color" style="--sw:${habitInk}">
-                <input data-action="habitInk" type="color" value="${habitInk}" aria-label="Text color">
-              </div>
-              <div class="swatch" title="Boxes (empty)" style="--sw:${emptyC}">
-                <input data-action="boxEmpty" type="color" value="${emptyC}" aria-label="Empty box color">
-              </div>
-              <div class="swatch" title="Boxes (filled)" style="--sw:${filledC}">
-                <input data-action="boxFilled" type="color" value="${filledC}" aria-label="Filled box color">
-              </div>
-              <div class="swatch" title="Box border" style="--sw:${borderC}">
-                <input data-action="boxBorder" type="color" value="${borderC}" aria-label="Box border color">
-              </div>
-
               <button class="icon-btn" data-action="collapse" type="button" title="${h.collapsed ? "Expand boxes" : "Collapse boxes"}" aria-label="Collapse or expand">
                 ${h.collapsed ? "▾" : "▴"}
               </button>
@@ -1892,7 +1813,6 @@
           </div>
         `;
 
-        habit.classList.toggle("selected", selectedHabitId === h.id);
         habitsEl.appendChild(habit);
 
         if(!h.collapsed){
@@ -1908,15 +1828,6 @@
           }
         }
       });
-    }
-
-    async function upsertHabit(partial){
-      const idx = app.habits.findIndex(x => x.id === partial.id);
-      if(idx >= 0){
-        app.habits[idx] = normalizeHabit(Object.assign({}, app.habits[idx], partial));
-      }
-      await persistApp();
-      renderHabits();
     }
 
     async function removeHabit(id){
@@ -2040,35 +1951,6 @@
         if(action === "collapse") await toggleCollapsed(id);
         return;
       }
-
-      if(e.target.closest("input")) return;
-
-      selectedHabitId = id;
-      await persistApp();
-      renderHabits();
-    });
-
-    const debouncedHabitColorUpdate = debounce(async (id, action, val) => {
-      const patch = { id };
-      if(action === "habitBg")   patch.habitBg = val;
-      if(action === "habitInk")  patch.habitInk = val;
-      if(action === "boxEmpty")  patch.boxEmpty = val;
-      if(action === "boxFilled") patch.boxFilled = val;
-      if(action === "boxBorder") patch.boxBorder = val;
-      await upsertHabit(patch);
-    }, 80);
-
-    habitsEl.addEventListener("input", (e) => {
-      const input = e.target.closest("input[data-action]");
-      if(!input) return;
-
-      const habit = input.closest(".habit");
-      const id = habit?.dataset?.id;
-      const action = input.dataset.action;
-      if(!id) return;
-
-      const val = normHex(input.value, "#ffffff");
-      debouncedHabitColorUpdate(id, action, val);
     });
 
     function closePanels(exceptId){

@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Skincare Tracker (AM + PM)</title>
+
+  <!-- Optional Firebase for real cross-device sync.
+       Leave as-is if you only want same-device saving. -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
   <style>
     :root{
       --app-bg: #ffffff;
@@ -12,16 +18,16 @@
       --muted: #7a7a7a;
 
       --border-rgb: 30,30,30;
-      --border-a: 0.10;
+      --border-a: 0.18;
       --border: rgba(var(--border-rgb), var(--border-a));
-      --shadow: 0 12px 34px rgba(20, 20, 20, 0.08);
+      --shadow: 0 14px 34px rgba(20, 20, 20, 0.09);
 
       --surface-a: 0.78;
-      --panel-a: 0.92;
+      --panel-a: 0.94;
 
-      --btn-a: 0.92;
-      --btn-border-a: 0.10;
-      --btn-ink: rgba(43,43,43,0.72);
+      --btn-a: 0.94;
+      --btn-border-a: 0.16;
+      --btn-ink: rgba(43,43,43,0.78);
 
       --accent: #cbb8ae;
 
@@ -31,32 +37,32 @@
       --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
+      --board-blur: 0px;
 
       --day-bg: #ffffff;
-      --day-bg-a: 0.94;
+      --day-bg-a: 0.95;
 
       --block-bg: #ffffff;
-      --block-bg-a: 0.72;
+      --block-bg-a: 0.78;
 
       --input-bg: #ffffff;
-      --input-bg-a: 0.96;
+      --input-bg-a: 0.97;
 
       --header-bg: #ffffff;
       --step-bg: #ffffff;
       --step-bg-rgb: 255,255,255;
-      --step-bg-a: 0.78;
+      --step-bg-a: 0.84;
 
-      /* ✅ “fit-in-one-frame” responsive spacing */
       --board-radius: 26px;
       --radius: 22px;
 
       --page-max: 1600px;
 
-      --gap: clamp(10px, 1.0vw, 18px);
+      --gap: clamp(10px, 1vw, 18px);
       --pad: clamp(10px, 1.1vw, 18px);
 
       --h1: clamp(16px, 1.25vw, 20px);
-      --sub: clamp(12px, 1.0vw, 14px);
+      --sub: clamp(12px, 1vw, 14px);
 
       --label: clamp(10px, 0.85vw, 12px);
       --text: clamp(12px, 0.95vw, 15px);
@@ -64,7 +70,7 @@
       --input-pad: clamp(9px, 0.9vw, 12px) clamp(9px, 0.9vw, 12px);
       --input-radius: 14px;
 
-      --header-pad: clamp(10px, 0.9vw, 14px) clamp(10px, 1.0vw, 16px);
+      --header-pad: clamp(10px, 0.9vw, 14px) clamp(10px, 1vw, 16px);
       --chip-pad: 8px 12px;
 
       --day-min-h: 520px;
@@ -81,6 +87,7 @@
       width: 100%;
       max-width: 100%;
       overflow-x: hidden !important;
+      -webkit-text-size-adjust: 100%;
     }
 
     body{
@@ -88,6 +95,11 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       color: var(--ink);
       background: var(--app-bg);
+      touch-action: manipulation;
+    }
+
+    button, input, textarea, select{
+      font: inherit;
     }
 
     .wrap{
@@ -137,11 +149,12 @@
       padding: var(--chip-pad);
       box-shadow: 0 8px 22px rgba(20,20,20,0.06);
       backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
 
     .bg-btn, .nav-btn, .theme-btn, .settings-btn{
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       border-radius: 999px;
       border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
       background: rgba(255,255,255, var(--btn-a));
@@ -152,6 +165,7 @@
       color: var(--btn-ink);
       font-weight: 900;
       line-height: 1;
+      appearance: none;
     }
     .bg-btn:active, .nav-btn:active, .theme-btn:active, .settings-btn:active{ transform: translateY(1px); }
 
@@ -159,7 +173,7 @@
       width: 16px;
       height: 16px;
       border-radius: 999px;
-      border: 1px solid rgba(var(--border-rgb), 0.14);
+      border: 1px solid rgba(var(--border-rgb), 0.18);
       background: var(--board-tint);
       box-shadow: 0 0 0 7px rgba(239,231,225,0.30);
     }
@@ -175,17 +189,17 @@
       top: 48px;
       right: 0;
       width: 390px;
-      max-width: min(390px, calc(100vw - 40px));
+      max-width: min(390px, calc(100vw - 24px));
       border-radius: 18px;
       border: 1px solid var(--border);
       background: rgba(255,255,255, var(--panel-a));
       box-shadow: 0 22px 50px rgba(20,20,20,0.12);
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       padding: 14px;
       display: none;
       z-index: 50;
-
-      max-height: min(70vh, 640px);
+      max-height: min(72vh, 640px);
       overflow: auto;
     }
     .panel.open{ display: block; }
@@ -206,22 +220,33 @@
       gap: 12px;
       padding: 9px 0;
     }
+
     .row label{
       font-size: 12px;
       color: var(--muted);
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .row > input[type="range"]{
+      flex: 0 0 170px;
     }
 
     input[type="color"]{
-      width: 36px;
-      height: 28px;
-      border: 1px solid rgba(var(--border-rgb), 0.12);
+      width: 38px;
+      min-width: 38px;
+      height: 30px;
+      border: 1px solid rgba(var(--border-rgb), 0.16);
       border-radius: 10px;
       padding: 0;
       background: transparent;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    input[type="range"]{ width: 170px; }
+
+    input[type="range"]{
+      width: 170px;
+    }
 
     .file{
       width: 100%;
@@ -232,19 +257,20 @@
     .mini-btn{
       width: 100%;
       border: 1px solid var(--border);
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.94);
       border-radius: 14px;
       padding: 11px 12px;
       cursor: pointer;
       font-weight: 750;
-      color: rgba(43,43,43,0.86);
+      color: rgba(43,43,43,0.88);
       -webkit-tap-highlight-color: transparent;
+      appearance: none;
     }
     .mini-btn:active{ transform: translateY(1px); }
 
     .divider{
       height: 1px;
-      background: rgba(var(--border-rgb), 0.08);
+      background: rgba(var(--border-rgb), 0.10);
       margin: 10px 0;
     }
 
@@ -258,27 +284,28 @@
       background: rgba(255,255,255, var(--surface-a));
       box-shadow: 0 8px 22px rgba(20,20,20,0.06);
       backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
 
     .week-label{
       font-size: 13px;
-      color: rgba(43,43,43,0.80);
+      color: rgba(43,43,43,0.82);
       min-width: 190px;
       text-align: center;
       user-select: none;
-      font-weight: 650;
+      font-weight: 700;
       letter-spacing: 0.1px;
     }
 
-    /* Board */
     .board{
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--board-radius);
       box-shadow: var(--shadow);
       overflow: hidden;
       position: relative;
       background: none;
       max-width: 100%;
+      isolation: isolate;
     }
 
     .board::before{
@@ -289,7 +316,7 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      filter: saturate(1.02) contrast(1.03);
+      filter: blur(var(--board-blur)) saturate(1.02) contrast(1.02);
       transform: scale(1.02);
     }
 
@@ -311,31 +338,27 @@
     .board-content{
       position: relative;
       z-index: 2;
-      backdrop-filter: blur(2px);
     }
 
-    /* ✅ THE FIX:
-       7 columns ALWAYS, but allowed to shrink (minmax(0,1fr))
-       so the whole week fits the board with no horizontal scroll and no cut-off. */
     .grid{
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: var(--gap);
       padding: var(--pad);
-      overflow: hidden; /* no scrollbar */
+      overflow: hidden;
       max-width: 100%;
     }
 
     .day{
       background: rgba(255,255,255, var(--day-bg-a));
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: 0 10px 26px rgba(20,20,20,0.06);
       display: flex;
       flex-direction: column;
       position: relative;
-      min-width: 0; /* critical for shrink */
+      min-width: 0;
       min-height: var(--day-min-h);
     }
 
@@ -349,7 +372,7 @@
       align-items: center;
       justify-content: space-between;
       padding: var(--header-pad);
-      border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+      border-bottom: 1px solid rgba(var(--border-rgb), 0.12);
       background: var(--header-bg);
       min-width: 0;
     }
@@ -361,12 +384,14 @@
       min-width: 0;
       flex-wrap: wrap;
     }
+
     .day-name{
       font-weight: 850;
       font-size: clamp(12px, 0.95vw, 15px);
       letter-spacing: 0.15px;
       white-space: nowrap;
     }
+
     .day-date{
       font-size: clamp(11px, 0.9vw, 13px);
       color: var(--muted);
@@ -380,15 +405,15 @@
       letter-spacing: .06em;
       text-transform: uppercase;
       color: rgba(43,43,43,0.70);
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.70);
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      background: rgba(255,255,255,0.76);
       padding: 3px 8px;
       border-radius: 999px;
       user-select: none;
     }
 
     .day-body{
-      padding: clamp(10px, 1.0vw, 16px);
+      padding: clamp(10px, 1vw, 16px);
       display: flex;
       flex-direction: column;
       gap: clamp(10px, 0.9vw, 14px);
@@ -400,7 +425,7 @@
     .block{
       border-radius: 18px;
       padding: clamp(10px, 0.9vw, 14px);
-      border: 1px dashed rgba(var(--border-rgb), 0.14);
+      border: 1.5px dashed rgba(var(--border-rgb), 0.18);
       background: rgba(255,255,255, var(--block-bg-a));
       min-width: 0;
     }
@@ -423,11 +448,11 @@
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.70);
+      border: 1px solid rgba(var(--border-rgb), 0.12);
+      background: rgba(255,255,255,0.74);
       padding: 4px 10px;
       border-radius: 999px;
-      color: rgba(43,43,43,0.70);
+      color: rgba(43,43,43,0.72);
       user-select: none;
       white-space: nowrap;
     }
@@ -441,11 +466,11 @@
 
     .step{
       display: grid;
-      grid-template-columns: 22px 1fr; /* slightly smaller */
+      grid-template-columns: 22px 1fr;
       align-items: center;
       gap: clamp(8px, 0.75vw, 12px);
       border-radius: 16px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
       box-shadow: 0 10px 24px rgba(20,20,20,0.05);
       background: rgba(var(--step-bg-rgb), var(--step-bg-a));
       padding: clamp(9px, 0.8vw, 12px);
@@ -460,10 +485,11 @@
       width: 20px;
       height: 20px;
       border-radius: 9px;
-      border: 1px solid rgba(var(--border-rgb), 0.12);
+      border: 1.5px solid rgba(var(--border-rgb), 0.18);
       background: var(--empty);
       box-shadow: 0 8px 18px rgba(20,20,20,0.05);
     }
+
     .step.done .tick{
       background: var(--filled);
       filter: saturate(1.03) contrast(1.02);
@@ -481,7 +507,7 @@
 
     textarea{
       width: 100%;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
       border-radius: var(--input-radius);
       padding: var(--input-pad);
       outline: none;
@@ -492,9 +518,14 @@
       resize: vertical;
       min-height: 76px;
       max-height: 220px;
+      appearance: none;
     }
-    textarea:focus{
-      border-color: rgba(var(--border-rgb), 0.18);
+
+    textarea:focus,
+    .line input[type="text"]:focus,
+    .presetName:focus,
+    .presetSelect:focus{
+      border-color: rgba(var(--border-rgb), 0.22);
       box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
     }
 
@@ -509,10 +540,17 @@
     }
 
     .list{ display: flex; flex-direction: column; gap: 10px; }
-    .line{ display: grid; grid-template-columns: 1fr 44px; gap: 10px; align-items: stretch; }
+
+    .line{
+      display: grid;
+      grid-template-columns: 1fr 44px;
+      gap: 10px;
+      align-items: stretch;
+    }
+
     .line input[type="text"]{
       width: 100%;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
       border-radius: 14px;
       padding: 12px 12px;
       outline: none;
@@ -520,35 +558,140 @@
       color: var(--ink);
       font-size: 14px;
       font-weight: 650;
+      appearance: none;
     }
-    .line input[type="text"]:focus{
-      border-color: rgba(var(--border-rgb), 0.18);
-      box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
-    }
+
     .xbtn{
       width: 44px;
       border-radius: 14px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.78);
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.82);
       cursor: pointer;
       font-weight: 900;
       color: rgba(43,43,43,0.76);
       -webkit-tap-highlight-color: transparent;
       font-size: 18px;
+      appearance: none;
     }
+
     .xbtn:active{ transform: translateY(1px); }
+
     .addRowBtn{
       width: 100%;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.90);
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.92);
       border-radius: 14px;
       padding: 11px 12px;
       cursor: pointer;
       font-weight: 850;
-      color: rgba(43,43,43,0.86);
+      color: rgba(43,43,43,0.88);
       -webkit-tap-highlight-color: transparent;
+      appearance: none;
     }
+
     .addRowBtn:active{ transform: translateY(1px); }
+
+    .presetName{
+      width:100%;
+      border:1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.94);
+      border-radius:14px;
+      padding:11px 12px;
+      font-size:12px;
+      color: var(--ink);
+      outline: none;
+      appearance: none;
+    }
+
+    .presetSelect{
+      height:40px;
+      border-radius:999px;
+      border:1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255, var(--btn-a));
+      padding:0 12px;
+      color: var(--ink);
+      width: 100%;
+      font-size:12px;
+      outline:none;
+      appearance: none;
+    }
+
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+      min-height: 16px;
+    }
+
+    .sync-badge{
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 1320px){
+      .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 980px){
+      .controls{
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .week-label{ min-width: 160px; }
+    }
+
+    @media (max-width: 680px){
+      .wrap{
+        margin: 14px auto;
+        padding: 10px;
+      }
+
+      .titlebar{
+        align-items: stretch;
+      }
+
+      .title{
+        min-width: 0;
+      }
+
+      .controls{
+        gap: 10px;
+      }
+
+      .week-pill{
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .week-label{
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+
+      .grid{ grid-template-columns: 1fr; }
+
+      .panel{
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        top: auto;
+        bottom: 12px;
+        width: auto;
+        max-width: none;
+        max-height: 78vh;
+        border-radius: 18px;
+      }
+
+      .row{
+        align-items: center;
+      }
+
+      .row > input[type="range"]{
+        flex: 0 0 140px;
+      }
+    }
   </style>
 </head>
 
@@ -559,6 +702,7 @@
     <div class="titlebar">
       <div class="title">
         <h1>Skincare Tracker</h1>
+        <div class="sync-badge" id="syncBadge">Saving locally on this device.</div>
       </div>
 
       <div class="controls">
@@ -614,23 +758,23 @@
 
             <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
-            <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
+            <div class="row"><label for="tMuted">Muted text</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
             <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e" /></div>
-            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10" /></div>
+            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="8" max="55" value="18" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tSurfaceA">Pills opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="78" /></div>
-            <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92" /></div>
+            <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="65" max="99" value="94" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="92" /></div>
-            <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10" /></div>
+            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="94" /></div>
+            <div class="row"><label for="tBtnBorderA">Button border</label><input id="tBtnBorderA" type="range" min="4" max="40" value="16" /></div>
 
             <div class="divider"></div>
 
@@ -639,28 +783,44 @@
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tDayBg">Day card bg</label><input id="tDayBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tDayBgA">Day card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="94" /></div>
+            <div class="row"><label for="tDayBg">Day card background</label><input id="tDayBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDayBgA">Day card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="95" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tBlockBg">Block bg</label><input id="tBlockBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tBlockBgA">Block opacity</label><input id="tBlockBgA" type="range" min="55" max="100" value="72" /></div>
+            <div class="row"><label for="tBlockBg">Section background</label><input id="tBlockBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tBlockBgA">Section opacity</label><input id="tBlockBgA" type="range" min="55" max="100" value="78" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tInputBgA">Input opacity</label><input id="tInputBgA" type="range" min="60" max="100" value="96" /></div>
+            <div class="row"><label for="tInputBg">Input background</label><input id="tInputBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInputBgA">Input opacity</label><input id="tInputBgA" type="range" min="60" max="100" value="97" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tHeaderBg">Header bg</label><input id="tHeaderBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tStepBg">Step tile bg</label><input id="tStepBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tStepBgA">Step opacity</label><input id="tStepBgA" type="range" min="40" max="100" value="78" /></div>
+            <div class="row"><label for="tHeaderBg">Header background</label><input id="tHeaderBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tStepBg">Step tile background</label><input id="tStepBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tStepBgA">Step tile opacity</label><input id="tStepBgA" type="range" min="40" max="100" value="84" /></div>
 
             <div class="divider"></div>
 
-            <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="themeReset" type="button" style="margin-top:10px;">Reset theme</button>
+
+            <div class="divider"></div>
+
+            <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
+
+            <input class="presetName" id="presetName" placeholder="Preset name" />
+            <button class="mini-btn" id="presetSave" type="button" style="margin-top:10px;">Save current as preset</button>
+
+            <div class="divider"></div>
+
+            <select class="presetSelect" id="presetSelect"></select>
+            <button class="mini-btn" id="presetApply" type="button" style="margin-top:10px;">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button" style="margin-top:10px;">Delete preset</button>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
           </div>
         </div>
 
@@ -676,13 +836,18 @@
             <div class="panelTitle">Background</div>
 
             <div class="row">
-              <label for="bgColor">Tint</label>
+              <label for="bgColor">Tint color</label>
               <input id="bgColor" type="color" value="#efe7e1" />
             </div>
 
             <div class="row">
               <label for="bgStrength">Tint strength</label>
               <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="row">
+              <label for="bgBlur">Image blur</label>
+              <input id="bgBlur" type="range" min="0" max="24" value="0" />
             </div>
 
             <div class="divider"></div>
@@ -698,10 +863,10 @@
 
             <div class="divider"></div>
 
-            <button class="mini-btn" id="bgReset" type="button">Reset background</button>
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:10px;">Reset background</button>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -714,10 +879,104 @@
   </div>
 
   <script>
-    const STORE_KEY   = "skincare_tracker_store_v3";
-    const THEME_KEY   = "skincare_tracker_theme_v3";
-    const BG_KEY      = "skincare_tracker_bg_v3";
-    const ROUTINE_KEY = "skincare_tracker_routine_v3";
+    /* =========================================================
+       IMPORTANT
+       - Local saving now uses BOTH localStorage + IndexedDB.
+       - Real cross-device sync needs Firebase config below.
+       - For safe per-instance sync, use a stable ?wid=... in the widget URL.
+       ========================================================= */
+
+    const SYNC_CONFIG = {
+      enabled: false, // set to true after pasting your Firebase config
+      firebaseConfig: {
+        apiKey: "",
+        authDomain: "",
+        databaseURL: "",
+        projectId: "",
+        storageBucket: "",
+        messagingSenderId: "",
+        appId: ""
+      },
+      namespace: "skincare-tracker"
+    };
+
+    (function(){
+      const mem = Object.create(null);
+
+      function canUseLocalStorage(){
+        try{
+          const k="__t__"+Math.random().toString(16).slice(2);
+          localStorage.setItem(k,"1");
+          localStorage.removeItem(k);
+          return true;
+        }catch{
+          return false;
+        }
+      }
+
+      const hasLS = canUseLocalStorage();
+
+      function storageGet(key){
+        try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+        catch{ return mem[key] ?? null; }
+      }
+
+      function storageSet(key, value){
+        try{
+          if(hasLS) localStorage.setItem(key, value);
+          else mem[key] = String(value);
+        }catch{
+          mem[key] = String(value);
+        }
+      }
+
+      function storageRemove(key){
+        try{
+          if(hasLS) localStorage.removeItem(key);
+          else delete mem[key];
+        }catch{
+          delete mem[key];
+        }
+      }
+
+      function uid(){
+        return Math.random().toString(16).slice(2) + Date.now().toString(16);
+      }
+
+      function getWidgetId(){
+        try{
+          const sp = new URLSearchParams(location.search);
+          const wid = (sp.get("wid") || "").trim();
+          if(wid) return wid;
+        }catch{}
+
+        /* fallback:
+           same URL on same device keeps the same widget id,
+           but true cross-device sync still needs ?wid=... */
+        const key = "skincare_widget_fallback_wid__" + location.pathname;
+        const existing = storageGet(key);
+        if(existing) return existing;
+
+        const fresh = uid();
+        storageSet(key, fresh);
+        return fresh;
+      }
+
+      window.__SKIN__ = {
+        wid: getWidgetId(),
+        get: storageGet,
+        set: storageSet,
+        remove: storageRemove
+      };
+    })();
+
+    const WID = window.__SKIN__?.wid || "default";
+    const PRESETS_KEY = "widget_presets_v3";
+    const STORE_KEY   = "skincare_tracker_store_v5__" + WID;
+    const THEME_KEY   = "skincare_tracker_theme_v5__" + WID;
+    const BG_KEY      = "skincare_tracker_bg_v5__" + WID;
+    const ROUTINE_KEY = "skincare_tracker_routine_v5__" + WID;
+    const META_KEY    = "skincare_tracker_meta_v5__" + WID;
 
     const $  = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -727,10 +986,12 @@
       if(!Number.isFinite(x)) return min;
       return Math.max(min, Math.min(max, x));
     }
+
     function normHex(hex, fallback){
       const s = String(hex || "").trim();
       return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
     }
+
     function hexToRgbTuple(hex){
       const h = normHex(hex, "#ffffff").slice(1);
       const r = parseInt(h.slice(0,2), 16);
@@ -738,9 +999,79 @@
       const b = parseInt(h.slice(4,6), 16);
       return `${r},${g},${b}`;
     }
+
     function hexToRgba(hex, a){
       const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
       return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function deepCopy(obj){
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function debounce(fn, wait=250){
+      let t = null;
+      return function(...args){
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    }
+
+    function loadJSON(key){
+      try{
+        const raw = window.__SKIN__.get(key);
+        return raw ? JSON.parse(raw) : null;
+      }catch{
+        return null;
+      }
+    }
+
+    function saveJSON(key, val){
+      try{
+        window.__SKIN__.set(key, JSON.stringify(val));
+      }catch{}
+    }
+
+    function removeJSON(key){
+      try{
+        window.__SKIN__.remove(key);
+      }catch{}
+    }
+
+    function escapeAttr(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function escapeText(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function uid(){
+      return Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+
+    function setStatus(msg){
+      const el = document.getElementById("presetStatus");
+      if(el) el.textContent = msg || "";
+    }
+
+    function setSyncBadge(msg){
+      const el = document.getElementById("syncBadge");
+      if(el) el.textContent = msg;
     }
 
     function toISODate(d){
@@ -748,6 +1079,7 @@
       x.setHours(0,0,0,0);
       return x.toISOString().slice(0,10);
     }
+
     function mondayOfWeek(date){
       const d = new Date(date);
       const day = d.getDay();
@@ -756,14 +1088,17 @@
       d.setHours(0,0,0,0);
       return d;
     }
+
     function addDays(d, n){
       const x = new Date(d);
       x.setDate(x.getDate() + n);
       return x;
     }
+
     function formatShortDate(d){
       return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
+
     function prettyWeekLabel(weekId){
       const mon = new Date(weekId + "T00:00:00");
       const sun = addDays(mon, 6);
@@ -772,8 +1107,219 @@
     }
 
     /* =========================
+       IndexedDB helpers
+       ========================= */
+    const IDB_NAME = "skincare_tracker_db_v1";
+    const IDB_STORE = "kv";
+
+    function openDB(){
+      return new Promise((resolve, reject) => {
+        if(!window.indexedDB){
+          reject(new Error("IndexedDB unavailable"));
+          return;
+        }
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if(!db.objectStoreNames.contains(IDB_STORE)){
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error || new Error("IndexedDB open failed"));
+      });
+    }
+
+    async function idbGet(key){
+      try{
+        const db = await openDB();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, "readonly");
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.get(key);
+          req.onsuccess = () => resolve(req.result ?? null);
+          req.onerror = () => reject(req.error);
+        });
+      }catch{
+        return null;
+      }
+    }
+
+    async function idbSet(key, value){
+      try{
+        const db = await openDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, "readwrite");
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.put(value, key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      }catch{}
+    }
+
+    async function idbRemove(key){
+      try{
+        const db = await openDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, "readwrite");
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.delete(key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      }catch{}
+    }
+
+    /* =========================
+       Optional cloud sync
+       ========================= */
+    let remoteReady = false;
+    let remoteRef = null;
+    let applyingRemote = false;
+    let lastRemoteUpdatedAt = 0;
+    let bootFinished = false;
+
+    function hasFirebaseConfig(){
+      const c = SYNC_CONFIG.firebaseConfig || {};
+      return !!(
+        SYNC_CONFIG.enabled &&
+        c.apiKey && c.authDomain && c.databaseURL &&
+        c.projectId && c.appId
+      );
+    }
+
+    function buildStatePayload(){
+      return {
+        version: 1,
+        wid: WID,
+        updatedAt: Date.now(),
+        theme: deepCopy(themeCommitted),
+        bg: deepCopy(bgCommitted),
+        routine: deepCopy(routine),
+        store: deepCopy(store),
+        meta: {
+          activeWeekId,
+          selectedDayIso
+        }
+      };
+    }
+
+    async function applyFullState(payload, source="local"){
+      if(!payload || typeof payload !== "object") return;
+
+      if(payload.theme && typeof payload.theme === "object"){
+        themeCommitted = Object.assign({}, DEFAULT_THEME, payload.theme);
+        themeDraft = deepCopy(themeCommitted);
+        saveJSON(THEME_KEY, themeCommitted);
+        themeApplyCSS(themeCommitted);
+        themeSyncInputs(themeDraft);
+      }
+
+      if(payload.bg && typeof payload.bg === "object"){
+        bgCommitted = Object.assign({}, DEFAULT_BG, payload.bg);
+        bgDraft = deepCopy(bgCommitted);
+        await persistBackgroundCommitted(bgCommitted);
+        applyBackgroundDraft(bgDraft);
+      }
+
+      if(payload.routine && typeof payload.routine === "object"){
+        routine = normalizeRoutine(payload.routine);
+        await persistRoutine();
+        routineApplyColors(routine.colors);
+        renderRoutineEditor();
+      }
+
+      if(payload.store && typeof payload.store === "object"){
+        store = normalizeStore(payload.store);
+        await persistStore();
+      }
+
+      if(payload.meta && typeof payload.meta === "object"){
+        if(typeof payload.meta.activeWeekId === "string") activeWeekId = payload.meta.activeWeekId;
+        if(typeof payload.meta.selectedDayIso === "string") selectedDayIso = payload.meta.selectedDayIso;
+        saveJSON(META_KEY, { activeWeekId, selectedDayIso });
+      }
+
+      if(bootFinished){
+        rebuildWeek(activeWeekId);
+      }
+
+      if(source === "remote"){
+        setStatus("Synced from cloud.");
+      }
+    }
+
+    async function initRemoteSync(){
+      if(!hasFirebaseConfig() || !window.firebase || !firebase.apps){
+        setSyncBadge("Saving locally on this device.");
+        return;
+      }
+
+      try{
+        const app = firebase.apps.length
+          ? firebase.app()
+          : firebase.initializeApp(SYNC_CONFIG.firebaseConfig);
+
+        const db = firebase.database(app);
+        const path = `${SYNC_CONFIG.namespace}/${encodeURIComponent(WID)}`;
+        remoteRef = db.ref(path);
+        remoteReady = true;
+        setSyncBadge("Cloud sync enabled.");
+
+        const snap = await remoteRef.get();
+        const remoteVal = snap.exists() ? snap.val() : null;
+        const localMeta = loadJSON(META_KEY) || {};
+        const localUpdated = Number(localMeta.lastSavedAt || 0);
+        const remoteUpdated = Number(remoteVal?.updatedAt || 0);
+
+        if(remoteVal && remoteUpdated > localUpdated){
+          applyingRemote = true;
+          lastRemoteUpdatedAt = remoteUpdated;
+          await applyFullState(remoteVal, "remote");
+          applyingRemote = false;
+        }else{
+          await pushRemoteState(true);
+        }
+
+        remoteRef.on("value", async (snapshot) => {
+          if(!snapshot.exists()) return;
+          const incoming = snapshot.val();
+          const incomingTs = Number(incoming?.updatedAt || 0);
+          const localStateMeta = loadJSON(META_KEY) || {};
+          const localTs = Number(localStateMeta.lastSavedAt || 0);
+
+          if(applyingRemote) return;
+          if(incomingTs <= Math.max(localTs, lastRemoteUpdatedAt)) return;
+
+          applyingRemote = true;
+          lastRemoteUpdatedAt = incomingTs;
+          await applyFullState(incoming, "remote");
+          applyingRemote = false;
+        });
+      }catch{
+        remoteReady = false;
+        setSyncBadge("Local save only. Cloud sync not connected.");
+      }
+    }
+
+    async function pushRemoteState(force=false){
+      if(!remoteReady || !remoteRef || applyingRemote) return;
+      try{
+        const payload = buildStatePayload();
+        const meta = loadJSON(META_KEY) || {};
+        const lastLocal = Number(meta.lastSavedAt || 0);
+        if(!force && payload.updatedAt <= lastLocal) return;
+        lastRemoteUpdatedAt = payload.updatedAt;
+        await remoteRef.set(payload);
+      }catch{}
+    }
+
+    const debouncedPushRemote = debounce(() => { pushRemoteState(false); }, 400);
+
+    /* =========================
        Theme
-    ========================= */
+       ========================= */
     const DEFAULT_THEME = {
       appBg: "#ffffff",
       ink: "#2b2b2b",
@@ -781,38 +1327,30 @@
       accent: "#cbb8ae",
 
       borderColor: "#1e1e1e",
-      borderA: 0.10,
+      borderA: 0.18,
 
       surfaceA: 0.78,
-      panelA: 0.92,
+      panelA: 0.94,
 
-      btnA: 0.92,
-      btnBorderA: 0.10,
+      btnA: 0.94,
+      btnBorderA: 0.16,
 
       overlayBase: "#ffffff",
       overlayA: 0.34,
 
       dayBg: "#ffffff",
-      dayBgA: 0.94,
+      dayBgA: 0.95,
 
       blockBg: "#ffffff",
-      blockBgA: 0.72,
+      blockBgA: 0.78,
 
       inputBg: "#ffffff",
-      inputBgA: 0.96,
+      inputBgA: 0.97,
 
       headerBg: "#ffffff",
       stepBg: "#ffffff",
-      stepBgA: 0.78
+      stepBgA: 0.84
     };
-
-    function themeLoad(){
-      try{ return JSON.parse(localStorage.getItem(THEME_KEY) || "null"); }
-      catch{ return null; }
-    }
-    function themeSave(t){
-      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-    }
 
     function setSelectionRingFromAccent(accentHex){
       const accent = normHex(accentHex, DEFAULT_THEME.accent);
@@ -830,7 +1368,7 @@
       `;
     }
 
-    function themeApply(t){
+    function themeApplyCSS(t){
       const theme = Object.assign({}, DEFAULT_THEME, t || {});
       const r = document.documentElement.style;
 
@@ -840,13 +1378,13 @@
       r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
 
       r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
-      r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
+      r.setProperty("--border-a", String(clamp(theme.borderA, 0.08, 0.55)));
 
       r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
-      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
+      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.65, 0.99)));
 
       r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
-      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
+      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.04, 0.40)));
 
       const dot = $("#themeDot");
       if(dot){
@@ -854,11 +1392,12 @@
         dot.style.background = accent;
         dot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
       }
+
       setSelectionRingFromAccent(theme.accent);
 
       const overlayBase = normHex(theme.overlayBase, DEFAULT_THEME.overlayBase);
       const overlayA = clamp(theme.overlayA, 0.00, 0.70);
-      const css = hexToRgba(overlayBase, overlayA);
+      const overlayCSS = hexToRgba(overlayBase, overlayA);
 
       let st = document.getElementById("overlayStyle");
       if(!st){
@@ -866,7 +1405,7 @@
         st.id = "overlayStyle";
         document.head.appendChild(st);
       }
-      st.textContent = `.board::after{ background: ${css} !important; }`;
+      st.textContent = `.board::after{ background: ${overlayCSS} !important; }`;
 
       const headerBg = normHex(theme.headerBg, "#ffffff");
       r.setProperty("--header-bg", headerBg);
@@ -883,15 +1422,22 @@
         document.head.appendChild(st2);
       }
       st2.textContent = `
+        body{ background: ${normHex(theme.appBg, "#ffffff")} !important; color: ${normHex(theme.ink, "#2b2b2b")} !important; }
         .day{ background: ${hexToRgba(normHex(theme.dayBg, "#ffffff"), clamp(theme.dayBgA,0.70,1.00))} !important; }
         .block{ background: ${hexToRgba(normHex(theme.blockBg, "#ffffff"), clamp(theme.blockBgA,0.55,1.00))} !important; }
-        textarea, .line input[type="text"]{ background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important; }
+        textarea, .line input[type="text"], .presetName, .presetSelect{
+          background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important;
+          color: ${normHex(theme.ink, "#2b2b2b")} !important;
+        }
       `;
     }
 
     function themeSyncInputs(t){
       const theme = Object.assign({}, DEFAULT_THEME, t || {});
-      const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
+      const set = (id, val) => {
+        const el = document.getElementById(id);
+        if(el) el.value = String(val);
+      };
 
       set("tAppBg", theme.appBg);
       set("tInk", theme.ink);
@@ -899,13 +1445,13 @@
       set("tAccent", theme.accent);
 
       set("tBorderColor", theme.borderColor);
-      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+      set("tBorderA", Math.round(clamp(theme.borderA, 0.08, 0.55) * 100));
 
       set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
-      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+      set("tPanelA", Math.round(clamp(theme.panelA, 0.65, 0.99) * 100));
 
       set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
-      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.04, 0.40) * 100));
 
       set("tOverlayBase", theme.overlayBase);
       set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
@@ -933,13 +1479,13 @@
         accent: g("tAccent")?.value,
 
         borderColor: g("tBorderColor")?.value,
-        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
+        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.08, 0.55),
 
         surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
-        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
+        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.65, 0.99),
 
         btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
-        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
+        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.04, 0.40),
 
         overlayBase: g("tOverlayBase")?.value,
         overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
@@ -959,10 +1505,22 @@
       };
     }
 
+    let themeCommitted = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
+    let themeDraft = deepCopy(themeCommitted);
+
+    async function persistTheme(){
+      saveJSON(THEME_KEY, themeCommitted);
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      meta.activeWeekId = activeWeekId;
+      meta.selectedDayIso = selectedDayIso;
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
+    }
+
     function initTheme(){
-      const saved = themeLoad() || DEFAULT_THEME;
-      themeApply(saved);
-      themeSyncInputs(saved);
+      themeApplyCSS(themeCommitted);
+      themeSyncInputs(themeDraft);
 
       const ids = [
         "tAppBg","tInk","tMuted","tAccent",
@@ -980,34 +1538,47 @@
         const el = document.getElementById(id);
         if(!el) return;
         el.addEventListener("input", () => {
-          const t = themeReadFromInputs();
-          themeApply(t);
-          themeSave(t);
+          themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+          themeApplyCSS(themeDraft);
+          setStatus("");
         });
       });
 
-      $("#themeReset").addEventListener("click", () => {
-        localStorage.removeItem(THEME_KEY);
-        themeApply(DEFAULT_THEME);
-        themeSyncInputs(DEFAULT_THEME);
+      $("#themeApply").addEventListener("click", async () => {
+        themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+        themeCommitted = deepCopy(themeDraft);
+        themeApplyCSS(themeCommitted);
+        await persistTheme();
+        setStatus("Theme applied.");
+      });
+
+      $("#themeReset").addEventListener("click", async () => {
+        removeJSON(THEME_KEY);
+        themeCommitted = deepCopy(DEFAULT_THEME);
+        themeDraft = deepCopy(DEFAULT_THEME);
+        themeApplyCSS(themeCommitted);
+        themeSyncInputs(themeDraft);
+        await persistTheme();
+        setStatus("Theme reset.");
       });
     }
 
     /* =========================
        Background
-    ========================= */
-    const DEFAULT_BG = { tint: "#efe7e1", strength: 30, imageDataUrl: null };
-
-    function bgLoad(){
-      try{ return JSON.parse(localStorage.getItem(BG_KEY) || "null"); }
-      catch{ return null; }
-    }
-    function bgSave(bg){
-      try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-    }
+       ========================= */
+    const DEFAULT_BG = {
+      tint: "#efe7e1",
+      strength: 30,
+      blur: 0,
+      imageDataUrl: null
+    };
 
     function setBoardImage(dataUrlOrNull){
       document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    }
+
+    function setBoardBlur(px){
+      document.documentElement.style.setProperty("--board-blur", `${clamp(px, 0, 24)}px`);
     }
 
     function applyBoardTint(colorHex, strengthPct){
@@ -1022,71 +1593,238 @@
         bgDot.style.background = tint;
         bgDot.style.boxShadow = `0 0 0 7px ${hexToRgba(tint, Math.min(0.30, strength + 0.10))}`;
       }
+
       $("#boardTint").style.background = hexToRgba(tint, strength);
     }
 
-    function applyBackground(bg){
-      const x = Object.assign({}, DEFAULT_BG, bg || {});
-      $("#bgColor").value = x.tint;
-      $("#bgStrength").value = String(x.strength);
-      applyBoardTint(x.tint, x.strength);
-      setBoardImage(x.imageDataUrl);
-    }
-
-    function fileToDataUrl(file){
+    async function fileToDataUrl(file){
       return new Promise((resolve, reject) => {
         const r = new FileReader();
-        r.onload = () => resolve(r.result);
+        r.onload = () => resolve(String(r.result));
         r.onerror = reject;
         r.readAsDataURL(file);
       });
     }
 
+    const BG_IMAGE_IDB_KEY = "skincare_bg_image_v5__" + WID;
+    let bgCommitted = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+    let bgDraft = deepCopy(bgCommitted);
+
+    async function hydrateBackgroundFromIDB(){
+      if(!bgCommitted.imageDataUrl){
+        const fromDb = await idbGet(BG_IMAGE_IDB_KEY);
+        if(typeof fromDb === "string" && fromDb.startsWith("data:image/")){
+          bgCommitted.imageDataUrl = fromDb;
+          bgDraft.imageDataUrl = fromDb;
+        }
+      }
+    }
+
+    function applyBackgroundDraft(bg){
+      $("#bgColor").value = normHex(bg.tint, DEFAULT_BG.tint);
+      $("#bgStrength").value = String(clamp(bg.strength, 0, 70));
+      $("#bgBlur").value = String(clamp(bg.blur, 0, 24));
+      applyBoardTint(bg.tint, bg.strength);
+      setBoardBlur(bg.blur);
+      setBoardImage(bg.imageDataUrl || null);
+    }
+
+    async function persistBackgroundCommitted(bg){
+      bgCommitted = Object.assign({}, DEFAULT_BG, bg || {});
+      saveJSON(BG_KEY, bgCommitted);
+
+      if(bgCommitted.imageDataUrl){
+        await idbSet(BG_IMAGE_IDB_KEY, bgCommitted.imageDataUrl);
+      }else{
+        await idbRemove(BG_IMAGE_IDB_KEY);
+      }
+
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      meta.activeWeekId = activeWeekId;
+      meta.selectedDayIso = selectedDayIso;
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
+    }
+
     function initBackground(){
-      const saved = bgLoad() || DEFAULT_BG;
-      applyBackground(saved);
+      applyBackgroundDraft(bgDraft);
 
       $("#bgColor").addEventListener("input", () => {
-        applyBoardTint($("#bgColor").value, $("#bgStrength").value);
-        const cur = bgLoad() || DEFAULT_BG;
-        cur.tint = $("#bgColor").value;
-        bgSave(cur);
+        bgDraft.tint = $("#bgColor").value;
+        applyBackgroundDraft(bgDraft);
+        setStatus("");
       });
 
       $("#bgStrength").addEventListener("input", () => {
-        applyBoardTint($("#bgColor").value, $("#bgStrength").value);
-        const cur = bgLoad() || DEFAULT_BG;
-        cur.strength = Number($("#bgStrength").value);
-        bgSave(cur);
+        bgDraft.strength = Number($("#bgStrength").value);
+        applyBackgroundDraft(bgDraft);
+        setStatus("");
+      });
+
+      $("#bgBlur").addEventListener("input", () => {
+        bgDraft.blur = Number($("#bgBlur").value);
+        applyBackgroundDraft(bgDraft);
+        setStatus("");
       });
 
       $("#bgImage").addEventListener("change", async () => {
         const file = $("#bgImage").files && $("#bgImage").files[0];
         if(!file) return;
-        const dataUrl = await fileToDataUrl(file);
-        setBoardImage(dataUrl);
-        const cur = bgLoad() || DEFAULT_BG;
-        cur.imageDataUrl = dataUrl;
-        bgSave(cur);
+        try{
+          const dataUrl = await fileToDataUrl(file);
+          bgDraft.imageDataUrl = dataUrl;
+          applyBackgroundDraft(bgDraft);
+          setStatus("Image preview updated. Click Apply background to save it.");
+        }catch{
+          setStatus("Could not read image.");
+        }
       });
 
       $("#removeImage").addEventListener("click", () => {
-        setBoardImage(null);
+        bgDraft.imageDataUrl = null;
         $("#bgImage").value = "";
-        const cur = bgLoad() || DEFAULT_BG;
-        cur.imageDataUrl = null;
-        bgSave(cur);
+        applyBackgroundDraft(bgDraft);
+        setStatus("Image removed from preview. Click Apply background to save.");
       });
 
-      $("#bgReset").addEventListener("click", () => {
-        localStorage.removeItem(BG_KEY);
-        applyBackground(DEFAULT_BG);
+      $("#bgApply").addEventListener("click", async () => {
+        bgCommitted = deepCopy(bgDraft);
+        await persistBackgroundCommitted(bgCommitted);
+        applyBackgroundDraft(bgCommitted);
+        setStatus("Background applied.");
+      });
+
+      $("#bgReset").addEventListener("click", async () => {
+        removeJSON(BG_KEY);
+        bgCommitted = deepCopy(DEFAULT_BG);
+        bgDraft = deepCopy(DEFAULT_BG);
+        $("#bgImage").value = "";
+        applyBackgroundDraft(bgCommitted);
+        await persistBackgroundCommitted(bgCommitted);
+        setStatus("Background reset.");
       });
     }
 
     /* =========================
-       Routine + colors
-    ========================= */
+       Presets
+       ========================= */
+    function loadPresets(){
+      const list = loadJSON(PRESETS_KEY);
+      return Array.isArray(list) ? list : [];
+    }
+
+    function savePresets(list){
+      saveJSON(PRESETS_KEY, list);
+    }
+
+    function refreshPresetSelect(){
+      const sel = document.getElementById("presetSelect");
+      if(!sel) return;
+      const list = loadPresets();
+      const cur = sel.value;
+
+      sel.innerHTML = `<option value="">—</option>`;
+      for(const p of list){
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || "Untitled";
+        sel.appendChild(opt);
+      }
+
+      if(cur) sel.value = cur;
+    }
+
+    async function applyPresetToThisWidget(p){
+      const nextTheme = Object.assign({}, DEFAULT_THEME, p?.theme || {});
+      const nextBg = Object.assign({}, DEFAULT_BG, p?.bg || {});
+
+      themeCommitted = deepCopy(nextTheme);
+      themeDraft = deepCopy(nextTheme);
+      themeApplyCSS(themeCommitted);
+      themeSyncInputs(themeDraft);
+      await persistTheme();
+
+      bgCommitted = deepCopy(nextBg);
+      bgDraft = deepCopy(nextBg);
+      applyBackgroundDraft(bgCommitted);
+      await persistBackgroundCommitted(bgCommitted);
+
+      setStatus("Preset applied.");
+    }
+
+    function initPresetsUI(){
+      const nameEl = document.getElementById("presetName");
+      const saveBtn = document.getElementById("presetSave");
+      const sel = document.getElementById("presetSelect");
+      const applyBtn = document.getElementById("presetApply");
+      const delBtn = document.getElementById("presetDelete");
+
+      if(!nameEl || !saveBtn || !sel || !applyBtn || !delBtn) return;
+
+      refreshPresetSelect();
+
+      saveBtn.addEventListener("click", () => {
+        const name = (nameEl.value || "").trim();
+        if(!name){
+          setStatus("Type a preset name first.");
+          return;
+        }
+
+        const entry = {
+          id: uid(),
+          name,
+          theme: deepCopy(themeCommitted),
+          bg: deepCopy(bgCommitted)
+        };
+
+        const list = loadPresets();
+        list.unshift(entry);
+        savePresets(list);
+
+        nameEl.value = "";
+        refreshPresetSelect();
+        sel.value = entry.id;
+        setStatus("Preset saved.");
+      });
+
+      applyBtn.addEventListener("click", async () => {
+        const id = sel.value;
+        if(!id){
+          setStatus("Choose a preset first.");
+          return;
+        }
+        const p = loadPresets().find(x => x.id === id);
+        if(!p){
+          setStatus("Preset not found.");
+          return;
+        }
+        await applyPresetToThisWidget(p);
+      });
+
+      delBtn.addEventListener("click", () => {
+        const id = sel.value;
+        if(!id){
+          setStatus("Choose a preset first.");
+          return;
+        }
+        let list = loadPresets();
+        const before = list.length;
+        list = list.filter(x => x.id !== id);
+        if(list.length === before){
+          setStatus("Preset not found.");
+          return;
+        }
+        savePresets(list);
+        refreshPresetSelect();
+        sel.value = "";
+        setStatus("Preset deleted.");
+      });
+    }
+
+    /* =========================
+       Routine
+       ========================= */
     const DEFAULT_ROUTINE = {
       colors: {
         amEmpty: "#eae6e2",
@@ -1098,21 +1836,33 @@
       pm: ["Makeup remover","Cleanser","Toner","Moisturizer","Lip balm"]
     };
 
-    function routineLoad(){
-      try{ return JSON.parse(localStorage.getItem(ROUTINE_KEY) || "null"); }
-      catch{ return null; }
-    }
-    function routineSave(r){
-      try{ localStorage.setItem(ROUTINE_KEY, JSON.stringify(r)); }catch{}
+    function normalizeRoutine(input){
+      const base = deepCopy(DEFAULT_ROUTINE);
+      const r = (input && typeof input === "object") ? input : {};
+      base.colors = Object.assign({}, base.colors, r.colors || {});
+      base.am = Array.isArray(r.am) ? r.am.map(v => String(v ?? "")) : base.am;
+      base.pm = Array.isArray(r.pm) ? r.pm.map(v => String(v ?? "")) : base.pm;
+      return base;
     }
 
-    let routine = routineLoad() || structuredClone(DEFAULT_ROUTINE);
+    function routineLoad(){
+      return loadJSON(ROUTINE_KEY);
+    }
+
+    async function persistRoutine(){
+      saveJSON(ROUTINE_KEY, routine);
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      meta.activeWeekId = activeWeekId;
+      meta.selectedDayIso = selectedDayIso;
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
+    }
+
+    let routine = normalizeRoutine(routineLoad() || DEFAULT_ROUTINE);
 
     function getRoutine(){
-      if(!routine) routine = structuredClone(DEFAULT_ROUTINE);
-      if(!Array.isArray(routine.am)) routine.am = structuredClone(DEFAULT_ROUTINE.am);
-      if(!Array.isArray(routine.pm)) routine.pm = structuredClone(DEFAULT_ROUTINE.pm);
-      if(!routine.colors) routine.colors = structuredClone(DEFAULT_ROUTINE.colors);
+      routine = normalizeRoutine(routine);
       return routine;
     }
 
@@ -1127,26 +1877,6 @@
       $("#amFilled").value = normHex(c.amFilled, DEFAULT_ROUTINE.colors.amFilled);
       $("#pmEmpty").value = normHex(c.pmEmpty, DEFAULT_ROUTINE.colors.pmEmpty);
       $("#pmFilled").value = normHex(c.pmFilled, DEFAULT_ROUTINE.colors.pmFilled);
-    }
-
-    function escapeAttr(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
-    }
-    function escapeHtml(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
-    }
-    function escapeText(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
     }
 
     function renderRoutineEditor(){
@@ -1165,33 +1895,49 @@
         `;
         const input = row.querySelector("input");
         const del = row.querySelector("button");
-        input.addEventListener("input", () => onText(input.value));
-        del.addEventListener("click", () => onDel());
+
+        const saveText = debounce(async () => {
+          onText(input.value);
+          await persistRoutine();
+          rebuildWeek(activeWeekId);
+        }, 140);
+
+        input.addEventListener("input", saveText);
+        input.addEventListener("change", saveText);
+
+        del.addEventListener("click", async () => {
+          onDel();
+          await persistRoutine();
+          renderRoutineEditor();
+          rebuildWeek(activeWeekId);
+        });
+
         return row;
       };
 
       r.am.forEach((t, idx) => {
-        amList.appendChild(makeRow(t,
-          (v) => { r.am[idx] = v; routineSave(r); rebuildWeek(activeWeekId); },
-          () => { r.am.splice(idx, 1); routineSave(r); renderRoutineEditor(); rebuildWeek(activeWeekId); }
+        amList.appendChild(makeRow(
+          t,
+          (v) => { r.am[idx] = v; },
+          () => { r.am.splice(idx, 1); }
         ));
       });
 
       r.pm.forEach((t, idx) => {
-        pmList.appendChild(makeRow(t,
-          (v) => { r.pm[idx] = v; routineSave(r); rebuildWeek(activeWeekId); },
-          () => { r.pm.splice(idx, 1); routineSave(r); renderRoutineEditor(); rebuildWeek(activeWeekId); }
+        pmList.appendChild(makeRow(
+          t,
+          (v) => { r.pm[idx] = v; },
+          () => { r.pm.splice(idx, 1); }
         ));
       });
     }
 
     function initRoutine(){
-      const r = getRoutine();
-      routineSave(r);
-      routineApplyColors(r.colors);
+      routine = normalizeRoutine(routine);
+      routineApplyColors(routine.colors);
       renderRoutineEditor();
 
-      const applyColorChange = () => {
+      const applyColorChange = debounce(async () => {
         const rr = getRoutine();
         rr.colors = {
           amEmpty: $("#amEmpty").value,
@@ -1199,57 +1945,74 @@
           pmEmpty: $("#pmEmpty").value,
           pmFilled: $("#pmFilled").value
         };
-        routineSave(rr);
+        routine = rr;
         routineApplyColors(rr.colors);
+        await persistRoutine();
         rebuildWeek(activeWeekId);
-      };
+      }, 100);
 
       ["amEmpty","amFilled","pmEmpty","pmFilled"].forEach(id => {
         document.getElementById(id).addEventListener("input", applyColorChange);
+        document.getElementById(id).addEventListener("change", applyColorChange);
       });
 
-      $("#addAmStep").addEventListener("click", () => {
+      $("#addAmStep").addEventListener("click", async () => {
         const rr = getRoutine();
         rr.am.push("New AM step");
-        routineSave(rr);
+        routine = rr;
+        await persistRoutine();
         renderRoutineEditor();
         rebuildWeek(activeWeekId);
       });
 
-      $("#addPmStep").addEventListener("click", () => {
+      $("#addPmStep").addEventListener("click", async () => {
         const rr = getRoutine();
         rr.pm.push("New PM step");
-        routineSave(rr);
+        routine = rr;
+        await persistRoutine();
         renderRoutineEditor();
         rebuildWeek(activeWeekId);
       });
 
-      $("#resetRoutine").addEventListener("click", () => {
-        localStorage.removeItem(ROUTINE_KEY);
-        routine = structuredClone(DEFAULT_ROUTINE);
-        routineSave(getRoutine());
-        routineApplyColors(getRoutine().colors);
+      $("#resetRoutine").addEventListener("click", async () => {
+        removeJSON(ROUTINE_KEY);
+        routine = deepCopy(DEFAULT_ROUTINE);
+        await persistRoutine();
+        routineApplyColors(routine.colors);
         renderRoutineEditor();
         rebuildWeek(activeWeekId);
       });
     }
 
     /* =========================
-       Store (per ISO day)
-    ========================= */
+       Store
+       ========================= */
+    function normalizeStore(input){
+      const s = (input && typeof input === "object") ? input : {};
+      if(!s.days || typeof s.days !== "object") s.days = {};
+      return s;
+    }
+
     function loadStore(){
       try{
-        const raw = localStorage.getItem(STORE_KEY);
-        return raw ? JSON.parse(raw) : { days: {} };
+        const raw = window.__SKIN__.get(STORE_KEY);
+        return raw ? normalizeStore(JSON.parse(raw)) : { days: {} };
       }catch{
         return { days: {} };
       }
     }
-    function saveStore(s){
-      localStorage.setItem(STORE_KEY, JSON.stringify(s));
+
+    async function persistStore(){
+      window.__SKIN__.set(STORE_KEY, JSON.stringify(store));
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      meta.activeWeekId = activeWeekId;
+      meta.selectedDayIso = selectedDayIso;
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
     }
 
-    let store = loadStore();
+    let store = normalizeStore(loadStore());
 
     function ensureDay(iso){
       const r = getRoutine();
@@ -1282,16 +2045,27 @@
 
     /* =========================
        Week UI
-    ========================= */
+       ========================= */
     const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
     const grid = $("#grid");
 
-    let selectedDayIso = toISODate(new Date());
-    let activeWeekId = toISODate(mondayOfWeek(new Date()));
+    const meta = loadJSON(META_KEY) || {};
+    let selectedDayIso = typeof meta.selectedDayIso === "string" ? meta.selectedDayIso : toISODate(new Date());
+    let activeWeekId = typeof meta.activeWeekId === "string" ? meta.activeWeekId : toISODate(mondayOfWeek(new Date()));
+
+    function persistMetaOnly(){
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      meta.activeWeekId = activeWeekId;
+      meta.selectedDayIso = selectedDayIso;
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
+    }
 
     function selectDay(iso){
       selectedDayIso = iso;
       $$(".day").forEach(d => d.classList.toggle("selected", d.dataset.iso === iso));
+      persistMetaOnly();
     }
 
     function rebuildWeek(weekId){
@@ -1355,10 +2129,11 @@
         const pmWrap = day.querySelector('[data-routine="pm"]');
 
         r.am.forEach((label, idx) => {
-          const step = document.createElement("div");
+          const step = document.createElement("button");
           step.className = "step" + (dayData.am[idx] ? " done" : "");
           step.dataset.slot = "am";
           step.dataset.idx = String(idx);
+          step.type = "button";
           step.style.setProperty("--empty", amEmpty);
           step.style.setProperty("--filled", amFilled);
           step.innerHTML = `
@@ -1369,10 +2144,11 @@
         });
 
         r.pm.forEach((label, idx) => {
-          const step = document.createElement("div");
+          const step = document.createElement("button");
           step.className = "step" + (dayData.pm[idx] ? " done" : "");
           step.dataset.slot = "pm";
           step.dataset.idx = String(idx);
+          step.type = "button";
           step.style.setProperty("--empty", pmEmpty);
           step.style.setProperty("--filled", pmFilled);
           step.innerHTML = `
@@ -1386,13 +2162,12 @@
       }
 
       selectDay(selectedDayIso);
-      /* stays put */
     }
 
     /* =========================
        Interactions
-    ========================= */
-    grid.addEventListener("click", (e) => {
+       ========================= */
+    grid.addEventListener("click", async (e) => {
       const dayEl = e.target.closest(".day");
       if(!dayEl) return;
       const iso = dayEl.dataset.iso;
@@ -1408,18 +2183,36 @@
         const d = ensureDay(iso);
         const arr = slot === "am" ? d.am : d.pm;
         arr[idx] = !arr[idx];
-        saveStore(store);
+        await persistStore();
 
         step.classList.toggle("done", arr[idx]);
 
         const { amDone, pmDone, allDone } = dayCompletion(iso);
-        dayEl.querySelector('[data-part="am"] .subpill').textContent = amDone ? "done" : "in progress";
-        dayEl.querySelector('[data-part="pm"] .subpill').textContent = pmDone ? "done" : "in progress";
+        const amPill = dayEl.querySelector('[data-part="am"] .subpill');
+        const pmPill = dayEl.querySelector('[data-part="pm"] .subpill');
+        if(amPill) amPill.textContent = amDone ? "done" : "in progress";
+        if(pmPill) pmPill.textContent = pmDone ? "done" : "in progress";
+
         if(allDone) confettiBurst();
       }
     });
 
+    const debouncedNoteSave = debounce(async (noteEl) => {
+      const dayEl = noteEl.closest(".day");
+      if(!dayEl) return;
+      const iso = dayEl.dataset.iso;
+      const d = ensureDay(iso);
+      d.note = noteEl.value ?? "";
+      await persistStore();
+    }, 120);
+
     grid.addEventListener("input", (e) => {
+      const note = e.target.closest("textarea.note");
+      if(!note) return;
+      debouncedNoteSave(note);
+    });
+
+    grid.addEventListener("change", async (e) => {
       const note = e.target.closest("textarea.note");
       if(!note) return;
       const dayEl = note.closest(".day");
@@ -1427,16 +2220,17 @@
       const iso = dayEl.dataset.iso;
       const d = ensureDay(iso);
       d.note = note.value ?? "";
-      saveStore(store);
+      await persistStore();
     });
 
     /* =========================
        Week nav
-    ========================= */
+       ========================= */
     $("#prevWeek").addEventListener("click", () => {
       const mon = new Date(activeWeekId + "T00:00:00");
       rebuildWeek(toISODate(addDays(mon, -7)));
     });
+
     $("#nextWeek").addEventListener("click", () => {
       const mon = new Date(activeWeekId + "T00:00:00");
       rebuildWeek(toISODate(addDays(mon, 7)));
@@ -1444,36 +2238,34 @@
 
     /* =========================
        Popovers
-    ========================= */
+       ========================= */
     function closePanels(exceptId){
       ["themePanel","bgPanel","routinePanel"].forEach(id => {
         if(id !== exceptId) document.getElementById(id).classList.remove("open");
       });
     }
 
+    function togglePanel(panelId){
+      const p = document.getElementById(panelId);
+      const open = !p.classList.contains("open");
+      closePanels(open ? panelId : null);
+      p.classList.toggle("open", open);
+    }
+
     function initPopovers(){
       $("#themeBtn").addEventListener("click", (e) => {
         e.stopPropagation();
-        const p = $("#themePanel");
-        const open = !p.classList.contains("open");
-        closePanels(open ? "themePanel" : null);
-        p.classList.toggle("open", open);
+        togglePanel("themePanel");
       });
 
       $("#bgBtn").addEventListener("click", (e) => {
         e.stopPropagation();
-        const p = $("#bgPanel");
-        const open = !p.classList.contains("open");
-        closePanels(open ? "bgPanel" : null);
-        p.classList.toggle("open", open);
+        togglePanel("bgPanel");
       });
 
       $("#routineBtn").addEventListener("click", (e) => {
         e.stopPropagation();
-        const p = $("#routinePanel");
-        const open = !p.classList.contains("open");
-        closePanels(open ? "routinePanel" : null);
-        p.classList.toggle("open", open);
+        togglePanel("routinePanel");
       });
 
       document.addEventListener("click", (e) => {
@@ -1483,20 +2275,26 @@
           e.target.closest("#routinePanel") || e.target.closest("#routineBtn");
         if(!insideAny) closePanels(null);
       });
+
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Escape") closePanels(null);
+      });
     }
 
     /* =========================
        Confetti
-    ========================= */
+       ========================= */
     const confettiCanvas = document.getElementById("confetti");
     const ctx = confettiCanvas.getContext("2d");
     let confettiLock = false;
 
     function resizeConfetti(){
-      confettiCanvas.width = Math.floor(window.innerWidth * devicePixelRatio);
-      confettiCanvas.height = Math.floor(window.innerHeight * devicePixelRatio);
-      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+      const ratio = Math.max(1, window.devicePixelRatio || 1);
+      confettiCanvas.width = Math.floor(window.innerWidth * ratio);
+      confettiCanvas.height = Math.floor(window.innerHeight * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     }
+
     window.addEventListener("resize", resizeConfetti);
 
     function confettiBurst(){
@@ -1561,23 +2359,64 @@
           confettiLock = false;
         }
       }
+
       requestAnimationFrame(tick);
     }
 
     /* =========================
+       Save hardening for mobile/webview
+       ========================= */
+    async function flushAllNow(){
+      try{
+        saveJSON(THEME_KEY, themeCommitted);
+        saveJSON(BG_KEY, bgCommitted);
+        saveJSON(ROUTINE_KEY, routine);
+        saveJSON(STORE_KEY, store);
+        saveJSON(META_KEY, {
+          lastSavedAt: Date.now(),
+          activeWeekId,
+          selectedDayIso
+        });
+        if(bgCommitted?.imageDataUrl){
+          await idbSet(BG_IMAGE_IDB_KEY, bgCommitted.imageDataUrl);
+        }
+        await pushRemoteState(true);
+      }catch{}
+    }
+
+    window.addEventListener("pagehide", () => { flushAllNow(); });
+    window.addEventListener("beforeunload", () => { flushAllNow(); });
+    document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "hidden"){
+        flushAllNow();
+      }
+    });
+
+    /* =========================
        Boot
-    ========================= */
-    function boot(){
+       ========================= */
+    async function boot(){
+      await hydrateBackgroundFromIDB();
+
       initPopovers();
       initTheme();
       initBackground();
+      initPresetsUI();
       initRoutine();
 
-      store = loadStore();
-      activeWeekId = toISODate(mondayOfWeek(new Date()));
-      selectedDayIso = toISODate(new Date());
+      store = normalizeStore(loadStore());
+
+      themeApplyCSS(themeCommitted);
+      applyBackgroundDraft(bgCommitted);
+      routineApplyColors(routine.colors);
+
       rebuildWeek(activeWeekId);
+      bootFinished = true;
+
+      await initRemoteSync();
+      await flushAllNow();
     }
+
     boot();
   </script>
 </body>

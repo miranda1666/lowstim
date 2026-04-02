@@ -191,10 +191,11 @@
       box-shadow: 0 0 0 7px rgba(239,231,225,0.30);
     }
 
-    .theme-square{
+    /* fixed: theme icon is now a circle, not a square */
+    .theme-circle{
       width: 16px;
       height: 16px;
-      border-radius: 5px;
+      border-radius: 999px;
       border: 1px solid rgba(var(--border-rgb), 0.18);
       background: linear-gradient(135deg, var(--left-card-bg), var(--right-card-bg));
       box-shadow: 0 0 0 7px rgba(255,255,255,0.16);
@@ -837,6 +838,7 @@
     <div class="titlebar">
       <div class="title">
         <h1>Not Today Parking Lot + Gratitude Pebbles</h1>
+        <div class="sync-badge" id="syncBadge">Saving locally on this device.</div>
       </div>
 
       <div class="controls">
@@ -856,7 +858,7 @@
         <div class="popover">
           <div class="icon-pill">
             <button class="btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
-              <span class="theme-square" id="themeDot" aria-hidden="true"></span>
+              <span class="theme-circle" id="themeDot" aria-hidden="true"></span>
             </button>
           </div>
 

@@ -281,10 +281,7 @@
 
     .panel{
       position:fixed;
-      top:20px;
-      left:50%;
-      transform:translateX(-50%);
-      width:min(340px, calc(100vw - 28px));
+      width:320px;
       border-radius:16px;
       border:1px solid var(--stroke);
       background: rgba(255,255,255,0.97);
@@ -295,7 +292,9 @@
       display:none;
       z-index:99999;
       overflow:auto;
-      max-height:calc(100dvh - 40px);
+      top:12px;
+      left:12px;
+      max-height:calc(100dvh - 24px);
     }
 
     .panel.open{ display:block; }
@@ -385,6 +384,13 @@
       body{ padding:14px; }
       .row{ flex-direction:column; align-items:stretch; }
       .item .right{ width:100%; justify-content:flex-end; }
+      .panel{
+        width:min(340px, calc(100vw - 20px));
+        left:10px !important;
+        right:10px;
+        top:10px !important;
+        max-height:calc(100dvh - 20px) !important;
+      }
       input, select, textarea{ font-size:16px; }
     }
   </style>
@@ -1175,18 +1181,61 @@
     });
   }
 
+  function positionPanel(btn, panel){
+    if(window.innerWidth <= 760){
+      panel.style.left = "10px";
+      panel.style.top = "10px";
+      panel.style.width = `min(340px, calc(100vw - 20px))`;
+      panel.style.maxHeight = `calc(100dvh - 20px)`;
+      return;
+    }
+
+    const pad = 12;
+    const gap = 10;
+
+    panel.style.width = "320px";
+    panel.style.maxHeight = `calc(100dvh - ${pad * 2}px)`;
+    panel.style.left = "0px";
+    panel.style.top = "0px";
+
+    const btnRect = btn.getBoundingClientRect();
+    const panelWidth = panel.offsetWidth || 320;
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+
+    let left = btnRect.right - panelWidth;
+    left = Math.max(pad, Math.min(left, viewportW - panelWidth - pad));
+
+    let top = btnRect.bottom + gap;
+
+    const maxHeight = viewportH - top - pad;
+    if(maxHeight >= 220){
+      panel.style.maxHeight = `${maxHeight}px`;
+    }else{
+      top = Math.max(pad, btnRect.top - gap - Math.min(panel.scrollHeight, viewportH - pad * 2));
+      panel.style.maxHeight = `${viewportH - top - pad}px`;
+    }
+
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(top)}px`;
+  }
+
+  function openPanel(btn, panel){
+    const isOpen = panel.classList.contains("open");
+    closeAllPanels(null);
+    if(isOpen) return;
+    panel.classList.add("open");
+    requestAnimationFrame(() => positionPanel(btn, panel));
+  }
+
   els.themeBtn.addEventListener("click", (e)=>{
     e.stopPropagation();
-    const open = !els.themePanel.classList.contains("open");
-    closeAllPanels(open ? els.themePanel : null);
-    els.themePanel.classList.toggle("open", open);
+    openPanel(els.themeBtn, els.themePanel);
   });
 
   els.bgBtn.addEventListener("click", (e)=>{
     e.stopPropagation();
-    const open = !els.bgPanel.classList.contains("open");
-    closeAllPanels(open ? els.bgPanel : null);
-    els.bgPanel.classList.toggle("open", open);
+    openPanel(els.bgBtn, els.bgPanel);
   });
 
   document.addEventListener("click",(e)=>{
@@ -1195,6 +1244,16 @@
       e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
     if(!inside) closeAllPanels(null);
   });
+
+  window.addEventListener("resize", () => {
+    if(els.themePanel.classList.contains("open")) positionPanel(els.themeBtn, els.themePanel);
+    if(els.bgPanel.classList.contains("open")) positionPanel(els.bgBtn, els.bgPanel);
+  });
+
+  window.addEventListener("scroll", () => {
+    if(els.themePanel.classList.contains("open")) positionPanel(els.themeBtn, els.themePanel);
+    if(els.bgPanel.classList.contains("open")) positionPanel(els.bgBtn, els.bgPanel);
+  }, { passive:true });
 
   [els.tBg, els.tInk, els.tMuted, els.tAccent, els.tCard, els.tCardA, els.tStroke, els.tSoft, els.tItemBg, els.tInputBg, els.tRadius, els.tShadow].forEach(el=>{
     el.addEventListener("input", ()=>{

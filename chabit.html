@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Notion Habit Builder / Tracker</title>
+
+  <!-- Optional Firebase for real cross-device sync.
+       Leave as-is if you only want same-device saving. -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
   <style>
     :root{
       --app-bg: #ffffff;
@@ -12,16 +18,16 @@
       --muted: #7a7a7a;
 
       --border-rgb: 30,30,30;
-      --border-a: 0.10;
+      --border-a: 0.18;
       --border: rgba(var(--border-rgb), var(--border-a));
-      --shadow: 0 12px 34px rgba(20, 20, 20, 0.08);
+      --shadow: 0 14px 34px rgba(20, 20, 20, 0.09);
 
       --surface-a: 0.78;
-      --panel-a: 0.92;
+      --panel-a: 0.94;
 
-      --btn-a: 0.92;
-      --btn-border-a: 0.10;
-      --btn-ink: rgba(43,43,43,0.72);
+      --btn-a: 0.94;
+      --btn-border-a: 0.16;
+      --btn-ink: rgba(43,43,43,0.78);
 
       --accent: #cbb8ae;
 
@@ -31,15 +37,16 @@
       --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
+      --board-blur: 0px;
 
       --day-bg: #ffffff;
-      --day-bg-a: 0.94;
+      --day-bg-a: 0.95;
 
       --block-bg: #ffffff;
-      --block-bg-a: 0.72;
+      --block-bg-a: 0.78;
 
       --input-bg: #ffffff;
-      --input-bg-a: 0.96;
+      --input-bg-a: 0.97;
 
       --board-radius: 26px;
       --radius: 20px;
@@ -61,18 +68,30 @@
       --header-pad: 14px 16px;
       --chip-pad: 8px 12px;
 
-      /* habit boxes */
       --box: 28px;
       --box-gap: 10px;
       --box-radius: 10px;
     }
 
     *{ box-sizing:border-box; }
+
+    html, body{
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden !important;
+      -webkit-text-size-adjust: 100%;
+    }
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       color: var(--ink);
       background: var(--app-bg);
+      touch-action: manipulation;
+    }
+
+    button, input, textarea, select{
+      font: inherit;
     }
 
     .wrap{
@@ -104,10 +123,10 @@
       letter-spacing:0.2px;
     }
 
-    .subtitle{
-      font-size: var(--sub);
+    .sync-badge{
+      font-size: 11px;
       color: var(--muted);
-      line-height:1.3;
+      margin-top: 2px;
     }
 
     .controls{
@@ -128,11 +147,12 @@
       padding: var(--chip-pad);
       box-shadow: 0 8px 22px rgba(20,20,20,0.06);
       backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
 
     .bg-btn, .theme-btn{
-      width:38px;
-      height:38px;
+      width:40px;
+      height:40px;
       border-radius:999px;
       border:1px solid rgba(var(--border-rgb), var(--btn-border-a));
       background: rgba(255,255,255, var(--btn-a));
@@ -143,6 +163,7 @@
       color: var(--btn-ink);
       font-weight:900;
       line-height:1;
+      appearance: none;
     }
     .bg-btn:active, .theme-btn:active{ transform: translateY(1px); }
 
@@ -150,7 +171,7 @@
       width:16px;
       height:16px;
       border-radius:999px;
-      border:1px solid rgba(var(--border-rgb), 0.14);
+      border:1px solid rgba(var(--border-rgb), 0.18);
       background: var(--board-tint);
       box-shadow: 0 0 0 7px rgba(239,231,225,0.30);
     }
@@ -166,16 +187,16 @@
       top:48px;
       right:0;
       width:360px;
+      max-width: min(360px, calc(100vw - 24px));
       border-radius:18px;
       border:1px solid var(--border);
       background: rgba(255,255,255, var(--panel-a));
       box-shadow: 0 22px 50px rgba(20,20,20,0.12);
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       padding:14px;
       display:none;
       z-index:50;
-
-      /* scroll if long so nothing is cut off */
       max-height: calc(100vh - 120px);
       overflow:auto;
     }
@@ -197,21 +218,31 @@
       gap:12px;
       padding:9px 0;
     }
+
     .row label{
       font-size:12px;
       color: var(--muted);
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .row > input[type="range"]{
+      flex: 0 0 170px;
     }
 
     input[type="color"]{
-      width:36px;
-      height:28px;
-      border:1px solid rgba(var(--border-rgb), 0.12);
+      width:38px;
+      min-width:38px;
+      height:30px;
+      border:1px solid rgba(var(--border-rgb), 0.16);
       border-radius:10px;
       padding:0;
       background:transparent;
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
+      appearance: none;
     }
+
     input[type="range"]{ width:170px; }
 
     .file{
@@ -223,31 +254,63 @@
     .mini-btn{
       width:100%;
       border:1px solid var(--border);
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.94);
       border-radius:14px;
       padding:11px 12px;
       cursor:pointer;
       font-weight:750;
-      color: rgba(43,43,43,0.86);
+      color: rgba(43,43,43,0.88);
       -webkit-tap-highlight-color: transparent;
+      appearance: none;
     }
     .mini-btn:active{ transform: translateY(1px); }
 
     .divider{
       height:1px;
-      background: rgba(var(--border-rgb), 0.08);
+      background: rgba(var(--border-rgb), 0.10);
       margin:10px 0;
     }
 
-    /* Board */
+    .presetName{
+      width:100%;
+      border:1.5px solid rgba(var(--border-rgb), 0.14);
+      border-radius:14px;
+      padding: 11px 12px;
+      background: rgba(255,255,255,0.94);
+      color: var(--ink);
+      font-size: 13px;
+      outline:none;
+      appearance: none;
+    }
+
+    .presetSelect{
+      width: 100%;
+      border:1.5px solid rgba(var(--border-rgb),0.14);
+      border-radius:14px;
+      padding:10px 12px;
+      background: rgba(255,255,255,0.94);
+      color: var(--ink);
+      outline:none;
+      appearance: none;
+    }
+
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+      min-height: 16px;
+    }
+
     .board{
-      border:1px solid var(--border);
+      border:1.5px solid var(--border);
       border-radius: var(--board-radius);
       box-shadow: var(--shadow);
       overflow:hidden;
       position:relative;
       background:none;
+      isolation: isolate;
     }
+
     .board::before{
       content:"";
       position:absolute;
@@ -256,29 +319,30 @@
       background-size: cover;
       background-position:center;
       background-repeat:no-repeat;
-      filter: saturate(1.02) contrast(1.03);
+      filter: blur(var(--board-blur)) saturate(1.02) contrast(1.02);
       transform: scale(1.02);
     }
+
     .board::after{
       content:"";
       position:absolute;
       inset:0;
       pointer-events:none;
-      background: rgba(255,255,255,0.34); /* overridden by JS */
+      background: rgba(255,255,255,0.34);
     }
+
     .board-tint{
       position:absolute;
       inset:0;
       pointer-events:none;
       mix-blend-mode:multiply;
     }
+
     .board-content{
       position:relative;
       z-index:2;
-      backdrop-filter: blur(2px);
     }
 
-    /* Layout */
     .content{
       padding: var(--pad);
       display:grid;
@@ -287,13 +351,10 @@
       align-items:start;
       min-height: 520px;
     }
-    @media (max-width: 980px){
-      .content{ grid-template-columns: 1fr; }
-    }
 
     .card{
       background: rgba(255,255,255, var(--day-bg-a));
-      border:1px solid var(--border);
+      border:1.5px solid var(--border);
       border-radius: var(--radius);
       overflow:hidden;
       box-shadow: 0 10px 26px rgba(20,20,20,0.06);
@@ -304,7 +365,7 @@
       align-items:center;
       justify-content:space-between;
       padding: var(--header-pad);
-      border-bottom:1px solid rgba(var(--border-rgb), 0.08);
+      border-bottom:1px solid rgba(var(--border-rgb), 0.12);
       background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92));
       gap:12px;
     }
@@ -332,7 +393,7 @@
     .block{
       border-radius:16px;
       padding:14px;
-      border:1px dashed rgba(var(--border-rgb), 0.14);
+      border:1.5px dashed rgba(var(--border-rgb), 0.18);
       background: rgba(255,255,255, var(--block-bg-a));
     }
 
@@ -347,7 +408,7 @@
 
     input[type="text"], input[type="number"]{
       width:100%;
-      border:1px solid rgba(var(--border-rgb), 0.10);
+      border:1.5px solid rgba(var(--border-rgb), 0.14);
       border-radius: var(--input-radius);
       padding: var(--input-pad);
       outline:none;
@@ -355,9 +416,12 @@
       color: var(--ink);
       font-size: var(--text);
       line-height:1.35;
+      appearance: none;
     }
-    input[type="text"]:focus, input[type="number"]:focus{
-      border-color: rgba(var(--border-rgb), 0.18);
+
+    input[type="text"]:focus, input[type="number"]:focus,
+    .presetName:focus, .presetSelect:focus{
+      border-color: rgba(var(--border-rgb), 0.22);
       box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
     }
 
@@ -375,8 +439,8 @@
 
     .add-btn{
       width:100%;
-      border:1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.90);
+      border:1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.92);
       border-radius:16px;
       padding:12px 12px;
       cursor:pointer;
@@ -385,12 +449,13 @@
       -webkit-tap-highlight-color: transparent;
       font-size:14px;
       letter-spacing:0.1px;
+      appearance: none;
     }
     .add-btn:active{ transform: translateY(1px); }
 
     .ghost-btn{
-      border:1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.78);
+      border:1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.82);
       border-radius:14px;
       padding:10px 12px;
       cursor:pointer;
@@ -400,10 +465,10 @@
       font-size:13px;
       letter-spacing:0.1px;
       white-space: nowrap;
+      appearance: none;
     }
     .ghost-btn:active{ transform: translateY(1px); }
 
-    /* Habits list scroll */
     .habits{
       display:flex;
       flex-direction:column;
@@ -412,9 +477,6 @@
       max-height: calc(100vh - 260px);
       overflow:auto;
       padding-right: 6px;
-    }
-    @media (max-width: 980px){
-      .habits{ max-height:none; overflow:visible; padding-right:0; }
     }
 
     .habit{
@@ -425,7 +487,7 @@
     }
 
     .habit.selected{
-      outline: 4px solid rgba(0,0,0,0); /* set by JS */
+      outline: 4px solid rgba(0,0,0,0);
       outline-offset: 3px;
     }
 
@@ -435,8 +497,7 @@
       justify-content:space-between;
       gap:12px;
       padding: var(--header-pad);
-      border-bottom:1px solid rgba(var(--border-rgb), 0.08);
-      /* ✅ no header glow tint here */
+      border-bottom:1px solid rgba(var(--border-rgb), 0.12);
       background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0.92));
     }
 
@@ -446,12 +507,14 @@
       gap:4px;
       min-width:0;
     }
+
     .habit-name{
       font-weight:850;
       font-size:16px;
       letter-spacing:0.15px;
       word-break: break-word;
     }
+
     .habit-progress{
       font-size:13px;
       color: var(--muted);
@@ -470,8 +533,8 @@
       width:38px;
       height:38px;
       border-radius:12px;
-      border:1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.70);
+      border:1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.76);
       cursor:pointer;
       display:grid;
       place-items:center;
@@ -481,6 +544,7 @@
       font-size:18px;
       line-height:1;
       user-select:none;
+      appearance: none;
     }
     .icon-btn:active{ transform: translateY(1px); }
 
@@ -489,19 +553,21 @@
       width:38px;
       height:38px;
       border-radius:12px;
-      border:1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.70);
+      border:1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.76);
       backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
       overflow:hidden;
       cursor:pointer;
     }
+
     .swatch::before{
       content:"";
       position:absolute;
       width:14px;
       height:14px;
       border-radius:999px;
-      border:1px solid rgba(var(--border-rgb), 0.16);
+      border:1px solid rgba(var(--border-rgb), 0.18);
       background: var(--sw, var(--accent));
       box-shadow: 0 0 0 6px rgba(0,0,0,0.06);
       left:50%;
@@ -509,6 +575,7 @@
       transform: translate(-50%, -50%);
       pointer-events:none;
     }
+
     .swatch input{
       position:absolute;
       inset:0;
@@ -539,7 +606,7 @@
       width: var(--box);
       height: var(--box);
       border-radius: var(--box-radius);
-      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border: 1.5px solid rgba(var(--border-rgb), 0.16);
       background: var(--empty, rgba(255,255,255,0.7));
       box-shadow: 0 8px 18px rgba(20,20,20,0.06);
       cursor:pointer;
@@ -558,26 +625,6 @@
     .habit.collapsed .habit-body{ display:none; }
     .habit.collapsed .habit-head{ border-bottom:none; }
 
-    .footer-note{
-      padding: 0 var(--pad) var(--pad);
-      color: var(--muted);
-      font-size:13px;
-      display:flex;
-      gap:10px;
-      justify-content:space-between;
-      flex-wrap:wrap;
-    }
-
-    .kbd{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:12px;
-      padding:3px 8px;
-      border-radius:10px;
-      border:1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.75);
-    }
-
-    /* confetti canvas */
     #confetti{
       position: fixed;
       inset: 0;
@@ -586,6 +633,68 @@
       pointer-events: none;
       z-index: 9999;
       display: none;
+    }
+
+    @media (max-width: 980px){
+      .content{ grid-template-columns: 1fr; }
+      .habits{ max-height:none; overflow:visible; padding-right:0; }
+      .controls{
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 680px){
+      .wrap{
+        margin: 14px auto;
+        padding: 10px;
+      }
+
+      .titlebar{
+        align-items: stretch;
+      }
+
+      .title{
+        min-width: 0;
+      }
+
+      .controls{
+        gap: 10px;
+      }
+
+      .panel{
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        top: auto;
+        bottom: 12px;
+        width: auto;
+        max-width: none;
+        max-height: 78vh;
+        border-radius: 18px;
+      }
+
+      .row > input[type="range"]{
+        flex: 0 0 140px;
+      }
+
+      .two-col{
+        grid-template-columns: 1fr;
+      }
+
+      .habit-head{
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .habit-actions{
+        justify-content: flex-start;
+      }
+
+      .box{
+        width: 30px;
+        height: 30px;
+      }
     }
   </style>
 </head>
@@ -597,6 +706,7 @@
     <div class="titlebar">
       <div class="title">
         <h1>Habit Builder</h1>
+        <div class="sync-badge" id="syncBadge">Saving locally on this device.</div>
       </div>
 
       <div class="controls">
@@ -613,23 +723,23 @@
 
             <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
-            <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
+            <div class="row"><label for="tMuted">Muted text</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
             <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e" /></div>
-            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10" /></div>
+            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="8" max="55" value="18" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tSurfaceA">Pills opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="78" /></div>
-            <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92" /></div>
+            <div class="row"><label for="tPanelA">Panel opacity</label><input id="tPanelA" type="range" min="65" max="99" value="94" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="92" /></div>
-            <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10" /></div>
+            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="94" /></div>
+            <div class="row"><label for="tBtnBorderA">Button border</label><input id="tBtnBorderA" type="range" min="4" max="40" value="16" /></div>
 
             <div class="divider"></div>
 
@@ -638,22 +748,43 @@
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tDayBg">Card bg</label><input id="tDayBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tDayBgA">Card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="94" /></div>
+            <div class="row"><label for="tDayBg">Card background</label><input id="tDayBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tDayBgA">Card opacity</label><input id="tDayBgA" type="range" min="70" max="100" value="95" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tBlockBg">Block bg</label><input id="tBlockBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tBlockBgA">Block opacity</label><input id="tBlockBgA" type="range" min="55" max="100" value="72" /></div>
+            <div class="row"><label for="tBlockBg">Block background</label><input id="tBlockBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tBlockBgA">Block opacity</label><input id="tBlockBgA" type="range" min="55" max="100" value="78" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tInputBg">Input bg</label><input id="tInputBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tInputBgA">Input opacity</label><input id="tInputBgA" type="range" min="60" max="100" value="96" /></div>
+            <div class="row"><label for="tInputBg">Input background</label><input id="tInputBg" type="color" value="#ffffff" /></div>
+            <div class="row"><label for="tInputBgA">Input opacity</label><input id="tInputBgA" type="range" min="60" max="100" value="97" /></div>
 
             <div class="divider"></div>
 
-            <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="themeReset" type="button" style="margin-top:10px;">Reset theme</button>
+
+            <div class="divider"></div>
+
+            <div class="panelTitle" style="margin-top:2px;">Presets</div>
+
+            <div class="row" style="flex-direction:column; align-items:stretch; gap:10px;">
+              <input id="presetName" class="presetName" placeholder="Preset name" />
+              <button class="mini-btn" id="presetSave" type="button">Save current as preset</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <select id="presetSelect" class="presetSelect">
+              <option value="">—</option>
+            </select>
+
+            <button class="mini-btn" id="presetApply" type="button" style="margin-top:10px;">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button" style="margin-top:10px;">Delete preset</button>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
           </div>
         </div>
 
@@ -669,13 +800,18 @@
             <div class="panelTitle">Background</div>
 
             <div class="row">
-              <label for="bgColor">Tint</label>
+              <label for="bgColor">Tint color</label>
               <input id="bgColor" type="color" value="#efe7e1" />
             </div>
 
             <div class="row">
               <label for="bgStrength">Tint strength</label>
               <input id="bgStrength" type="range" min="0" max="70" value="30" />
+            </div>
+
+            <div class="row">
+              <label for="bgBlur">Image blur</label>
+              <input id="bgBlur" type="range" min="0" max="24" value="0" />
             </div>
 
             <div class="divider"></div>
@@ -691,10 +827,10 @@
 
             <div class="divider"></div>
 
-            <button class="mini-btn" id="bgReset" type="button">Reset background</button>
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:10px;">Reset background</button>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -703,7 +839,6 @@
 
       <div class="board-content">
         <div class="content">
-          <!-- Left: Add habit -->
           <div class="card" id="addCard">
             <div class="card-header">
               <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
@@ -721,8 +856,7 @@
               <div class="block">
                 <div class="label">Target days (boxes)</div>
                 <input id="habitDays" type="number" min="1" max="365" value="30" />
-                <div class="hint" style="margin-top:10px;">
-                </div>
+                <div class="hint" style="margin-top:10px;">Choose how many boxes this habit should have.</div>
               </div>
 
               <div class="block">
@@ -759,32 +893,108 @@
                     <div class="hint" style="margin-bottom:8px;">Boxes (filled)</div>
                     <input id="cBoxFilled" type="color" value="#cbb8ae" />
                   </div>
-                  <div>
-                  </div>
+                  <div></div>
                 </div>
               </div>
 
               <button class="add-btn" id="addHabitBtn" type="button">+ Add habit</button>
-
-              <div class="hint">
-              </div>
             </div>
           </div>
 
-          <!-- Right: Habits -->
           <div class="habits" id="habits" aria-label="Habits list"></div>
-        </div>
-
-        <div class="footer-note">
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const APP_KEY   = "notion_habit_builder_v2";
-    const THEME_KEY = "weekly_overview_theme_v5";
-    const BG_KEY    = "weekly_overview_bg_v5";
+    const SYNC_CONFIG = {
+      enabled: false,
+      firebaseConfig: {
+        apiKey: "",
+        authDomain: "",
+        databaseURL: "",
+        projectId: "",
+        storageBucket: "",
+        messagingSenderId: "",
+        appId: ""
+      },
+      namespace: "habit-builder"
+    };
+
+    (function(){
+      const mem = Object.create(null);
+
+      function canUseLocalStorage(){
+        try{
+          const k = "__t__" + Math.random().toString(16).slice(2);
+          localStorage.setItem(k, "1");
+          localStorage.removeItem(k);
+          return true;
+        }catch{
+          return false;
+        }
+      }
+
+      const hasLS = canUseLocalStorage();
+
+      function storageGet(key){
+        try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+        catch{ return mem[key] ?? null; }
+      }
+
+      function storageSet(key, value){
+        try{
+          if(hasLS) localStorage.setItem(key, value);
+          else mem[key] = String(value);
+        }catch{
+          mem[key] = String(value);
+        }
+      }
+
+      function storageRemove(key){
+        try{
+          if(hasLS) localStorage.removeItem(key);
+          else delete mem[key];
+        }catch{
+          delete mem[key];
+        }
+      }
+
+      function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+      function getWidgetId(){
+        try{
+          const sp = new URLSearchParams(location.search);
+          const wid = (sp.get("wid") || "").trim();
+          if(wid) return wid;
+        }catch{}
+
+        const key = "habit_builder_fallback_wid__" + location.pathname;
+        const existing = storageGet(key);
+        if(existing) return existing;
+
+        const fresh = uid();
+        storageSet(key, fresh);
+        return fresh;
+      }
+
+      window.__HB__ = {
+        wid: getWidgetId(),
+        get: storageGet,
+        set: storageSet,
+        remove: storageRemove
+      };
+    })();
+
+    const WID = window.__HB__?.wid || "default";
+
+    const APP_KEY   = "notion_habit_builder_v8__" + WID;
+    const THEME_KEY = "habit_builder_theme_v8__" + WID;
+    const BG_KEY    = "habit_builder_bg_v8__" + WID;
+    const PRESETS_KEY = "habit_builder_presets_v8__" + WID;
+    const META_KEY = "habit_builder_meta_v8__" + WID;
+    const BG_IMAGE_IDB_KEY = "habit_builder_bg_image_v8__" + WID;
 
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -817,6 +1027,18 @@
       return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
     }
 
+    function deepCopy(obj){
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function debounce(fn, wait=250){
+      let t = null;
+      return function(...args){
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    }
+
     function escapeHtml(s){
       return String(s ?? "")
         .replaceAll("&","&amp;")
@@ -826,9 +1048,240 @@
         .replaceAll("'","&#039;");
     }
 
-    /* =========================
-       Theme
-    ========================= */
+    function loadJSON(key){
+      try{
+        const raw = window.__HB__.get(key);
+        return raw ? JSON.parse(raw) : null;
+      }catch{
+        return null;
+      }
+    }
+
+    function saveJSON(key, val){
+      try{
+        window.__HB__.set(key, JSON.stringify(val));
+      }catch{}
+    }
+
+    function removeJSON(key){
+      try{
+        window.__HB__.remove(key);
+      }catch{}
+    }
+
+    function setStatus(msg){
+      const el = document.getElementById("presetStatus");
+      if(el) el.textContent = msg || "";
+    }
+
+    function setSyncBadge(msg){
+      const el = document.getElementById("syncBadge");
+      if(el) el.textContent = msg;
+    }
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    const IDB_NAME = "habit_builder_db_v1";
+    const IDB_STORE = "kv";
+
+    function openDB(){
+      return new Promise((resolve, reject) => {
+        if(!window.indexedDB){
+          reject(new Error("IndexedDB unavailable"));
+          return;
+        }
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if(!db.objectStoreNames.contains(IDB_STORE)){
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error || new Error("IndexedDB open failed"));
+      });
+    }
+
+    async function idbGet(key){
+      try{
+        const db = await openDB();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, "readonly");
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.get(key);
+          req.onsuccess = () => resolve(req.result ?? null);
+          req.onerror = () => reject(req.error);
+        });
+      }catch{
+        return null;
+      }
+    }
+
+    async function idbSet(key, value){
+      try{
+        const db = await openDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, "readwrite");
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.put(value, key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      }catch{}
+    }
+
+    async function idbRemove(key){
+      try{
+        const db = await openDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, "readwrite");
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.delete(key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      }catch{}
+    }
+
+    let remoteReady = false;
+    let remoteRef = null;
+    let applyingRemote = false;
+    let lastRemoteUpdatedAt = 0;
+    let bootFinished = false;
+
+    function hasFirebaseConfig(){
+      const c = SYNC_CONFIG.firebaseConfig || {};
+      return !!(
+        SYNC_CONFIG.enabled &&
+        c.apiKey && c.authDomain && c.databaseURL &&
+        c.projectId && c.appId
+      );
+    }
+
+    function buildStatePayload(){
+      return {
+        version: 1,
+        wid: WID,
+        updatedAt: Date.now(),
+        theme: deepCopy(themeCommitted),
+        bg: deepCopy(bgCommitted),
+        app: deepCopy(app),
+        selectedHabitId,
+        meta: {}
+      };
+    }
+
+    async function applyFullState(payload, source="local"){
+      if(!payload || typeof payload !== "object") return;
+
+      if(payload.theme && typeof payload.theme === "object"){
+        themeCommitted = Object.assign({}, DEFAULT_THEME, payload.theme);
+        themeDraft = deepCopy(themeCommitted);
+        saveJSON(THEME_KEY, themeCommitted);
+        themeApplyToCSS(themeCommitted);
+        themeSyncInputs(themeDraft);
+      }
+
+      if(payload.bg && typeof payload.bg === "object"){
+        bgCommitted = Object.assign({}, DEFAULT_BG, payload.bg);
+        bgDraft = deepCopy(bgCommitted);
+        await persistBackgroundCommitted(bgCommitted);
+        bgApplyToCSS(bgDraft);
+        bgSyncInputs(bgDraft);
+      }
+
+      if(payload.app && typeof payload.app === "object"){
+        app = normalizeApp(payload.app);
+        saveJSON(APP_KEY, app);
+      }
+
+      if(typeof payload.selectedHabitId === "string" || payload.selectedHabitId === null){
+        selectedHabitId = payload.selectedHabitId;
+      }
+
+      if(bootFinished){
+        renderHabits();
+      }
+
+      if(source === "remote"){
+        setStatus("Synced from cloud.");
+      }
+    }
+
+    async function initRemoteSync(){
+      if(!hasFirebaseConfig() || !window.firebase || !firebase.apps){
+        setSyncBadge("Saving locally on this device.");
+        return;
+      }
+
+      try{
+        const appFb = firebase.apps.length
+          ? firebase.app()
+          : firebase.initializeApp(SYNC_CONFIG.firebaseConfig);
+
+        const db = firebase.database(appFb);
+        const path = `${SYNC_CONFIG.namespace}/${encodeURIComponent(WID)}`;
+        remoteRef = db.ref(path);
+        remoteReady = true;
+        setSyncBadge("Cloud sync enabled.");
+
+        const snap = await remoteRef.get();
+        const remoteVal = snap.exists() ? snap.val() : null;
+        const meta = loadJSON(META_KEY) || {};
+        const localUpdated = Number(meta.lastSavedAt || 0);
+        const remoteUpdated = Number(remoteVal?.updatedAt || 0);
+
+        if(remoteVal && remoteUpdated > localUpdated){
+          applyingRemote = true;
+          lastRemoteUpdatedAt = remoteUpdated;
+          await applyFullState(remoteVal, "remote");
+          applyingRemote = false;
+        }else{
+          await pushRemoteState(true);
+        }
+
+        remoteRef.on("value", async (snapshot) => {
+          if(!snapshot.exists()) return;
+          const incoming = snapshot.val();
+          const incomingTs = Number(incoming?.updatedAt || 0);
+          const metaNow = loadJSON(META_KEY) || {};
+          const localTs = Number(metaNow.lastSavedAt || 0);
+
+          if(applyingRemote) return;
+          if(incomingTs <= Math.max(localTs, lastRemoteUpdatedAt)) return;
+
+          applyingRemote = true;
+          lastRemoteUpdatedAt = incomingTs;
+          await applyFullState(incoming, "remote");
+          applyingRemote = false;
+        });
+      }catch{
+        remoteReady = false;
+        setSyncBadge("Local save only. Cloud sync not connected.");
+      }
+    }
+
+    async function pushRemoteState(force=false){
+      if(!remoteReady || !remoteRef || applyingRemote) return;
+      try{
+        const payload = buildStatePayload();
+        const meta = loadJSON(META_KEY) || {};
+        const lastLocal = Number(meta.lastSavedAt || 0);
+        if(!force && payload.updatedAt <= lastLocal) return;
+        lastRemoteUpdatedAt = payload.updatedAt;
+        await remoteRef.set(payload);
+      }catch{}
+    }
+
+    const debouncedPushRemote = debounce(() => { pushRemoteState(false); }, 400);
+
     const DEFAULT_THEME = {
       appBg: "#ffffff",
       ink: "#2b2b2b",
@@ -836,37 +1289,26 @@
       accent: "#cbb8ae",
 
       borderColor: "#1e1e1e",
-      borderA: 0.10,
+      borderA: 0.18,
 
       surfaceA: 0.78,
-      panelA: 0.92,
+      panelA: 0.94,
 
-      btnA: 0.92,
-      btnBorderA: 0.10,
+      btnA: 0.94,
+      btnBorderA: 0.16,
 
       overlayBase: "#ffffff",
       overlayA: 0.34,
 
       dayBg: "#ffffff",
-      dayBgA: 0.94,
+      dayBgA: 0.95,
 
       blockBg: "#ffffff",
-      blockBgA: 0.72,
+      blockBgA: 0.78,
 
       inputBg: "#ffffff",
-      inputBgA: 0.96,
+      inputBgA: 0.97
     };
-
-    function themeLoad(){
-      try{
-        const raw = localStorage.getItem(THEME_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
-    }
-
-    function themeSave(t){
-      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-    }
 
     function setSelectionRingFromAccent(accentHex){
       const accent = normHex(accentHex, DEFAULT_THEME.accent);
@@ -884,7 +1326,7 @@
       `;
     }
 
-    function themeApply(t){
+    function themeApplyToCSS(t){
       const theme = Object.assign({}, DEFAULT_THEME, t || {});
       const r = document.documentElement.style;
 
@@ -894,13 +1336,13 @@
       r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
 
       r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
-      r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
+      r.setProperty("--border-a", String(clamp(theme.borderA, 0.08, 0.55)));
 
       r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
-      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
+      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.65, 0.99)));
 
       r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
-      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
+      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.04, 0.40)));
 
       const dot = $("#themeDot");
       if(dot){
@@ -930,9 +1372,13 @@
         document.head.appendChild(st2);
       }
       st2.textContent = `
+        body{ background: ${normHex(theme.appBg, "#ffffff")} !important; color: ${normHex(theme.ink, "#2b2b2b")} !important; }
         .card, .habit{ background: ${hexToRgba(normHex(theme.dayBg, "#ffffff"), clamp(theme.dayBgA,0.70,1.00))} !important; }
         .block{ background: ${hexToRgba(normHex(theme.blockBg, "#ffffff"), clamp(theme.blockBgA,0.55,1.00))} !important; }
-        input[type="text"], input[type="number"]{ background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important; }
+        input[type="text"], input[type="number"], .presetName, .presetSelect{
+          background: ${hexToRgba(normHex(theme.inputBg, "#ffffff"), clamp(theme.inputBgA,0.60,1.00))} !important;
+          color: ${normHex(theme.ink, "#2b2b2b")} !important;
+        }
       `;
     }
 
@@ -946,13 +1392,13 @@
       set("tAccent", theme.accent);
 
       set("tBorderColor", theme.borderColor);
-      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+      set("tBorderA", Math.round(clamp(theme.borderA, 0.08, 0.55) * 100));
 
       set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
-      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+      set("tPanelA", Math.round(clamp(theme.panelA, 0.65, 0.99) * 100));
 
       set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
-      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.04, 0.40) * 100));
 
       set("tOverlayBase", theme.overlayBase);
       set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
@@ -976,13 +1422,13 @@
         accent: g("tAccent")?.value,
 
         borderColor: g("tBorderColor")?.value,
-        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
+        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.08, 0.55),
 
         surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
-        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
+        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.65, 0.99),
 
         btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
-        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
+        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.04, 0.40),
 
         overlayBase: g("tOverlayBase")?.value,
         overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
@@ -998,23 +1444,20 @@
       };
     }
 
+    let themeCommitted = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
+    let themeDraft = deepCopy(themeCommitted);
+
+    async function persistTheme(){
+      saveJSON(THEME_KEY, themeCommitted);
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
+    }
+
     function initThemeUI(){
-      const themeBtn = $("#themeBtn");
-      const themePanel = $("#themePanel");
-      const themeReset = $("#themeReset");
-      if(!themeBtn || !themePanel || !themeReset) return;
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        $("#bgPanel")?.classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        if(!themePanel.classList.contains("open")) return;
-        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-        if(!inside) themePanel.classList.remove("open");
-      });
+      themeApplyToCSS(themeCommitted);
+      themeSyncInputs(themeDraft);
 
       const ids = [
         "tAppBg","tInk","tMuted","tAccent",
@@ -1024,57 +1467,51 @@
         "tOverlayBase","tOverlayA",
         "tDayBg","tDayBgA",
         "tBlockBg","tBlockBgA",
-        "tInputBg","tInputBgA",
+        "tInputBg","tInputBgA"
       ];
 
       ids.forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
         el.addEventListener("input", () => {
-          const t = themeReadFromInputs();
-          themeApply(t);
-          themeSave(t);
+          themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+          themeApplyToCSS(themeDraft);
+          setStatus("");
         });
       });
 
-      themeReset.addEventListener("click", () => {
-        localStorage.removeItem(THEME_KEY);
-        themeApply(DEFAULT_THEME);
-        themeSyncInputs(DEFAULT_THEME);
+      $("#themeApply").addEventListener("click", async () => {
+        themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+        themeCommitted = deepCopy(themeDraft);
+        themeApplyToCSS(themeCommitted);
+        await persistTheme();
+        setStatus("Theme applied.");
       });
 
-      const saved = themeLoad() || DEFAULT_THEME;
-      themeApply(saved);
-      themeSyncInputs(saved);
+      $("#themeReset").addEventListener("click", async () => {
+        removeJSON(THEME_KEY);
+        themeCommitted = deepCopy(DEFAULT_THEME);
+        themeDraft = deepCopy(DEFAULT_THEME);
+        themeApplyToCSS(themeCommitted);
+        themeSyncInputs(themeDraft);
+        await persistTheme();
+        setStatus("Theme reset.");
+      });
     }
 
-    /* =========================
-       Background
-    ========================= */
-    const boardTint = $("#boardTint");
-    const bgBtn = $("#bgBtn");
-    const bgPanel = $("#bgPanel");
-    const bgColor = $("#bgColor");
-    const bgStrength = $("#bgStrength");
-    const bgImage = $("#bgImage");
-    const removeImage = $("#removeImage");
-    const bgDot = $("#bgDot");
-    const bgReset = $("#bgReset");
-
-    const DEFAULT_BG = { tint: "#efe7e1", strength: 30, imageDataUrl: null };
-
-    function bgLoad(){
-      try{
-        const raw = localStorage.getItem(BG_KEY);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
-    }
-    function bgSave(bg){
-      try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-    }
+    const DEFAULT_BG = {
+      tint: "#efe7e1",
+      strength: 30,
+      blur: 0,
+      imageDataUrl: null
+    };
 
     function setBoardImage(dataUrlOrNull){
       document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    }
+
+    function setBoardBlur(px){
+      document.documentElement.style.setProperty("--board-blur", `${clamp(px, 0, 24)}px`);
     }
 
     function applyBoardTint(colorHex, strengthPct){
@@ -1084,100 +1521,288 @@
       document.documentElement.style.setProperty("--board-tint", tint);
       document.documentElement.style.setProperty("--board-tint-a", String(strength));
 
+      const bgDot = $("#bgDot");
       if(bgDot){
         bgDot.style.background = tint;
         bgDot.style.boxShadow = `0 0 0 7px ${hexToRgba(tint, Math.min(0.30, strength + 0.10))}`;
       }
-      boardTint.style.background = hexToRgba(tint, strength);
+
+      const boardTint = $("#boardTint");
+      if(boardTint) boardTint.style.background = hexToRgba(tint, strength);
     }
 
-    function applyBackground(bg){
+    function bgApplyToCSS(bg){
       const x = Object.assign({}, DEFAULT_BG, bg || {});
-      bgColor.value = x.tint;
-      bgStrength.value = String(x.strength);
       applyBoardTint(x.tint, x.strength);
-      setBoardImage(x.imageDataUrl);
+      setBoardBlur(x.blur);
+      setBoardImage(x.imageDataUrl || null);
     }
 
-    bgBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      bgPanel.classList.toggle("open");
-      $("#themePanel")?.classList.remove("open");
-    });
+    function bgSyncInputs(bg){
+      const x = Object.assign({}, DEFAULT_BG, bg || {});
+      if($("#bgColor")) $("#bgColor").value = x.tint;
+      if($("#bgStrength")) $("#bgStrength").value = String(x.strength);
+      if($("#bgBlur")) $("#bgBlur").value = String(x.blur);
+    }
 
-    document.addEventListener("click", (e) => {
-      if (!bgPanel.classList.contains("open")) return;
-      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      if (!inside) bgPanel.classList.remove("open");
-    });
+    let bgCommitted = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+    let bgDraft = deepCopy(bgCommitted);
 
-    bgColor.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const cur = bgLoad() || DEFAULT_BG;
-      cur.tint = bgColor.value;
-      bgSave(cur);
-    });
+    async function hydrateBackgroundFromIDB(){
+      if(!bgCommitted.imageDataUrl){
+        const fromDb = await idbGet(BG_IMAGE_IDB_KEY);
+        if(typeof fromDb === "string" && fromDb.startsWith("data:image/")){
+          bgCommitted.imageDataUrl = fromDb;
+          bgDraft.imageDataUrl = fromDb;
+        }
+      }
+    }
 
-    bgStrength.addEventListener("input", () => {
-      applyBoardTint(bgColor.value, bgStrength.value);
-      const cur = bgLoad() || DEFAULT_BG;
-      cur.strength = Number(bgStrength.value);
-      bgSave(cur);
-    });
+    async function persistBackgroundCommitted(bg){
+      bgCommitted = Object.assign({}, DEFAULT_BG, bg || {});
+      saveJSON(BG_KEY, bgCommitted);
 
-    bgImage.addEventListener("change", async () => {
-      const file = bgImage.files && bgImage.files[0];
-      if (!file) return;
+      if(bgCommitted.imageDataUrl){
+        await idbSet(BG_IMAGE_IDB_KEY, bgCommitted.imageDataUrl);
+      }else{
+        await idbRemove(BG_IMAGE_IDB_KEY);
+      }
 
-      const dataUrl = await fileToDataUrl(file);
-      setBoardImage(dataUrl);
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
+    }
 
-      const cur = bgLoad() || DEFAULT_BG;
-      cur.imageDataUrl = dataUrl;
-      bgSave(cur);
-    });
+    function initBackgroundUI(){
+      bgSyncInputs(bgDraft);
+      bgApplyToCSS(bgDraft);
 
-    removeImage.addEventListener("click", () => {
-      setBoardImage(null);
-      bgImage.value = "";
-      const cur = bgLoad() || DEFAULT_BG;
-      cur.imageDataUrl = null;
-      bgSave(cur);
-    });
+      $("#bgColor").addEventListener("input", () => {
+        bgDraft.tint = $("#bgColor").value;
+        bgApplyToCSS(bgDraft);
+        setStatus("");
+      });
 
-    bgReset.addEventListener("click", () => {
-      localStorage.removeItem(BG_KEY);
-      applyBackground(DEFAULT_BG);
-    });
+      $("#bgStrength").addEventListener("input", () => {
+        bgDraft.strength = Number($("#bgStrength").value);
+        bgApplyToCSS(bgDraft);
+        setStatus("");
+      });
 
-    function fileToDataUrl(file){
-      return new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.onerror = reject;
-        r.readAsDataURL(file);
+      $("#bgBlur").addEventListener("input", () => {
+        bgDraft.blur = Number($("#bgBlur").value);
+        bgApplyToCSS(bgDraft);
+        setStatus("");
+      });
+
+      $("#bgImage").addEventListener("change", async () => {
+        const file = $("#bgImage").files && $("#bgImage").files[0];
+        if(!file) return;
+        try{
+          const dataUrl = await fileToDataUrl(file);
+          bgDraft.imageDataUrl = dataUrl;
+          bgApplyToCSS(bgDraft);
+          setStatus("Image preview updated. Click Apply background to save it.");
+        }catch{
+          setStatus("Could not read image.");
+        }
+      });
+
+      $("#removeImage").addEventListener("click", () => {
+        bgDraft.imageDataUrl = null;
+        $("#bgImage").value = "";
+        bgApplyToCSS(bgDraft);
+        setStatus("Image removed from preview. Click Apply background to save.");
+      });
+
+      $("#bgApply").addEventListener("click", async () => {
+        bgCommitted = deepCopy(bgDraft);
+        await persistBackgroundCommitted(bgCommitted);
+        bgApplyToCSS(bgCommitted);
+        setStatus("Background applied.");
+      });
+
+      $("#bgReset").addEventListener("click", async () => {
+        removeJSON(BG_KEY);
+        bgCommitted = deepCopy(DEFAULT_BG);
+        bgDraft = deepCopy(DEFAULT_BG);
+        $("#bgImage").value = "";
+        bgSyncInputs(bgCommitted);
+        bgApplyToCSS(bgCommitted);
+        await persistBackgroundCommitted(bgCommitted);
+        setStatus("Background reset.");
       });
     }
 
-    /* =========================
-       Habits store
-    ========================= */
+    function loadPresets(){
+      const list = loadJSON(PRESETS_KEY);
+      return Array.isArray(list) ? list : [];
+    }
+
+    function savePresets(list){
+      saveJSON(PRESETS_KEY, list);
+    }
+
+    function refreshPresetSelect(){
+      const sel = document.getElementById("presetSelect");
+      if(!sel) return;
+      const list = loadPresets();
+      const current = sel.value;
+      sel.innerHTML = `<option value="">—</option>`;
+      for(const p of list){
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || "Untitled";
+        sel.appendChild(opt);
+      }
+      if(current) sel.value = current;
+    }
+
+    async function applyPresetToThisWidget(p){
+      const nextTheme = Object.assign({}, DEFAULT_THEME, p?.theme || {});
+      const nextBg = Object.assign({}, DEFAULT_BG, p?.bg || {});
+
+      themeCommitted = deepCopy(nextTheme);
+      themeDraft = deepCopy(nextTheme);
+      themeApplyToCSS(themeCommitted);
+      themeSyncInputs(themeDraft);
+      await persistTheme();
+
+      bgCommitted = deepCopy(nextBg);
+      bgDraft = deepCopy(nextBg);
+      bgApplyToCSS(bgCommitted);
+      bgSyncInputs(bgDraft);
+      await persistBackgroundCommitted(bgCommitted);
+
+      setStatus("Preset applied.");
+    }
+
+    function initPresetsUI(){
+      const presetName = document.getElementById("presetName");
+      const presetSaveBtn = document.getElementById("presetSave");
+      const presetSelect = document.getElementById("presetSelect");
+      const presetApplyBtn = document.getElementById("presetApply");
+      const presetDeleteBtn = document.getElementById("presetDelete");
+
+      if(!presetName || !presetSaveBtn || !presetSelect || !presetApplyBtn || !presetDeleteBtn) return;
+
+      refreshPresetSelect();
+
+      presetSaveBtn.addEventListener("click", () => {
+        const name = (presetName.value || "").trim();
+        if(!name){
+          setStatus("Type a preset name first.");
+          return;
+        }
+
+        const entry = {
+          id: uid(),
+          name,
+          theme: deepCopy(themeCommitted),
+          bg: deepCopy(bgCommitted)
+        };
+
+        const list = loadPresets();
+        list.unshift(entry);
+        savePresets(list);
+
+        presetName.value = "";
+        refreshPresetSelect();
+        presetSelect.value = entry.id;
+        setStatus("Preset saved.");
+      });
+
+      presetApplyBtn.addEventListener("click", async () => {
+        const id = presetSelect.value;
+        if(!id){
+          setStatus("Choose a preset first.");
+          return;
+        }
+
+        const list = loadPresets();
+        const p = list.find(x => x.id === id);
+        if(!p){
+          setStatus("Preset not found.");
+          return;
+        }
+
+        await applyPresetToThisWidget(p);
+      });
+
+      presetDeleteBtn.addEventListener("click", () => {
+        const id = presetSelect.value;
+        if(!id){
+          setStatus("Choose a preset first.");
+          return;
+        }
+
+        let list = loadPresets();
+        const before = list.length;
+        list = list.filter(x => x.id !== id);
+        if(list.length === before){
+          setStatus("Preset not found.");
+          return;
+        }
+
+        savePresets(list);
+        refreshPresetSelect();
+        presetSelect.value = "";
+        setStatus("Preset deleted.");
+      });
+    }
+
+    function normalizeHabit(h){
+      const days = clamp(h?.days, 1, 365);
+      const done = Array.isArray(h?.done) ? h.done.slice(0, days).map(Boolean) : new Array(days).fill(false);
+      while(done.length < days) done.push(false);
+
+      return {
+        id: String(h?.id || uid()),
+        name: String(h?.name || "New habit"),
+        days,
+        done,
+        collapsed: !!h?.collapsed,
+        habitBg: normHex(h?.habitBg, "#ffffff"),
+        habitInk: normHex(h?.habitInk, "#2b2b2b"),
+        boxBorder: normHex(h?.boxBorder, "#1e1e1e"),
+        boxEmpty: normHex(h?.boxEmpty, "#eae6e2"),
+        boxFilled: normHex(h?.boxFilled, "#cbb8ae")
+      };
+    }
+
+    function normalizeApp(input){
+      const out = { habits: [] };
+      const src = (input && typeof input === "object") ? input : {};
+      const habits = Array.isArray(src.habits) ? src.habits : [];
+      out.habits = habits.map(normalizeHabit);
+      return out;
+    }
+
     function loadApp(){
       try{
-        const raw = localStorage.getItem(APP_KEY);
-        return raw ? JSON.parse(raw) : { habits: [] };
+        const raw = window.__HB__.get(APP_KEY);
+        return raw ? normalizeApp(JSON.parse(raw)) : { habits: [] };
       }catch{
         return { habits: [] };
       }
     }
+
     function saveApp(data){
-      localStorage.setItem(APP_KEY, JSON.stringify(data));
+      window.__HB__.set(APP_KEY, JSON.stringify(data));
     }
 
-    let app = loadApp();
+    let app = normalizeApp(loadApp());
     let selectedHabitId = null;
-
     const habitsEl = $("#habits");
+
+    async function persistApp(){
+      saveApp(app);
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
+    }
 
     function countDone(h){
       return (h.done || []).filter(Boolean).length;
@@ -1208,8 +1833,7 @@
               <div class="card-sub">Add one on the left to get started.</div>
             </div>
           </div>
-          <div class="card-body">
-          </div>
+          <div class="card-body"></div>
         `;
         habitsEl.appendChild(empty);
         return;
@@ -1229,7 +1853,6 @@
         const habit = document.createElement("section");
         habit.className = "habit card" + (h.collapsed ? " collapsed" : "");
         habit.dataset.id = h.id;
-
         habit.style.background = habitBg;
         habit.style.color = habitInk;
 
@@ -1257,7 +1880,7 @@
                 <input data-action="boxBorder" type="color" value="${borderC}" aria-label="Box border color">
               </div>
 
-              <button class="icon-btn" data-action="collapse" type="button" title="${h.collapsed ? "Expand boxes" : "Collapse boxes"}" aria-label="Collapse/expand">
+              <button class="icon-btn" data-action="collapse" type="button" title="${h.collapsed ? "Expand boxes" : "Collapse boxes"}" aria-label="Collapse or expand">
                 ${h.collapsed ? "▾" : "▴"}
               </button>
               <button class="icon-btn" data-action="reset" type="button" title="Reset boxes" aria-label="Reset boxes">↺</button>
@@ -1276,36 +1899,35 @@
         if(!h.collapsed){
           const boxesWrap = habit.querySelector(".boxes");
           for(let i=0;i<total;i++){
-            const b = document.createElement("div");
+            const b = document.createElement("button");
             b.className = "box" + (h.done[i] ? " done" : "");
             b.dataset.idx = String(i);
+            b.type = "button";
             b.title = `Day ${i+1}`;
-            b.style.borderColor = hexToRgba(borderC, 0.18);
+            b.style.borderColor = hexToRgba(borderC, 0.24);
             boxesWrap.appendChild(b);
           }
         }
       });
     }
 
-    function upsertHabit(partial){
+    async function upsertHabit(partial){
       const idx = app.habits.findIndex(x => x.id === partial.id);
       if(idx >= 0){
-        app.habits[idx] = Object.assign({}, app.habits[idx], partial);
-        // remove any old legacy glow value if it exists from past versions
-        delete app.habits[idx].habitTint;
+        app.habits[idx] = normalizeHabit(Object.assign({}, app.habits[idx], partial));
       }
-      saveApp(app);
+      await persistApp();
       renderHabits();
     }
 
-    function removeHabit(id){
+    async function removeHabit(id){
       app.habits = app.habits.filter(h => h.id !== id);
       if(selectedHabitId === id) selectedHabitId = null;
-      saveApp(app);
+      await persistApp();
       renderHabits();
     }
 
-    function toggleBox(habitId, idx){
+    async function toggleBox(habitId, idx){
       const h = app.habits.find(x => x.id === habitId);
       if(!h) return;
 
@@ -1313,33 +1935,29 @@
       if(idx < 0 || idx >= total) return;
 
       h.done[idx] = !h.done[idx];
-
-      saveApp(app);
+      await persistApp();
       renderHabits();
 
       if(isComplete(h)) confettiBurst();
     }
 
-    function resetHabitBoxes(habitId){
+    async function resetHabitBoxes(habitId){
       const h = app.habits.find(x => x.id === habitId);
       if(!h) return;
       const total = ensureDoneArray(h);
       h.done = new Array(total).fill(false);
-      saveApp(app);
+      await persistApp();
       renderHabits();
     }
 
-    function toggleCollapsed(habitId){
+    async function toggleCollapsed(habitId){
       const h = app.habits.find(x => x.id === habitId);
       if(!h) return;
       h.collapsed = !h.collapsed;
-      saveApp(app);
+      await persistApp();
       renderHabits();
     }
 
-    /* =========================
-       Add habit UI
-    ========================= */
     const habitName = $("#habitName");
     const habitDays = $("#habitDays");
     const addHabitBtn = $("#addHabitBtn");
@@ -1350,32 +1968,31 @@
     const cBoxEmpty  = $("#cBoxEmpty");
     const cBoxFilled = $("#cBoxFilled");
 
-    function addHabit(){
+    async function addHabit(){
       const name = (habitName.value || "").trim();
       if(!name){
         habitName.focus();
         return;
       }
+
       const days = clamp(habitDays.value, 1, 365);
 
-      const h = {
+      const h = normalizeHabit({
         id: uid(),
         name,
         days,
         done: new Array(days).fill(false),
         collapsed: false,
-
         habitBg: normHex(cHabitBg.value, "#ffffff"),
         habitInk: normHex(cHabitInk.value, "#2b2b2b"),
-
         boxBorder: normHex(cBoxBorder.value, "#1e1e1e"),
         boxEmpty: normHex(cBoxEmpty.value, "#eae6e2"),
-        boxFilled: normHex(cBoxFilled.value, "#cbb8ae"),
-      };
+        boxFilled: normHex(cBoxFilled.value, "#cbb8ae")
+      });
 
       app.habits.unshift(h);
       selectedHabitId = h.id;
-      saveApp(app);
+      await persistApp();
       renderHabits();
 
       habitName.value = "";
@@ -1384,24 +2001,27 @@
 
     addHabitBtn.addEventListener("click", addHabit);
     habitName.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){ e.preventDefault(); addHabit(); }
+      if(e.key === "Enter"){
+        e.preventDefault();
+        addHabit();
+      }
     });
     habitDays.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){ e.preventDefault(); addHabit(); }
+      if(e.key === "Enter"){
+        e.preventDefault();
+        addHabit();
+      }
     });
 
-    $("#clearAll").addEventListener("click", () => {
-      if(!confirm("Clear all habits? This removes everything saved locally for this widget.")) return;
-      localStorage.removeItem(APP_KEY);
+    $("#clearAll").addEventListener("click", async () => {
+      removeJSON(APP_KEY);
       app = { habits: [] };
       selectedHabitId = null;
+      await persistApp();
       renderHabits();
     });
 
-    /* =========================
-       Habit interactions
-    ========================= */
-    habitsEl.addEventListener("click", (e) => {
+    habitsEl.addEventListener("click", async (e) => {
       const habit = e.target.closest(".habit");
       if(!habit) return;
       const id = habit.dataset.id;
@@ -1409,24 +2029,35 @@
       const box = e.target.closest(".box");
       if(box){
         const idx = Number(box.dataset.idx);
-        if(Number.isFinite(idx)) toggleBox(id, idx);
+        if(Number.isFinite(idx)) await toggleBox(id, idx);
         return;
       }
 
       const btn = e.target.closest("button[data-action]");
       if(btn){
         const action = btn.dataset.action;
-        if(action === "delete") removeHabit(id);
-        if(action === "reset") resetHabitBoxes(id);
-        if(action === "collapse") toggleCollapsed(id);
+        if(action === "delete") await removeHabit(id);
+        if(action === "reset") await resetHabitBoxes(id);
+        if(action === "collapse") await toggleCollapsed(id);
         return;
       }
 
       if(e.target.closest("input")) return;
 
       selectedHabitId = id;
+      await persistApp();
       renderHabits();
     });
+
+    const debouncedHabitColorUpdate = debounce(async (id, action, val) => {
+      const patch = { id };
+      if(action === "habitBg")   patch.habitBg = val;
+      if(action === "habitInk")  patch.habitInk = val;
+      if(action === "boxEmpty")  patch.boxEmpty = val;
+      if(action === "boxFilled") patch.boxFilled = val;
+      if(action === "boxBorder") patch.boxBorder = val;
+      await upsertHabit(patch);
+    }, 80);
 
     habitsEl.addEventListener("input", (e) => {
       const input = e.target.closest("input[data-action]");
@@ -1438,29 +2069,55 @@
       if(!id) return;
 
       const val = normHex(input.value, "#ffffff");
-      const patch = { id };
-
-      if(action === "habitBg")   patch.habitBg = val;
-      if(action === "habitInk")  patch.habitInk = val;
-      if(action === "boxEmpty")  patch.boxEmpty = val;
-      if(action === "boxFilled") patch.boxFilled = val;
-      if(action === "boxBorder") patch.boxBorder = val;
-
-      upsertHabit(patch);
+      debouncedHabitColorUpdate(id, action, val);
     });
 
-    /* =========================
-       Confetti (no external libs)
-    ========================= */
+    function closePanels(exceptId){
+      ["themePanel","bgPanel"].forEach(id => {
+        if(id !== exceptId) document.getElementById(id)?.classList.remove("open");
+      });
+    }
+
+    function initPopovers(){
+      $("#themeBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const panel = $("#themePanel");
+        const open = !panel.classList.contains("open");
+        closePanels(open ? "themePanel" : null);
+        panel.classList.toggle("open", open);
+      });
+
+      $("#bgBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const panel = $("#bgPanel");
+        const open = !panel.classList.contains("open");
+        closePanels(open ? "bgPanel" : null);
+        panel.classList.toggle("open", open);
+      });
+
+      document.addEventListener("click", (e) => {
+        const inside =
+          e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
+          e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+        if(!inside) closePanels(null);
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Escape") closePanels(null);
+      });
+    }
+
     const confettiCanvas = document.getElementById("confetti");
     const ctx = confettiCanvas.getContext("2d");
     let confettiActive = false;
 
     function resizeConfetti(){
-      confettiCanvas.width = Math.floor(window.innerWidth * devicePixelRatio);
-      confettiCanvas.height = Math.floor(window.innerHeight * devicePixelRatio);
-      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+      const ratio = Math.max(1, window.devicePixelRatio || 1);
+      confettiCanvas.width = Math.floor(window.innerWidth * ratio);
+      confettiCanvas.height = Math.floor(window.innerHeight * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     }
+
     window.addEventListener("resize", resizeConfetti);
 
     function confettiBurst(){
@@ -1477,7 +2134,6 @@
 
       const W = window.innerWidth;
       const H = window.innerHeight;
-
       const particles = [];
       const N = 140;
 
@@ -1508,7 +2164,6 @@
           p.x += p.vx;
           p.y += p.vy;
           p.rot += p.vr;
-
           const life = 1 - (t / duration);
           p.a = Math.max(0, life);
 
@@ -1533,15 +2188,45 @@
       requestAnimationFrame(tick);
     }
 
-    /* =========================
-       Boot
-    ========================= */
-    initThemeUI();
+    async function flushAllNow(){
+      try{
+        saveJSON(THEME_KEY, themeCommitted);
+        saveJSON(BG_KEY, bgCommitted);
+        saveJSON(APP_KEY, app);
+        saveJSON(META_KEY, { lastSavedAt: Date.now() });
+        if(bgCommitted?.imageDataUrl){
+          await idbSet(BG_IMAGE_IDB_KEY, bgCommitted.imageDataUrl);
+        }
+        await pushRemoteState(true);
+      }catch{}
+    }
 
-    const savedBg = bgLoad() || DEFAULT_BG;
-    applyBackground(savedBg);
+    window.addEventListener("pagehide", () => { flushAllNow(); });
+    window.addEventListener("beforeunload", () => { flushAllNow(); });
+    document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "hidden"){
+        flushAllNow();
+      }
+    });
 
-    renderHabits();
+    async function boot(){
+      await hydrateBackgroundFromIDB();
+
+      initPopovers();
+      initThemeUI();
+      initBackgroundUI();
+      initPresetsUI();
+
+      themeApplyToCSS(themeCommitted);
+      bgApplyToCSS(bgCommitted);
+      renderHabits();
+
+      bootFinished = true;
+      await initRemoteSync();
+      await flushAllNow();
+    }
+
+    boot();
   </script>
 </body>
 </html>

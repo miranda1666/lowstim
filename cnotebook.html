@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Journal</title>
   <style>
     :root{
@@ -35,11 +35,11 @@
       --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
+      --board-blur: 0px;
 
       --paper-image: none;
       --paper-tint-a: 0.0;
 
-      /* NEW: override-friendly "whites" */
       --card-bg: rgba(255,255,255,0.88);
       --field-bg: #ffffff;
       --panel-bg: rgba(255,255,255,0.92);
@@ -47,12 +47,15 @@
     }
 
     *{ box-sizing:border-box; }
+    html, body{ min-height:100%; }
     body{
       margin:0;
       background:var(--bg);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       padding:22px;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     .wrap{ max-width: 1200px; margin: 0 auto; }
@@ -88,6 +91,7 @@
       user-select:none;
       white-space:nowrap;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     .btn:hover{ transform:translateY(-1px); box-shadow:0 14px 22px rgba(0,0,0,0.10); }
     .btn.primary{ background:var(--cream); }
@@ -120,6 +124,7 @@
       line-height:1;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       transition: transform 140ms ease, box-shadow 140ms ease;
+      touch-action: manipulation;
     }
     .bg-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 22px rgba(0,0,0,0.10); }
     .bg-btn:active{ transform: translateY(0px); }
@@ -133,7 +138,6 @@
       box-shadow: 0 0 0 6px rgba(230,216,204,0.30);
     }
 
-    /* NEW: theme dot */
     .theme-dot{
       width:14px;
       height:14px;
@@ -147,7 +151,8 @@
       position:absolute;
       top: 46px;
       right: 0;
-      width: 270px;
+      width: 300px;
+      max-width: min(92vw, 300px);
       border-radius: 16px;
       border: 1px solid var(--borderSoft);
       background: var(--panel-bg);
@@ -210,18 +215,34 @@
       color: rgba(31,31,31,0.80);
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     .mini-btn:active{ transform: translateY(1px); }
+
+    .mini-input, .mini-select{
+      width:100%;
+      border:1px solid var(--borderSoft);
+      background:rgba(255,255,255,0.95);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+      font-size:12px;
+      color:var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      min-height: 38px;
+    }
+
     .divider{
       height: 1px;
       background: rgba(201,190,182,0.35);
       margin: 8px 0;
     }
-    .hint{
-      margin-top: 8px;
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.35;
+
+    .panelActions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 10px;
     }
 
     .grid{
@@ -250,16 +271,13 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      filter: saturate(0.95);
-      transform: scale(1.02);
+      filter: blur(var(--board-blur)) saturate(1);
       z-index:0;
     }
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
-      /* FIX: the original had a broken "background:" line.
-         Kept consistent with your other widgets. */
       background:
         radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.35), transparent 60%),
         radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.22), transparent 62%),
@@ -311,7 +329,7 @@
       color:var(--muted);
     }
 
-    .input, .select{
+    .input, .select, input[type="date"]{
       border:1px solid var(--border);
       background:var(--field-bg);
       border-radius:12px;
@@ -321,8 +339,9 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       height:36px;
       color: var(--text);
+      min-width: 0;
     }
-    .input:focus, .select:focus{
+    .input:focus, .select:focus, input[type="date"]:focus{
       border-color: rgba(201,190,182,1);
       box-shadow: 0 0 0 3px rgba(230,216,204,0.55);
     }
@@ -361,8 +380,6 @@
       content:"";
       position:absolute;
       inset:0;
-      /* FIX: original had broken "background:".
-         Leaving it empty (transparent) keeps your paper clean. */
       background: transparent;
       pointer-events:none;
       opacity:0.55;
@@ -407,7 +424,6 @@
       opacity: var(--paper-tint-a);
       pointer-events:none;
       z-index:0;
-      transform: scale(1.02);
     }
 
     .bookmarkTab{
@@ -429,6 +445,7 @@
       height: 100%;
       border-radius: 12px;
       z-index: 1;
+      overflow: hidden;
     }
 
     .editor{
@@ -443,8 +460,10 @@
       color: var(--text);
       border-radius: 12px;
       user-select:text;
-
       position: relative;
+      -webkit-overflow-scrolling: touch;
+      overflow-wrap: anywhere;
+      word-break: break-word;
 
       background-image: repeating-linear-gradient(
         to bottom,
@@ -460,8 +479,12 @@
       background-attachment: local;
     }
     .editor p{ margin:0; }
+    .editor:empty::before{
+      content: "Start writing...";
+      color: rgba(107,98,92,0.60);
+      pointer-events:none;
+    }
 
-    /* Image blocks (custom resize handle) */
     .imgWrap{
       display:inline-block;
       position:relative;
@@ -469,6 +492,7 @@
       max-width:100%;
       vertical-align:baseline;
       border-radius:12px;
+      touch-action:none;
     }
     .imgWrap img{
       display:block;
@@ -486,22 +510,21 @@
       position:absolute;
       z-index: 20;
       margin: 0;
-      touch-action: none;
       cursor: grab;
     }
-    .imgWrap.freeMove img{ pointer-events:none; }
 
     .imgHandle{
       position:absolute;
       right:6px;
       bottom:6px;
-      width:18px;
-      height:18px;
+      width:20px;
+      height:20px;
       border-radius:8px;
       border:1px solid rgba(201,190,182,0.75);
       background: rgba(255,255,255,0.92);
       box-shadow: 0 8px 14px rgba(0,0,0,0.10);
       cursor: nwse-resize;
+      touch-action:none;
     }
     .imgHandle::after{
       content:"";
@@ -532,9 +555,9 @@
       align-items:center;
       justify-content:center;
       font-size:12px;
+      touch-action: manipulation;
     }
 
-    /* Sticker layer */
     .stickerLayer{
       position:absolute;
       inset:0;
@@ -548,6 +571,7 @@
       transform: translate(-50%, -50%);
       font-size: 28px;
       filter: drop-shadow(0 8px 10px rgba(0,0,0,0.10));
+      touch-action:none;
     }
     .sticker:active{ cursor:grabbing; }
     .sticker .x{
@@ -564,6 +588,7 @@
       font-size:12px;
       cursor:pointer;
       box-shadow: 0 8px 14px rgba(0,0,0,0.10);
+      touch-action: manipulation;
     }
 
     .toolbar{
@@ -583,6 +608,7 @@
       gap:8px;
       flex-wrap:wrap;
       align-items:flex-end;
+      min-width: 0;
     }
     .iconBtn{
       appearance:none;
@@ -601,6 +627,7 @@
       font-size:14px;
       -webkit-tap-highlight-color: transparent;
       color: var(--text);
+      touch-action: manipulation;
     }
     .iconBtn:hover{ transform:translateY(-1px); box-shadow:0 14px 22px rgba(0,0,0,0.10); }
     .iconBtn.primary{ background: var(--cream); }
@@ -623,7 +650,6 @@
       margin:0;
     }
 
-    /* Sidebar */
     .side{
       border:1px solid var(--border);
       border-radius: var(--rOuter);
@@ -632,6 +658,7 @@
         linear-gradient(180deg, rgba(230,216,204,0.12), rgba(255,255,255,0)),
         var(--card-bg);
       padding:14px;
+      min-width: 0;
     }
     .sideHead{
       display:flex;
@@ -660,6 +687,7 @@
       gap:10px;
       cursor:pointer;
       transition: transform 140ms ease, box-shadow 140ms ease;
+      min-width: 0;
     }
     .rowCard:hover{ transform:translateY(-1px); box-shadow:0 14px 22px rgba(0,0,0,0.10); }
     .rowCard small{
@@ -673,6 +701,7 @@
       flex-direction:column;
       gap:4px;
       min-width:0;
+      flex: 1;
     }
     .rowCard .title{
       font-size:13px;
@@ -692,12 +721,53 @@
       line-height:1;
       user-select:none;
       white-space:nowrap;
+      flex-shrink: 0;
     }
 
     @media (max-width: 980px){
       .grid{ grid-template-columns: 1fr; }
       .wrap{ max-width: 900px; }
       .widgetBoard{ padding: 12px; }
+      .side{ order: 2; }
+    }
+
+    @media (max-width: 720px){
+      body{ padding: 12px; }
+      .top{ gap:12px; }
+      .top > div:last-child{
+        width:100%;
+        justify-content:flex-start !important;
+      }
+      .panel{
+        right:auto;
+        left:0;
+      }
+      .shellHead{
+        align-items:flex-start;
+      }
+      .dateRow{
+        width:100%;
+      }
+      .dateRow > div{
+        min-width: 0;
+      }
+      .dateRow input,
+      .dateRow select{
+        width:100%;
+      }
+      .book{
+        height: min(72vh, 595px);
+      }
+      .toolbar{
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .toolGroup{
+        width:100%;
+      }
+      .rowCard .title{
+        max-width: none;
+      }
     }
   </style>
 </head>
@@ -729,6 +799,11 @@
               <input id="bgStrength" type="range" min="0" max="70" value="30" />
             </div>
 
+            <div class="row">
+              <label for="bgBlur">Image blur</label>
+              <input id="bgBlur" type="range" min="0" max="20" value="0" />
+            </div>
+
             <div class="divider"></div>
 
             <div class="row" style="align-items:flex-start;">
@@ -739,9 +814,13 @@
             <div class="row">
               <button class="mini-btn" id="removeImage" type="button">Remove image</button>
             </div>
+
+            <div class="panelActions">
+              <button class="mini-btn" id="bgReset" type="button">Reset</button>
+              <button class="mini-btn" id="bgApply" type="button">Apply</button>
+            </div>
           </div>
         </div>
-
 
         <div class="popover" id="paperPopover">
           <div class="icon-pill">
@@ -772,6 +851,11 @@
 
             <div class="row">
               <button class="mini-btn" id="removePaperImage" type="button">Remove image</button>
+            </div>
+
+            <div class="panelActions">
+              <button class="mini-btn" id="paperReset" type="button">Reset</button>
+              <button class="mini-btn" id="paperApply" type="button">Apply</button>
             </div>
           </div>
         </div>
@@ -821,24 +905,38 @@
             </div>
 
             <div class="row">
-              <label for="tStone">Accent</label>
-              <input id="tStone" type="color" value="#c9beb6" />
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="row">
               <label for="tCream">Highlight</label>
               <input id="tCream" type="color" value="#e6d8cc" />
             </div>
 
             <div class="divider"></div>
 
-            <div class="row">
-              <button class="mini-btn" id="resetTheme" type="button">Reset theme</button>
+            <h2>Presets</h2>
+
+            <div class="row" style="display:block;">
+              <label for="presetName" style="display:block; margin-bottom:8px;">Name preset</label>
+              <input id="presetName" class="mini-input" type="text" placeholder="Preset name" maxlength="60" />
             </div>
 
-            <div class="hint">
+            <div class="row">
+              <button class="mini-btn" id="savePresetBtn" type="button">Save preset</button>
+            </div>
+
+            <div class="row" style="display:block;">
+              <label for="presetSelect" style="display:block; margin-bottom:8px;">Apply preset</label>
+              <select id="presetSelect" class="mini-select">
+                <option value="">Select preset</option>
+              </select>
+            </div>
+
+            <div class="panelActions">
+              <button class="mini-btn" id="applyPresetBtn" type="button">Apply preset</button>
+              <button class="mini-btn" id="deletePresetBtn" type="button">Delete preset</button>
+            </div>
+
+            <div class="panelActions">
+              <button class="mini-btn" id="themeReset" type="button">Reset</button>
+              <button class="mini-btn" id="themeApply" type="button">Apply</button>
             </div>
           </div>
         </div>
@@ -965,7 +1063,7 @@
             </div>
           </div>
 
-          <p class="hint" style="margin-top:10px;"></p>
+          <p class="hint" style="margin-top:10px;">Presets now save the full visual setup, including background image.</p>
         </section>
 
         <aside class="side" aria-label="Pages and bookmarks">
@@ -988,32 +1086,146 @@
   </main>
 
   <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      const STORE_KEY = "cute_notebook_journal_v4";
+    window.addEventListener("DOMContentLoaded", async () => {
+      "use strict";
 
-      const pad2 = (n) => String(n).padStart(2,"0");
-      const isoDay = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      const STORAGE_DB_NAME = "notionJournalWidgetDB";
+      const STORAGE_STORE_NAME = "kv";
+      const SETTINGS_KEY = "notion_widget_settings_v3";
+      const JOURNAL_KEY = "cute_notebook_journal_v5";
+      const CHANNEL_NAME = "notion-journal-widget-sync";
 
-      const today = new Date();
-      today.setHours(0,0,0,0);
+      const canUseBroadcast = typeof BroadcastChannel !== "undefined";
+      const bc = canUseBroadcast ? new BroadcastChannel(CHANNEL_NAME) : null;
 
-      // ---------- Storage helpers (localStorage + session fallback) ----------
-      function loadStore(){
-        try{
-          const raw = localStorage.getItem(STORE_KEY);
-          if(raw) return JSON.parse(raw) || {};
-        }catch{}
-        try{
-          const raw = sessionStorage.getItem(STORE_KEY);
-          if(raw) return JSON.parse(raw) || {};
-        }catch{}
-        return {};
+      function safeParseJSON(raw){
+        try{ return JSON.parse(raw); }catch{ return null; }
       }
-      function saveStore(store){
-        const data = JSON.stringify(store);
-        try{ localStorage.setItem(STORE_KEY, data); return; }catch{}
-        try{ sessionStorage.setItem(STORE_KEY, data); return; }catch{}
+
+      function deepClone(obj){
+        return JSON.parse(JSON.stringify(obj));
       }
+
+      function deepMerge(base, extra){
+        if(Array.isArray(base)) return Array.isArray(extra) ? extra.slice() : base.slice();
+        if(base && typeof base === "object"){
+          const out = { ...base };
+          if(extra && typeof extra === "object"){
+            Object.keys(extra).forEach((key) => {
+              if(base[key] && typeof base[key] === "object" && !Array.isArray(base[key])){
+                out[key] = deepMerge(base[key], extra[key]);
+              } else {
+                out[key] = extra[key];
+              }
+            });
+          }
+          return out;
+        }
+        return extra ?? base;
+      }
+
+      function announce(kind){
+        if(bc){
+          try{ bc.postMessage({ kind, at: Date.now() }); }catch{}
+        }
+        try{
+          localStorage.setItem("__notion_widget_ping__", JSON.stringify({ kind, at: Date.now(), nonce: Math.random() }));
+        }catch{}
+      }
+
+      function createKVStorage(dbName, storeName){
+        let dbPromise = null;
+
+        function openDB(){
+          if(dbPromise) return dbPromise;
+          dbPromise = new Promise((resolve) => {
+            if(!("indexedDB" in window)){
+              resolve(null);
+              return;
+            }
+            const req = indexedDB.open(dbName, 1);
+            req.onupgradeneeded = () => {
+              const db = req.result;
+              if(!db.objectStoreNames.contains(storeName)){
+                db.createObjectStore(storeName);
+              }
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => resolve(null);
+          });
+          return dbPromise;
+        }
+
+        async function get(key){
+          const db = await openDB();
+          if(!db) return null;
+          return new Promise((resolve) => {
+            const tx = db.transaction(storeName, "readonly");
+            const store = tx.objectStore(storeName);
+            const req = store.get(key);
+            req.onsuccess = () => resolve(req.result ?? null);
+            req.onerror = () => resolve(null);
+          });
+        }
+
+        async function set(key, value){
+          const db = await openDB();
+          if(!db) return false;
+          return new Promise((resolve) => {
+            const tx = db.transaction(storeName, "readwrite");
+            const store = tx.objectStore(storeName);
+            const req = store.put(value, key);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+          });
+        }
+
+        return { get, set };
+      }
+
+      const kv = createKVStorage(STORAGE_DB_NAME, STORAGE_STORE_NAME);
+
+      async function loadPersistent(key, fallbackValue){
+        let localVal = null;
+        try{
+          localVal = safeParseJSON(localStorage.getItem(key));
+        }catch{}
+        const idbVal = await kv.get(key);
+        const val = idbVal ?? localVal;
+        if(val == null) return deepClone(fallbackValue);
+        return deepMerge(fallbackValue, val);
+      }
+
+      async function savePersistent(key, value){
+        const payload = deepClone(value);
+        try{ localStorage.setItem(key, JSON.stringify(payload)); }catch{}
+        await kv.set(key, payload);
+      }
+
+      const DEFAULT_SETTINGS = {
+        version: 3,
+        theme: {
+          bg: "#ffffff",
+          cardBg: "#ffffff",
+          fieldBg: "#ffffff",
+          text: "#1f1f1f",
+          muted: "#6b625c",
+          borderHex: "#c9beb6",
+          cream: "#e6d8cc"
+        },
+        background: {
+          tint: "#efe7e1",
+          strength: 30,
+          blur: 0,
+          imageDataUrl: null
+        },
+        paper: {
+          color: "#fffdfb",
+          strength: 0,
+          imageDataUrl: null
+        },
+        presets: []
+      };
 
       function defaultPage(){
         return {
@@ -1025,12 +1237,58 @@
         };
       }
 
-      const store = loadStore();
+      function defaultStore(){
+        return {};
+      }
 
-      // --------------------------------------------------------------------
-      // Theme Settings (NEW)
-      // --------------------------------------------------------------------
-      const THEME_KEY = "cute_notebook_theme_v1";
+      const savedSettings = await loadPersistent(SETTINGS_KEY, DEFAULT_SETTINGS);
+      const draftSettings = deepClone(savedSettings);
+      const store = await loadPersistent(JOURNAL_KEY, defaultStore());
+
+      function pad2(n){ return String(n).padStart(2,"0"); }
+      function isoDay(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+
+      function hexToRgba(hex, a){
+        const h = String(hex || "").replace("#","").trim();
+        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+        const num = parseInt(full || "efe7e1", 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${a})`;
+      }
+
+      function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+      async function fileToDataURL(file){
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      }
+
+      function ensureDay(dateStr){
+        if(!store[dateStr]) store[dateStr] = { pages: [ defaultPage() ] };
+        if(!Array.isArray(store[dateStr].pages) || store[dateStr].pages.length === 0){
+          store[dateStr].pages = [ defaultPage() ];
+        }
+        store[dateStr].pages = store[dateStr].pages.map((page) => ({
+          ...defaultPage(),
+          ...page,
+          stickers: Array.isArray(page?.stickers) ? page.stickers : []
+        }));
+        return store[dateStr];
+      }
+
+      function stripHtml(html){
+        const tmp = document.createElement("div");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+      }
+
+      function pageLabel(i){ return `Page ${i+1}`; }
 
       const themeBtn = document.getElementById("themeBtn");
       const themePanel = document.getElementById("themePanel");
@@ -1042,127 +1300,27 @@
       const tText     = document.getElementById("tText");
       const tMuted    = document.getElementById("tMuted");
       const tBorder   = document.getElementById("tBorder");
-      const tStone    = document.getElementById("tStone");
       const tCream    = document.getElementById("tCream");
-      const resetTheme= document.getElementById("resetTheme");
+      const themeResetBtn = document.getElementById("themeReset");
+      const themeApplyBtn = document.getElementById("themeApply");
 
-      const DEFAULT_THEME = {
-        bg: "#ffffff",
-        cardBg: "#ffffff",
-        fieldBg: "#ffffff",
-        text: "#1f1f1f",
-        muted: "#6b625c",
-        borderHex: "#c9beb6",
-        stone: "#c9beb6",
-        cream: "#e6d8cc"
-      };
+      const presetName = document.getElementById("presetName");
+      const presetSelect = document.getElementById("presetSelect");
+      const savePresetBtn = document.getElementById("savePresetBtn");
+      const applyPresetBtn = document.getElementById("applyPresetBtn");
+      const deletePresetBtn = document.getElementById("deletePresetBtn");
 
-      function loadTheme(){
-        try{
-          const raw = localStorage.getItem(THEME_KEY);
-          if(raw) return JSON.parse(raw) || null;
-        }catch{}
-        return null;
-      }
-      function saveTheme(t){
-        try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-      }
-
-      // Helper used by both theme + background
-      function hexToRgba(hex, a){
-        const h = String(hex || "").replace("#","").trim();
-        const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-        const num = parseInt(full || "efe7e1", 16);
-        const r = (num >> 16) & 255;
-        const g = (num >> 8) & 255;
-        const b = num & 255;
-        return `rgba(${r},${g},${b},${a})`;
-      }
-
-      function applyTheme(t){
-        document.documentElement.style.setProperty("--bg", t.bg);
-        document.documentElement.style.setProperty("--text", t.text);
-        document.documentElement.style.setProperty("--muted", t.muted);
-
-        document.documentElement.style.setProperty("--stone", t.stone);
-        document.documentElement.style.setProperty("--cream", t.cream);
-
-        document.documentElement.style.setProperty("--border", hexToRgba(t.borderHex, 0.85));
-        document.documentElement.style.setProperty("--borderSoft", hexToRgba(t.borderHex, 0.55));
-
-        document.documentElement.style.setProperty("--card-bg", hexToRgba(t.cardBg, 0.88));
-        document.documentElement.style.setProperty("--field-bg", t.fieldBg);
-        document.documentElement.style.setProperty("--chip-bg", t.fieldBg);
-
-        if(themeDot){
-          themeDot.style.background = t.text;
-          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.borderHex, 0.25)}`;
-          themeDot.style.borderColor = hexToRgba(t.borderHex, 0.75);
-        }
-      }
-
-      const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
-
-      tWidgetBg.value = themeState.bg;
-      tCardBg.value = themeState.cardBg;
-      tFieldBg.value = themeState.fieldBg;
-      tText.value = themeState.text;
-      tMuted.value = themeState.muted;
-      tBorder.value = themeState.borderHex;
-      tStone.value = themeState.stone;
-      tCream.value = themeState.cream;
-
-      applyTheme(themeState);
-
-      function wireThemeInput(el, key){
-        el.addEventListener("input", () => {
-          themeState[key] = el.value;
-          applyTheme(themeState);
-          saveTheme(themeState);
-          // keep dots consistent (board dot uses border-ish colors too)
-          applyBackgroundFromStore();
-          applyPaperFromStore();
-        });
-      }
-
-      wireThemeInput(tWidgetBg, "bg");
-      wireThemeInput(tCardBg, "cardBg");
-      wireThemeInput(tFieldBg, "fieldBg");
-      wireThemeInput(tText, "text");
-      wireThemeInput(tMuted, "muted");
-      wireThemeInput(tBorder, "borderHex");
-      wireThemeInput(tStone, "stone");
-      wireThemeInput(tCream, "cream");
-
-      resetTheme.addEventListener("click", () => {
-        Object.assign(themeState, DEFAULT_THEME);
-
-        tWidgetBg.value = themeState.bg;
-        tCardBg.value = themeState.cardBg;
-        tFieldBg.value = themeState.fieldBg;
-        tText.value = themeState.text;
-        tMuted.value = themeState.muted;
-        tBorder.value = themeState.borderHex;
-        tStone.value = themeState.stone;
-        tCream.value = themeState.cream;
-
-        applyTheme(themeState);
-        saveTheme(themeState);
-        applyBackgroundFromStore();
-        applyPaperFromStore();
-      });
-
-      // --------------------------------------------------------------------
-      // Background Settings (board + paper)  (existing)
-      // --------------------------------------------------------------------
       const boardTintEl = document.getElementById("boardTint");
       const bgBtn = document.getElementById("bgBtn");
       const bgPanel = document.getElementById("bgPanel");
       const bgColor = document.getElementById("bgColor");
       const bgStrength = document.getElementById("bgStrength");
+      const bgBlur = document.getElementById("bgBlur");
       const bgImage = document.getElementById("bgImage");
       const removeImage = document.getElementById("removeImage");
       const boardDot = document.getElementById("boardDot");
+      const bgResetBtn = document.getElementById("bgReset");
+      const bgApplyBtn = document.getElementById("bgApply");
 
       const paperBtn = document.getElementById("paperBtn");
       const paperPanel = document.getElementById("paperPanel");
@@ -1171,186 +1329,9 @@
       const paperImage = document.getElementById("paperImage");
       const removePaperImage = document.getElementById("removePaperImage");
       const paperDot = document.getElementById("paperDot");
+      const paperResetBtn = document.getElementById("paperReset");
+      const paperApplyBtn = document.getElementById("paperApply");
 
-      function ensureUI(){
-        store.__ui = store.__ui || {};
-        store.__ui.background = store.__ui.background || { tint: "#efe7e1", strength: 30, imageDataUrl: null };
-        store.__ui.paper = store.__ui.paper || { color: "#fffdfb", strength: 0, imageDataUrl: null };
-        return store.__ui;
-      }
-
-      function setBoardImage(dataUrlOrNull){
-        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-      }
-
-      function applyBoardTint(colorHex, strengthPct){
-        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
-        document.documentElement.style.setProperty("--board-tint", colorHex);
-        document.documentElement.style.setProperty("--board-tint-a", String(strength));
-
-        if (boardDot){
-          boardDot.style.background = colorHex;
-          boardDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.35, strength + 0.12))}`;
-        }
-        if (boardTintEl){
-          boardTintEl.style.background = hexToRgba(colorHex, strength);
-        }
-      }
-
-      function setPaperImage(dataUrlOrNull){
-        document.documentElement.style.setProperty("--paper-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
-      }
-
-      function applyPaper(colorHex, strengthPct){
-        const strength = Math.max(0, Math.min(70, Number(strengthPct))) / 100;
-        document.documentElement.style.setProperty("--paper", colorHex);
-        document.documentElement.style.setProperty("--paper-tint-a", String(strength));
-
-        if (paperDot){
-          paperDot.style.background = colorHex;
-          paperDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.20, strength + 0.10))}`;
-        }
-      }
-
-      async function fileToDataUrl(file){
-        return new Promise((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(String(r.result));
-          r.onerror = reject;
-          r.readAsDataURL(file);
-        });
-      }
-
-      function applyBackgroundFromStore(){
-        const ui = ensureUI();
-        const bg = ui.background;
-
-        bgColor.value = bg.tint || "#efe7e1";
-        bgStrength.value = String(bg.strength ?? 30);
-
-        applyBoardTint(bgColor.value, bgStrength.value);
-        setBoardImage(bg.imageDataUrl || null);
-      }
-
-      function applyPaperFromStore(){
-        const ui = ensureUI();
-        const p = ui.paper;
-
-        paperColor.value = p.color || "#fffdfb";
-        paperStrength.value = String(p.strength ?? 0);
-
-        applyPaper(paperColor.value, paperStrength.value);
-        setPaperImage(p.imageDataUrl || null);
-      }
-
-      // Popover toggle + click outside
-      bgBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        bgPanel.classList.toggle("open");
-        themePanel.classList.remove("open");
-      });
-
-      paperBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        paperPanel.classList.toggle("open");
-        themePanel.classList.remove("open");
-      });
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        bgPanel.classList.remove("open");
-        paperPanel.classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        if (bgPanel.classList.contains("open")) {
-          const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-          if (!inside) bgPanel.classList.remove("open");
-        }
-        if (paperPanel.classList.contains("open")) {
-          const inside2 = e.target.closest("#paperPanel") || e.target.closest("#paperBtn");
-          if (!inside2) paperPanel.classList.remove("open");
-        }
-        if (themePanel.classList.contains("open")) {
-          const inside3 = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-          if (!inside3) themePanel.classList.remove("open");
-        }
-      });
-
-      // Board inputs
-      bgColor.addEventListener("input", () => {
-        const ui = ensureUI();
-        ui.background.tint = bgColor.value;
-        applyBoardTint(ui.background.tint, bgStrength.value);
-        saveStore(store);
-      });
-
-      bgStrength.addEventListener("input", () => {
-        const ui = ensureUI();
-        ui.background.strength = Number(bgStrength.value);
-        applyBoardTint(bgColor.value, ui.background.strength);
-        saveStore(store);
-      });
-
-      bgImage.addEventListener("change", async () => {
-        const file = bgImage.files && bgImage.files[0];
-        if(!file) return;
-        const ui = ensureUI();
-        const dataUrl = await fileToDataUrl(file);
-        ui.background.imageDataUrl = dataUrl;
-        setBoardImage(dataUrl);
-        saveStore(store);
-      });
-
-      removeImage.addEventListener("click", () => {
-        const ui = ensureUI();
-        ui.background.imageDataUrl = null;
-        setBoardImage(null);
-        bgImage.value = "";
-        saveStore(store);
-      });
-
-      // Paper inputs
-      paperColor.addEventListener("input", () => {
-        const ui = ensureUI();
-        ui.paper.color = paperColor.value;
-        applyPaper(ui.paper.color, paperStrength.value);
-        saveStore(store);
-      });
-
-      paperStrength.addEventListener("input", () => {
-        const ui = ensureUI();
-        ui.paper.strength = Number(paperStrength.value);
-        applyPaper(paperColor.value, ui.paper.strength);
-        saveStore(store);
-      });
-
-      paperImage.addEventListener("change", async () => {
-        const file = paperImage.files && paperImage.files[0];
-        if(!file) return;
-        const ui = ensureUI();
-        const dataUrl = await fileToDataUrl(file);
-        ui.paper.imageDataUrl = dataUrl;
-        setPaperImage(dataUrl);
-        saveStore(store);
-      });
-
-      removePaperImage.addEventListener("click", () => {
-        const ui = ensureUI();
-        ui.paper.imageDataUrl = null;
-        setPaperImage(null);
-        paperImage.value = "";
-        saveStore(store);
-      });
-
-      // Apply on load
-      applyBackgroundFromStore();
-      applyPaperFromStore();
-
-      // --------------------------------------------------------------------
-      // Existing Journal logic (unchanged except one tiny bugfix below)
-      // --------------------------------------------------------------------
       const datePick = document.getElementById("datePick");
       const pagePick = document.getElementById("pagePick");
       const editor = document.getElementById("editor");
@@ -1381,51 +1362,249 @@
       const dayCountPill = document.getElementById("dayCountPill");
       const bmCountPill = document.getElementById("bmCountPill");
 
+      function setBoardImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      }
+
+      function setPaperImage(dataUrlOrNull){
+        document.documentElement.style.setProperty("--paper-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+      }
+
+      function applyTheme(theme){
+        document.documentElement.style.setProperty("--bg", theme.bg);
+        document.documentElement.style.setProperty("--text", theme.text);
+        document.documentElement.style.setProperty("--muted", theme.muted);
+        document.documentElement.style.setProperty("--stone", theme.borderHex);
+        document.documentElement.style.setProperty("--cream", theme.cream);
+        document.documentElement.style.setProperty("--border", hexToRgba(theme.borderHex, 0.85));
+        document.documentElement.style.setProperty("--borderSoft", hexToRgba(theme.borderHex, 0.55));
+        document.documentElement.style.setProperty("--card-bg", hexToRgba(theme.cardBg, 0.88));
+        document.documentElement.style.setProperty("--field-bg", theme.fieldBg);
+        document.documentElement.style.setProperty("--chip-bg", theme.fieldBg);
+        document.documentElement.style.setProperty("--panel-bg", hexToRgba(theme.cardBg, 0.92));
+        document.documentElement.style.setProperty("--line", hexToRgba(theme.borderHex, 0.35));
+
+        if(themeDot){
+          themeDot.style.background = theme.text;
+          themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(theme.borderHex, 0.25)}`;
+          themeDot.style.borderColor = hexToRgba(theme.borderHex, 0.75);
+        }
+      }
+
+      function applyBoardTint(tintHex, strengthPct){
+        const strength = clamp(Number(strengthPct) || 0, 0, 70) / 100;
+        document.documentElement.style.setProperty("--board-tint", tintHex);
+        document.documentElement.style.setProperty("--board-tint-a", String(strength));
+
+        if(boardDot){
+          boardDot.style.background = tintHex;
+          boardDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tintHex, Math.min(0.35, strength + 0.12))}`;
+          boardDot.style.borderColor = hexToRgba(draftSettings.theme.borderHex, 0.75);
+        }
+        if(boardTintEl){
+          boardTintEl.style.background = hexToRgba(tintHex, strength);
+        }
+      }
+
+      function applyBoardBlur(px){
+        const blur = clamp(Number(px) || 0, 0, 20);
+        document.documentElement.style.setProperty("--board-blur", `${blur}px`);
+      }
+
+      function applyPaper(colorHex, strengthPct){
+        const strength = clamp(Number(strengthPct) || 0, 0, 70) / 100;
+        document.documentElement.style.setProperty("--paper", colorHex);
+        document.documentElement.style.setProperty("--paper-tint-a", String(strength));
+        if(paperDot){
+          paperDot.style.background = colorHex;
+          paperDot.style.boxShadow = `0 0 0 6px ${hexToRgba(colorHex, Math.min(0.20, strength + 0.10))}`;
+          paperDot.style.borderColor = hexToRgba(draftSettings.theme.borderHex, 0.75);
+        }
+      }
+
+      function applyAllPreview(){
+        applyTheme(draftSettings.theme);
+        applyBoardTint(draftSettings.background.tint, draftSettings.background.strength);
+        applyBoardBlur(draftSettings.background.blur);
+        setBoardImage(draftSettings.background.imageDataUrl);
+        applyPaper(draftSettings.paper.color, draftSettings.paper.strength);
+        setPaperImage(draftSettings.paper.imageDataUrl);
+      }
+
+      function syncThemeInputs(theme){
+        tWidgetBg.value = theme.bg;
+        tCardBg.value = theme.cardBg;
+        tFieldBg.value = theme.fieldBg;
+        tText.value = theme.text;
+        tMuted.value = theme.muted;
+        tBorder.value = theme.borderHex;
+        tCream.value = theme.cream;
+      }
+
+      function syncBgInputs(bg){
+        bgColor.value = bg.tint;
+        bgStrength.value = String(bg.strength);
+        bgBlur.value = String(bg.blur || 0);
+        bgImage.value = "";
+      }
+
+      function syncPaperInputs(p){
+        paperColor.value = p.color;
+        paperStrength.value = String(p.strength);
+        paperImage.value = "";
+      }
+
+      function normalizePresetName(name){
+        return String(name || "").trim().replace(/\s+/g, " ").slice(0, 60);
+      }
+
+      function getPresetPayloadFromDraft(){
+        return {
+          theme: deepClone(draftSettings.theme),
+          background: deepClone(draftSettings.background),
+          paper: deepClone(draftSettings.paper)
+        };
+      }
+
+      function syncPresetSelect(){
+        const presets = Array.isArray(savedSettings.presets) ? savedSettings.presets : [];
+        const currentValue = presetSelect.value;
+        presetSelect.innerHTML = '<option value="">Select preset</option>';
+
+        presets.forEach((preset, index) => {
+          const opt = document.createElement("option");
+          opt.value = String(index);
+          opt.textContent = preset.name || `Preset ${index + 1}`;
+          presetSelect.appendChild(opt);
+        });
+
+        if(currentValue && presets[Number(currentValue)]){
+          presetSelect.value = currentValue;
+        }
+      }
+
+      async function persistSettings(){
+        savedSettings.version = DEFAULT_SETTINGS.version;
+        savedSettings.theme = deepClone(draftSettings.theme);
+        savedSettings.background = deepClone(draftSettings.background);
+        savedSettings.paper = deepClone(draftSettings.paper);
+        savedSettings.presets = Array.isArray(savedSettings.presets) ? savedSettings.presets : [];
+        await savePersistent(SETTINGS_KEY, savedSettings);
+        syncPresetSelect();
+        announce("settings");
+      }
+
+      async function savePresetByName(name){
+        const clean = normalizePresetName(name);
+        if(!clean) return;
+
+        savedSettings.presets = Array.isArray(savedSettings.presets) ? savedSettings.presets : [];
+
+        const payload = getPresetPayloadFromDraft();
+        const existingIndex = savedSettings.presets.findIndex(p => String(p.name).toLowerCase() === clean.toLowerCase());
+
+        const entry = {
+          name: clean,
+          ...payload
+        };
+
+        if(existingIndex >= 0){
+          savedSettings.presets[existingIndex] = entry;
+        } else {
+          savedSettings.presets.push(entry);
+        }
+
+        await persistSettings();
+        syncPresetSelect();
+
+        const newIndex = savedSettings.presets.findIndex(p => p.name === clean);
+        if(newIndex >= 0) presetSelect.value = String(newIndex);
+        presetName.value = clean;
+      }
+
+      async function applyPresetByIndex(index){
+        const presets = Array.isArray(savedSettings.presets) ? savedSettings.presets : [];
+        const preset = presets[index];
+        if(!preset) return;
+
+        draftSettings.theme = deepMerge(DEFAULT_SETTINGS.theme, preset.theme || {});
+        draftSettings.background = deepMerge(DEFAULT_SETTINGS.background, preset.background || {});
+        draftSettings.paper = deepMerge(DEFAULT_SETTINGS.paper, preset.paper || {});
+
+        syncThemeInputs(draftSettings.theme);
+        syncBgInputs(draftSettings.background);
+        syncPaperInputs(draftSettings.paper);
+        applyAllPreview();
+
+        await persistSettings();
+      }
+
+      async function deletePresetByIndex(index){
+        const presets = Array.isArray(savedSettings.presets) ? savedSettings.presets : [];
+        if(!presets[index]) return;
+        presets.splice(index, 1);
+        savedSettings.presets = presets;
+        await persistSettings();
+        presetSelect.value = "";
+      }
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
       let currentDate = isoDay(today);
       let currentPageIndex = 0;
       let savingTimer = null;
+      let savePromise = Promise.resolve();
+      let isApplyingRemoteState = false;
 
-      function ensureDay(dateStr){
-        if(!store[dateStr]) store[dateStr] = { pages: [ defaultPage() ] };
-        if(!Array.isArray(store[dateStr].pages) || store[dateStr].pages.length === 0){
-          store[dateStr].pages = [ defaultPage() ];
-        }
-        return store[dateStr];
-      }
       function getDay(){ return ensureDay(currentDate); }
       function getPage(){ return getDay().pages[currentPageIndex]; }
-      function pageLabel(i){ return `Page ${i+1}`; }
 
       function markSaving(isSaving){
         savePill.textContent = isSaving ? "Saving…" : "Saved";
         savePill.style.background = isSaving ? "rgba(230,216,204,0.55)" : "var(--field-bg)";
       }
-      function scheduleSave(){
+
+      async function persistJournalNow(){
+        const snapshot = deepClone(store);
+        savePromise = savePromise.then(async () => {
+          await savePersistent(JOURNAL_KEY, snapshot);
+          markSaving(false);
+          renderSidebar();
+          announce("journal");
+        }).catch(() => {
+          markSaving(false);
+        });
+        return savePromise;
+      }
+
+      function scheduleSave(delay = 180){
+        if(isApplyingRemoteState) return;
         markSaving(true);
         if(savingTimer) clearTimeout(savingTimer);
         savingTimer = setTimeout(() => {
-          saveStore(store);
-          markSaving(false);
           savingTimer = null;
-          renderSidebar();
-        }, 280);
+          persistJournalNow();
+        }, delay);
       }
-      function scheduleSaveFromEditor(){
+
+      function scheduleSaveFromEditor(delay = 180){
         const page = getPage();
         page.html = editor.innerHTML;
-        scheduleSave();
+        scheduleSave(delay);
       }
 
       function setDate(dateStr){
         currentDate = dateStr;
         ensureDay(currentDate);
         currentPageIndex = 0;
-        renderAll();
+        renderAll(false);
       }
+
       function setPage(index){
         const pages = getDay().pages;
-        currentPageIndex = Math.max(0, Math.min(index, pages.length - 1));
-        renderAll();
+        currentPageIndex = clamp(index, 0, pages.length - 1);
+        renderAll(false);
       }
 
       function populatePageSelect(){
@@ -1454,8 +1633,70 @@
         toggleBookmarkBtn.textContent = page.bookmark ? "BOOKMARKED" : "BOOKMARK";
       }
 
-      // Stickers
-      function clearStickers(){ stickerLayer.innerHTML = ""; }
+      function clearStickers(){
+        stickerLayer.innerHTML = "";
+      }
+
+      function pctFromPx(px, total){
+        return (px / total) * 100;
+      }
+
+      function makeStickerDraggable(el, page){
+        let pointerId = null;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+
+        el.addEventListener("pointerdown", (e) => {
+          if(e.target && e.target.classList && e.target.classList.contains("x")) return;
+          pointerId = e.pointerId;
+          el.setPointerCapture(pointerId);
+          el.style.cursor = "grabbing";
+
+          startX = e.clientX;
+          startY = e.clientY;
+
+          const rect = stickerLayer.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          startLeft = elRect.left - rect.left + elRect.width/2;
+          startTop = elRect.top - rect.top + elRect.height/2;
+
+          e.preventDefault();
+        });
+
+        el.addEventListener("pointermove", (e) => {
+          if(pointerId == null || e.pointerId !== pointerId) return;
+          const rect = stickerLayer.getBoundingClientRect();
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          let x = startLeft + dx;
+          let y = startTop + dy;
+          x = clamp(x, 10, rect.width - 10);
+          y = clamp(y, 10, rect.height - 10);
+          el.style.left = pctFromPx(x, rect.width) + "%";
+          el.style.top = pctFromPx(y, rect.height) + "%";
+          e.preventDefault();
+        });
+
+        function finishDrag(e){
+          if(pointerId == null || e.pointerId !== pointerId) return;
+          const id = el.dataset.id;
+          const s = (page.stickers || []).find(t => t.id === id);
+          if(s){
+            s.xPct = parseFloat(el.style.left);
+            s.yPct = parseFloat(el.style.top);
+            scheduleSave(0);
+          }
+          el.style.cursor = "grab";
+          try{ el.releasePointerCapture(pointerId); }catch{}
+          pointerId = null;
+        }
+
+        el.addEventListener("pointerup", finishDrag);
+        el.addEventListener("pointercancel", finishDrag);
+      }
+
       function renderStickers(page){
         clearStickers();
         (page.stickers || []).forEach(s => {
@@ -1473,436 +1714,14 @@
           x.addEventListener("click", (e) => {
             e.stopPropagation();
             page.stickers = (page.stickers || []).filter(t => t.id !== s.id);
-            scheduleSave();
+            scheduleSave(0);
             renderStickers(page);
           });
-          el.appendChild(x);
 
-          makeDraggable(el, page);
+          el.appendChild(x);
+          makeStickerDraggable(el, page);
           stickerLayer.appendChild(el);
         });
-      }
-
-      function makeDraggable(el, page){
-        let dragging = false;
-        let startX=0, startY=0;
-        let startLeft=0, startTop=0;
-
-        function pctFromPx(px, total){ return (px / total) * 100; }
-
-        el.addEventListener("mousedown", (e) => {
-          if(e.target && e.target.classList && e.target.classList.contains("x")) return;
-          dragging = true;
-          el.style.cursor = "grabbing";
-          startX = e.clientX;
-          startY = e.clientY;
-
-          const rect = stickerLayer.getBoundingClientRect();
-          const elRect = el.getBoundingClientRect();
-          startLeft = elRect.left - rect.left + elRect.width/2;
-          startTop  = elRect.top  - rect.top  + elRect.height/2;
-          e.preventDefault();
-        });
-
-        window.addEventListener("mousemove", (e) => {
-          if(!dragging) return;
-          const rect = stickerLayer.getBoundingClientRect();
-          const dx = e.clientX - startX;
-          const dy = e.clientY - startY;
-          let x = startLeft + dx;
-          let y = startTop + dy;
-          x = Math.max(10, Math.min(x, rect.width - 10));
-          y = Math.max(10, Math.min(y, rect.height - 10));
-          el.style.left = pctFromPx(x, rect.width) + "%";
-          el.style.top  = pctFromPx(y, rect.height) + "%";
-        });
-
-        window.addEventListener("mouseup", () => {
-          if(!dragging) return;
-          dragging = false;
-          el.style.cursor = "grab";
-          const id = el.dataset.id;
-          const s = (page.stickers || []).find(t => t.id === id);
-          if(s){
-            s.xPct = parseFloat(el.style.left);
-            s.yPct = parseFloat(el.style.top);
-            scheduleSave();
-          }
-        });
-
-        el.addEventListener("touchstart", (e) => {
-          if(e.target && e.target.classList && e.target.classList.contains("x")) return;
-          const t = e.touches && e.touches[0];
-          if(!t) return;
-          dragging = true;
-          el.style.cursor = "grabbing";
-          startX = t.clientX;
-          startY = t.clientY;
-
-          const rect = stickerLayer.getBoundingClientRect();
-          const elRect = el.getBoundingClientRect();
-          startLeft = elRect.left - rect.left + elRect.width/2;
-          startTop  = elRect.top  - rect.top  + elRect.height/2;
-          e.preventDefault();
-        }, { passive:false });
-
-        window.addEventListener("touchmove", (e) => {
-          if(!dragging) return;
-          const t = e.touches && e.touches[0];
-          if(!t) return;
-          const rect = stickerLayer.getBoundingClientRect();
-          const dx = t.clientX - startX;
-          const dy = t.clientY - startY;
-          let x = startLeft + dx;
-          let y = startTop + dy;
-          x = Math.max(10, Math.min(x, rect.width - 10));
-          y = Math.max(10, Math.min(y, rect.height - 10));
-          el.style.left = (x / rect.width) * 100 + "%";
-          el.style.top  = (y / rect.height) * 100 + "%";
-          e.preventDefault();
-        }, { passive:false });
-
-        window.addEventListener("touchend", () => {
-          if(!dragging) return;
-          dragging = false;
-          el.style.cursor = "grab";
-          const id = el.dataset.id;
-          const s = (page.stickers || []).find(t => t.id === id);
-          if(s){
-            s.xPct = parseFloat(el.style.left);
-            s.yPct = parseFloat(el.style.top);
-            scheduleSave();
-          }
-        });
-      }
-
-      // Formatting
-      function exec(cmd, value=null){
-        editor.focus();
-        try{ document.execCommand(cmd, false, value); } catch {}
-      }
-
-      document.querySelectorAll("[data-cmd]").forEach(btn => {
-        btn.addEventListener("click", () => { exec(btn.dataset.cmd); scheduleSaveFromEditor(); });
-      });
-
-      doHighlight.addEventListener("click", () => {
-        const c = highlight.value || "#fff59d";
-        editor.focus();
-        const ok = document.execCommand("hiliteColor", false, c);
-        if(!ok) document.execCommand("backColor", false, c);
-        scheduleSaveFromEditor();
-      });
-
-      clearFormat.addEventListener("click", () => { exec("removeFormat"); scheduleSaveFromEditor(); });
-
-      fontSel.addEventListener("change", () => {
-        const page = getPage();
-        page.font = fontSel.value;
-        page.customFont = "";
-        applyFonts(page);
-        scheduleSave();
-      });
-
-      applyCustomFont.addEventListener("click", () => {
-        const page = getPage();
-        const val = (customFont.value || "").trim();
-        if(!val) return;
-        page.customFont = val;
-        applyFonts(page);
-        scheduleSave();
-      });
-
-      editor.addEventListener("input", scheduleSaveFromEditor);
-
-      // Images: insert + resize handle (and later you can drag them)
-      imgPick.addEventListener("change", async () => {
-        const file = imgPick.files && imgPick.files[0];
-        if(!file) return;
-
-        // FIX: original called fileToDataURL but defined fileToDataURL (caps) later; this is ok,
-        // but it called fileToDataURL vs fileToDataURL in one place. Keep one spelling:
-        const dataUrl = await fileToDataURL(file);
-
-        const id = "img_" + Math.random().toString(16).slice(2) + "_" + Date.now();
-
-        const html =
-          `<div class="imgWrap" contenteditable="false" data-img-id="${id}" style="width:260px;">
-             <img src="${dataUrl}" alt="image" />
-             <div class="imgHandle" title="Drag to resize"></div>
-             <button class="imgDel" type="button" title="Remove">✕</button>
-           </div><br/>`;
-
-        safeInsertHTML(html);
-        imgPick.value = "";
-        scheduleSaveFromEditor();
-      });
-
-      function fileToDataURL(file){
-        return new Promise((resolve, reject) => {
-          const r = new FileReader();
-          r.onload = () => resolve(String(r.result));
-          r.onerror = reject;
-          r.readAsDataURL(file);
-        });
-      }
-
-      function safeInsertHTML(html){
-        editor.focus();
-        try{
-          const ok = document.execCommand("insertHTML", false, html);
-          if(!ok) throw new Error("insertHTML not supported");
-        }catch{
-          editor.insertAdjacentHTML("beforeend", html);
-        }
-      }
-
-      // Resize + Drag logic
-      let resizing = null;
-      let imgDragging = null;
-
-      function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
-
-      function removeTrailingBrIfAny(wrap){
-        const n = wrap && wrap.nextSibling;
-        if(n && n.nodeName === "BR") n.remove();
-      }
-
-      function promoteToFreeMove(wrap){
-        if(wrap.classList.contains("freeMove")) return;
-
-        const edRect = editor.getBoundingClientRect();
-        const wr = wrap.getBoundingClientRect();
-
-        wrap.classList.add("freeMove");
-        removeTrailingBrIfAny(wrap);
-
-        const left = (wr.left - edRect.left) + editor.scrollLeft;
-        const top  = (wr.top  - edRect.top)  + editor.scrollTop;
-
-        wrap.style.left = Math.max(0, left) + "px";
-        wrap.style.top  = Math.max(0, top) + "px";
-      }
-
-      // Mouse interactions (resize + drag)
-      editor.addEventListener("mousedown", (e) => {
-        const handle = e.target && e.target.classList && e.target.classList.contains("imgHandle") ? e.target : null;
-        const delBtn = e.target && e.target.classList && e.target.classList.contains("imgDel") ? e.target : null;
-
-        if(delBtn){
-          const wrap = delBtn.closest(".imgWrap");
-          if(wrap){
-            removeTrailingBrIfAny(wrap);
-            wrap.remove();
-            scheduleSaveFromEditor();
-          }
-          e.preventDefault();
-          return;
-        }
-
-        if(handle){
-          const wrap = handle.closest(".imgWrap");
-          if(!wrap) return;
-
-          const startWidth = wrap.getBoundingClientRect().width;
-          const startX = e.clientX;
-
-          const editorRect = editor.getBoundingClientRect();
-          const maxW = Math.floor(editorRect.width - 18);
-          const minW = 120;
-
-          resizing = { wrap, startWidth, startX, minW, maxW };
-          e.preventDefault();
-          return;
-        }
-
-        const wrap = e.target && e.target.closest ? e.target.closest(".imgWrap") : null;
-        if(!wrap) return;
-        if(e.target.classList && (e.target.classList.contains("imgHandle") || e.target.classList.contains("imgDel"))) return;
-
-        promoteToFreeMove(wrap);
-
-        const startX = e.clientX;
-        const startY = e.clientY;
-        const startLeft = parseFloat(wrap.style.left || "0");
-        const startTop = parseFloat(wrap.style.top || "0");
-
-        imgDragging = { wrap, startX, startY, startLeft, startTop };
-        wrap.style.cursor = "grabbing";
-        e.preventDefault();
-      });
-
-      window.addEventListener("mousemove", (e) => {
-        if(resizing){
-          const dx = e.clientX - resizing.startX;
-          const newW = clamp(resizing.startWidth + dx, resizing.minW, resizing.maxW);
-          resizing.wrap.style.width = Math.round(newW) + "px";
-          return;
-        }
-
-        if(imgDragging){
-          const wrap = imgDragging.wrap;
-          const w = wrap.offsetWidth;
-          const h = wrap.offsetHeight;
-
-          const dx = e.clientX - imgDragging.startX;
-          const dy = e.clientY - imgDragging.startY;
-
-          let newLeft = imgDragging.startLeft + dx;
-          let newTop  = imgDragging.startTop + dy;
-
-          const maxLeft = Math.max(0, editor.scrollWidth - w);
-          const maxTop  = Math.max(0, editor.scrollHeight - h);
-
-          newLeft = clamp(newLeft, 0, maxLeft);
-          newTop  = clamp(newTop, 0, maxTop);
-
-          wrap.style.left = Math.round(newLeft) + "px";
-          wrap.style.top  = Math.round(newTop) + "px";
-        }
-      });
-
-      window.addEventListener("mouseup", () => {
-        let didSomething = false;
-
-        if(resizing){
-          resizing = null;
-          didSomething = true;
-        }
-
-        if(imgDragging){
-          imgDragging.wrap.style.cursor = "grab";
-          imgDragging = null;
-          didSomething = true;
-        }
-
-        if(didSomething) scheduleSaveFromEditor();
-      });
-
-      editor.addEventListener("touchstart", (e) => {
-        const t = e.touches && e.touches[0];
-        if(!t) return;
-
-        const target = e.target;
-        const delBtn = target && target.classList && target.classList.contains("imgDel") ? target : null;
-        const handle = target && target.classList && target.classList.contains("imgHandle") ? target : null;
-
-        if(delBtn){
-          const wrap = delBtn.closest(".imgWrap");
-          if(wrap){
-            removeTrailingBrIfAny(wrap);
-            wrap.remove();
-            scheduleSaveFromEditor();
-          }
-          e.preventDefault();
-          return;
-        }
-
-        if(handle) return;
-
-        const wrap = target && target.closest ? target.closest(".imgWrap") : null;
-        if(!wrap) return;
-
-        promoteToFreeMove(wrap);
-
-        const startX = t.clientX;
-        const startY = t.clientY;
-        const startLeft = parseFloat(wrap.style.left || "0");
-        const startTop = parseFloat(wrap.style.top || "0");
-
-        imgDragging = { wrap, startX, startY, startLeft, startTop };
-        wrap.style.cursor = "grabbing";
-        e.preventDefault();
-      }, { passive:false });
-
-      window.addEventListener("touchmove", (e) => {
-        if(!imgDragging) return;
-        const t = e.touches && e.touches[0];
-        if(!t) return;
-
-        const wrap = imgDragging.wrap;
-        const w = wrap.offsetWidth;
-        const h = wrap.offsetHeight;
-
-        const dx = t.clientX - imgDragging.startX;
-        const dy = t.clientY - imgDragging.startY;
-
-        let newLeft = imgDragging.startLeft + dx;
-        let newTop  = imgDragging.startTop + dy;
-
-        const maxLeft = Math.max(0, editor.scrollWidth - w);
-        const maxTop  = Math.max(0, editor.scrollHeight - h);
-
-        newLeft = clamp(newLeft, 0, maxLeft);
-        newTop  = clamp(newTop, 0, maxTop);
-
-        wrap.style.left = Math.round(newLeft) + "px";
-        wrap.style.top  = Math.round(newTop) + "px";
-
-        e.preventDefault();
-      }, { passive:false });
-
-      window.addEventListener("touchend", () => {
-        if(!imgDragging) return;
-        imgDragging.wrap.style.cursor = "grab";
-        imgDragging = null;
-        scheduleSaveFromEditor();
-      });
-
-      // Pages
-      addPageBtn.addEventListener("click", () => {
-        const day = getDay();
-        day.pages.push(defaultPage());
-        currentPageIndex = day.pages.length - 1;
-        renderAll();
-      });
-
-      deletePageBtn.addEventListener("click", () => {
-        const day = getDay();
-        if(day.pages.length <= 1){
-          day.pages[0] = defaultPage();
-          currentPageIndex = 0;
-          renderAll();
-          return;
-        }
-        day.pages.splice(currentPageIndex, 1);
-        currentPageIndex = Math.max(0, currentPageIndex - 1);
-        renderAll();
-      });
-
-      prevPageBtn.addEventListener("click", () => setPage(currentPageIndex - 1));
-      nextPageBtn.addEventListener("click", () => setPage(currentPageIndex + 1));
-      pagePick.addEventListener("change", () => setPage(Number(pagePick.value || 0)));
-
-      toggleBookmarkBtn.addEventListener("click", () => {
-        const page = getPage();
-        page.bookmark = !page.bookmark;
-        renderBookmarkUI(page);
-        scheduleSave();
-      });
-
-      datePick.addEventListener("change", () => {
-        const v = datePick.value;
-        if(v) setDate(v);
-      });
-
-      document.querySelectorAll("[data-sticker]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const page = getPage();
-          const emoji = btn.dataset.sticker;
-          const id = "s_" + Math.random().toString(16).slice(2) + "_" + Date.now();
-          page.stickers = page.stickers || [];
-          page.stickers.push({ id, emoji, xPct: 72, yPct: 24, size: 28 });
-          scheduleSave();
-          renderStickers(page);
-        });
-      });
-
-      // Sidebar
-      function stripHtml(html){
-        const tmp = document.createElement("div");
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || "";
       }
 
       function renderSidebar(){
@@ -2001,17 +1820,522 @@
         renderStickers(page);
       }
 
-      function renderAll(){
+      function renderAll(shouldSave = true){
+        ensureDay(currentDate);
         populatePageSelect();
         renderEditor();
         renderSidebar();
-        scheduleSave();
+        bindImageInteractionEvents();
+        if(shouldSave) scheduleSave(0);
       }
 
-      // Init
+      function safeInsertHTML(html){
+        editor.focus();
+        try{
+          const ok = document.execCommand("insertHTML", false, html);
+          if(!ok) throw new Error("insertHTML not supported");
+        }catch{
+          editor.insertAdjacentHTML("beforeend", html);
+        }
+      }
+
+      function removeTrailingBrIfAny(wrap){
+        const n = wrap && wrap.nextSibling;
+        if(n && n.nodeName === "BR") n.remove();
+      }
+
+      function promoteToFreeMove(wrap){
+        if(wrap.classList.contains("freeMove")) return;
+
+        const edRect = editor.getBoundingClientRect();
+        const wr = wrap.getBoundingClientRect();
+
+        wrap.classList.add("freeMove");
+        removeTrailingBrIfAny(wrap);
+
+        const left = (wr.left - edRect.left) + editor.scrollLeft;
+        const top = (wr.top - edRect.top) + editor.scrollTop;
+
+        wrap.style.left = Math.max(0, left) + "px";
+        wrap.style.top = Math.max(0, top) + "px";
+      }
+
+      let activePointerMode = null;
+
+      function bindImageInteractionEvents(){
+        const wraps = editor.querySelectorAll(".imgWrap");
+        wraps.forEach((wrap) => {
+          if(wrap.dataset.bound === "1") return;
+          wrap.dataset.bound = "1";
+
+          wrap.setAttribute("contenteditable", "false");
+
+          const delBtn = wrap.querySelector(".imgDel");
+          const handle = wrap.querySelector(".imgHandle");
+
+          if(delBtn){
+            delBtn.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              removeTrailingBrIfAny(wrap);
+              wrap.remove();
+              scheduleSaveFromEditor(0);
+            });
+          }
+
+          wrap.addEventListener("pointerdown", (e) => {
+            if(e.target === delBtn) return;
+
+            const editorRect = editor.getBoundingClientRect();
+            const currentWidth = wrap.getBoundingClientRect().width;
+            const maxW = Math.max(140, Math.floor(editorRect.width - 18));
+            const minW = 120;
+
+            if(e.target === handle){
+              activePointerMode = {
+                type: "resize",
+                pointerId: e.pointerId,
+                wrap,
+                startX: e.clientX,
+                startWidth: currentWidth,
+                minW,
+                maxW
+              };
+              wrap.setPointerCapture(e.pointerId);
+              e.preventDefault();
+              return;
+            }
+
+            promoteToFreeMove(wrap);
+
+            activePointerMode = {
+              type: "drag",
+              pointerId: e.pointerId,
+              wrap,
+              startX: e.clientX,
+              startY: e.clientY,
+              startLeft: parseFloat(wrap.style.left || "0"),
+              startTop: parseFloat(wrap.style.top || "0")
+            };
+            wrap.style.cursor = "grabbing";
+            wrap.setPointerCapture(e.pointerId);
+            e.preventDefault();
+          });
+        });
+      }
+
+      window.addEventListener("pointermove", (e) => {
+        if(!activePointerMode || e.pointerId !== activePointerMode.pointerId) return;
+
+        if(activePointerMode.type === "resize"){
+          const dx = e.clientX - activePointerMode.startX;
+          const newW = clamp(activePointerMode.startWidth + dx, activePointerMode.minW, activePointerMode.maxW);
+          activePointerMode.wrap.style.width = Math.round(newW) + "px";
+          e.preventDefault();
+          return;
+        }
+
+        if(activePointerMode.type === "drag"){
+          const wrap = activePointerMode.wrap;
+          const w = wrap.offsetWidth;
+          const h = wrap.offsetHeight;
+
+          const dx = e.clientX - activePointerMode.startX;
+          const dy = e.clientY - activePointerMode.startY;
+
+          let newLeft = activePointerMode.startLeft + dx;
+          let newTop = activePointerMode.startTop + dy;
+
+          const maxLeft = Math.max(0, editor.scrollWidth - w);
+          const maxTop = Math.max(0, editor.scrollHeight - h);
+
+          newLeft = clamp(newLeft, 0, maxLeft);
+          newTop = clamp(newTop, 0, maxTop);
+
+          wrap.style.left = Math.round(newLeft) + "px";
+          wrap.style.top = Math.round(newTop) + "px";
+          e.preventDefault();
+        }
+      }, { passive:false });
+
+      window.addEventListener("pointerup", (e) => {
+        if(!activePointerMode || e.pointerId !== activePointerMode.pointerId) return;
+        if(activePointerMode.wrap){
+          activePointerMode.wrap.style.cursor = "grab";
+          try{ activePointerMode.wrap.releasePointerCapture(activePointerMode.pointerId); }catch{}
+        }
+        activePointerMode = null;
+        scheduleSaveFromEditor(0);
+      });
+
+      window.addEventListener("pointercancel", (e) => {
+        if(!activePointerMode || e.pointerId !== activePointerMode.pointerId) return;
+        if(activePointerMode.wrap){
+          activePointerMode.wrap.style.cursor = "grab";
+          try{ activePointerMode.wrap.releasePointerCapture(activePointerMode.pointerId); }catch{}
+        }
+        activePointerMode = null;
+        scheduleSaveFromEditor(0);
+      });
+
+      function closePanels(){
+        bgPanel.classList.remove("open");
+        paperPanel.classList.remove("open");
+        themePanel.classList.remove("open");
+      }
+
+      bgBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const willOpen = !bgPanel.classList.contains("open");
+        closePanels();
+        if(willOpen) bgPanel.classList.add("open");
+      });
+
+      paperBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const willOpen = !paperPanel.classList.contains("open");
+        closePanels();
+        if(willOpen) paperPanel.classList.add("open");
+      });
+
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const willOpen = !themePanel.classList.contains("open");
+        closePanels();
+        if(willOpen) themePanel.classList.add("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        const inside = e.target.closest(".panel") || e.target.closest(".bg-btn");
+        if(!inside) closePanels();
+      });
+
+      function wireThemeInput(el, key){
+        el.addEventListener("input", () => {
+          draftSettings.theme[key] = el.value;
+          applyAllPreview();
+        });
+      }
+
+      wireThemeInput(tWidgetBg, "bg");
+      wireThemeInput(tCardBg, "cardBg");
+      wireThemeInput(tFieldBg, "fieldBg");
+      wireThemeInput(tText, "text");
+      wireThemeInput(tMuted, "muted");
+      wireThemeInput(tBorder, "borderHex");
+      wireThemeInput(tCream, "cream");
+
+      themeResetBtn.addEventListener("click", async () => {
+        draftSettings.theme = deepClone(DEFAULT_SETTINGS.theme);
+        syncThemeInputs(draftSettings.theme);
+        applyAllPreview();
+        await persistSettings();
+      });
+
+      themeApplyBtn.addEventListener("click", async () => {
+        await persistSettings();
+      });
+
+      savePresetBtn.addEventListener("click", async () => {
+        await savePresetByName(presetName.value);
+      });
+
+      applyPresetBtn.addEventListener("click", async () => {
+        const index = Number(presetSelect.value);
+        if(Number.isNaN(index)) return;
+        await applyPresetByIndex(index);
+      });
+
+      deletePresetBtn.addEventListener("click", async () => {
+        const index = Number(presetSelect.value);
+        if(Number.isNaN(index)) return;
+        await deletePresetByIndex(index);
+      });
+
+      bgColor.addEventListener("input", () => {
+        draftSettings.background.tint = bgColor.value;
+        applyAllPreview();
+      });
+
+      bgStrength.addEventListener("input", () => {
+        draftSettings.background.strength = Number(bgStrength.value);
+        applyAllPreview();
+      });
+
+      bgBlur.addEventListener("input", () => {
+        draftSettings.background.blur = Number(bgBlur.value);
+        applyAllPreview();
+      });
+
+      bgImage.addEventListener("change", async () => {
+        const file = bgImage.files && bgImage.files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataURL(file);
+        draftSettings.background.imageDataUrl = dataUrl;
+        applyAllPreview();
+      });
+
+      removeImage.addEventListener("click", async () => {
+        draftSettings.background.imageDataUrl = null;
+        bgImage.value = "";
+        applyAllPreview();
+        await persistSettings();
+      });
+
+      bgResetBtn.addEventListener("click", async () => {
+        draftSettings.background = deepClone(DEFAULT_SETTINGS.background);
+        syncBgInputs(draftSettings.background);
+        applyAllPreview();
+        await persistSettings();
+      });
+
+      bgApplyBtn.addEventListener("click", async () => {
+        await persistSettings();
+      });
+
+      paperColor.addEventListener("input", () => {
+        draftSettings.paper.color = paperColor.value;
+        applyAllPreview();
+      });
+
+      paperStrength.addEventListener("input", () => {
+        draftSettings.paper.strength = Number(paperStrength.value);
+        applyAllPreview();
+      });
+
+      paperImage.addEventListener("change", async () => {
+        const file = paperImage.files && paperImage.files[0];
+        if(!file) return;
+        const dataUrl = await fileToDataURL(file);
+        draftSettings.paper.imageDataUrl = dataUrl;
+        applyAllPreview();
+      });
+
+      removePaperImage.addEventListener("click", async () => {
+        draftSettings.paper.imageDataUrl = null;
+        paperImage.value = "";
+        applyAllPreview();
+        await persistSettings();
+      });
+
+      paperResetBtn.addEventListener("click", async () => {
+        draftSettings.paper = deepClone(DEFAULT_SETTINGS.paper);
+        syncPaperInputs(draftSettings.paper);
+        applyAllPreview();
+        await persistSettings();
+      });
+
+      paperApplyBtn.addEventListener("click", async () => {
+        await persistSettings();
+      });
+
+      function exec(cmd, value = null){
+        editor.focus();
+        try{ document.execCommand(cmd, false, value); } catch {}
+      }
+
+      document.querySelectorAll("[data-cmd]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          exec(btn.dataset.cmd);
+          scheduleSaveFromEditor(0);
+        });
+      });
+
+      doHighlight.addEventListener("click", () => {
+        const c = highlight.value || "#fff59d";
+        editor.focus();
+        const ok = document.execCommand("hiliteColor", false, c);
+        if(!ok) document.execCommand("backColor", false, c);
+        scheduleSaveFromEditor(0);
+      });
+
+      clearFormat.addEventListener("click", () => {
+        exec("removeFormat");
+        scheduleSaveFromEditor(0);
+      });
+
+      fontSel.addEventListener("change", () => {
+        const page = getPage();
+        page.font = fontSel.value;
+        page.customFont = "";
+        applyFonts(page);
+        scheduleSave(0);
+      });
+
+      applyCustomFont.addEventListener("click", () => {
+        const page = getPage();
+        const val = (customFont.value || "").trim();
+        if(!val) return;
+        page.customFont = val;
+        applyFonts(page);
+        scheduleSave(0);
+      });
+
+      editor.addEventListener("input", () => scheduleSaveFromEditor(180));
+      editor.addEventListener("blur", () => scheduleSaveFromEditor(0));
+      editor.addEventListener("paste", () => setTimeout(() => scheduleSaveFromEditor(0), 0));
+
+      imgPick.addEventListener("change", async () => {
+        const file = imgPick.files && imgPick.files[0];
+        if(!file) return;
+
+        const dataUrl = await fileToDataURL(file);
+        const id = "img_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+
+        const html =
+          `<div class="imgWrap" contenteditable="false" data-img-id="${id}" style="width:260px;">
+             <img src="${dataUrl}" alt="image" />
+             <div class="imgHandle" title="Drag to resize"></div>
+             <button class="imgDel" type="button" title="Remove">✕</button>
+           </div><br/>`;
+
+        safeInsertHTML(html);
+        imgPick.value = "";
+        bindImageInteractionEvents();
+        scheduleSaveFromEditor(0);
+      });
+
+      addPageBtn.addEventListener("click", () => {
+        const day = getDay();
+        day.pages.push(defaultPage());
+        currentPageIndex = day.pages.length - 1;
+        renderAll(true);
+      });
+
+      deletePageBtn.addEventListener("click", () => {
+        const day = getDay();
+        if(day.pages.length <= 1){
+          day.pages[0] = defaultPage();
+          currentPageIndex = 0;
+          renderAll(true);
+          return;
+        }
+        day.pages.splice(currentPageIndex, 1);
+        currentPageIndex = Math.max(0, currentPageIndex - 1);
+        renderAll(true);
+      });
+
+      prevPageBtn.addEventListener("click", () => setPage(currentPageIndex - 1));
+      nextPageBtn.addEventListener("click", () => setPage(currentPageIndex + 1));
+      pagePick.addEventListener("change", () => setPage(Number(pagePick.value || 0)));
+
+      toggleBookmarkBtn.addEventListener("click", () => {
+        const page = getPage();
+        page.bookmark = !page.bookmark;
+        renderBookmarkUI(page);
+        scheduleSave(0);
+      });
+
+      datePick.addEventListener("change", () => {
+        const v = datePick.value;
+        if(v) setDate(v);
+      });
+
+      document.querySelectorAll("[data-sticker]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const page = getPage();
+          const emoji = btn.dataset.sticker;
+          const id = "s_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+          page.stickers = page.stickers || [];
+          page.stickers.push({ id, emoji, xPct: 72, yPct: 24, size: 28 });
+          scheduleSave(0);
+          renderStickers(page);
+        });
+      });
+
+      async function reloadFromStorage(kind){
+        if(kind === "settings" || !kind){
+          const latestSettings = await loadPersistent(SETTINGS_KEY, DEFAULT_SETTINGS);
+          isApplyingRemoteState = true;
+
+          Object.keys(savedSettings).forEach(k => delete savedSettings[k]);
+          Object.assign(savedSettings, deepClone(latestSettings));
+
+          Object.keys(draftSettings).forEach(k => delete draftSettings[k]);
+          Object.assign(draftSettings, deepClone(latestSettings));
+
+          syncThemeInputs(draftSettings.theme);
+          syncBgInputs(draftSettings.background);
+          syncPaperInputs(draftSettings.paper);
+          applyAllPreview();
+          syncPresetSelect();
+
+          isApplyingRemoteState = false;
+        }
+
+        if(kind === "journal" || !kind){
+          const latestStore = await loadPersistent(JOURNAL_KEY, defaultStore());
+          isApplyingRemoteState = true;
+
+          Object.keys(store).forEach((k) => delete store[k]);
+          Object.assign(store, latestStore);
+
+          ensureDay(currentDate);
+          const pages = getDay().pages;
+          currentPageIndex = clamp(currentPageIndex, 0, pages.length - 1);
+
+          renderAll(false);
+          bindImageInteractionEvents();
+
+          isApplyingRemoteState = false;
+        }
+      }
+
+      if(bc){
+        bc.addEventListener("message", async (event) => {
+          const kind = event?.data?.kind;
+          if(kind === "settings" || kind === "journal"){
+            await reloadFromStorage(kind);
+          }
+        });
+      }
+
+      window.addEventListener("storage", async (e) => {
+        if(e.key === SETTINGS_KEY){
+          await reloadFromStorage("settings");
+        } else if(e.key === JOURNAL_KEY){
+          await reloadFromStorage("journal");
+        } else if(e.key === "__notion_widget_ping__"){
+          const payload = safeParseJSON(e.newValue || "");
+          if(payload?.kind){
+            await reloadFromStorage(payload.kind);
+          }
+        }
+      });
+
+      window.addEventListener("beforeunload", () => {
+        const page = getPage();
+        if(page) page.html = editor.innerHTML;
+        try{ localStorage.setItem(JOURNAL_KEY, JSON.stringify(store)); }catch{}
+        try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(savedSettings)); }catch{}
+      });
+
+      window.addEventListener("pagehide", () => {
+        const page = getPage();
+        if(page) page.html = editor.innerHTML;
+        try{ localStorage.setItem(JOURNAL_KEY, JSON.stringify(store)); }catch{}
+        try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(savedSettings)); }catch{}
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if(document.visibilityState === "hidden"){
+          const page = getPage();
+          if(page) page.html = editor.innerHTML;
+          try{ localStorage.setItem(JOURNAL_KEY, JSON.stringify(store)); }catch{}
+          try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(savedSettings)); }catch{}
+        }
+      });
+
+      syncThemeInputs(draftSettings.theme);
+      syncBgInputs(draftSettings.background);
+      syncPaperInputs(draftSettings.paper);
+      applyAllPreview();
+      syncPresetSelect();
+
       datePick.value = currentDate;
       ensureDay(currentDate);
-      renderAll();
+      renderAll(false);
+      bindImageInteractionEvents();
       markSaving(false);
     });
   </script>

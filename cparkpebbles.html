@@ -2,69 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Not Today Parking Lot + Gratitude Pebbles</title>
+
+  <!-- Optional Firebase for real cross-device sync.
+       Leave as-is if you only want same-device saving. -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
   <style>
     :root{
-      /* ===== Global base ===== */
       --app-bg: #ffffff;
 
       --ink: #2b2b2b;
       --muted: #7a7a7a;
 
       --border-rgb: 30,30,30;
-      --border-a: 0.10;
+      --border-a: 0.18;
       --border: rgba(var(--border-rgb), var(--border-a));
-      --shadow: 0 12px 34px rgba(20, 20, 20, 0.08);
+      --shadow: 0 14px 34px rgba(20, 20, 20, 0.09);
 
-      --surface-a: 0.78; /* pills */
-      --panel-a: 0.92;
+      --surface-a: 0.78;
+      --panel-a: 0.94;
 
-      --btn-a: 0.92;
-      --btn-border-a: 0.10;
+      --btn-a: 0.94;
+      --btn-border-a: 0.16;
 
-      --accent: #cbb8ae;
-
-      /* overlay */
       --overlay-base: #ffffff;
       --overlay-a: 0.34;
 
-      /* Board background */
       --board-tint: #efe7e1;
       --board-tint-a: 0.30;
       --board-image: none;
+      --board-blur: 0px;
 
-      /* ===== Per-half theme variables (FULL COVERAGE) ===== */
-      /* LEFT (Parking lot) */
       --left-card-bg: #ffffff;
-      --left-card-a: 0.94;
+      --left-card-a: 0.95;
       --left-header-bg: #ffffff;
-      --left-header-a: 0.92;
+      --left-header-a: 0.94;
       --left-block-bg: #ffffff;
-      --left-block-a: 0.78;
+      --left-block-a: 0.80;
       --left-item-bg: #ffffff;
-      --left-item-a: 0.82;
+      --left-item-a: 0.86;
       --left-input-bg: #ffffff;
-      --left-input-a: 0.96;
+      --left-input-a: 0.97;
 
-      /* RIGHT (Pebbles) */
       --right-card-bg: #ffffff;
-      --right-card-a: 0.94;
+      --right-card-a: 0.95;
       --right-header-bg: #ffffff;
-      --right-header-a: 0.92;
+      --right-header-a: 0.94;
       --right-block-bg: #ffffff;
-      --right-block-a: 0.78;
+      --right-block-a: 0.80;
       --right-stage-bg: #ffffff;
-      --right-stage-a: 0.76;
+      --right-stage-a: 0.80;
       --right-tower-bg: #ffffff;
-      --right-tower-a: 0.45;
+      --right-tower-a: 0.52;
       --right-input-bg: #ffffff;
-      --right-input-a: 0.96;
+      --right-input-a: 0.97;
 
-      /* Pebbles (right) */
-      --pebble-outline-a: 0.14;
+      --pebble-outline-a: 0.18;
 
-      /* Layout */
       --page-max: 1400px;
       --board-radius: 26px;
       --radius: 22px;
@@ -86,16 +83,22 @@
     *{ box-sizing: border-box; }
 
     html, body{
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+    }
 
     body{
       margin: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       color: var(--ink);
       background: var(--app-bg);
+      touch-action: manipulation;
+    }
+
+    button, input, textarea, select{
+      font: inherit;
     }
 
     .wrap{
@@ -104,7 +107,6 @@
       padding: 18px;
     }
 
-    /* ===== Top bar ===== */
     .titlebar{
       display: flex;
       gap: 14px;
@@ -120,17 +122,25 @@
       gap: 4px;
       min-width: 260px;
     }
+
     h1{
       margin: 0;
       font-size: var(--h1);
       font-weight: 800;
       letter-spacing: 0.2px;
     }
+
     .subtitle{
       font-size: var(--sub);
       color: var(--muted);
       line-height: 1.35;
       max-width: 72ch;
+    }
+
+    .sync-badge{
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
     }
 
     .controls{
@@ -146,27 +156,29 @@
       align-items: center;
       gap: 10px;
       background: rgba(255,255,255, var(--surface-a));
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: 999px;
       padding: var(--chip-pad);
       box-shadow: 0 8px 22px rgba(20,20,20,0.06);
       backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
 
     .btn{
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       border-radius: 999px;
-      border: 1px solid rgba(var(--border-rgb), var(--btn-border-a));
+      border: 1.5px solid rgba(var(--border-rgb), var(--btn-border-a));
       background: rgba(255,255,255, var(--btn-a));
       cursor: pointer;
       display: grid;
       place-items: center;
       -webkit-tap-highlight-color: transparent;
-      color: rgba(43,43,43,0.72);
+      color: rgba(43,43,43,0.78);
       font-weight: 900;
       line-height: 1;
       user-select: none;
+      appearance: none;
     }
     .btn:active{ transform: translateY(1px); }
 
@@ -174,13 +186,18 @@
       width: 16px;
       height: 16px;
       border-radius: 999px;
-      border: 1px solid rgba(var(--border-rgb), 0.14);
+      border: 1px solid rgba(var(--border-rgb), 0.18);
       background: var(--board-tint);
       box-shadow: 0 0 0 7px rgba(239,231,225,0.30);
     }
-    .theme-dot{
-      background: var(--accent);
-      box-shadow: 0 0 0 7px rgba(203,184,174,0.22);
+
+    .theme-square{
+      width: 16px;
+      height: 16px;
+      border-radius: 5px;
+      border: 1px solid rgba(var(--border-rgb), 0.18);
+      background: linear-gradient(135deg, var(--left-card-bg), var(--right-card-bg));
+      box-shadow: 0 0 0 7px rgba(255,255,255,0.16);
     }
 
     .popover{ position: relative; }
@@ -190,17 +207,21 @@
       top: 48px;
       right: 0;
       width: 460px;
+      max-width: min(460px, calc(100vw - 24px));
       border-radius: 18px;
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       background: rgba(255,255,255, var(--panel-a));
       box-shadow: 0 22px 50px rgba(20,20,20,0.12);
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       padding: 14px;
       display: none;
       z-index: 50;
-
       max-height: calc(100vh - 120px);
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
+      -webkit-overflow-scrolling: touch;
     }
     .panel.open{ display: block; }
 
@@ -229,39 +250,46 @@
       gap: 12px;
       padding: 9px 0;
     }
+
     .row label{
       font-size: 12px;
       color: var(--muted);
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     input[type="color"]{
-      width: 36px;
-      height: 28px;
-      border: 1px solid rgba(var(--border-rgb), 0.12);
+      width: 38px;
+      min-width: 38px;
+      height: 30px;
+      border: 1.5px solid rgba(var(--border-rgb), 0.16);
       border-radius: 10px;
       padding: 0;
       background: transparent;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      appearance: none;
     }
+
     input[type="range"]{ width: 210px; }
 
     .mini-btn{
       width: 100%;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.92);
+      border: 1.5px solid var(--border);
+      background: rgba(255,255,255,0.94);
       border-radius: 14px;
       padding: 11px 12px;
       cursor: pointer;
       font-weight: 800;
-      color: rgba(43,43,43,0.86);
+      color: rgba(43,43,43,0.88);
       -webkit-tap-highlight-color: transparent;
+      appearance: none;
     }
     .mini-btn:active{ transform: translateY(1px); }
 
     .divider{
       height: 1px;
-      background: rgba(var(--border-rgb), 0.08);
+      background: rgba(var(--border-rgb), 0.10);
       margin: 10px 0;
     }
 
@@ -271,41 +299,71 @@
       color: rgba(43,43,43,0.75);
     }
 
-    /* ===== Date / Month nav pills ===== */
+    .presetName{
+      width:100%;
+      border:1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.95);
+      border-radius:14px;
+      padding:11px 12px;
+      font-size:12px;
+      color: var(--ink);
+      outline: none;
+      appearance: none;
+    }
+
+    .presetSelect{
+      height: 38px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.95);
+      padding: 0 10px;
+      color: var(--ink);
+      width: 100%;
+      outline: none;
+      appearance: none;
+    }
+
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+      min-height: 16px;
+    }
+
     .nav-pill{
       display: inline-flex;
       align-items: center;
       gap: 12px;
       padding: var(--chip-pad);
       border-radius: 999px;
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       background: rgba(255,255,255, var(--surface-a));
       box-shadow: 0 8px 22px rgba(20,20,20,0.06);
       backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
       user-select: none;
     }
+
     .nav-label{
       font-size: 13px;
-      color: rgba(43,43,43,0.80);
+      color: rgba(43,43,43,0.82);
       min-width: 190px;
       text-align: center;
-      font-weight: 650;
+      font-weight: 700;
       letter-spacing: 0.1px;
       white-space: nowrap;
     }
 
-    /* ===== Board ===== */
     .board{
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--board-radius);
       box-shadow: var(--shadow);
       overflow: hidden;
       position: relative;
       background: none;
+      max-width: 100%;
+      isolation: isolate;
     }
-
-    .wrap{ max-width: 100%; }
-.board{ max-width: 100%; }
 
     .board::before{
       content: "";
@@ -315,42 +373,40 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      filter: saturate(1.02) contrast(1.03);
+      filter: blur(var(--board-blur)) saturate(1.02) contrast(1.02);
       transform: scale(1.02);
     }
+
     .board::after{
       content: "";
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: rgba(255,255,255,0.34); /* overridden by JS */
+      background: rgba(255,255,255,0.34);
     }
+
     .board-tint{
       position: absolute;
       inset: 0;
       pointer-events: none;
       mix-blend-mode: multiply;
     }
+
     .board-content{
       position: relative;
       z-index: 2;
-      backdrop-filter: blur(2px);
       padding: var(--pad);
     }
 
-    /* ===== Two-column layout ===== */
     .two{
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: var(--gap);
       align-items: start;
     }
-    @media (max-width: 980px){
-      .two{ grid-template-columns: 1fr; }
-    }
 
     .col{
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       box-shadow: 0 10px 26px rgba(20,20,20,0.06);
       overflow: hidden;
@@ -360,19 +416,19 @@
       min-height: 640px;
     }
 
-    /* per-half card backgrounds */
     #leftCol{ background: rgba(255,255,255, var(--left-card-a)); }
     #rightCol{ background: rgba(255,255,255, var(--right-card-a)); }
 
     .col-header{
       padding: var(--header-pad);
-      border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+      border-bottom: 1px solid rgba(var(--border-rgb), 0.12);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       flex-wrap: wrap;
     }
+
     #leftCol .col-header{ background: rgba(255,255,255, var(--left-header-a)); }
     #rightCol .col-header{ background: rgba(255,255,255, var(--right-header-a)); }
 
@@ -382,10 +438,12 @@
       gap: 3px;
       min-width: 240px;
     }
+
     .col-title strong{
       font-size: 15px;
       letter-spacing: 0.1px;
     }
+
     .col-title span{
       font-size: 13px;
       color: var(--muted);
@@ -404,8 +462,9 @@
     .block{
       border-radius: 18px;
       padding: 14px;
-      border: 1px dashed rgba(var(--border-rgb), 0.14);
+      border: 1.5px dashed rgba(var(--border-rgb), 0.18);
     }
+
     #leftCol .block{ background: rgba(255,255,255, var(--left-block-a)); }
     #rightCol .block{ background: rgba(255,255,255, var(--right-block-a)); }
 
@@ -424,7 +483,7 @@
 
     input[type="text"], select{
       width: 100%;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
       border-radius: var(--input-radius);
       padding: var(--input-pad);
       outline: none;
@@ -432,24 +491,22 @@
       font-size: 14px;
       line-height: 1.3;
       background: rgba(255,255,255,0.96);
+      appearance: none;
     }
+
     #leftCol input[type="text"], #leftCol select{ background: rgba(255,255,255, var(--left-input-a)); }
     #rightCol input[type="text"], #rightCol select{ background: rgba(255,255,255, var(--right-input-a)); }
 
-    input[type="text"]:focus, select:focus{
-      border-color: rgba(var(--border-rgb), 0.18);
+    input[type="text"]:focus, select:focus, .presetName:focus, .presetSelect:focus{
+      border-color: rgba(var(--border-rgb), 0.22);
       box-shadow: 0 0 0 5px rgba(203,184,174,0.18);
     }
 
-    /* ===== Parking lot items ===== */
     .park-form{
       display: grid;
       grid-template-columns: 1fr 140px 110px;
       gap: 10px;
       align-items: center;
-    }
-    @media (max-width: 520px){
-      .park-form{ grid-template-columns: 1fr; }
     }
 
     .park-list{
@@ -459,6 +516,7 @@
       overflow: auto;
       padding-right: 4px;
       max-height: 380px;
+      -webkit-overflow-scrolling: touch;
     }
 
     .park-item{
@@ -467,10 +525,11 @@
       gap: 12px;
       align-items: center;
       border-radius: 18px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
       box-shadow: 0 10px 24px rgba(20,20,20,0.05);
       padding: 12px;
     }
+
     #leftCol .park-item{ background: rgba(255,255,255, var(--left-item-a)); }
 
     .park-text{
@@ -479,12 +538,14 @@
       gap: 3px;
       min-width: 0;
     }
+
     .park-text .t{
       font-weight: 800;
       font-size: 14px;
       line-height: 1.2;
       overflow-wrap: anywhere;
     }
+
     .park-text .meta{
       font-size: 12px;
       color: rgba(43,43,43,0.62);
@@ -494,15 +555,16 @@
       width: 34px;
       height: 34px;
       border-radius: 12px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.74);
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
+      background: rgba(255,255,255,0.78);
       cursor: pointer;
       font-weight: 900;
-      color: rgba(43,43,43,0.70);
+      color: rgba(43,43,43,0.72);
       display: grid;
       place-items: center;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
+      appearance: none;
     }
     .x:active{ transform: translateY(1px); }
 
@@ -513,35 +575,33 @@
       place-items: center;
       cursor: pointer;
     }
+
     .car svg{
       width: 86px;
       height: 50px;
       filter: drop-shadow(0 10px 14px rgba(0,0,0,0.08));
     }
 
-    /* ===== Pebble area ===== */
     .pebble-form{
       display: grid;
       grid-template-columns: 1fr 150px 120px;
       gap: 10px;
       align-items: center;
     }
-    @media (max-width: 520px){
-      .pebble-form{ grid-template-columns: 1fr; }
-    }
 
     .month-stage{
       border-radius: 18px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
+      border: 1.5px solid rgba(var(--border-rgb), 0.14);
       box-shadow: 0 10px 24px rgba(20,20,20,0.05);
       padding: 14px;
       overflow: auto;
       min-height: 420px;
-        max-width: 100%;
-  overflow-x: auto;
-  overflow-y: auto;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    
+
     #rightCol .month-stage{ background: rgba(255,255,255, var(--right-stage-a)); }
 
     .towers{
@@ -561,7 +621,7 @@
       gap: 8px;
       padding: 8px 6px;
       border-radius: 16px;
-      border: 1px dashed rgba(var(--border-rgb), 0.14);
+      border: 1.5px dashed rgba(var(--border-rgb), 0.18);
       position: relative;
       background: rgba(255,255,255, var(--right-tower-a));
     }
@@ -572,8 +632,8 @@
       letter-spacing: .06em;
       text-transform: uppercase;
       color: rgba(43,43,43,0.60);
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.62);
+      border: 1.5px solid rgba(var(--border-rgb), 0.12);
+      background: rgba(255,255,255,0.68);
       padding: 4px 8px;
       border-radius: 999px;
       user-select: none;
@@ -592,14 +652,16 @@
 
     .pebble{
       border-radius: 999px;
-      border: 1px solid rgba(var(--border-rgb), var(--pebble-outline-a));
+      border: 1.5px solid rgba(var(--border-rgb), var(--pebble-outline-a));
       background: var(--pebble);
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       box-shadow: 0 12px 22px rgba(20,20,20,0.08);
       position: relative;
+      appearance: none;
     }
     .pebble:active{ transform: translateY(1px); }
+
     .pebble::after{
       content: "";
       position: absolute;
@@ -623,14 +685,15 @@
       align-items: center;
       justify-content: space-between;
     }
+
     .pill{
       font-size: 11px;
       font-weight: 900;
       letter-spacing: .06em;
       text-transform: uppercase;
-      color: rgba(43,43,43,0.70);
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.70);
+      color: rgba(43,43,43,0.72);
+      border: 1.5px solid rgba(var(--border-rgb), 0.12);
+      background: rgba(255,255,255,0.74);
       padding: 4px 10px;
       border-radius: 999px;
       user-select: none;
@@ -641,8 +704,8 @@
       font-size: 12px;
       padding: 3px 8px;
       border-radius: 10px;
-      border: 1px solid rgba(var(--border-rgb), 0.10);
-      background: rgba(255,255,255,0.75);
+      border: 1.5px solid rgba(var(--border-rgb), 0.12);
+      background: rgba(255,255,255,0.76);
     }
 
     .footer-note{
@@ -656,7 +719,6 @@
       padding: 0 2px 4px;
     }
 
-    /* ===== Modal ===== */
     .modal{
       position: fixed;
       inset: 0;
@@ -667,37 +729,105 @@
       z-index: 9999;
       background: rgba(0,0,0,0.25);
       backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
+
     .modal.open{ display: flex; }
 
     .modalCard{
       width: min(720px, 100%);
       border-radius: 22px;
-      border: 1px solid rgba(var(--border-rgb), 0.14);
-      background: rgba(255,255,255,0.94);
+      border: 1.5px solid rgba(var(--border-rgb), 0.16);
+      background: rgba(255,255,255,0.96);
       box-shadow: 0 24px 70px rgba(0,0,0,0.20);
       overflow: hidden;
     }
+
     .modalHead{
       padding: 14px 16px;
-      border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+      border-bottom: 1px solid rgba(var(--border-rgb), 0.10);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
     }
+
     .modalHead strong{
       font-size: 14px;
       letter-spacing: .02em;
     }
+
     .modalBody{
       padding: 16px;
       display: grid;
       gap: 12px;
     }
-    .modalBody .small{
-      font-size: 12px;
-      color: rgba(43,43,43,0.64);
+
+    @media (max-width: 980px){
+      .two{ grid-template-columns: 1fr; }
+      .controls{
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 680px){
+      .wrap{
+        margin: 14px auto;
+        padding: 10px;
+      }
+
+      .titlebar{
+        align-items: stretch;
+      }
+
+      .title{
+        min-width: 0;
+      }
+
+      .controls{
+        gap: 10px;
+      }
+
+      .nav-pill{
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .nav-label{
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+
+      .panel{
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        top: auto;
+        bottom: 12px;
+        width: auto;
+        max-width: none;
+        max-height: 78vh;
+        border-radius: 18px;
+      }
+
+      .park-form,
+      .pebble-form{
+        grid-template-columns: 1fr;
+      }
+
+      .row{
+        align-items: center;
+      }
+
+      input[type="range"]{
+        width: 140px;
+      }
+
+      .col{
+        min-width: 0;
+        min-height: 0;
+      }
     }
   </style>
 </head>
@@ -706,19 +836,16 @@
   <div class="wrap">
     <div class="titlebar">
       <div class="title">
-        <div class="subtitle">
-        </div>
+        <h1>Not Today Parking Lot + Gratitude Pebbles</h1>
       </div>
 
       <div class="controls">
-        <!-- Day navigation -->
         <div class="nav-pill" aria-label="Day navigation">
           <button class="btn" id="prevDay" type="button" aria-label="Previous day" title="Previous day">‹</button>
           <div class="nav-label" id="dayLabel">Day</div>
           <button class="btn" id="nextDay" type="button" aria-label="Next day" title="Next day">›</button>
         </div>
 
-        <!-- Month navigation -->
         <div class="nav-pill" aria-label="Month navigation">
           <button class="btn" id="prevMonth" type="button" aria-label="Previous month" title="Previous month">‹</button>
           <div class="nav-label" id="monthLabel">Month</div>
@@ -729,104 +856,115 @@
         <div class="popover">
           <div class="icon-pill">
             <button class="btn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
-              <span class="dot theme-dot" id="themeDot" aria-hidden="true"></span>
+              <span class="theme-square" id="themeDot" aria-hidden="true"></span>
             </button>
           </div>
 
           <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
-
-
-            <!-- Global -->
             <div class="subPanelTitle">Global</div>
             <div class="row"><label for="tAppBg">App background</label><input id="tAppBg" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tInk">Text</label><input id="tInk" type="color" value="#2b2b2b" /></div>
             <div class="row"><label for="tMuted">Muted</label><input id="tMuted" type="color" value="#7a7a7a" /></div>
-            <div class="row"><label for="tAccent">Accent</label><input id="tAccent" type="color" value="#cbb8ae" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tBorderColor">Border color</label><input id="tBorderColor" type="color" value="#1e1e1e" /></div>
-            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="4" max="30" value="10" /></div>
+            <div class="row"><label for="tBorderA">Border strength</label><input id="tBorderA" type="range" min="8" max="55" value="18" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tSurfaceA">Pills opacity</label><input id="tSurfaceA" type="range" min="40" max="98" value="78" /></div>
-            <div class="row"><label for="tPanelA">Panels opacity</label><input id="tPanelA" type="range" min="60" max="98" value="92" /></div>
+            <div class="row"><label for="tPanelA">Panels opacity</label><input id="tPanelA" type="range" min="65" max="99" value="94" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="92" /></div>
-            <div class="row"><label for="tBtnBorderA">Btn border</label><input id="tBtnBorderA" type="range" min="0" max="30" value="10" /></div>
+            <div class="row"><label for="tBtnA">Buttons opacity</label><input id="tBtnA" type="range" min="55" max="100" value="94" /></div>
+            <div class="row"><label for="tBtnBorderA">Button border</label><input id="tBtnBorderA" type="range" min="4" max="40" value="16" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tOverlayBase">Overlay color</label><input id="tOverlayBase" type="color" value="#ffffff" /></div>
             <div class="row"><label for="tOverlayA">Overlay strength</label><input id="tOverlayA" type="range" min="0" max="70" value="34" /></div>
 
-            <!-- Left -->
             <div class="divider"></div>
             <div class="subPanelTitle">Left (Parking Lot)</div>
             <div class="row"><label for="tLeftCardBg">Card bg</label><input id="tLeftCardBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tLeftCardA">Card opacity</label><input id="tLeftCardA" type="range" min="70" max="100" value="94" /></div>
+            <div class="row"><label for="tLeftCardA">Card opacity</label><input id="tLeftCardA" type="range" min="70" max="100" value="95" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tLeftHeaderBg">Header bg</label><input id="tLeftHeaderBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tLeftHeaderA">Header opacity</label><input id="tLeftHeaderA" type="range" min="70" max="100" value="92" /></div>
+            <div class="row"><label for="tLeftHeaderA">Header opacity</label><input id="tLeftHeaderA" type="range" min="70" max="100" value="94" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tLeftBlockBg">Blocks bg</label><input id="tLeftBlockBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tLeftBlockA">Blocks opacity</label><input id="tLeftBlockA" type="range" min="45" max="100" value="78" /></div>
+            <div class="row"><label for="tLeftBlockA">Blocks opacity</label><input id="tLeftBlockA" type="range" min="45" max="100" value="80" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tLeftItemBg">Items bg</label><input id="tLeftItemBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tLeftItemA">Items opacity</label><input id="tLeftItemA" type="range" min="45" max="100" value="82" /></div>
+            <div class="row"><label for="tLeftItemA">Items opacity</label><input id="tLeftItemA" type="range" min="45" max="100" value="86" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tLeftInputBg">Inputs bg</label><input id="tLeftInputBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tLeftInputA">Inputs opacity</label><input id="tLeftInputA" type="range" min="60" max="100" value="96" /></div>
+            <div class="row"><label for="tLeftInputA">Inputs opacity</label><input id="tLeftInputA" type="range" min="60" max="100" value="97" /></div>
 
-            <!-- Right -->
             <div class="divider"></div>
             <div class="subPanelTitle">Right (Pebbles)</div>
             <div class="row"><label for="tRightCardBg">Card bg</label><input id="tRightCardBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tRightCardA">Card opacity</label><input id="tRightCardA" type="range" min="70" max="100" value="94" /></div>
+            <div class="row"><label for="tRightCardA">Card opacity</label><input id="tRightCardA" type="range" min="70" max="100" value="95" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tRightHeaderBg">Header bg</label><input id="tRightHeaderBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tRightHeaderA">Header opacity</label><input id="tRightHeaderA" type="range" min="70" max="100" value="92" /></div>
+            <div class="row"><label for="tRightHeaderA">Header opacity</label><input id="tRightHeaderA" type="range" min="70" max="100" value="94" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tRightBlockBg">Blocks bg</label><input id="tRightBlockBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tRightBlockA">Blocks opacity</label><input id="tRightBlockA" type="range" min="45" max="100" value="78" /></div>
+            <div class="row"><label for="tRightBlockA">Blocks opacity</label><input id="tRightBlockA" type="range" min="45" max="100" value="80" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tRightStageBg">Stage bg</label><input id="tRightStageBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tRightStageA">Stage opacity</label><input id="tRightStageA" type="range" min="45" max="100" value="76" /></div>
+            <div class="row"><label for="tRightStageA">Stage opacity</label><input id="tRightStageA" type="range" min="45" max="100" value="80" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tRightTowerBg">Tower bg</label><input id="tRightTowerBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tRightTowerA">Tower opacity</label><input id="tRightTowerA" type="range" min="20" max="100" value="45" /></div>
+            <div class="row"><label for="tRightTowerA">Tower opacity</label><input id="tRightTowerA" type="range" min="20" max="100" value="52" /></div>
 
             <div class="divider"></div>
 
             <div class="row"><label for="tRightInputBg">Inputs bg</label><input id="tRightInputBg" type="color" value="#ffffff" /></div>
-            <div class="row"><label for="tRightInputA">Inputs opacity</label><input id="tRightInputA" type="range" min="60" max="100" value="96" /></div>
+            <div class="row"><label for="tRightInputA">Inputs opacity</label><input id="tRightInputA" type="range" min="60" max="100" value="97" /></div>
 
             <div class="divider"></div>
 
-            <div class="row"><label for="tPebbleOutlineA">Pebble outline</label><input id="tPebbleOutlineA" type="range" min="5" max="30" value="14" /></div>
+            <div class="row"><label for="tPebbleOutlineA">Pebble outline</label><input id="tPebbleOutlineA" type="range" min="5" max="30" value="18" /></div>
 
             <div class="divider"></div>
 
-            <button class="mini-btn" id="themeReset" type="button">Reset theme</button>
+            <button class="mini-btn" id="themeApply" type="button">Apply theme</button>
+            <button class="mini-btn" id="themeReset" type="button" style="margin-top:10px;">Reset theme</button>
+
+            <div class="divider"></div>
+
+            <div class="subPanelTitle" style="margin-top:0;">Presets</div>
+            <div class="row" style="flex-direction:column; align-items:stretch; gap:10px;">
+              <input class="presetName" id="presetName" placeholder="Preset name" />
+              <button class="mini-btn" id="presetSave" type="button">Save current as preset</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <select class="presetSelect" id="presetSelect"></select>
+            <button class="mini-btn" id="presetApply" type="button" style="margin-top:10px;">Apply preset</button>
+            <button class="mini-btn" id="presetDelete" type="button" style="margin-top:10px;">Delete preset</button>
+
+            <div class="status" id="presetStatus" aria-live="polite"></div>
           </div>
         </div>
 
@@ -851,6 +989,11 @@
               <input id="bgStrength" type="range" min="0" max="70" value="30" />
             </div>
 
+            <div class="row">
+              <label for="bgBlur">Image blur</label>
+              <input id="bgBlur" type="range" min="0" max="24" value="0" />
+            </div>
+
             <div class="divider"></div>
 
             <div class="row" style="align-items:flex-start;">
@@ -864,10 +1007,12 @@
 
             <div class="divider"></div>
 
-            <button class="mini-btn" id="bgReset" type="button">Reset background</button>
+            <button class="mini-btn" id="bgApply" type="button">Apply background</button>
+            <button class="mini-btn" id="bgReset" type="button" style="margin-top:10px;">Reset background</button>
+
+            <div class="status" id="bgStatus" aria-live="polite" style="margin-top:10px;"></div>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -876,7 +1021,6 @@
 
       <div class="board-content">
         <div class="two">
-          <!-- LEFT -->
           <section class="col" id="leftCol" aria-label="Not today parking lot" tabindex="-1">
             <div class="col-header">
               <div class="col-title">
@@ -896,21 +1040,15 @@
                   <input id="parkColor" type="color" value="#e0565b" title="Car color" />
                   <button class="mini-btn" id="addPark" type="button">Park it</button>
                 </div>
-                <div class="hint" style="margin-top:10px;">
-                </div>
               </div>
 
               <div class="block" style="min-height: 250px;">
                 <div class="label">Parking Lot <span class="pill" id="parkDatePill">—</span></div>
                 <div class="park-list" id="parkList"></div>
               </div>
-
-              <div class="footer-note">
-              </div>
             </div>
           </section>
 
-          <!-- RIGHT -->
           <section class="col" id="rightCol" aria-label="Daily gratitude pebbles" tabindex="-1">
             <div class="col-header">
               <div class="col-title">
@@ -935,30 +1073,21 @@
                   </select>
                   <button class="mini-btn" id="addPebble" type="button">Add pebble</button>
                 </div>
-                <div class="hint" style="margin-top:10px;">
-                </div>
               </div>
 
               <div class="block">
-                <div class="label">This month's pebbles<span class="pill" id="monthPill">—</span></div>
+                <div class="label">This month's pebbles <span class="pill" id="monthPill">—</span></div>
                 <div class="month-stage" id="monthStage">
                   <div class="towers" id="towers"></div>
                 </div>
               </div>
-
-              <div class="footer-note">
-              </div>
             </div>
           </section>
-        </div>
-
-        <div class="footer-note" style="padding: 12px 4px 4px;">
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Pebble modal -->
   <div class="modal" id="modal">
     <div class="modalCard">
       <div class="modalHead">
@@ -978,12 +1107,93 @@
   </div>
 
   <script>
-    /* =========================
-       Storage keys
-    ========================= */
-    const STORE_KEY = "not_today_parkinglot_gratitude_v2";
-    const THEME_KEY = "not_today_parkinglot_gratitude_theme_v2";
-    const BG_KEY    = "not_today_parkinglot_gratitude_bg_v2";
+    const SYNC_CONFIG = {
+      enabled: false,
+      firebaseConfig: {
+        apiKey: "",
+        authDomain: "",
+        databaseURL: "",
+        projectId: "",
+        storageBucket: "",
+        messagingSenderId: "",
+        appId: ""
+      },
+      namespace: "parking-gratitude"
+    };
+
+    (function(){
+      const mem = Object.create(null);
+
+      function canUseLocalStorage(){
+        try{
+          const k="__t__"+Math.random().toString(16).slice(2);
+          localStorage.setItem(k,"1");
+          localStorage.removeItem(k);
+          return true;
+        }catch{
+          return false;
+        }
+      }
+
+      const hasLS = canUseLocalStorage();
+
+      function storageGet(key){
+        try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+        catch{ return mem[key] ?? null; }
+      }
+
+      function storageSet(key, value){
+        try{
+          if(hasLS) localStorage.setItem(key, value);
+          else mem[key]=String(value);
+        }catch{
+          mem[key]=String(value);
+        }
+      }
+
+      function storageRemove(key){
+        try{
+          if(hasLS) localStorage.removeItem(key);
+          else delete mem[key];
+        }catch{
+          delete mem[key];
+        }
+      }
+
+      function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+      function getWidgetId(){
+        try{
+          const sp = new URLSearchParams(location.search);
+          const wid = (sp.get("wid") || "").trim();
+          if(wid) return wid;
+        }catch{}
+
+        const key = "nt_parking_gratitude_fallback_wid__" + location.pathname;
+        const existing = storageGet(key);
+        if(existing) return existing;
+
+        const fresh = uid();
+        storageSet(key, fresh);
+        return fresh;
+      }
+
+      window.__NT__ = {
+        wid: getWidgetId(),
+        get: storageGet,
+        set: storageSet,
+        remove: storageRemove
+      };
+    })();
+
+    const WID = window.__NT__?.wid || "default";
+
+    const STORE_KEY = "not_today_parkinglot_gratitude_store_v6__" + WID;
+    const THEME_KEY = "not_today_parkinglot_gratitude_theme_v6__" + WID;
+    const BG_KEY    = "not_today_parkinglot_gratitude_bg_v6__" + WID;
+    const META_KEY  = "not_today_parkinglot_gratitude_meta_v6__" + WID;
+    const PRESETS_KEY = "widget_presets_v6";
+    const BG_IMAGE_IDB_KEY = "not_today_parkinglot_gratitude_bg_image_v6__" + WID;
 
     const $  = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -1017,26 +1227,36 @@
       x.setHours(0,0,0,0);
       return x.toISOString().slice(0,10);
     }
+
     function parseISO(iso){ return new Date(iso + "T00:00:00"); }
+
     function addDays(iso, n){
       const d = parseISO(iso);
       d.setDate(d.getDate() + n);
       return toISODate(d);
     }
-    function monthId(iso){ return iso.slice(0,7); } // YYYY-MM
+
+    function monthId(iso){ return iso.slice(0,7); }
+
     function prettyDayLabel(iso){
       const d = parseISO(iso);
       return d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
     }
+
     function prettyMonthLabel(ym){
       const d = new Date(ym + "-01T00:00:00");
       return d.toLocaleDateString(undefined, { month:"long", year:"numeric" });
     }
+
     function daysInMonth(ym){
       const [y,m] = ym.split("-").map(Number);
       return new Date(y, m, 0).getDate();
     }
-    function uid(){ return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
+
+    function uid(){
+      return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+    }
+
     function escapeHtml(s){
       return String(s ?? "")
         .replaceAll("&","&amp;")
@@ -1044,129 +1264,427 @@
         .replaceAll(">","&gt;");
     }
 
-    /* =========================
-       Store
-    ========================= */
-    function loadStore(){
+    function deepCopy(obj){
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function debounce(fn, wait=250){
+      let t = null;
+      return function(...args){
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    }
+
+    function loadJSON(key){
       try{
-        const raw = localStorage.getItem(STORE_KEY);
-        return raw ? JSON.parse(raw) : { parkingByDay: {}, pebblesByDay: {} };
+        const raw = window.__NT__.get(key);
+        return raw ? JSON.parse(raw) : null;
       }catch{
-        return { parkingByDay: {}, pebblesByDay: {} };
+        return null;
       }
     }
-    function saveStore(s){
-      localStorage.setItem(STORE_KEY, JSON.stringify(s));
+
+    function saveJSON(key, val){
+      try{ window.__NT__.set(key, JSON.stringify(val)); }catch{}
     }
-    let store = loadStore();
+
+    function removeKey(key){
+      try{ window.__NT__.remove(key); }catch{}
+    }
+
+    function status(msg){
+      const el = $("#presetStatus");
+      if(el) el.textContent = msg || "";
+    }
+
+    function bgStatus(msg){
+      const el = $("#bgStatus");
+      if(el) el.textContent = msg || "";
+    }
+
+    function setSyncBadge(msg){
+      const el = $("#syncBadge");
+      if(el) el.textContent = msg;
+    }
+
+    function copyText(text){
+      return new Promise(async (resolve) => {
+        try{
+          if(navigator.clipboard && navigator.clipboard.writeText){
+            await navigator.clipboard.writeText(text);
+            resolve(true);
+            return;
+          }
+        }catch{}
+        try{
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          const ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          resolve(!!ok);
+        }catch{
+          resolve(false);
+        }
+      });
+    }
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    const IDB_NAME = "parking_gratitude_db_v1";
+    const IDB_STORE = "kv";
+
+    function openDB(){
+      return new Promise((resolve, reject) => {
+        if(!window.indexedDB){
+          reject(new Error("IndexedDB unavailable"));
+          return;
+        }
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if(!db.objectStoreNames.contains(IDB_STORE)){
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error || new Error("IndexedDB open failed"));
+      });
+    }
+
+    async function idbGet(key){
+      try{
+        const db = await openDB();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, "readonly");
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.get(key);
+          req.onsuccess = () => resolve(req.result ?? null);
+          req.onerror = () => reject(req.error);
+        });
+      }catch{
+        return null;
+      }
+    }
+
+    async function idbSet(key, value){
+      try{
+        const db = await openDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, "readwrite");
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.put(value, key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      }catch{}
+    }
+
+    async function idbRemove(key){
+      try{
+        const db = await openDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, "readwrite");
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.delete(key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      }catch{}
+    }
+
+    let remoteReady = false;
+    let remoteRef = null;
+    let applyingRemote = false;
+    let lastRemoteUpdatedAt = 0;
+    let bootFinished = false;
+
+    function hasFirebaseConfig(){
+      const c = SYNC_CONFIG.firebaseConfig || {};
+      return !!(
+        SYNC_CONFIG.enabled &&
+        c.apiKey && c.authDomain && c.databaseURL &&
+        c.projectId && c.appId
+      );
+    }
+
+    const DEFAULT_THEME = {
+      appBg: "#ffffff",
+      ink: "#2b2b2b",
+      muted: "#7a7a7a",
+      borderColor: "#1e1e1e",
+      borderA: 0.18,
+      surfaceA: 0.78,
+      panelA: 0.94,
+      btnA: 0.94,
+      btnBorderA: 0.16,
+      overlayBase: "#ffffff",
+      overlayA: 0.34,
+
+      leftCardBg: "#ffffff",
+      leftCardA: 0.95,
+      leftHeaderBg: "#ffffff",
+      leftHeaderA: 0.94,
+      leftBlockBg: "#ffffff",
+      leftBlockA: 0.80,
+      leftItemBg: "#ffffff",
+      leftItemA: 0.86,
+      leftInputBg: "#ffffff",
+      leftInputA: 0.97,
+
+      rightCardBg: "#ffffff",
+      rightCardA: 0.95,
+      rightHeaderBg: "#ffffff",
+      rightHeaderA: 0.94,
+      rightBlockBg: "#ffffff",
+      rightBlockA: 0.80,
+      rightStageBg: "#ffffff",
+      rightStageA: 0.80,
+      rightTowerBg: "#ffffff",
+      rightTowerA: 0.52,
+      rightInputBg: "#ffffff",
+      rightInputA: 0.97,
+
+      pebbleOutlineA: 0.18
+    };
+
+    const DEFAULT_BG = {
+      tint: "#efe7e1",
+      strength: 30,
+      blur: 0,
+      imageDataUrl: null
+    };
+
+    function normalizeStore(input){
+      const src = (input && typeof input === "object") ? input : {};
+      const out = {
+        parkingByDay: {},
+        pebblesByDay: {}
+      };
+      if(src.parkingByDay && typeof src.parkingByDay === "object") out.parkingByDay = src.parkingByDay;
+      if(src.pebblesByDay && typeof src.pebblesByDay === "object") out.pebblesByDay = src.pebblesByDay;
+      return out;
+    }
+
+    let store = normalizeStore(loadJSON(STORE_KEY) || { parkingByDay: {}, pebblesByDay: {} });
+    let themeCommitted = Object.assign({}, DEFAULT_THEME, loadJSON(THEME_KEY) || {});
+    let themeDraft = deepCopy(themeCommitted);
+    let bgCommitted = Object.assign({}, DEFAULT_BG, loadJSON(BG_KEY) || {});
+    let bgDraft = deepCopy(bgCommitted);
+
+    let activeDay = toISODate(new Date());
+    let activeMonth = monthId(activeDay);
+
+    function buildStatePayload(){
+      return {
+        version: 1,
+        wid: WID,
+        updatedAt: Date.now(),
+        theme: deepCopy(themeCommitted),
+        bg: deepCopy(bgCommitted),
+        store: deepCopy(store),
+        meta: {
+          activeDay,
+          activeMonth
+        }
+      };
+    }
+
+    async function applyFullState(payload, source="local"){
+      if(!payload || typeof payload !== "object") return;
+
+      if(payload.theme && typeof payload.theme === "object"){
+        themeCommitted = Object.assign({}, DEFAULT_THEME, payload.theme);
+        themeDraft = deepCopy(themeCommitted);
+        saveJSON(THEME_KEY, themeCommitted);
+        themeApply(themeCommitted);
+        themeSyncInputs(themeDraft);
+      }
+
+      if(payload.bg && typeof payload.bg === "object"){
+        bgCommitted = Object.assign({}, DEFAULT_BG, payload.bg);
+        bgDraft = deepCopy(bgCommitted);
+        await persistBackgroundCommitted(bgCommitted);
+        bgApplyToCSS(bgDraft);
+        bgSyncInputs(bgDraft);
+      }
+
+      if(payload.store && typeof payload.store === "object"){
+        store = normalizeStore(payload.store);
+        saveJSON(STORE_KEY, store);
+      }
+
+      if(payload.meta && typeof payload.meta === "object"){
+        if(typeof payload.meta.activeDay === "string") activeDay = payload.meta.activeDay;
+        if(typeof payload.meta.activeMonth === "string") activeMonth = payload.meta.activeMonth;
+        saveJSON(META_KEY, { lastSavedAt: Date.now(), activeDay, activeMonth });
+      }
+
+      if(bootFinished){
+        renderAll();
+      }
+
+      if(source === "remote"){
+        status("Synced from cloud.");
+      }
+    }
+
+    async function initRemoteSync(){
+      if(!hasFirebaseConfig() || !window.firebase || !firebase.apps){
+        setSyncBadge("Saving locally on this device.");
+        return;
+      }
+
+      try{
+        const appFb = firebase.apps.length
+          ? firebase.app()
+          : firebase.initializeApp(SYNC_CONFIG.firebaseConfig);
+
+        const db = firebase.database(appFb);
+        const path = `${SYNC_CONFIG.namespace}/${encodeURIComponent(WID)}`;
+        remoteRef = db.ref(path);
+        remoteReady = true;
+        setSyncBadge("Cloud sync enabled.");
+
+        const snap = await remoteRef.get();
+        const remoteVal = snap.exists() ? snap.val() : null;
+        const meta = loadJSON(META_KEY) || {};
+        const localUpdated = Number(meta.lastSavedAt || 0);
+        const remoteUpdated = Number(remoteVal?.updatedAt || 0);
+
+        if(remoteVal && remoteUpdated > localUpdated){
+          applyingRemote = true;
+          lastRemoteUpdatedAt = remoteUpdated;
+          await applyFullState(remoteVal, "remote");
+          applyingRemote = false;
+        }else{
+          await pushRemoteState(true);
+        }
+
+        remoteRef.on("value", async (snapshot) => {
+          if(!snapshot.exists()) return;
+          const incoming = snapshot.val();
+          const incomingTs = Number(incoming?.updatedAt || 0);
+          const metaNow = loadJSON(META_KEY) || {};
+          const localTs = Number(metaNow.lastSavedAt || 0);
+
+          if(applyingRemote) return;
+          if(incomingTs <= Math.max(localTs, lastRemoteUpdatedAt)) return;
+
+          applyingRemote = true;
+          lastRemoteUpdatedAt = incomingTs;
+          await applyFullState(incoming, "remote");
+          applyingRemote = false;
+        });
+      }catch{
+        remoteReady = false;
+        setSyncBadge("Local save only. Cloud sync not connected.");
+      }
+    }
+
+    async function pushRemoteState(force=false){
+      if(!remoteReady || !remoteRef || applyingRemote) return;
+      try{
+        const payload = buildStatePayload();
+        const meta = loadJSON(META_KEY) || {};
+        const lastLocal = Number(meta.lastSavedAt || 0);
+        if(!force && payload.updatedAt <= lastLocal) return;
+        lastRemoteUpdatedAt = payload.updatedAt;
+        await remoteRef.set(payload);
+      }catch{}
+    }
+
+    const debouncedPushRemote = debounce(() => { pushRemoteState(false); }, 400);
+
     function ensureDay(iso){
       if(!store.parkingByDay[iso]) store.parkingByDay[iso] = [];
       if(!store.pebblesByDay[iso]) store.pebblesByDay[iso] = [];
     }
 
-    /* =========================
-       Theme (NOW ACTUALLY APPLIES COLORS)
-       We set CSS variables + also generate tiny styles to cover bg colors.
-    ========================= */
-    const DEFAULT_THEME = {
-      /* Global */
-      appBg: "#ffffff",
-      ink: "#2b2b2b",
-      muted: "#7a7a7a",
-      accent: "#cbb8ae",
-      borderColor: "#1e1e1e",
-      borderA: 0.10,
-      surfaceA: 0.78,
-      panelA: 0.92,
-      btnA: 0.92,
-      btnBorderA: 0.10,
-      overlayBase: "#ffffff",
-      overlayA: 0.34,
-
-      /* Left */
-      leftCardBg: "#ffffff",
-      leftCardA: 0.94,
-      leftHeaderBg: "#ffffff",
-      leftHeaderA: 0.92,
-      leftBlockBg: "#ffffff",
-      leftBlockA: 0.78,
-      leftItemBg: "#ffffff",
-      leftItemA: 0.82,
-      leftInputBg: "#ffffff",
-      leftInputA: 0.96,
-
-      /* Right */
-      rightCardBg: "#ffffff",
-      rightCardA: 0.94,
-      rightHeaderBg: "#ffffff",
-      rightHeaderA: 0.92,
-      rightBlockBg: "#ffffff",
-      rightBlockA: 0.78,
-      rightStageBg: "#ffffff",
-      rightStageA: 0.76,
-      rightTowerBg: "#ffffff",
-      rightTowerA: 0.45,
-      rightInputBg: "#ffffff",
-      rightInputA: 0.96,
-
-      /* Pebble */
-      pebbleOutlineA: 0.14
-    };
-
-    function themeLoad(){
-      try{ const raw = localStorage.getItem(THEME_KEY); return raw ? JSON.parse(raw) : null; }
-      catch{ return null; }
-    }
-    function themeSave(t){
-      try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
+    async function persistStore(){
+      saveJSON(STORE_KEY, store);
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      meta.activeDay = activeDay;
+      meta.activeMonth = activeMonth;
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
     }
 
-    function setAccentStyles(accentHex){
-      const accent = normHex(accentHex, DEFAULT_THEME.accent);
-      let st = document.getElementById("accentStyle");
-      if(!st){
-        st = document.createElement("style");
-        st.id = "accentStyle";
-        document.head.appendChild(st);
+    async function persistTheme(){
+      saveJSON(THEME_KEY, themeCommitted);
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      meta.activeDay = activeDay;
+      meta.activeMonth = activeMonth;
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
+    }
+
+    async function hydrateBackgroundFromIDB(){
+      if(!bgCommitted.imageDataUrl){
+        const fromDb = await idbGet(BG_IMAGE_IDB_KEY);
+        if(typeof fromDb === "string" && fromDb.startsWith("data:image/")){
+          bgCommitted.imageDataUrl = fromDb;
+          bgDraft.imageDataUrl = fromDb;
+        }
       }
-      st.textContent = `
-        .col:focus-within{
-          box-shadow: 0 0 0 4px ${hexToRgba(accent, 0.35)}, 0 10px 26px rgba(20,20,20,0.06);
-        }
-        input[type="text"]:focus, select:focus{
-          box-shadow: 0 0 0 5px ${hexToRgba(accent, 0.18)};
-        }
-      `;
+    }
+
+    async function persistBackgroundCommitted(bg){
+      bgCommitted = Object.assign({}, DEFAULT_BG, bg || {});
+      saveJSON(BG_KEY, bgCommitted);
+
+      if(bgCommitted.imageDataUrl){
+        await idbSet(BG_IMAGE_IDB_KEY, bgCommitted.imageDataUrl);
+      }else{
+        await idbRemove(BG_IMAGE_IDB_KEY);
+      }
+
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      meta.activeDay = activeDay;
+      meta.activeMonth = activeMonth;
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
     }
 
     function themeApply(t){
       const theme = Object.assign({}, DEFAULT_THEME, t || {});
       const r = document.documentElement.style;
 
-      /* Global */
       r.setProperty("--app-bg", normHex(theme.appBg, DEFAULT_THEME.appBg));
       r.setProperty("--ink", normHex(theme.ink, DEFAULT_THEME.ink));
       r.setProperty("--muted", normHex(theme.muted, DEFAULT_THEME.muted));
-      r.setProperty("--accent", normHex(theme.accent, DEFAULT_THEME.accent));
 
       r.setProperty("--border-rgb", hexToRgbTuple(theme.borderColor));
-      r.setProperty("--border-a", String(clamp(theme.borderA, 0.04, 0.30)));
+      r.setProperty("--border-a", String(clamp(theme.borderA, 0.08, 0.55)));
       r.setProperty("--surface-a", String(clamp(theme.surfaceA, 0.40, 0.98)));
-      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.60, 0.98)));
+      r.setProperty("--panel-a", String(clamp(theme.panelA, 0.65, 0.99)));
       r.setProperty("--btn-a", String(clamp(theme.btnA, 0.55, 1.00)));
-      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.00, 0.30)));
+      r.setProperty("--btn-border-a", String(clamp(theme.btnBorderA, 0.04, 0.40)));
 
       r.setProperty("--overlay-base", normHex(theme.overlayBase, DEFAULT_THEME.overlayBase));
       r.setProperty("--overlay-a", String(clamp(theme.overlayA, 0.00, 0.70)));
 
-      /* Left variables */
       r.setProperty("--left-card-a", String(clamp(theme.leftCardA, 0.70, 1.00)));
       r.setProperty("--left-header-a", String(clamp(theme.leftHeaderA, 0.70, 1.00)));
       r.setProperty("--left-block-a", String(clamp(theme.leftBlockA, 0.45, 1.00)));
       r.setProperty("--left-item-a", String(clamp(theme.leftItemA, 0.45, 1.00)));
       r.setProperty("--left-input-a", String(clamp(theme.leftInputA, 0.60, 1.00)));
 
-      /* Right variables */
       r.setProperty("--right-card-a", String(clamp(theme.rightCardA, 0.70, 1.00)));
       r.setProperty("--right-header-a", String(clamp(theme.rightHeaderA, 0.70, 1.00)));
       r.setProperty("--right-block-a", String(clamp(theme.rightBlockA, 0.45, 1.00)));
@@ -1174,19 +1692,13 @@
       r.setProperty("--right-tower-a", String(clamp(theme.rightTowerA, 0.20, 1.00)));
       r.setProperty("--right-input-a", String(clamp(theme.rightInputA, 0.60, 1.00)));
 
-      /* Pebble */
       r.setProperty("--pebble-outline-a", String(clamp(theme.pebbleOutlineA, 0.05, 0.30)));
 
-      /* Update dots */
       const themeDot = $("#themeDot");
       if(themeDot){
-        const accent = normHex(theme.accent, DEFAULT_THEME.accent);
-        themeDot.style.background = accent;
-        themeDot.style.boxShadow = `0 0 0 7px ${hexToRgba(accent, 0.22)}`;
+        themeDot.style.background = `linear-gradient(135deg, ${normHex(theme.leftCardBg, "#ffffff")}, ${normHex(theme.rightCardBg, "#ffffff")})`;
       }
-      setAccentStyles(theme.accent);
 
-      /* Overlay actually applies */
       let overlayStyle = document.getElementById("overlayStyle");
       if(!overlayStyle){
         overlayStyle = document.createElement("style");
@@ -1196,7 +1708,6 @@
       const ov = hexToRgba(normHex(theme.overlayBase, "#ffffff"), clamp(theme.overlayA, 0, 0.70));
       overlayStyle.textContent = `.board::after{ background: ${ov} !important; }`;
 
-      /* Per-half color application for all areas */
       let halfStyle = document.getElementById("halfThemeStyle");
       if(!halfStyle){
         halfStyle = document.createElement("style");
@@ -1218,20 +1729,20 @@
       const rightInput = hexToRgba(normHex(theme.rightInputBg, "#ffffff"), clamp(theme.rightInputA, 0.60, 1.00));
 
       halfStyle.textContent = `
-        /* Left */
+        body{ background: ${normHex(theme.appBg, "#ffffff")} !important; color: ${normHex(theme.ink, "#2b2b2b")} !important; }
+
         #leftCol{ background: ${leftCard} !important; }
         #leftCol .col-header{ background: ${leftHead} !important; }
         #leftCol .block{ background: ${leftBlock} !important; }
         #leftCol .park-item{ background: ${leftItem} !important; }
-        #leftCol input[type="text"]{ background: ${leftInput} !important; }
+        #leftCol input[type="text"]{ background: ${leftInput} !important; color: ${normHex(theme.ink, "#2b2b2b")} !important; }
 
-        /* Right */
         #rightCol{ background: ${rightCard} !important; }
         #rightCol .col-header{ background: ${rightHead} !important; }
         #rightCol .block{ background: ${rightBlock} !important; }
         #rightCol .month-stage{ background: ${rightStage} !important; }
         #rightCol .tower{ background: ${rightTower} !important; }
-        #rightCol input[type="text"], #rightCol select{ background: ${rightInput} !important; }
+        #rightCol input[type="text"], #rightCol select{ background: ${rightInput} !important; color: ${normHex(theme.ink, "#2b2b2b")} !important; }
       `;
     }
 
@@ -1239,21 +1750,19 @@
       const theme = Object.assign({}, DEFAULT_THEME, t || {});
       const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = String(val); };
 
-      /* Global */
       set("tAppBg", theme.appBg);
       set("tInk", theme.ink);
       set("tMuted", theme.muted);
-      set("tAccent", theme.accent);
+
       set("tBorderColor", theme.borderColor);
-      set("tBorderA", Math.round(clamp(theme.borderA, 0.04, 0.30) * 100));
+      set("tBorderA", Math.round(clamp(theme.borderA, 0.08, 0.55) * 100));
       set("tSurfaceA", Math.round(clamp(theme.surfaceA, 0.40, 0.98) * 100));
-      set("tPanelA", Math.round(clamp(theme.panelA, 0.60, 0.98) * 100));
+      set("tPanelA", Math.round(clamp(theme.panelA, 0.65, 0.99) * 100));
       set("tBtnA", Math.round(clamp(theme.btnA, 0.55, 1.00) * 100));
-      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.00, 0.30) * 100));
+      set("tBtnBorderA", Math.round(clamp(theme.btnBorderA, 0.04, 0.40) * 100));
       set("tOverlayBase", theme.overlayBase);
       set("tOverlayA", Math.round(clamp(theme.overlayA, 0.00, 0.70) * 100));
 
-      /* Left */
       set("tLeftCardBg", theme.leftCardBg);
       set("tLeftCardA", Math.round(clamp(theme.leftCardA, 0.70, 1.00) * 100));
       set("tLeftHeaderBg", theme.leftHeaderBg);
@@ -1265,7 +1774,6 @@
       set("tLeftInputBg", theme.leftInputBg);
       set("tLeftInputA", Math.round(clamp(theme.leftInputA, 0.60, 1.00) * 100));
 
-      /* Right */
       set("tRightCardBg", theme.rightCardBg);
       set("tRightCardA", Math.round(clamp(theme.rightCardA, 0.70, 1.00) * 100));
       set("tRightHeaderBg", theme.rightHeaderBg);
@@ -1279,28 +1787,24 @@
       set("tRightInputBg", theme.rightInputBg);
       set("tRightInputA", Math.round(clamp(theme.rightInputA, 0.60, 1.00) * 100));
 
-      /* Pebble */
       set("tPebbleOutlineA", Math.round(clamp(theme.pebbleOutlineA, 0.05, 0.30) * 100));
     }
 
     function themeReadFromInputs(){
       const g = (id)=>document.getElementById(id);
       return {
-        /* Global */
         appBg: g("tAppBg")?.value,
         ink: g("tInk")?.value,
         muted: g("tMuted")?.value,
-        accent: g("tAccent")?.value,
         borderColor: g("tBorderColor")?.value,
-        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.04, 0.30),
+        borderA: clamp(Number(g("tBorderA")?.value)/100, 0.08, 0.55),
         surfaceA: clamp(Number(g("tSurfaceA")?.value)/100, 0.40, 0.98),
-        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.60, 0.98),
+        panelA: clamp(Number(g("tPanelA")?.value)/100, 0.65, 0.99),
         btnA: clamp(Number(g("tBtnA")?.value)/100, 0.55, 1.00),
-        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.00, 0.30),
+        btnBorderA: clamp(Number(g("tBtnBorderA")?.value)/100, 0.04, 0.40),
         overlayBase: g("tOverlayBase")?.value,
         overlayA: clamp(Number(g("tOverlayA")?.value)/100, 0.00, 0.70),
 
-        /* Left */
         leftCardBg: g("tLeftCardBg")?.value,
         leftCardA: clamp(Number(g("tLeftCardA")?.value)/100, 0.70, 1.00),
         leftHeaderBg: g("tLeftHeaderBg")?.value,
@@ -1312,7 +1816,6 @@
         leftInputBg: g("tLeftInputBg")?.value,
         leftInputA: clamp(Number(g("tLeftInputA")?.value)/100, 0.60, 1.00),
 
-        /* Right */
         rightCardBg: g("tRightCardBg")?.value,
         rightCardA: clamp(Number(g("tRightCardA")?.value)/100, 0.70, 1.00),
         rightHeaderBg: g("tRightHeaderBg")?.value,
@@ -1326,85 +1829,16 @@
         rightInputBg: g("tRightInputBg")?.value,
         rightInputA: clamp(Number(g("tRightInputA")?.value)/100, 0.60, 1.00),
 
-        /* Pebble */
         pebbleOutlineA: clamp(Number(g("tPebbleOutlineA")?.value)/100, 0.05, 0.30),
       };
     }
 
-    function initThemeUI(){
-      const themeBtn = $("#themeBtn");
-      const themePanel = $("#themePanel");
-      const themeReset = $("#themeReset");
-
-      themeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        themePanel.classList.toggle("open");
-        $("#bgPanel")?.classList.remove("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        if(!themePanel.classList.contains("open")) return;
-        const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-        if(!inside) themePanel.classList.remove("open");
-      });
-
-      const ids = [
-        /* Global */
-        "tAppBg","tInk","tMuted","tAccent",
-        "tBorderColor","tBorderA","tSurfaceA","tPanelA",
-        "tBtnA","tBtnBorderA",
-        "tOverlayBase","tOverlayA",
-
-        /* Left */
-        "tLeftCardBg","tLeftCardA","tLeftHeaderBg","tLeftHeaderA",
-        "tLeftBlockBg","tLeftBlockA","tLeftItemBg","tLeftItemA",
-        "tLeftInputBg","tLeftInputA",
-
-        /* Right */
-        "tRightCardBg","tRightCardA","tRightHeaderBg","tRightHeaderA",
-        "tRightBlockBg","tRightBlockA","tRightStageBg","tRightStageA",
-        "tRightTowerBg","tRightTowerA","tRightInputBg","tRightInputA",
-
-        /* Pebble */
-        "tPebbleOutlineA"
-      ];
-
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if(!el) return;
-        el.addEventListener("input", () => {
-          const t = themeReadFromInputs();
-          themeApply(t);
-          themeSave(t);
-        });
-      });
-
-      themeReset.addEventListener("click", () => {
-        localStorage.removeItem(THEME_KEY);
-        themeApply(DEFAULT_THEME);
-        themeSyncInputs(DEFAULT_THEME);
-      });
-
-      const saved = themeLoad() || DEFAULT_THEME;
-      themeApply(saved);
-      themeSyncInputs(saved);
-    }
-
-    /* =========================
-       Background (now definitely works)
-    ========================= */
-    const DEFAULT_BG = { tint: "#efe7e1", strength: 30, imageDataUrl: null };
-
-    function bgLoad(){
-      try{ const raw = localStorage.getItem(BG_KEY); return raw ? JSON.parse(raw) : null; }
-      catch{ return null; }
-    }
-    function bgSave(bg){
-      try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-    }
-
     function setBoardImage(dataUrlOrNull){
       document.documentElement.style.setProperty("--board-image", dataUrlOrNull ? `url("${dataUrlOrNull}")` : "none");
+    }
+
+    function setBoardBlur(px){
+      document.documentElement.style.setProperty("--board-blur", `${clamp(px, 0, 24)}px`);
     }
 
     function applyBoardTint(colorHex, strengthPct){
@@ -1422,83 +1856,283 @@
       $("#boardTint").style.background = hexToRgba(tint, strength);
     }
 
-    function applyBackground(bg){
+    function bgApplyToCSS(bg){
+      const x = Object.assign({}, DEFAULT_BG, bg || {});
+      applyBoardTint(x.tint, x.strength);
+      setBoardBlur(x.blur);
+      setBoardImage(x.imageDataUrl || null);
+    }
+
+    function bgSyncInputs(bg){
       const x = Object.assign({}, DEFAULT_BG, bg || {});
       $("#bgColor").value = x.tint;
       $("#bgStrength").value = String(x.strength);
-      applyBoardTint(x.tint, x.strength);
-      setBoardImage(x.imageDataUrl);
+      $("#bgBlur").value = String(x.blur);
     }
 
-    function fileToDataUrl(file){
-      return new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
+    function loadPresets(){
+      const list = loadJSON(PRESETS_KEY);
+      return Array.isArray(list) ? list : [];
     }
 
-    function initBgUI(){
+    function savePresets(list){
+      saveJSON(PRESETS_KEY, list);
+    }
+
+    function refreshPresetSelect(){
+      const sel = $("#presetSelect");
+      if(!sel) return;
+      const list = loadPresets();
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">—</option>`;
+      for(const p of list){
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name || "Untitled";
+        sel.appendChild(opt);
+      }
+      if(cur) sel.value = cur;
+    }
+
+    async function applyPresetToThisWidget(p){
+      const nextTheme = Object.assign({}, DEFAULT_THEME, p?.theme || {});
+      const nextBg = Object.assign({}, DEFAULT_BG, p?.bg || {});
+
+      themeCommitted = deepCopy(nextTheme);
+      themeDraft = deepCopy(nextTheme);
+      themeApply(themeCommitted);
+      themeSyncInputs(themeDraft);
+      await persistTheme();
+
+      bgCommitted = deepCopy(nextBg);
+      bgDraft = deepCopy(nextBg);
+      bgApplyToCSS(bgCommitted);
+      bgSyncInputs(bgDraft);
+      await persistBackgroundCommitted(bgCommitted);
+
+      status("Preset applied.");
+      bgStatus("Preset background applied.");
+    }
+
+    function initPanelToggles(){
+      const themeBtn = $("#themeBtn");
+      const themePanel = $("#themePanel");
       const bgBtn = $("#bgBtn");
       const bgPanel = $("#bgPanel");
 
+      themeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = !themePanel.classList.contains("open");
+        themePanel.classList.toggle("open", open);
+        bgPanel.classList.remove("open");
+      });
+
       bgBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        bgPanel.classList.toggle("open");
-        $("#themePanel")?.classList.remove("open");
+        const open = !bgPanel.classList.contains("open");
+        bgPanel.classList.toggle("open", open);
+        themePanel.classList.remove("open");
       });
 
       document.addEventListener("click", (e) => {
-        if(!bgPanel.classList.contains("open")) return;
-        const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-        if(!inside) bgPanel.classList.remove("open");
+        const inTheme = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+        const inBg = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+        if(!inTheme) themePanel.classList.remove("open");
+        if(!inBg) bgPanel.classList.remove("open");
       });
 
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Escape"){
+          themePanel.classList.remove("open");
+          bgPanel.classList.remove("open");
+        }
+      });
+    }
+
+    function initThemeUI(){
+      const ids = [
+        "tAppBg","tInk","tMuted",
+        "tBorderColor","tBorderA","tSurfaceA","tPanelA",
+        "tBtnA","tBtnBorderA",
+        "tOverlayBase","tOverlayA",
+        "tLeftCardBg","tLeftCardA","tLeftHeaderBg","tLeftHeaderA",
+        "tLeftBlockBg","tLeftBlockA","tLeftItemBg","tLeftItemA",
+        "tLeftInputBg","tLeftInputA",
+        "tRightCardBg","tRightCardA","tRightHeaderBg","tRightHeaderA",
+        "tRightBlockBg","tRightBlockA","tRightStageBg","tRightStageA",
+        "tRightTowerBg","tRightTowerA","tRightInputBg","tRightInputA",
+        "tPebbleOutlineA"
+      ];
+
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener("input", () => {
+          themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+          themeApply(themeDraft);
+          status("");
+        });
+      });
+
+      $("#themeApply").addEventListener("click", async () => {
+        themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+        themeCommitted = deepCopy(themeDraft);
+        themeApply(themeCommitted);
+        await persistTheme();
+        status("Theme applied.");
+      });
+
+      $("#themeReset").addEventListener("click", async () => {
+        removeKey(THEME_KEY);
+        themeCommitted = deepCopy(DEFAULT_THEME);
+        themeDraft = deepCopy(DEFAULT_THEME);
+        themeSyncInputs(themeDraft);
+        themeApply(themeCommitted);
+        await persistTheme();
+        status("Theme reset.");
+      });
+
+      refreshPresetSelect();
+
+      $("#presetSave").addEventListener("click", () => {
+        const name = ($("#presetName").value || "").trim();
+        if(!name){
+          status("Type a preset name first.");
+          return;
+        }
+
+        const entry = {
+          id: uid(),
+          name,
+          theme: deepCopy(themeCommitted),
+          bg: deepCopy(bgCommitted)
+        };
+
+        const list = loadPresets();
+        list.unshift(entry);
+        savePresets(list);
+
+        $("#presetName").value = "";
+        refreshPresetSelect();
+        $("#presetSelect").value = entry.id;
+        status("Preset saved.");
+      });
+
+      $("#presetApply").addEventListener("click", async () => {
+        const id = $("#presetSelect").value;
+        if(!id){
+          status("Choose a preset first.");
+          return;
+        }
+        const p = loadPresets().find(x => x.id === id);
+        if(!p){
+          status("Preset not found.");
+          return;
+        }
+        await applyPresetToThisWidget(p);
+      });
+
+      $("#presetDelete").addEventListener("click", () => {
+        const sel = $("#presetSelect");
+        const id = sel.value;
+        if(!id){
+          status("Choose a preset first.");
+          return;
+        }
+        let list = loadPresets();
+        const before = list.length;
+        list = list.filter(x => x.id !== id);
+        if(list.length === before){
+          status("Preset not found.");
+          return;
+        }
+        savePresets(list);
+        refreshPresetSelect();
+        sel.value = "";
+        status("Preset deleted.");
+      });
+
+      themeSyncInputs(themeDraft);
+      themeApply(themeCommitted);
+    }
+
+    function initBgUI(){
+      bgSyncInputs(bgDraft);
+      bgApplyToCSS(bgDraft);
+
       $("#bgColor").addEventListener("input", () => {
-        const cur = bgLoad() || DEFAULT_BG;
-        cur.tint = $("#bgColor").value;
-        applyBackground(cur);
-        bgSave(cur);
+        bgDraft.tint = $("#bgColor").value;
+        bgApplyToCSS(bgDraft);
+        bgStatus("");
+        status("");
       });
 
       $("#bgStrength").addEventListener("input", () => {
-        const cur = bgLoad() || DEFAULT_BG;
-        cur.strength = Number($("#bgStrength").value);
-        applyBackground(cur);
-        bgSave(cur);
+        bgDraft.strength = Number($("#bgStrength").value);
+        bgApplyToCSS(bgDraft);
+        bgStatus("");
+        status("");
+      });
+
+      $("#bgBlur").addEventListener("input", () => {
+        bgDraft.blur = Number($("#bgBlur").value);
+        bgApplyToCSS(bgDraft);
+        bgStatus("");
+        status("");
       });
 
       $("#bgImage").addEventListener("change", async () => {
         const file = $("#bgImage").files && $("#bgImage").files[0];
         if(!file) return;
-        const dataUrl = await fileToDataUrl(file);
-        const cur = bgLoad() || DEFAULT_BG;
-        cur.imageDataUrl = dataUrl;
-        applyBackground(cur);
-        bgSave(cur);
+        try{
+          const dataUrl = await fileToDataUrl(file);
+          bgDraft.imageDataUrl = dataUrl;
+          bgApplyToCSS(bgDraft);
+          bgStatus("Image preview updated. Click Apply background to save it.");
+        }catch{
+          bgStatus("Could not read image.");
+        }
       });
 
       $("#removeImage").addEventListener("click", () => {
-        const cur = bgLoad() || DEFAULT_BG;
-        cur.imageDataUrl = null;
         $("#bgImage").value = "";
-        applyBackground(cur);
-        bgSave(cur);
+        bgDraft.imageDataUrl = null;
+        bgApplyToCSS(bgDraft);
+        bgStatus("Image removed from preview. Click Apply background to save.");
       });
 
-      $("#bgReset").addEventListener("click", () => {
-        localStorage.removeItem(BG_KEY);
-        applyBackground(DEFAULT_BG);
+      $("#bgApply").addEventListener("click", async () => {
+        bgCommitted = deepCopy(bgDraft);
+        await persistBackgroundCommitted(bgCommitted);
+        bgApplyToCSS(bgCommitted);
+        bgStatus("Background applied.");
       });
 
-      const saved = bgLoad() || DEFAULT_BG;
-      applyBackground(saved);
+      $("#bgReset").addEventListener("click", async () => {
+        removeKey(BG_KEY);
+        bgCommitted = deepCopy(DEFAULT_BG);
+        bgDraft = deepCopy(DEFAULT_BG);
+        bgSyncInputs(bgCommitted);
+        bgApplyToCSS(bgCommitted);
+        await persistBackgroundCommitted(bgCommitted);
+        bgStatus("Background reset.");
+      });
     }
 
-    /* =========================
-       Cute retro car SVGs
-    ========================= */
+    function syncLabels(){
+      $("#dayLabel").textContent = prettyDayLabel(activeDay);
+      $("#monthLabel").textContent = prettyMonthLabel(activeMonth);
+      $("#parkDatePill").textContent = activeDay;
+      $("#monthPill").textContent = activeMonth;
+
+      const meta = loadJSON(META_KEY) || {};
+      meta.lastSavedAt = Date.now();
+      meta.activeDay = activeDay;
+      meta.activeMonth = activeMonth;
+      saveJSON(META_KEY, meta);
+      debouncedPushRemote();
+    }
+
     function carSvg(color, styleId=0){
       const fill = normHex(color, "#e0565b");
       const styles = [
@@ -1549,35 +2183,17 @@
       ];
       return styles[(styleId||0) % styles.length](fill);
     }
+
     function randomCarStyle(){ return Math.floor(Math.random() * 3); }
 
-    /* =========================
-       Pebble sizing
-    ========================= */
     function sizePxFromChoice(choice){
-      const base = () => Math.floor(22 + Math.random()*26); // 22..48
+      const base = () => Math.floor(22 + Math.random()*26);
       if(choice === "sm") return Math.floor(18 + Math.random()*10);
       if(choice === "md") return Math.floor(26 + Math.random()*14);
       if(choice === "lg") return Math.floor(36 + Math.random()*22);
       return base();
     }
 
-    /* =========================
-       Current day/month state
-    ========================= */
-    let activeDay = toISODate(new Date());
-    let activeMonth = monthId(activeDay);
-
-    function syncLabels(){
-      $("#dayLabel").textContent = prettyDayLabel(activeDay);
-      $("#monthLabel").textContent = prettyMonthLabel(activeMonth);
-      $("#parkDatePill").textContent = activeDay;
-      $("#monthPill").textContent = activeMonth;
-    }
-
-    /* =========================
-       Parking lot
-    ========================= */
     function addParked(){
       const text = ($("#parkText").value || "").trim();
       if(!text) return;
@@ -1593,7 +2209,7 @@
         created: Date.now()
       });
 
-      saveStore(store);
+      persistStore();
       $("#parkText").value = "";
       renderParking();
     }
@@ -1601,7 +2217,7 @@
     function removeParked(id){
       ensureDay(activeDay);
       store.parkingByDay[activeDay] = store.parkingByDay[activeDay].filter(x => x.id !== id);
-      saveStore(store);
+      persistStore();
       renderParking();
     }
 
@@ -1611,7 +2227,7 @@
       if(!item) return;
       const palette = ["#e0565b","#f2994a","#f2c94c","#6fcf97","#56ccf2","#9b51e0","#eb7aa1","#2d9cdb","#27ae60","#b08968"];
       item.color = palette[Math.floor(Math.random()*palette.length)];
-      saveStore(store);
+      persistStore();
       renderParking();
     }
 
@@ -1630,6 +2246,7 @@
         const time = new Date(it.created).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
         return `
           <div class="park-item" data-id="${it.id}">
+            <div class="car" title="Tap to recolor">${carSvg(it.color, it.carStyle || 0)}</div>
             <div class="park-text">
               <div class="t">${escapeHtml(it.text)}</div>
               <div class="meta">Parked at ${time}</div>
@@ -1646,9 +2263,6 @@
       });
     }
 
-    /* =========================
-       Pebbles
-    ========================= */
     function addPebble(){
       const text = ($("#gratText").value || "").trim();
       if(!text) return;
@@ -1666,7 +2280,7 @@
         day: activeDay
       });
 
-      saveStore(store);
+      persistStore();
       $("#gratText").value = "";
       renderMonthTowers();
       renderPebbleCountPill();
@@ -1675,7 +2289,7 @@
     function deletePebbleById(dayIso, id){
       ensureDay(dayIso);
       store.pebblesByDay[dayIso] = (store.pebblesByDay[dayIso] || []).filter(p => p.id !== id);
-      saveStore(store);
+      persistStore();
       renderMonthTowers();
       renderPebbleCountPill();
     }
@@ -1699,7 +2313,7 @@
       const towers = $("#towers");
       towers.innerHTML = "";
 
-      const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#cbb8ae";
+      const pebbleBase = normHex(themeCommitted.rightBlockBg || "#cbb8ae", "#cbb8ae");
 
       daysInMonthTower().forEach(iso => {
         ensureDay(iso);
@@ -1718,14 +2332,14 @@
         const stack = tower.querySelector(".stack");
 
         dayPebbles.forEach((p, idx) => {
-          const el = document.createElement("div");
+          const el = document.createElement("button");
           el.className = "pebble";
+          el.type = "button";
           el.style.width  = `${p.sizePx}px`;
           el.style.height = `${Math.max(16, Math.floor(p.sizePx * 0.72))}px`;
 
-          // Softly varied pebble tones from accent (no picker needed)
           const a = 0.85 - Math.min(0.35, idx * 0.03);
-          el.style.setProperty("--pebble", hexToRgba(normHex(accent, "#cbb8ae"), clamp(a, 0.45, 0.90)));
+          el.style.setProperty("--pebble", hexToRgba(pebbleBase, clamp(a, 0.45, 0.90)));
 
           el.title = "Click to read";
           el.dataset.id = p.id;
@@ -1737,15 +2351,13 @@
 
         tower.querySelector(".daycap").addEventListener("click", () => {
           activeDay = iso;
+          activeMonth = monthId(activeDay);
           syncLabels();
           renderAll();
         });
       });
     }
 
-    /* =========================
-       Modal
-    ========================= */
     const modal = $("#modal");
     let modalCtx = { iso: null, id: null };
 
@@ -1778,9 +2390,6 @@
       closeModal();
     });
 
-    /* =========================
-       Navigation
-    ========================= */
     $("#prevDay").addEventListener("click", () => {
       activeDay = addDays(activeDay, -1);
       activeMonth = monthId(activeDay);
@@ -1823,12 +2432,10 @@
       renderAll();
     });
 
-    /* =========================
-       Inputs
-    ========================= */
     $("#parkText").addEventListener("keydown", (e) => {
       if(e.key === "Enter"){ e.preventDefault(); addParked(); }
     });
+
     $("#gratText").addEventListener("keydown", (e) => {
       if(e.key === "Enter"){ e.preventDefault(); addPebble(); }
     });
@@ -1836,9 +2443,6 @@
     $("#addPark").addEventListener("click", addParked);
     $("#addPebble").addEventListener("click", addPebble);
 
-    /* =========================
-       Render
-    ========================= */
     function renderAll(){
       ensureDay(activeDay);
       syncLabels();
@@ -1847,23 +2451,54 @@
       renderPebbleCountPill();
     }
 
-    /* =========================
-       Boot
-    ========================= */
-    function boot(){
-      // init theme + bg
+    async function flushAllNow(){
+      try{
+        saveJSON(THEME_KEY, themeCommitted);
+        saveJSON(BG_KEY, bgCommitted);
+        saveJSON(STORE_KEY, store);
+        saveJSON(META_KEY, {
+          lastSavedAt: Date.now(),
+          activeDay,
+          activeMonth
+        });
+        if(bgCommitted?.imageDataUrl){
+          await idbSet(BG_IMAGE_IDB_KEY, bgCommitted.imageDataUrl);
+        }
+        await pushRemoteState(true);
+      }catch{}
+    }
+
+    window.addEventListener("pagehide", () => { flushAllNow(); });
+    window.addEventListener("beforeunload", () => { flushAllNow(); });
+    document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "hidden"){
+        flushAllNow();
+      }
+    });
+
+    async function boot(){
+      await hydrateBackgroundFromIDB();
+
+      store = normalizeStore(loadJSON(STORE_KEY) || { parkingByDay: {}, pebblesByDay: {} });
+
+      const meta = loadJSON(META_KEY) || {};
+      if(typeof meta.activeDay === "string") activeDay = meta.activeDay;
+      if(typeof meta.activeMonth === "string") activeMonth = meta.activeMonth;
+      else activeMonth = monthId(activeDay);
+
+      initPanelToggles();
       initThemeUI();
       initBgUI();
 
-      // store
-      store = loadStore();
-
-      // state
-      activeDay = toISODate(new Date());
-      activeMonth = monthId(activeDay);
+      themeApply(themeCommitted);
+      bgApplyToCSS(bgCommitted);
 
       syncLabels();
       renderAll();
+
+      bootFinished = true;
+      await initRemoteSync();
+      await flushAllNow();
     }
 
     boot();

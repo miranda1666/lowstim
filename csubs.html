@@ -280,18 +280,22 @@
     }
 
     .panel{
-      position:absolute;
-      width:320px;
+      position:fixed;
+      top:20px;
+      left:50%;
+      transform:translateX(-50%);
+      width:min(340px, calc(100vw - 28px));
       border-radius:16px;
       border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.94);
-      box-shadow: 0 18px 40px rgba(30,20,10,.12);
+      background: rgba(255,255,255,0.97);
+      box-shadow: 0 18px 40px rgba(30,20,10,.18);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       padding:12px;
       display:none;
-      z-index:9999;
+      z-index:99999;
       overflow:auto;
+      max-height:calc(100dvh - 40px);
     }
 
     .panel.open{ display:block; }
@@ -381,16 +385,6 @@
       body{ padding:14px; }
       .row{ flex-direction:column; align-items:stretch; }
       .item .right{ width:100%; justify-content:flex-end; }
-
-      .panel{
-        position:fixed !important;
-        top:14px !important;
-        left:14px !important;
-        right:14px !important;
-        width:auto !important;
-        max-height:calc(100dvh - 28px) !important;
-      }
-
       input, select, textarea{ font-size:16px; }
     }
   </style>
@@ -841,12 +835,9 @@
   const $ = (id)=>document.getElementById(id);
 
   const els = {
-    widgetShell:$("widgetShell"),
     themeBtn:$("themeBtn"),
-    themeWrap:$("themeWrap"),
     themePanel:$("themePanel"),
     bgBtn:$("bgBtn"),
-    bgWrap:$("bgWrap"),
     bgPanel:$("bgPanel"),
 
     themeDot:$("themeDot"),
@@ -1081,18 +1072,6 @@
     return list.find(x => x.id === id) || null;
   }
 
-  function daysUntilRenew(renewDay){
-    const now = new Date();
-    const d = now.getDate();
-    let diff = renewDay - d;
-    if(diff < 0) diff += 31;
-    return diff;
-  }
-
-  function sortByNextRenew(subs){
-    return [...subs].sort((a,b)=> daysUntilRenew(a.renewDay) - daysUntilRenew(b.renewDay));
-  }
-
   function renderKPIs(sorted){
     const total = sorted.reduce((a,s)=>a + Number(s.cost||0), 0);
     els.kTotal.textContent = money(total);
@@ -1172,6 +1151,18 @@
     broadcast("subscriptions");
   }
 
+  function daysUntilRenew(renewDay){
+    const now = new Date();
+    const d = now.getDate();
+    let diff = renewDay - d;
+    if(diff < 0) diff += 31;
+    return diff;
+  }
+
+  function sortByNextRenew(subs){
+    return [...subs].sort((a,b)=> daysUntilRenew(a.renewDay) - daysUntilRenew(b.renewDay));
+  }
+
   let state = sanitizeState(loadJSON(KEY, defaultState()));
   let themeDraft = safeTheme(DEFAULT_THEME);
   let bgDraft = safeBg(DEFAULT_BG);
@@ -1184,66 +1175,18 @@
     });
   }
 
-  function positionPanel(btn, panel){
-    if(window.innerWidth <= 760) return;
-
-    const btnRect = btn.getBoundingClientRect();
-    const viewportPad = 12;
-
-    panel.style.left = "0px";
-    panel.style.top = "0px";
-    panel.style.maxHeight = "";
-    panel.style.width = "320px";
-
-    const panelRect = panel.getBoundingClientRect();
-    const panelWidth = panelRect.width || 320;
-    const naturalHeight = panel.scrollHeight || panelRect.height || 400;
-
-    let left = window.scrollX + btnRect.right - panelWidth;
-    const minLeft = window.scrollX + viewportPad;
-    const maxLeft = window.scrollX + window.innerWidth - panelWidth - viewportPad;
-    left = Math.max(minLeft, Math.min(maxLeft, left));
-
-    const spaceBelow = window.innerHeight - btnRect.bottom - viewportPad;
-    const spaceAbove = btnRect.top - viewportPad;
-
-    let top;
-    let maxHeight;
-
-    if(spaceBelow >= Math.min(naturalHeight, 260) || spaceBelow >= spaceAbove){
-      top = window.scrollY + btnRect.bottom + 8;
-      maxHeight = Math.max(220, spaceBelow - 8);
-    }else{
-      maxHeight = Math.max(220, spaceAbove - 8);
-      top = window.scrollY + btnRect.top - Math.min(naturalHeight, maxHeight) - 8;
-    }
-
-    const minTop = window.scrollY + viewportPad;
-    const maxTop = window.scrollY + window.innerHeight - Math.min(naturalHeight, maxHeight) - viewportPad;
-    top = Math.max(minTop, Math.min(maxTop, top));
-
-    panel.style.left = `${left}px`;
-    panel.style.top = `${top}px`;
-    panel.style.maxHeight = `${maxHeight}px`;
-  }
-
-  function togglePanel(btn, panel){
-    const open = !panel.classList.contains("open");
-    closeAllPanels(open ? panel : null);
-    panel.classList.toggle("open", open);
-    if(open){
-      requestAnimationFrame(() => positionPanel(btn, panel));
-    }
-  }
-
   els.themeBtn.addEventListener("click", (e)=>{
     e.stopPropagation();
-    togglePanel(els.themeBtn, els.themePanel);
+    const open = !els.themePanel.classList.contains("open");
+    closeAllPanels(open ? els.themePanel : null);
+    els.themePanel.classList.toggle("open", open);
   });
 
   els.bgBtn.addEventListener("click", (e)=>{
     e.stopPropagation();
-    togglePanel(els.bgBtn, els.bgPanel);
+    const open = !els.bgPanel.classList.contains("open");
+    closeAllPanels(open ? els.bgPanel : null);
+    els.bgPanel.classList.toggle("open", open);
   });
 
   document.addEventListener("click",(e)=>{
@@ -1253,23 +1196,10 @@
     if(!inside) closeAllPanels(null);
   });
 
-  window.addEventListener("resize", () => {
-    if(els.themePanel.classList.contains("open")) positionPanel(els.themeBtn, els.themePanel);
-    if(els.bgPanel.classList.contains("open")) positionPanel(els.bgBtn, els.bgPanel);
-  });
-
-  window.addEventListener("scroll", () => {
-    if(els.themePanel.classList.contains("open")) positionPanel(els.themeBtn, els.themePanel);
-    if(els.bgPanel.classList.contains("open")) positionPanel(els.bgBtn, els.bgPanel);
-  }, { passive:true });
-
   [els.tBg, els.tInk, els.tMuted, els.tAccent, els.tCard, els.tCardA, els.tStroke, els.tSoft, els.tItemBg, els.tInputBg, els.tRadius, els.tShadow].forEach(el=>{
     el.addEventListener("input", ()=>{
       themeDraft = applyTheme(readThemeInputs());
       setStatus("");
-      if(els.themePanel.classList.contains("open")){
-        requestAnimationFrame(() => positionPanel(els.themeBtn, els.themePanel));
-      }
     });
   });
 
@@ -1278,9 +1208,6 @@
     syncThemeInputs(themeDraft);
     await saveTheme(themeDraft);
     setStatus("Theme applied.");
-    if(els.themePanel.classList.contains("open")){
-      requestAnimationFrame(() => positionPanel(els.themeBtn, els.themePanel));
-    }
   });
 
   els.themeReset.addEventListener("click", async ()=>{
@@ -1288,9 +1215,6 @@
     syncThemeInputs(themeDraft);
     await saveTheme(themeDraft);
     setStatus("Theme reset.");
-    if(els.themePanel.classList.contains("open")){
-      requestAnimationFrame(() => positionPanel(els.themeBtn, els.themePanel));
-    }
   });
 
   els.bgColor.addEventListener("input", ()=>{
@@ -1318,9 +1242,6 @@
       bgDraftImage = await fileToDataUrl(file);
       applyBackground(bgDraft, bgDraftImage);
       setStatus("");
-      if(els.bgPanel.classList.contains("open")){
-        requestAnimationFrame(() => positionPanel(els.bgBtn, els.bgPanel));
-      }
     }catch{
       setStatus("Could not load image.");
     }
@@ -1377,9 +1298,6 @@
     await refreshPresetSelect();
     els.presetSelect.value = id;
     setStatus("Preset saved.");
-    if(els.themePanel.classList.contains("open")){
-      requestAnimationFrame(() => positionPanel(els.themeBtn, els.themePanel));
-    }
   });
 
   els.presetApply.addEventListener("click", async ()=>{
@@ -1406,9 +1324,6 @@
     await saveBackground(bgDraft, bgDraftImage);
 
     setStatus("Preset applied.");
-    if(els.themePanel.classList.contains("open")){
-      requestAnimationFrame(() => positionPanel(els.themeBtn, els.themePanel));
-    }
   });
 
   els.presetDelete.addEventListener("click", async ()=>{
@@ -1430,9 +1345,6 @@
     await refreshPresetSelect();
     els.presetSelect.value = "";
     setStatus("Preset deleted.");
-    if(els.themePanel.classList.contains("open")){
-      requestAnimationFrame(() => positionPanel(els.themeBtn, els.themePanel));
-    }
   });
 
   els.currency.value = storageGet(CUR_KEY) || "AUTO";

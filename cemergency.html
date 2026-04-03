@@ -15,7 +15,7 @@
       --shadow:0 10px 30px rgba(30,20,10,.06);
       --r:18px;
 
-      --board-tint:#ffffff;
+      --board-tint:#efe7e1;
       --board-tint-a:0.30;
       --board-image:none;
       --board-blur:2px;
@@ -47,10 +47,11 @@
       margin:0 auto;
       position:relative;
       border-radius:var(--r);
-      overflow:visible;
+      overflow:hidden;
       border:1px solid var(--stroke);
       box-shadow:var(--shadow);
       background: var(--board-base-bg);
+      isolation:isolate;
     }
 
     .widgetBoard::before{
@@ -61,21 +62,11 @@
       background-size:cover;
       background-position:center;
       background-repeat:no-repeat;
-      transform:scale(1.02);
       z-index:0;
       pointer-events:none;
       filter: blur(var(--board-blur)) saturate(1);
-      border-radius:var(--r);
-    }
-
-    .widgetBoard::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background: transparent;
-      pointer-events:none;
-      z-index:0;
-      border-radius:var(--r);
+      transform: scale(1.03);
+      transform-origin:center;
     }
 
     .boardTint{
@@ -83,8 +74,8 @@
       inset:0;
       pointer-events:none;
       z-index:1;
-      background:rgba(0,0,0,0);
-      border-radius:var(--r);
+      background:rgba(239,231,225,0.30);
+      border-radius:inherit;
     }
 
     .boardContent{

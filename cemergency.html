@@ -18,7 +18,8 @@
       --board-tint:#ffffff;
       --board-tint-a:0.30;
       --board-image:none;
-      --board-blur:0px;
+      --board-blur:2px;
+      --board-base-bg: rgba(239,231,225,0.30);
 
       --panel-bg: rgba(255,255,255,0.96);
       --field-bg: #ffffff;
@@ -49,7 +50,7 @@
       overflow:visible;
       border:1px solid var(--stroke);
       box-shadow:var(--shadow);
-      background:transparent;
+      background: var(--board-base-bg);
     }
 
     .widgetBoard::before{
@@ -71,7 +72,7 @@
       content:"";
       position:absolute;
       inset:0;
-      background: rgba(255,255,255,0.18);
+      background: transparent;
       pointer-events:none;
       z-index:0;
       border-radius:var(--r);
@@ -500,7 +501,7 @@
 
     <div class="bgRow">
       <label for="bgBlur">Image blur</label>
-      <input id="bgBlur" type="range" min="0" max="20" value="0" />
+      <input id="bgBlur" type="range" min="2" max="20" value="2" />
     </div>
 
     <div class="bgDiv"></div>
@@ -593,12 +594,12 @@
 
   function hexToRgba(hex, a){
     const h = String(hex || "").replace("#","").trim();
-    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
+    const full = h.length === 3 ? h.split("").map(function(c){ return c + c; }).join("") : h;
     const num = parseInt(full || "efe7e1", 16);
     const r = (num >> 16) & 255;
     const g = (num >> 8) & 255;
     const b = num & 255;
-    return `rgba(${r},${g},${b},${a})`;
+    return "rgba(" + r + "," + g + "," + b + "," + a + ")";
   }
 
   function clamp(n, a, b){
@@ -612,12 +613,12 @@
   }
 
   function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   function normHex(hex, fallback){
@@ -679,15 +680,16 @@
   const THEME_KEY = "emergency_fund_theme_v2__" + WID;
   const BG_KEY = "emergency_fund_bg_v2__" + WID;
   const BG_IMAGE_KEY = "emergency_fund_bg_image_v2__" + WID;
+  const BG_IMAGE_STAMP_KEY = "emergency_fund_bg_image_stamp_v2__" + WID;
 
-  const DB_NAME = "emergency_fund_meter_db_v2";
+  const DB_NAME = "emergency_fund_meter_db_v3";
   const DB_STORE = "kv";
   let dbPromise = null;
 
   function openDB(){
     if(dbPromise) return dbPromise;
 
-    dbPromise = new Promise((resolve) => {
+    dbPromise = new Promise(function(resolve){
       if(!("indexedDB" in window)){
         resolve(null);
         return;
@@ -695,15 +697,15 @@
 
       const request = indexedDB.open(DB_NAME, 1);
 
-      request.onupgradeneeded = () => {
+      request.onupgradeneeded = function(){
         const db = request.result;
         if(!db.objectStoreNames.contains(DB_STORE)){
           db.createObjectStore(DB_STORE);
         }
       };
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => resolve(null);
+      request.onsuccess = function(){ resolve(request.result); };
+      request.onerror = function(){ resolve(null); };
     });
 
     return dbPromise;
@@ -713,13 +715,13 @@
     const db = await openDB();
     if(!db) return null;
 
-    return new Promise((resolve) => {
+    return new Promise(function(resolve){
       try{
         const tx = db.transaction(DB_STORE, "readonly");
         const store = tx.objectStore(DB_STORE);
         const req = store.get(key);
-        req.onsuccess = () => resolve(req.result ?? null);
-        req.onerror = () => resolve(null);
+        req.onsuccess = function(){ resolve(req.result ?? null); };
+        req.onerror = function(){ resolve(null); };
       }catch{
         resolve(null);
       }
@@ -730,13 +732,13 @@
     const db = await openDB();
     if(!db) return false;
 
-    return new Promise((resolve) => {
+    return new Promise(function(resolve){
       try{
         const tx = db.transaction(DB_STORE, "readwrite");
         const store = tx.objectStore(DB_STORE);
         const req = store.put(value, key);
-        req.onsuccess = () => resolve(true);
-        req.onerror = () => resolve(false);
+        req.onsuccess = function(){ resolve(true); };
+        req.onerror = function(){ resolve(false); };
       }catch{
         resolve(false);
       }
@@ -747,20 +749,20 @@
     const db = await openDB();
     if(!db) return false;
 
-    return new Promise((resolve) => {
+    return new Promise(function(resolve){
       try{
         const tx = db.transaction(DB_STORE, "readwrite");
         const store = tx.objectStore(DB_STORE);
         const req = store.delete(key);
-        req.onsuccess = () => resolve(true);
-        req.onerror = () => resolve(false);
+        req.onsuccess = function(){ resolve(true); };
+        req.onerror = function(){ resolve(false); };
       }catch{
         resolve(false);
       }
     });
   }
 
-  function loadJSON(key, fallback = null){
+  function loadJSON(key, fallback){
     try{
       const raw = storageGet(key);
       return raw ? JSON.parse(raw) : fallback;
@@ -774,6 +776,8 @@
   }
 
   const els = {
+    widgetBoard: document.getElementById("widgetBoard"),
+
     confirmBackdrop: document.getElementById("confirmBackdrop"),
     confirmBody: document.getElementById("confirmBody"),
     confirmOk: document.getElementById("confirmOk"),
@@ -827,14 +831,18 @@
   };
 
   let confirmResolver = null;
-  function askConfirm(message, { okText="Confirm", cancelText="Cancel" } = {}){
-    return new Promise((resolve) => {
+  function askConfirm(message, options){
+    const opt = options || {};
+    const okText = opt.okText || "Confirm";
+    const cancelText = opt.cancelText || "Cancel";
+
+    return new Promise(function(resolve){
       confirmResolver = resolve;
-      els.confirmBody.innerHTML = `<div>${escapeHtml(message)}</div>`;
+      els.confirmBody.innerHTML = "<div>" + escapeHtml(message) + "</div>";
       els.confirmOk.textContent = okText;
       els.confirmCancel.textContent = cancelText;
       els.confirmBackdrop.classList.add("show");
-      setTimeout(() => els.confirmOk.focus(), 0);
+      setTimeout(function(){ els.confirmOk.focus(); }, 0);
     });
   }
 
@@ -845,20 +853,21 @@
     if(r) r(val);
   }
 
-  els.confirmOk.addEventListener("click", () => closeConfirm(true));
-  els.confirmCancel.addEventListener("click", () => closeConfirm(false));
-  els.confirmBackdrop.addEventListener("click", (e) => {
+  els.confirmOk.addEventListener("click", function(){ closeConfirm(true); });
+  els.confirmCancel.addEventListener("click", function(){ closeConfirm(false); });
+  els.confirmBackdrop.addEventListener("click", function(e){
     if(e.target === els.confirmBackdrop) closeConfirm(false);
   });
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", function(e){
     if(els.confirmBackdrop.classList.contains("show") && e.key === "Escape"){
       closeConfirm(false);
     }
   });
 
   function setStatus(msg){
-    els.presetStatus.textContent = msg || "";
-    els.bgStatus.textContent = msg || "";
+    const text = msg || "";
+    els.presetStatus.textContent = text;
+    els.bgStatus.textContent = text;
   }
 
   const DEFAULT_THEME = {
@@ -873,7 +882,7 @@
   const DEFAULT_BG = {
     tint:"#efe7e1",
     strength:30,
-    blur:0
+    blur:2
   };
 
   function safeTheme(t){
@@ -893,7 +902,7 @@
     return {
       tint: normHex(x.tint, DEFAULT_BG.tint),
       strength: clamp(x.strength, 0, 70),
-      blur: clamp(x.blur, 0, 20)
+      blur: clamp(x.blur, 2, 20)
     };
   }
 
@@ -908,7 +917,7 @@
     document.documentElement.style.setProperty("--theme-dot", t.ink);
 
     els.themeDot.style.background = t.ink;
-    els.themeDot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.stroke, 0.35)}`;
+    els.themeDot.style.boxShadow = "0 0 0 6px " + hexToRgba(t.stroke, 0.35);
     els.themeDot.style.borderColor = hexToRgba(t.stroke, 0.95);
 
     return t;
@@ -917,23 +926,19 @@
   function applyBgToCSS(bg, imageDataUrl){
     const b = safeBg(bg);
     const strength = b.strength / 100;
+    const tintLayer = hexToRgba(b.tint, strength);
 
     document.documentElement.style.setProperty("--board-tint", b.tint);
     document.documentElement.style.setProperty("--board-tint-a", String(strength));
-    document.documentElement.style.setProperty("--board-image", imageDataUrl ? `url("${imageDataUrl}")` : "none");
-    document.documentElement.style.setProperty("--board-blur", `${b.blur}px`);
+    document.documentElement.style.setProperty("--board-image", imageDataUrl ? "url(\"" + imageDataUrl + "\")" : "none");
+    document.documentElement.style.setProperty("--board-blur", b.blur + "px");
+    document.documentElement.style.setProperty("--board-base-bg", tintLayer);
 
-    els.boardTint.style.background = hexToRgba(b.tint, strength);
+    els.widgetBoard.style.background = tintLayer;
+    els.boardTint.style.background = tintLayer;
     els.bgDot.style.background = b.tint;
-    els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(b.tint, Math.min(0.35, strength + 0.12))}`;
+    els.bgDot.style.boxShadow = "0 0 0 6px " + hexToRgba(b.tint, Math.min(0.35, strength + 0.12));
 
-    let st = document.getElementById("ef_overlay_style");
-    if(!st){
-      st = document.createElement("style");
-      st.id = "ef_overlay_style";
-      document.head.appendChild(st);
-    }
-    st.textContent = `.widgetBoard::after{background:${hexToRgba("#ffffff", clamp(strength + 0.08, 0.08, 0.55))} !important;}`;
     return b;
   }
 
@@ -972,51 +977,94 @@
   }
 
   async function fileToDataUrl(file){
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject){
       const r = new FileReader();
-      r.onload = () => resolve(String(r.result || ""));
+      r.onload = function(){ resolve(String(r.result || "")); };
       r.onerror = reject;
       r.readAsDataURL(file);
     });
   }
 
+  async function saveImageValue(key, imageDataUrl){
+    if(!imageDataUrl){
+      await idbRemove(key);
+      storageRemove(key);
+      return true;
+    }
+
+    let ok = await idbSet(key, imageDataUrl);
+    try{
+      storageSet(key, imageDataUrl);
+      ok = true;
+    }catch{}
+    return ok;
+  }
+
+  async function loadImageValue(key){
+    let image = await idbGet(key);
+    if(typeof image === "string" && image) return image;
+
+    const raw = storageGet(key);
+    return (typeof raw === "string" && raw) ? raw : null;
+  }
+
+  async function removeImageValue(key){
+    await idbRemove(key);
+    storageRemove(key);
+  }
+
   async function loadBackground(){
     const bg = safeBg(loadJSON(BG_KEY, DEFAULT_BG));
-    const image = await idbGet(BG_IMAGE_KEY);
+    const image = await loadImageValue(BG_IMAGE_KEY);
     return {
-      bg,
-      imageDataUrl: (typeof image === "string" && image) ? image : null
+      bg: bg,
+      imageDataUrl: image
     };
   }
 
   async function saveBackground(bg, imageDataUrl){
     saveJSON(BG_KEY, safeBg(bg));
     if(imageDataUrl){
-      await idbSet(BG_IMAGE_KEY, imageDataUrl);
+      await saveImageValue(BG_IMAGE_KEY, imageDataUrl);
     }else{
-      await idbRemove(BG_IMAGE_KEY);
+      await removeImageValue(BG_IMAGE_KEY);
     }
+    storageSet(BG_IMAGE_STAMP_KEY, String(Date.now()));
+  }
+
+  function presetImageKey(id){
+    return "emergency_fund_preset_image_v2__" + id;
+  }
+
+  async function savePresetImage(id, imageDataUrl){
+    if(imageDataUrl){
+      await saveImageValue(presetImageKey(id), imageDataUrl);
+    }else{
+      await removeImageValue(presetImageKey(id));
+    }
+  }
+
+  async function loadPresetImage(id){
+    return loadImageValue(presetImageKey(id));
   }
 
   async function refreshPresetSelect(){
     const list = loadJSON(PRESETS_KEY, []);
     const current = els.presetSelect.value;
-    els.presetSelect.innerHTML = `<option value="">—</option>`;
+    els.presetSelect.innerHTML = "<option value=\"\">—</option>";
+
     if(Array.isArray(list)){
-      for(const p of list){
+      for(let i = 0; i < list.length; i++){
+        const p = list[i];
         const opt = document.createElement("option");
         opt.value = p.id;
         opt.textContent = p.name || "Untitled";
         els.presetSelect.appendChild(opt);
       }
-      if(current && list.some(x => x.id === current)){
+      if(current && list.some(function(x){ return x.id === current; })){
         els.presetSelect.value = current;
       }
     }
-  }
-
-  function presetImageKey(id){
-    return `emergency_fund_preset_image_v2__${id}`;
   }
 
   function positionPanel(btn, panel){
@@ -1034,7 +1082,7 @@
     panel.style.width = "300px";
     panel.style.left = "0px";
     panel.style.top = "0px";
-    panel.style.maxHeight = `calc(100dvh - ${pad * 2}px)`;
+    panel.style.maxHeight = "calc(100dvh - " + (pad * 2) + "px)";
 
     const btnRect = btn.getBoundingClientRect();
     const panelWidth = panel.offsetWidth || 300;
@@ -1052,13 +1100,13 @@
       maxHeight = viewportH - top - pad;
     }
 
-    panel.style.left = `${Math.round(left)}px`;
-    panel.style.top = `${Math.round(top)}px`;
-    panel.style.maxHeight = `${Math.max(220, maxHeight)}px`;
+    panel.style.left = Math.round(left) + "px";
+    panel.style.top = Math.round(top) + "px";
+    panel.style.maxHeight = Math.max(220, maxHeight) + "px";
   }
 
   function closeAllPanels(except){
-    [els.themePanel, els.bgPanel].forEach((panel) => {
+    [els.themePanel, els.bgPanel].forEach(function(panel){
       if(panel !== except) panel.classList.remove("open");
     });
   }
@@ -1068,32 +1116,32 @@
     closeAllPanels(null);
     if(isOpen) return;
     panel.classList.add("open");
-    requestAnimationFrame(() => positionPanel(btn, panel));
+    requestAnimationFrame(function(){ positionPanel(btn, panel); });
   }
 
-  els.themeBtn.addEventListener("click", (e) => {
+  els.themeBtn.addEventListener("click", function(e){
     e.stopPropagation();
     openPanel(els.themeBtn, els.themePanel);
   });
 
-  els.bgBtn.addEventListener("click", (e) => {
+  els.bgBtn.addEventListener("click", function(e){
     e.stopPropagation();
     openPanel(els.bgBtn, els.bgPanel);
   });
 
-  document.addEventListener("click", (e) => {
+  document.addEventListener("click", function(e){
     const inside =
       e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
       e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
     if(!inside) closeAllPanels(null);
   });
 
-  window.addEventListener("resize", () => {
+  window.addEventListener("resize", function(){
     if(els.themePanel.classList.contains("open")) positionPanel(els.themeBtn, els.themePanel);
     if(els.bgPanel.classList.contains("open")) positionPanel(els.bgBtn, els.bgPanel);
   });
 
-  window.addEventListener("scroll", () => {
+  window.addEventListener("scroll", function(){
     if(els.themePanel.classList.contains("open")) positionPanel(els.themeBtn, els.themePanel);
     if(els.bgPanel.classList.contains("open")) positionPanel(els.bgBtn, els.bgPanel);
   }, { passive:true });
@@ -1109,8 +1157,8 @@
   function loadState(){
     const raw = loadJSON(KEY, defaultState());
     return {
-      current: Math.max(0, Number(raw?.current || 0)),
-      target: Math.max(1, Number(raw?.target || 1000))
+      current: Math.max(0, Number(raw && raw.current || 0)),
+      target: Math.max(1, Number(raw && raw.target || 1000))
     };
   }
 
@@ -1124,7 +1172,7 @@
     if(r >= 0.9) return {label:"Safe", note:"You’re close to (or at) your target emergency fund. So proud of you!"};
     if(r >= 0.6) return {label:"Comfortable", note:"You have meaningful breathing room. Yay!"};
     if(r >= 0.3) return {label:"Okay", note:"Some cushion — keep going!"};
-    return {label:"Barely", note:"It’s okay to start small. Any amount helps :)"}; 
+    return {label:"Barely", note:"It’s okay to start small. Any amount helps :)"};
   }
 
   const REGION_TO_CURRENCY = {
@@ -1182,79 +1230,93 @@
     els.efCurrent.value = String(cur);
     els.efTarget.value = String(tar);
     els.labelTxt.textContent = info.label;
-    els.detailTxt.textContent = `${money(cur)} of ${money(tar)}`;
-    els.pctTxt.textContent = `${pct}%`;
+    els.detailTxt.textContent = money(cur) + " of " + money(tar);
+    els.pctTxt.textContent = pct + "%";
     els.fill.style.width = Math.max(2, pct) + "%";
     els.noteTxt.textContent = info.note;
   }
 
-  [els.tPageBg, els.tText, els.tMuted, els.tStroke, els.tCard, els.tSoft].forEach((el) => {
-    el.addEventListener("input", () => {
+  function persistTheme(){
+    saveJSON(THEME_KEY, safeTheme(themeDraft));
+  }
+
+  async function persistBackground(){
+    await saveBackground(bgDraft, bgDraftImage);
+  }
+
+  [els.tPageBg, els.tText, els.tMuted, els.tStroke, els.tCard, els.tSoft].forEach(function(el){
+    el.addEventListener("input", function(){
       themeDraft = applyThemeToCSS(readThemeInputs());
+      persistTheme();
       setStatus("");
     });
   });
 
-  [els.bgColor, els.bgStrength, els.bgBlur].forEach((el) => {
-    el.addEventListener("input", () => {
+  [els.bgColor, els.bgStrength, els.bgBlur].forEach(function(el){
+    el.addEventListener("input", function(){
       bgDraft = readBgInputs();
       applyBgToCSS(bgDraft, bgDraftImage);
+      void persistBackground();
       setStatus("");
     });
   });
 
-  els.bgImage.addEventListener("change", async () => {
+  els.bgImage.addEventListener("change", async function(){
     const file = els.bgImage.files && els.bgImage.files[0];
     if(!file) return;
     try{
       bgDraftImage = await fileToDataUrl(file);
+      bgDraft = readBgInputs();
       applyBgToCSS(bgDraft, bgDraftImage);
-      setStatus("");
+      await persistBackground();
+      setStatus("Background image saved.");
     }catch{
       setStatus("Could not load image.");
     }
   });
 
-  els.bgRemove.addEventListener("click", () => {
+  els.bgRemove.addEventListener("click", async function(){
     bgDraftImage = null;
     els.bgImage.value = "";
+    bgDraft = readBgInputs();
     applyBgToCSS(bgDraft, bgDraftImage);
-    setStatus("");
+    await persistBackground();
+    setStatus("Background image removed.");
   });
 
-  els.themeApply.addEventListener("click", () => {
+  els.themeApply.addEventListener("click", function(){
     themeDraft = applyThemeToCSS(readThemeInputs());
     syncThemeInputs(themeDraft);
-    saveJSON(THEME_KEY, themeDraft);
+    persistTheme();
     setStatus("Theme applied.");
   });
 
-  els.resetTheme.addEventListener("click", () => {
+  els.resetTheme.addEventListener("click", function(){
     themeDraft = applyThemeToCSS(DEFAULT_THEME);
     syncThemeInputs(themeDraft);
-    saveJSON(THEME_KEY, themeDraft);
+    persistTheme();
     setStatus("Theme reset.");
   });
 
-  els.bgApply.addEventListener("click", async () => {
+  els.bgApply.addEventListener("click", async function(){
     bgDraft = readBgInputs();
     applyBgToCSS(bgDraft, bgDraftImage);
     syncBgInputs(bgDraft);
-    await saveBackground(bgDraft, bgDraftImage);
+    await persistBackground();
     setStatus("Background applied.");
   });
 
-  els.bgReset.addEventListener("click", async () => {
+  els.bgReset.addEventListener("click", async function(){
     bgDraft = safeBg(DEFAULT_BG);
     bgDraftImage = null;
     syncBgInputs(bgDraft);
     els.bgImage.value = "";
     applyBgToCSS(bgDraft, bgDraftImage);
-    await saveBackground(bgDraft, bgDraftImage);
+    await persistBackground();
     setStatus("Background reset.");
   });
 
-  els.presetSave.addEventListener("click", async () => {
+  els.presetSave.addEventListener("click", async function(){
     const name = (els.presetName.value || "").trim();
     if(!name){
       setStatus("Type a preset name first.");
@@ -1263,17 +1325,19 @@
 
     const list = loadJSON(PRESETS_KEY, []);
     const id = uid();
+    const themeToSave = readThemeInputs();
+    const bgToSave = readBgInputs();
 
     list.unshift({
-      id,
-      name,
-      theme: readThemeInputs(),
-      bg: readBgInputs(),
+      id: id,
+      name: name,
+      theme: themeToSave,
+      bg: bgToSave,
       hasImage: !!bgDraftImage
     });
 
     if(bgDraftImage){
-      await idbSet(presetImageKey(id), bgDraftImage);
+      await savePresetImage(id, bgDraftImage);
     }
 
     saveJSON(PRESETS_KEY, list);
@@ -1283,7 +1347,7 @@
     setStatus("Preset saved.");
   });
 
-  els.presetApply.addEventListener("click", async () => {
+  els.presetApply.addEventListener("click", async function(){
     const id = els.presetSelect.value || "";
     if(!id){
       setStatus("Choose a preset first.");
@@ -1291,7 +1355,7 @@
     }
 
     const list = loadJSON(PRESETS_KEY, []);
-    const preset = Array.isArray(list) ? list.find(x => x.id === id) : null;
+    const preset = Array.isArray(list) ? list.find(function(x){ return x.id === id; }) : null;
     if(!preset){
       setStatus("Preset not found.");
       return;
@@ -1299,19 +1363,19 @@
 
     themeDraft = applyThemeToCSS(preset.theme || DEFAULT_THEME);
     syncThemeInputs(themeDraft);
-    saveJSON(THEME_KEY, themeDraft);
+    persistTheme();
 
     bgDraft = safeBg(preset.bg || DEFAULT_BG);
-    bgDraftImage = preset.hasImage ? await idbGet(presetImageKey(id)) : null;
+    bgDraftImage = preset.hasImage ? await loadPresetImage(id) : null;
     syncBgInputs(bgDraft);
     els.bgImage.value = "";
     applyBgToCSS(bgDraft, bgDraftImage);
-    await saveBackground(bgDraft, bgDraftImage);
+    await persistBackground();
 
     setStatus("Preset applied.");
   });
 
-  els.presetDelete.addEventListener("click", async () => {
+  els.presetDelete.addEventListener("click", async function(){
     const id = els.presetSelect.value || "";
     if(!id){
       setStatus("Choose a preset first.");
@@ -1319,30 +1383,30 @@
     }
 
     const list = loadJSON(PRESETS_KEY, []);
-    const preset = Array.isArray(list) ? list.find(x => x.id === id) : null;
+    const preset = Array.isArray(list) ? list.find(function(x){ return x.id === id; }) : null;
     if(!preset){
       setStatus("Preset not found.");
       return;
     }
 
-    const ok = await askConfirm(`Delete preset "${preset.name || "Untitled"}"?`, { okText:"Delete", cancelText:"Cancel" });
+    const ok = await askConfirm("Delete preset \"" + (preset.name || "Untitled") + "\"?", { okText:"Delete", cancelText:"Cancel" });
     if(!ok) return;
 
-    const next = list.filter(x => x.id !== id);
+    const next = list.filter(function(x){ return x.id !== id; });
     saveJSON(PRESETS_KEY, next);
-    await idbRemove(presetImageKey(id));
+    await removeImageValue(presetImageKey(id));
     await refreshPresetSelect();
     els.presetSelect.value = "";
     setStatus("Preset deleted.");
   });
 
   els.currency.value = storageGet(CUR_KEY) || "AUTO";
-  els.currency.addEventListener("change", () => {
+  els.currency.addEventListener("change", function(){
     storageSet(CUR_KEY, els.currency.value);
     render();
   });
 
-  els.saveBtn.addEventListener("click", () => {
+  els.saveBtn.addEventListener("click", function(){
     const cur = Number(els.efCurrent.value);
     const tar = Number(els.efTarget.value);
 
@@ -1355,7 +1419,7 @@
     render();
   });
 
-  els.resetBtn.addEventListener("click", async () => {
+  els.resetBtn.addEventListener("click", async function(){
     const ok = await askConfirm("Reset this widget’s saved values?", { okText:"Reset", cancelText:"Cancel" });
     if(!ok) return;
     storageRemove(KEY);
@@ -1364,19 +1428,21 @@
     render();
   });
 
-  window.addEventListener("pagehide", () => {
+  window.addEventListener("pagehide", function(){
     saveState();
-    saveJSON(THEME_KEY, themeDraft);
+    persistTheme();
+    void persistBackground();
   });
 
-  document.addEventListener("visibilitychange", () => {
+  document.addEventListener("visibilitychange", function(){
     if(document.visibilityState === "hidden"){
       saveState();
-      saveJSON(THEME_KEY, themeDraft);
+      persistTheme();
+      void persistBackground();
     }
   });
 
-  window.addEventListener("storage", async (e) => {
+  window.addEventListener("storage", async function(e){
     if(!e.key) return;
 
     if(e.key === KEY){
@@ -1394,7 +1460,7 @@
       syncThemeInputs(themeDraft);
     }
 
-    if(e.key === BG_KEY){
+    if(e.key === BG_KEY || e.key === BG_IMAGE_KEY || e.key === BG_IMAGE_STAMP_KEY){
       const savedBg = await loadBackground();
       bgDraft = savedBg.bg;
       bgDraftImage = savedBg.imageDataUrl;
@@ -1403,7 +1469,7 @@
     }
 
     if(e.key === PRESETS_KEY){
-      refreshPresetSelect();
+      await refreshPresetSelect();
     }
   });
 

@@ -25,6 +25,8 @@
       --board-tint-a: 0.35;
       --board-image: none;
       --board-blur: 0px;
+
+      --time-col-width: 96px;
     }
 
     * { box-sizing: border-box; }
@@ -298,6 +300,7 @@
       .actions{ width:100%; justify-content:flex-start; }
       .wrap{ padding: 18px 12px 28px; }
       .btn{ min-height: 42px; }
+      :root{ --time-col-width: 90px; }
     }
 
     .field{ position: relative; display:grid; gap: 6px; }
@@ -371,7 +374,7 @@
     .gridWrap{ padding: 14px; overflow-x: auto; }
     .timetable{
       width: 100%;
-      min-width: 760px;
+      min-width: 780px;
       border-radius: var(--radius2);
       border: 1px solid var(--lineStrong);
       background: rgba(255,255,255,.66);
@@ -381,7 +384,7 @@
 
     .ttHeader{
       display:grid;
-      grid-template-columns: 78px repeat(7, minmax(0, 1fr));
+      grid-template-columns: var(--time-col-width) repeat(7, minmax(0, 1fr));
       gap: 0;
       border-bottom: 1px solid var(--lineStrong);
       background: rgba(255,255,255,.76);
@@ -408,30 +411,49 @@
       position: relative;
       height: 720px;
       display:grid;
-      grid-template-columns: 78px repeat(7, minmax(0, 1fr));
+      grid-template-columns: var(--time-col-width) repeat(7, minmax(0, 1fr));
     }
 
     .timeCol{
       border-right: 1px solid var(--lineStrong);
       background: rgba(255,255,255,.64);
       position: relative;
+      isolation: isolate;
+      z-index: 2;
+      overflow: hidden;
     }
     .timeLabel{
       position: absolute;
-      left: 0;
-      right: 0;
+      left: 8px;
+      right: 8px;
       transform: translateY(-50%);
-      padding: 0 10px;
       font-size: 11px;
-      color: rgba(43,43,43,.64);
-      text-align: right;
+      color: rgba(43,43,43,.72);
+      text-align: left;
       pointer-events:none;
+      z-index: 3;
+      display: flex;
+      justify-content: flex-start;
+    }
+    .timeLabel span{
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.94);
+      box-shadow: 0 1px 0 rgba(255,255,255,.95);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      white-space: nowrap;
     }
 
     .dayCol{
       position: relative;
       border-right: 1px solid var(--line);
       background: rgba(255,255,255,.56);
+      overflow: hidden;
     }
     .dayCol:last-child{ border-right: none; }
 
@@ -443,6 +465,7 @@
       background: var(--gridLine);
       opacity: .95;
       pointer-events:none;
+      z-index: 1;
     }
     .hLine.major{ background: var(--lineStrong); }
 
@@ -464,6 +487,7 @@
       transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
       overflow: hidden;
       touch-action: manipulation;
+      z-index: 2;
     }
     .event:hover{
       transform: translateY(-1px);
@@ -519,10 +543,10 @@
       background: rgba(43,43,43,.30);
       opacity: .9;
       pointer-events:none;
+      z-index: 4;
     }
     .nowDot{
       position:absolute;
-      left: 78px;
       width: 10px;
       height: 10px;
       border-radius: 999px;
@@ -530,6 +554,7 @@
       transform: translate(-50%, -50%);
       opacity: .9;
       pointer-events:none;
+      z-index: 5;
     }
 
     .empty{
@@ -946,10 +971,10 @@
       }
 
       const WID = stableWidgetId();
-      const STORAGE_KEY = "timetable_widget_state_v4__" + WID;
-      const PRESETS_KEY = "timetable_widget_presets_v4";
+      const STORAGE_KEY = "timetable_widget_state_v5__" + WID;
+      const PRESETS_KEY = "timetable_widget_presets_v5";
       const PRESET_NAMESPACE = "timetable";
-      const DB_NAME = "timetable_widget_db_v4";
+      const DB_NAME = "timetable_widget_db_v5";
       const STORE_NAME = "kv";
 
       const els = {
@@ -1048,7 +1073,7 @@
       };
 
       const DEFAULT_STATE = {
-        version: 4,
+        version: 5,
         updatedAt: nowISO(),
         blocks: [],
         theme: { ...DEFAULT_THEME },
@@ -1063,6 +1088,7 @@
       let renderResizeTimer = null;
       let saveToastTimer = null;
       let isBooting = true;
+      let saveQueue = Promise.resolve();
 
       const Storage = {
         dbPromise: null,
@@ -1156,18 +1182,31 @@
           }
         },
 
+        parseJSON(raw){
+          if (!raw || typeof raw !== "string") return null;
+          try{ return JSON.parse(raw); }catch{ return null; }
+        },
+
+        pickNewest(a, b){
+          if (!a && !b) return null;
+          if (a && !b) return a;
+          if (!a && b) return b;
+
+          const aTime = Date.parse(a?.updatedAt || "") || 0;
+          const bTime = Date.parse(b?.updatedAt || "") || 0;
+          return bTime > aTime ? b : a;
+        },
+
         async getJSON(key){
-          const fromLs = this.lsGet(key);
-          if (fromLs) {
-            try{ return JSON.parse(fromLs); }catch{}
-          }
-          const fromDb = await this.idbGet(key);
-          if (fromDb && typeof fromDb === "string") {
-            try{
-              const parsed = JSON.parse(fromDb);
-              this.lsSet(key, fromDb);
-              return parsed;
-            }catch{}
+          const fromLs = this.parseJSON(this.lsGet(key));
+          const fromDbRaw = await this.idbGet(key);
+          const fromDb = this.parseJSON(typeof fromDbRaw === "string" ? fromDbRaw : null);
+
+          const chosen = this.pickNewest(fromLs, fromDb);
+          if (chosen){
+            const raw = JSON.stringify(chosen);
+            this.lsSet(key, raw);
+            return chosen;
           }
           return null;
         },
@@ -1262,6 +1301,13 @@
         };
       }
 
+      function normalizeTags(raw){
+        if (!raw) return [];
+        const src = Array.isArray(raw) ? raw.join(",") : String(raw);
+        const parts = src.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+        return [...new Set(parts)].slice(0, 14);
+      }
+
       function sanitizeBlock(it){
         const day = clamp(Number(it?.day ?? 0), 0, 6);
         return {
@@ -1282,7 +1328,7 @@
 
       function sanitizeState(raw){
         const clean = {
-          version: 4,
+          version: 5,
           updatedAt: raw?.updatedAt || nowISO(),
           blocks: Array.isArray(raw?.blocks) ? raw.blocks.map(sanitizeBlock) : [],
           theme: sanitizeTheme(raw?.theme || DEFAULT_THEME),
@@ -1293,28 +1339,29 @@
         return clean;
       }
 
-      function normalizeTags(raw){
-        if (!raw) return [];
-        const src = Array.isArray(raw) ? raw.join(",") : String(raw);
-        const parts = src.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-        return [...new Set(parts)].slice(0, 14);
-      }
-
       async function persistState(message){
         appState.updatedAt = nowISO();
-        await Storage.setJSON(STORAGE_KEY, appState);
+        const snapshot = structuredCloneSafe(appState);
+        saveQueue = saveQueue.then(() => Storage.setJSON(STORAGE_KEY, snapshot)).catch(() => {});
+        await saveQueue;
         if (!isBooting) showSavedToast(message || "Saved");
       }
 
       async function loadState(){
-        const saved = await Storage.getJSON(STORAGE_KEY);
+        const saved =
+          await Storage.getJSON(STORAGE_KEY) ||
+          await Storage.getJSON("timetable_widget_state_v4__" + WID);
+
         appState = sanitizeState(saved || DEFAULT_STATE);
         themeDraft = { ...appState.theme };
         bgDraft = { ...appState.background };
       }
 
       async function loadPresets(){
-        const raw = await Storage.getJSON(PRESETS_KEY);
+        const raw =
+          await Storage.getJSON(PRESETS_KEY) ||
+          await Storage.getJSON("timetable_widget_presets_v4");
+
         const list = Array.isArray(raw) ? raw : [];
         return list
           .filter(Boolean)
@@ -1322,13 +1369,22 @@
             id: String(p.id || uid()),
             name: String(p.name || "Untitled"),
             ns: String(p.ns || PRESET_NAMESPACE),
+            updatedAt: p.updatedAt || nowISO(),
             theme: sanitizeTheme(p.theme || {}),
             bg: sanitizeBackground(p.bg || {})
           }));
       }
 
       async function savePresets(list){
-        await Storage.setJSON(PRESETS_KEY, list);
+        const clean = Array.isArray(list) ? list.map((p) => ({
+          id: String(p.id || uid()),
+          name: String(p.name || "Untitled"),
+          ns: String(p.ns || PRESET_NAMESPACE),
+          updatedAt: p.updatedAt || nowISO(),
+          theme: sanitizeTheme(p.theme || {}),
+          bg: sanitizeBackground(p.bg || {})
+        })) : [];
+        await Storage.setJSON(PRESETS_KEY, clean);
       }
 
       async function refreshPresetSelect(){
@@ -1412,9 +1468,11 @@
       function applyBackground(bg){
         const b = sanitizeBackground(bg);
         const strength = clamp(b.strength / 100, 0, 0.7);
+
         document.documentElement.style.setProperty("--board-tint", b.tint);
         document.documentElement.style.setProperty("--board-tint-a", String(strength));
         document.documentElement.style.setProperty("--board-blur", `${b.blur}px`);
+
         els.boardTint.style.background = hexToRgba(b.tint, strength);
 
         els.bgDot.style.background = b.tint;
@@ -1559,6 +1617,7 @@
 
         for (let t=startMin; t<=endMin; t+=30){
           const y = ((t - startMin) / totalMin) * bodyHeight;
+
           const line = document.createElement("div");
           line.className = "hLine" + ((t % 60 === 0) ? " major" : "");
           line.style.top = `${y}px`;
@@ -1568,7 +1627,7 @@
             const lbl = document.createElement("div");
             lbl.className = "timeLabel";
             lbl.style.top = `${y}px`;
-            lbl.textContent = minutesToLabel(t);
+            lbl.innerHTML = `<span>${escapeHtml(minutesToLabel(t))}</span>`;
             timeCol.appendChild(lbl);
           }
         }
@@ -1640,7 +1699,11 @@
           dot.style.top = `${y}px`;
 
           body.appendChild(line);
-          dot.style.left = `${78 + (dayIndex * ((body.clientWidth - 78) / 7))}px`;
+
+          const timeColWidth = timeCol.getBoundingClientRect().width || 96;
+          const dayWidth = (body.clientWidth - timeColWidth) / 7;
+          dot.style.left = `${timeColWidth + (dayIndex * dayWidth)}px`;
+
           body.appendChild(dot);
         }
       }
@@ -1833,6 +1896,7 @@
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas unavailable");
         ctx.drawImage(img, 0, 0, width, height);
 
         let out;
@@ -2035,7 +2099,12 @@
           if (!file) return;
           try{
             const dataUrl = await processImageFile(file);
-            bgDraft.imageDataUrl = dataUrl;
+            bgDraft = sanitizeBackground({
+              tint: els.bgColor.value,
+              strength: Number(els.bgStrength.value),
+              blur: Number(els.bgBlur.value),
+              imageDataUrl: dataUrl
+            });
             applyBackground(bgDraft);
             setStatus("");
           }catch{
@@ -2044,7 +2113,12 @@
         });
 
         els.removeImage.addEventListener("click", () => {
-          bgDraft.imageDataUrl = null;
+          bgDraft = sanitizeBackground({
+            tint: els.bgColor.value,
+            strength: Number(els.bgStrength.value),
+            blur: Number(els.bgBlur.value),
+            imageDataUrl: null
+          });
           els.bgImage.value = "";
           applyBackground(bgDraft);
           setStatus("");
@@ -2080,17 +2154,20 @@
           }
 
           const list = await loadPresets();
-          list.unshift({
+          const preset = {
             id: uid(),
             ns: PRESET_NAMESPACE,
             name,
+            updatedAt: nowISO(),
             theme: sanitizeTheme(themeDraft),
             bg: sanitizeBackground(bgDraft)
-          });
+          };
+
+          list.unshift(preset);
           await savePresets(list);
           els.presetName.value = "";
           await refreshPresetSelect();
-          els.presetSelect.value = list[0].id;
+          els.presetSelect.value = preset.id;
           setStatus("Preset saved.");
           showSavedToast("Preset saved");
         });

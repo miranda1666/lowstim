@@ -1460,7 +1460,7 @@
           removeBtn.textContent = "Remove";
           removeBtn.addEventListener("click", async function(){
             const typed = await askInline({
-              title: 'Type REMOVE to delete "' + (l.title || "this link") + '"',
+              title: 'Type REMOVE to delete ' + (l.title || "this link") + '',
               placeholder: "REMOVE",
               okText: "Remove"
             });

@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Word of the Day</title>
+
+<style>
+  :root{
+    --bg: transparent;
+    --card-a: 0.92;
+    --stroke:#e2dfd8;
+    --ink:#2f2f2f;
+    --muted:#7a7a7a;
+    --shadow: 0 10px 30px rgba(30,20,10,.06);
+    --r:14px;
+
+    --board-tint:#efe7e1;
+    --board-tint-a:0.12;
+    --board-image:none;
+    --board-image-a:0.92;
+    --board-image-blur:0px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    overflow:visible;
+    background: var(--bg);
+  }
+
+  body{
+    padding:18px;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  input, button, select, textarea{
+    font: inherit;
+  }
+
+  .widgetShell{
+    position:relative;
+    width:100%;
+    max-width:380px;
+    overflow:visible;
+    touch-action: manipulation;
+  }
+
+  .boardClip{
+    position:relative;
+    border-radius: var(--r);
+    overflow:hidden;
+    border:1px solid var(--stroke);
+    box-shadow: var(--shadow);
+    background: transparent;
+  }
+
+  .boardClip::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image: var(--board-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: scale(1.03);
+    z-index:0;
+    pointer-events:none;
+    filter:
+      blur(var(--board-image-blur))
+      saturate(1.08)
+      contrast(1.04)
+      brightness(1.02);
+    opacity: var(--board-image-a);
+  }
+
+  .boardTint{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    background: rgba(0,0,0,0);
+  }
+
+  .boardContent{
+    position:relative;
+    z-index:2;
+  }
+
+  .card{
+    background: rgba(247,245,240,var(--card-a));
+    border:0;
+    border-radius:0;
+    padding:22px;
+    color: var(--ink);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .topRow{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+  }
+
+  .rightControls{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    flex-shrink:0;
+  }
+
+  .label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color: var(--muted);
+    margin:0;
+  }
+
+  .word{
+    font-size:30px;
+    font-weight:600;
+    color: var(--ink);
+    margin:10px 0 4px;
+    animation: fadeIn 0.8s ease;
+    word-break: break-word;
+  }
+
+  .phonetic{
+    font-size:14px;
+    color: var(--muted);
+    margin-bottom:10px;
+    word-break: break-word;
+  }
+
+  .definition{
+    font-size:15px;
+    line-height:1.5;
+    margin-bottom:10px;
+    color: rgba(47,47,47,0.92);
+    animation: slideUp 0.6s ease;
+    word-break: break-word;
+  }
+
+  .example{
+    font-size:14px;
+    color: rgba(47,47,47,0.78);
+    font-style:italic;
+    border-left:3px solid rgba(214,210,200,0.9);
+    padding-left:10px;
+    word-break: break-word;
+  }
+
+  @keyframes fadeIn {
+    from { opacity:0; }
+    to { opacity:1; }
+  }
+
+  @keyframes slideUp {
+    from { opacity:0; transform: translateY(6px); }
+    to { opacity:1; transform: translateY(0); }
+  }
+
+  .settingsWrap{ position:relative; }
+
+  .settingsBtn{
+    width:34px;
+    height:34px;
+    border-radius:999px;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.96);
+    padding:0;
+    display:grid;
+    place-items:center;
+    box-shadow: 0 3px 12px rgba(30,20,10,.08);
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .settingsBtn:focus-visible,
+  .miniBtn:focus-visible,
+  .presetName:focus-visible,
+  .presetSelect:focus-visible,
+  .pFile:focus-visible,
+  .pRow input:focus-visible{
+    outline:2px solid rgba(100,100,100,.35);
+    outline-offset:2px;
+  }
+
+  .bgDot,
+  .themeDot{
+    width:14px;
+    height:14px;
+    border-radius:999px;
+    border:1px solid rgba(233,228,221,0.95);
+  }
+
+  .bgDot{
+    background: var(--board-tint);
+    box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
+  }
+
+  .themeDot{
+    background: var(--ink);
+    box-shadow: 0 0 0 6px rgba(243,239,233,0.22);
+  }
+
+  .panel{
+    position:absolute;
+    width:320px;
+    border-radius:16px;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.96);
+    box-shadow: 0 18px 40px rgba(30,20,10,.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding:12px;
+    display:none;
+    z-index:9999;
+    max-height:min(72vh, 620px);
+    overflow:auto;
+    overscroll-behavior:contain;
+  }
+
+  .panel.open{ display:block; }
+
+  .panelTitle{
+    margin:0 0 10px 0;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color: rgba(43,42,40,0.72);
+  }
+
+  .pRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:7px 0;
+  }
+
+  .pRow label{
+    font-size:12px;
+    color: rgba(106,102,95,1);
+    flex:1;
+    min-width:0;
+  }
+
+  .pRow input[type="color"]{
+    width:40px;
+    height:30px;
+    border-radius:10px;
+    padding:0;
+    border:1px solid var(--stroke);
+    background:transparent;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+
+  .pRow input[type="range"]{
+    width:160px;
+    flex-shrink:0;
+  }
+
+  .pFile{
+    width:100%;
+    font-size:12px;
+    color: rgba(43,42,40,0.75);
+  }
+
+  .miniBtn{
+    width:100%;
+    border-radius:12px;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.96);
+    padding:10px 12px;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    font-size:11px;
+    color: rgba(43,42,40,0.82);
+    box-shadow: 0 2px 8px rgba(30,20,10,.06);
+    cursor:pointer;
+    touch-action: manipulation;
+  }
+
+  .miniBtn:active{
+    transform: translateY(1px);
+  }
+
+  .pDiv{
+    height:1px;
+    background: var(--stroke);
+    margin:8px 0;
+  }
+
+  .status{
+    font-size:12px;
+    color: rgba(106,102,95,1);
+    margin-top:8px;
+    min-height:16px;
+    line-height:1.35;
+  }
+
+  .presetName,
+  .presetSelect{
+    width:100%;
+    border:1px solid var(--stroke);
+    background: rgba(255,255,255,0.98);
+    border-radius:12px;
+    padding:10px 12px;
+    font-size:12px;
+    color: var(--ink);
+    outline:none;
+  }
+
+  .presetSelect{
+    height:40px;
+  }
+
+  .tinyNote{
+    margin-top:6px;
+    font-size:11px;
+    color: var(--muted);
+    line-height:1.35;
+  }
+
+  @media (max-width: 480px){
+    body{
+      padding:12px;
+    }
+
+    .widgetShell{
+      max-width:100%;
+    }
+
+    .card{
+      padding:18px;
+    }
+
+    .word{
+      font-size:26px;
+    }
+
+    .panel{
+      width:min(92vw, 360px);
+      max-height:70vh;
+    }
+
+    .pRow{
+      gap:8px;
+    }
+
+    .pRow input[type="range"]{
+      width:140px;
+    }
+  }
+
+  @media (max-width: 380px){
+    .topRow{
+      gap:8px;
+    }
+
+    .rightControls{
+      gap:8px;
+    }
+
+    .settingsBtn{
+      width:32px;
+      height:32px;
+    }
+
+    .pRow{
+      flex-wrap:wrap;
+      align-items:flex-start;
+    }
+
+    .pRow label{
+      width:100%;
+      flex:unset;
+    }
+
+    .pRow input[type="range"]{
+      width:100%;
+    }
+  }
+</style>
+</head>
+
+<body>
+  <div class="widgetShell" id="widgetShell" aria-label="Word of the Day shell">
+
+    <div class="panel" id="bgPanel" role="dialog" aria-label="Background settings" aria-modal="false">
+      <div class="panelTitle">Background</div>
+
+      <div class="pRow">
+        <label for="bgColor">Tint</label>
+        <input id="bgColor" type="color" value="#efe7e1" />
+      </div>
+
+      <div class="pRow">
+        <label for="bgStrength">Tint strength</label>
+        <input id="bgStrength" type="range" min="0" max="70" value="12" />
+      </div>
+
+      <div class="pRow">
+        <label for="bgImageA">Image visibility</label>
+        <input id="bgImageA" type="range" min="0" max="100" value="92" />
+      </div>
+
+      <div class="pRow">
+        <label for="bgBlur">Background blur</label>
+        <input id="bgBlur" type="range" min="0" max="24" value="0" />
+      </div>
+
+      <div class="pDiv"></div>
+
+      <div class="pRow" style="align-items:flex-start;">
+        <label for="bgImage">Image</label>
+        <input id="bgImage" class="pFile" type="file" accept="image/*" />
+      </div>
+
+      <div class="pRow">
+        <button id="bgRemove" class="miniBtn" type="button">Remove image</button>
+      </div>
+
+      <div class="pDiv"></div>
+
+      <button class="miniBtn" id="bgApply" type="button">Apply background</button>
+      <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
+
+      <div class="status" id="uiStatus" aria-live="polite"></div>
+    </div>
+
+    <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings" aria-modal="false">
+      <div class="panelTitle">Theme</div>
+
+      <div class="pRow">
+        <label for="tBg">Page bg</label>
+        <input id="tBg" type="color" value="#ffffff" />
+      </div>
+
+      <div class="pRow">
+        <label for="tInk">Text</label>
+        <input id="tInk" type="color" value="#2f2f2f" />
+      </div>
+
+      <div class="pRow">
+        <label for="tMuted">Muted</label>
+        <input id="tMuted" type="color" value="#7a7a7a" />
+      </div>
+
+      <div class="pRow">
+        <label for="tStroke">Borders</label>
+        <input id="tStroke" type="color" value="#e2dfd8" />
+      </div>
+
+      <div class="pRow">
+        <label for="tCardA">Card opacity</label>
+        <input id="tCardA" type="range" min="20" max="100" value="92" />
+      </div>
+
+      <div class="pDiv"></div>
+
+      <button id="tApply" class="miniBtn" type="button">Apply theme</button>
+      <button id="tReset" class="miniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+      <div class="pDiv"></div>
+
+      <div class="panelTitle" style="margin:0 0 10px 0;">Presets</div>
+
+      <input class="presetName" id="presetName" placeholder="Preset name" />
+      <button class="miniBtn" id="presetSave" type="button" style="margin-top:8px;">Save current as preset</button>
+
+      <div class="pDiv"></div>
+
+      <select class="presetSelect" id="presetSelect"></select>
+
+      <button class="miniBtn" id="presetApply" type="button" style="margin-top:8px;">Apply preset</button>
+      <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
+
+      <div class="tinyNote">
+        Presets now save theme, tint, image visibility, blur, and the background image itself.
+      </div>
+
+      <div class="status" id="presetStatus" aria-live="polite"></div>
+    </div>
+
+    <div class="boardClip" id="boardClip" aria-label="Word of the Day board">
+      <div class="boardTint" id="boardTint"></div>
+
+      <div class="boardContent">
+        <div class="card">
+          <div class="topRow">
+            <p class="label">Word of the Day</p>
+
+            <div class="rightControls">
+              <div class="settingsWrap">
+                <button class="settingsBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
+                  <span class="bgDot" id="bgDot" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <div class="settingsWrap">
+                <button class="settingsBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
+                  <span class="themeDot" id="themeDot" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="word" id="word">Loading…</div>
+          <div class="phonetic" id="phonetic"></div>
+          <div class="definition" id="definition"></div>
+          <div class="example" id="example"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   Utility
+========================================================= */
+(function(){
+  function hexToRgba(hex, a){
+    const h = String(hex || "").replace("#","").trim();
+    const full = h.length === 3 ? h.split("").map(c => c + c).join("") : h;
+    const safe = /^[0-9a-fA-F]{6}$/.test(full) ? full : "efe7e1";
+    const num = parseInt(safe, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function clamp(n, min, max){
+    n = Number(n);
+    if(!Number.isFinite(n)) return min;
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function normHex(hex, fallback){
+    const s = String(hex || "").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+  }
+
+  function uid(prefix){
+    return (prefix || "id") + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  }
+
+  function debounce(fn, wait){
+    let t = null;
+    return function(){
+      const args = arguments;
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), wait);
+    };
+  }
+
+  window.__wotdUtils = { hexToRgba, clamp, normHex, uid, debounce };
+})();
+
+/* =========================================================
+   Strong persistence: localStorage + IndexedDB
+   - localStorage stores settings/state
+   - IndexedDB stores image data more reliably than localStorage
+========================================================= */
+const WOTDStore = (function(){
+  const STATE_KEY = "word_of_day_state_v4";
+  const DB_NAME = "word_of_day_widget_db";
+  const DB_VERSION = 1;
+  const IMAGE_STORE = "images";
+
+  let dbPromise = null;
+
+  function canUseLocalStorage(){
+    try{
+      const k = "__wotd_test__" + Math.random().toString(16).slice(2);
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    }catch{
+      return false;
+    }
+  }
+
+  const hasLS = canUseLocalStorage();
+
+  function getState(){
+    try{
+      const raw = hasLS ? localStorage.getItem(STATE_KEY) : null;
+      return raw ? JSON.parse(raw) : null;
+    }catch{
+      return null;
+    }
+  }
+
+  function setState(state){
+    if(!hasLS) return false;
+    try{
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+      return true;
+    }catch{
+      return false;
+    }
+  }
+
+  function openDB(){
+    if(!("indexedDB" in window)){
+      return Promise.resolve(null);
+    }
+    if(dbPromise) return dbPromise;
+
+    dbPromise = new Promise((resolve) => {
+      try{
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+        req.onupgradeneeded = function(e){
+          const db = e.target.result;
+          if(!db.objectStoreNames.contains(IMAGE_STORE)){
+            db.createObjectStore(IMAGE_STORE);
+          }
+        };
+
+        req.onsuccess = function(){
+          resolve(req.result);
+        };
+
+        req.onerror = function(){
+          resolve(null);
+        };
+      }catch{
+        resolve(null);
+      }
+    });
+
+    return dbPromise;
+  }
+
+  async function putImage(key, dataUrl){
+    const db = await openDB();
+    if(!db || !key) return false;
+
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(IMAGE_STORE, "readwrite");
+        tx.objectStore(IMAGE_STORE).put(String(dataUrl || ""), key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+        tx.onabort = () => resolve(false);
+      }catch{
+        resolve(false);
+      }
+    });
+  }
+
+  async function getImage(key){
+    const db = await openDB();
+    if(!db || !key) return null;
+
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(IMAGE_STORE, "readonly");
+        const req = tx.objectStore(IMAGE_STORE).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      }catch{
+        resolve(null);
+      }
+    });
+  }
+
+  async function deleteImage(key){
+    const db = await openDB();
+    if(!db || !key) return false;
+
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(IMAGE_STORE, "readwrite");
+        tx.objectStore(IMAGE_STORE).delete(key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+        tx.onabort = () => resolve(false);
+      }catch{
+        resolve(false);
+      }
+    });
+  }
+
+  return {
+    STATE_KEY,
+    getState,
+    setState,
+    openDB,
+    putImage,
+    getImage,
+    deleteImage
+  };
+})();
+
+/* =========================================================
+   App state
+========================================================= */
+const WOTDApp = (function(){
+  const { hexToRgba, clamp, normHex, uid, debounce } = window.__wotdUtils;
+
+  const DEFAULT_THEME = {
+    bg:"#ffffff",
+    ink:"#2f2f2f",
+    muted:"#7a7a7a",
+    stroke:"#e2dfd8",
+    cardA:92
+  };
+
+  const DEFAULT_BG = {
+    tint:"#efe7e1",
+    strength:12,
+    imageA:92,
+    blur:0,
+    imageKey:null
+  };
+
+  const DEFAULT_STATE = {
+    version:4,
+    theme:{ ...DEFAULT_THEME },
+    bg:{ ...DEFAULT_BG },
+    presets:[]
+  };
+
+  let state = structuredCloneSafe(DEFAULT_STATE);
+  let themeDraft = structuredCloneSafe(DEFAULT_THEME);
+  let bgDraft = structuredCloneSafe(DEFAULT_BG);
+
+  let pendingImageDataUrl = null;
+  let pendingImageChanged = false;
+
+  const els = {};
+  let initialized = false;
+
+  function structuredCloneSafe(obj){
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  function $(id){
+    return document.getElementById(id);
+  }
+
+  function cacheEls(){
+    [
+      "widgetShell","boardTint","bgDot","themeDot",
+      "bgColor","bgStrength","bgImageA","bgBlur","bgImage","bgRemove","bgApply","bgReset","uiStatus",
+      "tBg","tInk","tMuted","tStroke","tCardA","tApply","tReset",
+      "presetName","presetSave","presetSelect","presetApply","presetDelete","presetStatus",
+      "bgBtn","themeBtn","bgPanel","themePanel",
+      "word","phonetic","definition","example"
+    ].forEach(id => els[id] = $(id));
+  }
+
+  function setBgStatus(msg){
+    if(els.uiStatus) els.uiStatus.textContent = msg || "";
+  }
+
+  function setPresetStatus(msg){
+    if(els.presetStatus) els.presetStatus.textContent = msg || "";
+  }
+
+  function clearStatuses(){
+    setBgStatus("");
+    setPresetStatus("");
+  }
+
+  function cleanTheme(input){
+    return {
+      bg: normHex(input?.bg, DEFAULT_THEME.bg),
+      ink: normHex(input?.ink, DEFAULT_THEME.ink),
+      muted: normHex(input?.muted, DEFAULT_THEME.muted),
+      stroke: normHex(input?.stroke, DEFAULT_THEME.stroke),
+      cardA: clamp(input?.cardA, 20, 100)
+    };
+  }
+
+  function cleanBg(input){
+    return {
+      tint: normHex(input?.tint, DEFAULT_BG.tint),
+      strength: clamp(input?.strength, 0, 70),
+      imageA: clamp(input?.imageA, 0, 100),
+      blur: clamp(input?.blur, 0, 24),
+      imageKey: input?.imageKey ? String(input.imageKey) : null
+    };
+  }
+
+  function cleanPresetList(list){
+    if(!Array.isArray(list)) return [];
+    return list.map(item => ({
+      id: item?.id ? String(item.id) : uid("preset"),
+      name: String(item?.name || "Untitled"),
+      theme: cleanTheme(item?.theme || {}),
+      bg: cleanBg(item?.bg || {})
+    }));
+  }
+
+  async function loadState(){
+    const saved = WOTDStore.getState();
+    if(saved && typeof saved === "object"){
+      state = {
+        version: 4,
+        theme: cleanTheme(saved.theme || {}),
+        bg: cleanBg(saved.bg || {}),
+        presets: cleanPresetList(saved.presets || [])
+      };
+    }else{
+      state = structuredCloneSafe(DEFAULT_STATE);
+    }
+
+    themeDraft = structuredCloneSafe(state.theme);
+    bgDraft = structuredCloneSafe(state.bg);
+  }
+
+  function persistState(){
+    state.theme = cleanTheme(state.theme);
+    state.bg = cleanBg(state.bg);
+    state.presets = cleanPresetList(state.presets);
+    WOTDStore.setState(state);
+  }
+
+  const persistStateDebounced = debounce(persistState, 120);
+
+  function readThemeInputs(){
+    return cleanTheme({
+      bg: els.tBg?.value,
+      ink: els.tInk?.value,
+      muted: els.tMuted?.value,
+      stroke: els.tStroke?.value,
+      cardA: Number(els.tCardA?.value)
+    });
+  }
+
+  function syncThemeInputs(theme){
+    const t = cleanTheme(theme);
+    if(els.tBg) els.tBg.value = t.bg;
+    if(els.tInk) els.tInk.value = t.ink;
+    if(els.tMuted) els.tMuted.value = t.muted;
+    if(els.tStroke) els.tStroke.value = t.stroke;
+    if(els.tCardA) els.tCardA.value = String(t.cardA);
+  }
+
+  function syncBgInputs(bg){
+    const b = cleanBg(bg);
+    if(els.bgColor) els.bgColor.value = b.tint;
+    if(els.bgStrength) els.bgStrength.value = String(b.strength);
+    if(els.bgImageA) els.bgImageA.value = String(b.imageA);
+    if(els.bgBlur) els.bgBlur.value = String(b.blur);
+    if(els.bgImage) els.bgImage.value = "";
+  }
+
+  async function getCurrentBgImageDataUrl(){
+    if(pendingImageChanged && pendingImageDataUrl !== null){
+      return pendingImageDataUrl;
+    }
+    if(bgDraft.imageKey){
+      return await WOTDStore.getImage(bgDraft.imageKey);
+    }
+    return null;
+  }
+
+  async function applyThemePreview(theme){
+    const t = cleanTheme(theme);
+    document.documentElement.style.setProperty("--bg", t.bg);
+    document.documentElement.style.setProperty("--ink", t.ink);
+    document.documentElement.style.setProperty("--muted", t.muted);
+    document.documentElement.style.setProperty("--stroke", t.stroke);
+    document.documentElement.style.setProperty("--card-a", String(t.cardA / 100));
+
+    if(els.themeDot){
+      els.themeDot.style.background = t.ink;
+      els.themeDot.style.boxShadow = `0 0 0 6px rgba(243,239,233,${Math.min(0.34, 0.1 + t.cardA / 300)})`;
+    }
+  }
+
+  async function applyBgPreview(bg, explicitDataUrl){
+    const b = cleanBg(bg);
+    const imageDataUrl = typeof explicitDataUrl === "string"
+      ? explicitDataUrl
+      : await getCurrentBgImageDataUrl();
+
+    const tintAlpha = clamp(b.strength, 0, 70) / 100;
+    const imageAlpha = clamp(b.imageA, 0, 100) / 100;
+    const blurPx = clamp(b.blur, 0, 24);
+
+    document.documentElement.style.setProperty("--board-tint", b.tint);
+    document.documentElement.style.setProperty("--board-tint-a", String(tintAlpha));
+    document.documentElement.style.setProperty("--board-image-a", String(imageAlpha));
+    document.documentElement.style.setProperty("--board-image-blur", `${blurPx}px`);
+    document.documentElement.style.setProperty("--board-image", imageDataUrl ? `url("${imageDataUrl}")` : "none");
+
+    if(els.boardTint){
+      els.boardTint.style.background = hexToRgba(b.tint, tintAlpha);
+    }
+
+    if(els.bgDot){
+      els.bgDot.style.background = b.tint;
+      els.bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(b.tint, Math.min(0.28, tintAlpha + 0.10))}`;
+    }
+  }
+
+  async function renderAll(){
+    await applyThemePreview(themeDraft);
+    await applyBgPreview(bgDraft);
+    refreshPresetSelect();
+  }
+
+  function refreshPresetSelect(){
+    if(!els.presetSelect) return;
+    const current = els.presetSelect.value;
+    els.presetSelect.innerHTML = `<option value="">—</option>`;
+    state.presets.forEach(preset => {
+      const opt = document.createElement("option");
+      opt.value = preset.id;
+      opt.textContent = preset.name;
+      els.presetSelect.appendChild(opt);
+    });
+    if(state.presets.some(x => x.id === current)){
+      els.presetSelect.value = current;
+    }
+  }
+
+  async function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function commitBackgroundDraftToState(){
+    const cleanDraft = cleanBg(bgDraft);
+
+    if(pendingImageChanged){
+      const oldKey = state.bg.imageKey;
+      if(pendingImageDataUrl){
+        const newKey = uid("bgimg");
+        const ok = await WOTDStore.putImage(newKey, pendingImageDataUrl);
+        if(ok){
+          cleanDraft.imageKey = newKey;
+          state.bg.imageKey = newKey;
+          if(oldKey && oldKey !== newKey){
+            WOTDStore.deleteImage(oldKey).catch(() => {});
+          }
+        }else{
+          cleanDraft.imageKey = state.bg.imageKey || null;
+        }
+      }else{
+        if(oldKey){
+          WOTDStore.deleteImage(oldKey).catch(() => {});
+        }
+        cleanDraft.imageKey = null;
+      }
+      pendingImageChanged = false;
+    }else{
+      cleanDraft.imageKey = state.bg.imageKey || cleanDraft.imageKey || null;
+    }
+
+    state.bg = cleanBg(cleanDraft);
+    bgDraft = structuredCloneSafe(state.bg);
+    persistState();
+    await applyBgPreview(bgDraft);
+  }
+
+  async function commitThemeDraftToState(){
+    state.theme = cleanTheme(themeDraft);
+    themeDraft = structuredCloneSafe(state.theme);
+    persistState();
+    await applyThemePreview(themeDraft);
+  }
+
+  async function savePresetFromCurrentDraft(){
+    const name = String(els.presetName?.value || "").trim();
+    if(!name){
+      setPresetStatus("Type a preset name first.");
+      return;
+    }
+
+    await commitBackgroundDraftToState();
+    await commitThemeDraftToState();
+
+    const presetBg = cleanBg(state.bg);
+    let presetImageKey = null;
+
+    if(presetBg.imageKey){
+      const existingDataUrl = await WOTDStore.getImage(presetBg.imageKey);
+      if(existingDataUrl){
+        presetImageKey = uid("presetimg");
+        await WOTDStore.putImage(presetImageKey, existingDataUrl);
+      }
+    }
+
+    const entry = {
+      id: uid("preset"),
+      name,
+      theme: cleanTheme(state.theme),
+      bg: cleanBg({
+        ...presetBg,
+        imageKey: presetImageKey
+      })
+    };
+
+    state.presets.unshift(entry);
+    persistState();
+    refreshPresetSelect();
+
+    if(els.presetName) els.presetName.value = "";
+    if(els.presetSelect) els.presetSelect.value = entry.id;
+
+    setPresetStatus("Preset saved.");
+    setBgStatus("Background applied.");
+  }
+
+  async function applyPresetById(id){
+    const preset = state.presets.find(x => x.id === id);
+    if(!preset){
+      setPresetStatus("Preset not found.");
+      return;
+    }
+
+    themeDraft = cleanTheme(preset.theme);
+    state.theme = cleanTheme(preset.theme);
+    syncThemeInputs(themeDraft);
+    await applyThemePreview(themeDraft);
+
+    pendingImageChanged = false;
+    pendingImageDataUrl = null;
+
+    bgDraft = cleanBg(preset.bg);
+    state.bg = cleanBg(preset.bg);
+    syncBgInputs(bgDraft);
+    await applyBgPreview(bgDraft);
+
+    persistState();
+    setPresetStatus("Preset applied.");
+    setBgStatus("Background applied.");
+  }
+
+  async function deletePresetById(id){
+    const before = state.presets.length;
+    const removed = state.presets.find(x => x.id === id) || null;
+    state.presets = state.presets.filter(x => x.id !== id);
+
+    if(state.presets.length === before){
+      setPresetStatus("Preset not found.");
+      return;
+    }
+
+    if(removed?.bg?.imageKey){
+      WOTDStore.deleteImage(removed.bg.imageKey).catch(() => {});
+    }
+
+    persistState();
+    refreshPresetSelect();
+    if(els.presetSelect) els.presetSelect.value = "";
+    setPresetStatus("Preset deleted.");
+  }
+
+  async function resetBackground(){
+    pendingImageChanged = true;
+    pendingImageDataUrl = null;
+
+    if(state.bg.imageKey){
+      WOTDStore.deleteImage(state.bg.imageKey).catch(() => {});
+    }
+
+    bgDraft = structuredCloneSafe(DEFAULT_BG);
+    state.bg = structuredCloneSafe(DEFAULT_BG);
+    syncBgInputs(bgDraft);
+    persistState();
+    await applyBgPreview(bgDraft, null);
+    setBgStatus("Background reset.");
+  }
+
+  async function resetTheme(){
+    themeDraft = structuredCloneSafe(DEFAULT_THEME);
+    state.theme = structuredCloneSafe(DEFAULT_THEME);
+    syncThemeInputs(themeDraft);
+    persistState();
+    await applyThemePreview(themeDraft);
+    setPresetStatus("Theme reset.");
+  }
+
+  function attachPreviewListeners(){
+    ["tBg","tInk","tMuted","tStroke","tCardA"].forEach(id => {
+      const el = els[id];
+      if(!el) return;
+      el.addEventListener("input", async () => {
+        themeDraft = readThemeInputs();
+        await applyThemePreview(themeDraft);
+        clearStatuses();
+      });
+      el.addEventListener("change", async () => {
+        themeDraft = readThemeInputs();
+        await applyThemePreview(themeDraft);
+      });
+    });
+
+    if(els.bgColor){
+      els.bgColor.addEventListener("input", async () => {
+        bgDraft.tint = els.bgColor.value;
+        await applyBgPreview(bgDraft);
+        clearStatuses();
+      });
+    }
+
+    if(els.bgStrength){
+      els.bgStrength.addEventListener("input", async () => {
+        bgDraft.strength = Number(els.bgStrength.value);
+        await applyBgPreview(bgDraft);
+        clearStatuses();
+      });
+    }
+
+    if(els.bgImageA){
+      els.bgImageA.addEventListener("input", async () => {
+        bgDraft.imageA = Number(els.bgImageA.value);
+        await applyBgPreview(bgDraft);
+        clearStatuses();
+      });
+    }
+
+    if(els.bgBlur){
+      els.bgBlur.addEventListener("input", async () => {
+        bgDraft.blur = Number(els.bgBlur.value);
+        await applyBgPreview(bgDraft);
+        clearStatuses();
+      });
+    }
+
+    if(els.bgImage){
+      els.bgImage.addEventListener("change", async () => {
+        const file = els.bgImage.files && els.bgImage.files[0];
+        if(!file) return;
+        try{
+          const dataUrl = await fileToDataUrl(file);
+          pendingImageDataUrl = dataUrl;
+          pendingImageChanged = true;
+          await applyBgPreview(bgDraft, dataUrl);
+          clearStatuses();
+        }catch{
+          setBgStatus("Could not load that image.");
+        }
+      });
+    }
+
+    if(els.bgRemove){
+      els.bgRemove.addEventListener("click", async () => {
+        pendingImageDataUrl = null;
+        pendingImageChanged = true;
+        await applyBgPreview(bgDraft, null);
+        clearStatuses();
+      });
+    }
+
+    if(els.bgApply){
+      els.bgApply.addEventListener("click", async () => {
+        await commitBackgroundDraftToState();
+        setBgStatus("Background applied.");
+      });
+    }
+
+    if(els.bgReset){
+      els.bgReset.addEventListener("click", async () => {
+        await resetBackground();
+      });
+    }
+
+    if(els.tApply){
+      els.tApply.addEventListener("click", async () => {
+        themeDraft = readThemeInputs();
+        await commitThemeDraftToState();
+        setPresetStatus("Theme applied.");
+      });
+    }
+
+    if(els.tReset){
+      els.tReset.addEventListener("click", async () => {
+        await resetTheme();
+      });
+    }
+
+    if(els.presetSave){
+      els.presetSave.addEventListener("click", async () => {
+        await savePresetFromCurrentDraft();
+      });
+    }
+
+    if(els.presetApply){
+      els.presetApply.addEventListener("click", async () => {
+        const id = String(els.presetSelect?.value || "");
+        if(!id){
+          setPresetStatus("Choose a preset first.");
+          return;
+        }
+        await applyPresetById(id);
+      });
+    }
+
+    if(els.presetDelete){
+      els.presetDelete.addEventListener("click", async () => {
+        const id = String(els.presetSelect?.value || "");
+        if(!id){
+          setPresetStatus("Choose a preset first.");
+          return;
+        }
+        await deletePresetById(id);
+      });
+    }
+  }
+
+  function attachPanelLogic(){
+    const shell = els.widgetShell;
+    const bgBtn = els.bgBtn;
+    const themeBtn = els.themeBtn;
+    const bgPanel = els.bgPanel;
+    const themePanel = els.themePanel;
+
+    if(!shell || !bgBtn || !themeBtn || !bgPanel || !themePanel) return;
+
+    function isMobileViewport(){
+      return window.innerWidth <= 480;
+    }
+
+    function closeAll(except){
+      [bgPanel, themePanel].forEach(panel => {
+        if(panel !== except){
+          panel.classList.remove("open");
+          panel.style.left = "";
+          panel.style.top = "";
+          panel.style.right = "";
+          panel.style.bottom = "";
+          panel.style.position = "";
+        }
+      });
+      document.body.style.paddingBottom = "";
+    }
+
+    function placePanel(btn, panel){
+      if(!panel || !btn || !shell) return;
+
+      if(isMobileViewport()){
+        panel.style.position = "fixed";
+        panel.style.left = "50%";
+        panel.style.top = "50%";
+        panel.style.right = "auto";
+        panel.style.bottom = "auto";
+        panel.style.transform = "translate(-50%, -50%)";
+        return;
+      }
+
+      panel.style.transform = "";
+      panel.style.position = "absolute";
+
+      const shellRect = shell.getBoundingClientRect();
+      const btnRect = btn.getBoundingClientRect();
+      const pad = 10;
+
+      const width = panel.offsetWidth;
+      let top = (btnRect.bottom - shellRect.top) + pad;
+      let left = (btnRect.right - shellRect.left) - width;
+
+      left = Math.max(pad, Math.min(shell.clientWidth - width - pad, left));
+
+      panel.style.left = left + "px";
+      panel.style.top = top + "px";
+
+      requestAnimationFrame(() => {
+        const panelRect = panel.getBoundingClientRect();
+        const need = Math.ceil(panelRect.bottom + 24);
+        const extra = Math.max(0, need - window.innerHeight);
+        document.body.style.paddingBottom = extra ? (extra + 24) + "px" : "";
+      });
+    }
+
+    function openPanel(btn, panel){
+      const alreadyOpen = panel.classList.contains("open");
+      closeAll(null);
+      if(alreadyOpen) return;
+      panel.classList.add("open");
+      requestAnimationFrame(() => placePanel(btn, panel));
+    }
+
+    bgBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openPanel(bgBtn, bgPanel);
+    });
+
+    themeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openPanel(themeBtn, themePanel);
+    });
+
+    window.addEventListener("resize", () => {
+      if(bgPanel.classList.contains("open")) placePanel(bgBtn, bgPanel);
+      if(themePanel.classList.contains("open")) placePanel(themeBtn, themePanel);
+    });
+
+    document.addEventListener("click", (e) => {
+      const inside = e.target.closest("#bgPanel, #bgBtn, #themePanel, #themeBtn");
+      if(!inside) closeAll(null);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if(e.key === "Escape") closeAll(null);
+    });
+  }
+
+  function attachSyncListeners(){
+    window.addEventListener("storage", async (e) => {
+      if(e.key !== WOTDStore.STATE_KEY) return;
+      await loadState();
+      syncThemeInputs(state.theme);
+      syncBgInputs(state.bg);
+      themeDraft = structuredCloneSafe(state.theme);
+      bgDraft = structuredCloneSafe(state.bg);
+      pendingImageChanged = false;
+      pendingImageDataUrl = null;
+      await renderAll();
+    });
+
+    const flush = async () => {
+      if(!initialized) return;
+      persistStateDebounced.flush && persistStateDebounced.flush();
+      persistState();
+    };
+
+    document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "hidden"){
+        flush();
+      }
+    });
+
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("beforeunload", flush);
+  }
+
+  async function init(){
+    cacheEls();
+    await WOTDStore.openDB();
+    await loadState();
+
+    syncThemeInputs(state.theme);
+    syncBgInputs(state.bg);
+
+    themeDraft = structuredCloneSafe(state.theme);
+    bgDraft = structuredCloneSafe(state.bg);
+
+    await renderAll();
+    attachPreviewListeners();
+    attachPanelLogic();
+    attachSyncListeners();
+
+    initialized = true;
+  }
+
+  return {
+    init
+  };
+})();
+
+/* small helper to support flush-style use if needed */
+(function(){
+  const originalDebounce = window.__wotdUtils.debounce;
+  window.__wotdUtils.debounce = function(fn, wait){
+    let t = null;
+    const wrapped = function(){
+      const args = arguments;
+      clearTimeout(t);
+      t = setTimeout(() => {
+        t = null;
+        fn.apply(this, args);
+      }, wait);
+    };
+    wrapped.flush = function(){
+      if(t){
+        clearTimeout(t);
+        t = null;
+        fn();
+      }
+    };
+    return wrapped;
+  };
+})();
+
+/* =========================================================
+   Word of the Day
+========================================================= */
+(function(){
+  const fallbackWords = [
+    "serendipity","resilient","ephemeral","luminous","eloquent","solace","clarity","intentional",
+    "ubiquitous","magnanimous","ineffable","obfuscate","quixotic","perfunctory","alacrity","pulchritude",
+    "redolent","recalcitrant","obstreperous","sagacious","inscrutable","mellifluous","perspicacious","capricious",
+    "vicissitude","ameliorate","fastidious","equanimity","iconoclast","loquacious","nefarious","panacea",
+    "pugnacious","recondite","salubrious","trenchant","vituperative","winsome","antediluvian","apotheosis",
+    "atavistic","auspicious","bombastic","cogent","convivial","diaphanous","ebullient","efficacious",
+    "egregious","enervate","epistolary","erudite","evanescent","exculpate","exigent","fecund","felicitous",
+    "garrulous","halcyon","impecunious","ineluctable","ingenuous","inimical","insouciant","interlocutor",
+    "inveterate","lachrymose","liminal","luculent","munificent","noisome","obdurate","officious",
+    "onerous","opprobrium","parsimonious","pellucid","penumbral","peripatetic","pertinacious","plenary",
+    "prosaic","propitious","quotidian","raconteur","sanguine","sedulous","simulacrum","sonorous",
+    "surfeit","sycophantic","tenebrous","timorous","taciturn","umbral","uxorious","verisimilitude",
+    "vociferous","weltanschauung","zealous","arcane","brusque","cathartic","didactic","enigma",
+    "forbearance","gregarious","harbinger","idiosyncratic","judicious","kinetic","labyrinthine","myriad",
+    "nuance","ostensible","pragmatic","reticent","staunch","underscore","venerate","whimsical"
+  ];
+
+  const today = Math.floor(Date.now() / 86400000);
+  const word = fallbackWords[today % fallbackWords.length];
+
+  const wordEl = document.getElementById("word");
+  const phoneticEl = document.getElementById("phonetic");
+  const definitionEl = document.getElementById("definition");
+  const exampleEl = document.getElementById("example");
+
+  function setFallback(){
+    if(wordEl) wordEl.textContent = word;
+    if(phoneticEl) phoneticEl.textContent = "";
+    if(definitionEl) definitionEl.textContent = "Unable to load definition today.";
+    if(exampleEl) exampleEl.textContent = "";
+  }
+
+  fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`)
+    .then(res => {
+      if(!res.ok) throw new Error("Request failed");
+      return res.json();
+    })
+    .then(data => {
+      const entry = Array.isArray(data) ? data[0] : null;
+      const meaning = entry?.meanings?.[0] || null;
+      const definitionObj = meaning?.definitions?.[0] || null;
+
+      if(!entry || !definitionObj){
+        setFallback();
+        return;
+      }
+
+      if(wordEl) wordEl.textContent = entry.word || word;
+      if(phoneticEl) phoneticEl.textContent = entry.phonetic ? `/${entry.phonetic.replace(/^\/|\/$/g, "")}/` : "";
+      if(definitionEl) definitionEl.textContent = definitionObj.definition || "No definition available today.";
+      if(exampleEl) exampleEl.textContent = definitionObj.example ? `“${definitionObj.example}”` : "";
+    })
+    .catch(setFallback);
+})();
+
+/* =========================================================
+   Start app
+========================================================= */
+WOTDApp.init();
+</script>
+</body>
+</html>

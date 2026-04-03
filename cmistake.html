@@ -100,6 +100,7 @@
       user-select:none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      pointer-events: auto;
     }
     .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,.08); border-color: rgba(43,43,43,.32); }
     .btn:active{ transform: translateY(0px); }
@@ -323,6 +324,7 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.92);
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      pointer-events: auto;
     }
     .iconBtn:hover{
       transform: translateY(-1px);
@@ -559,6 +561,7 @@
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      pointer-events: auto;
     }
     .mmBgBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
 
@@ -655,6 +658,7 @@
       color: rgba(43,43,43,.88);
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      pointer-events: auto;
     }
     .mmBgMiniBtn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
 
@@ -698,6 +702,14 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+
+    .status{
+      min-height: 18px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
   </style>
 </head>
 
@@ -709,7 +721,7 @@
       </div>
 
       <div class="actions">
-        <button class="btn primary" id="addBtn" type="button" title="Add an exhibit">
+        <button class="btn primary" id="addBtn" data-action="open-add" type="button" title="Add an exhibit">
           <span aria-hidden="true">＋</span>
           Add exhibit
         </button>
@@ -921,14 +933,17 @@
 
         <div class="field">
           <label for="mWhat">What happened?</label>
+          <textarea class="textarea" id="mWhat" placeholder="Describe the mistake clearly."></textarea>
         </div>
 
         <div class="field">
           <label for="mLesson">Lesson learned</label>
+          <textarea class="textarea" id="mLesson" placeholder="What did this teach you?"></textarea>
         </div>
 
         <div class="field">
           <label for="mFix">Prevention routine</label>
+          <textarea class="textarea" id="mFix" placeholder="What will you do next time to prevent it?"></textarea>
         </div>
 
         <div class="modalFoot">
@@ -964,7 +979,7 @@
   };
 
   const DEFAULT_STATE = {
-    version: 4,
+    version: 5,
     updatedAt: new Date().toISOString(),
     items: [],
     view: { q:"", tag:"", sort:"updated_desc" },
@@ -983,10 +998,10 @@
   }
 
   const WID = stableWidgetId();
-  const DATA_KEY = "mistake_museum_state_v4__" + WID;
-  const PRESETS_KEY = "mistake_museum_presets_v4";
+  const DATA_KEY = "mistake_museum_state_v5__" + WID;
+  const PRESETS_KEY = "mistake_museum_presets_v5";
   const PRESET_NAMESPACE = "mistake-museum";
-  const DB_NAME = "mistake_museum_db_v4";
+  const DB_NAME = "mistake_museum_db_v5";
   const STORE_NAME = "kv";
 
   const els = {
@@ -1098,27 +1113,38 @@
       }
     },
 
+    lsRemove(key){
+      try{ localStorage.removeItem(key); }catch{}
+    },
+
+    parseJSON(raw){
+      if (typeof raw !== "string" || !raw) return null;
+      try{ return JSON.parse(raw); }catch{ return null; }
+    },
+
     async getJSON(key){
-      const fromLs = this.lsGet(key);
-      if (fromLs) {
-        try{ return JSON.parse(fromLs); }catch{}
+      const fromDbRaw = await this.idbGet(key);
+      const fromDb = this.parseJSON(fromDbRaw);
+
+      if (fromDb !== null){
+        if (typeof fromDbRaw === "string") this.lsSet(key, fromDbRaw);
+        return fromDb;
       }
-      const fromDb = await this.idbGet(key);
-      if (fromDb && typeof fromDb === "string") {
-        try{
-          const parsed = JSON.parse(fromDb);
-          this.lsSet(key, fromDb);
-          return parsed;
-        }catch{}
-      }
-      return null;
+
+      const fromLsRaw = this.lsGet(key);
+      const fromLs = this.parseJSON(fromLsRaw);
+      return fromLs;
     },
 
     async setJSON(key, value){
       const raw = JSON.stringify(value);
-      this.lsSet(key, raw);
-      await this.idbSet(key, raw);
-      return true;
+      const lsOk = this.lsSet(key, raw);
+      const dbOk = await this.idbSet(key, raw);
+
+      if (!lsOk && dbOk) {
+        this.lsRemove(key);
+      }
+      return lsOk || dbOk;
     }
   };
 
@@ -1150,16 +1176,17 @@
     return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
   }
 
-  function hexToRgbTuple(hex){
+  function hexToRgb(hex){
     const h = normHex(hex, "#ffffff").slice(1);
-    const r = parseInt(h.slice(0,2), 16);
-    const g = parseInt(h.slice(2,4), 16);
-    const b = parseInt(h.slice(4,6), 16);
-    return `${r},${g},${b}`;
+    return {
+      r: parseInt(h.slice(0,2), 16),
+      g: parseInt(h.slice(2,4), 16),
+      b: parseInt(h.slice(4,6), 16)
+    };
   }
 
   function hexToRgba(hex, a){
-    const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+    const { r, g, b } = hexToRgb(hex);
     return `rgba(${r},${g},${b},${a})`;
   }
 
@@ -1169,6 +1196,15 @@
     }catch{}
     return Math.random().toString(16).slice(2) + Date.now().toString(16);
   }
+
+  const nowISO = () => new Date().toISOString();
+
+  const normalizeTags = (raw) => {
+    if (!raw) return [];
+    const src = Array.isArray(raw) ? raw.join(",") : String(raw);
+    const parts = src.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    return [...new Set(parts)].slice(0, 14);
+  };
 
   function sanitizeTheme(t){
     return {
@@ -1207,17 +1243,35 @@
 
   function sanitizeState(raw){
     return {
-      version: 4,
+      version: 5,
       updatedAt: raw?.updatedAt || new Date().toISOString(),
       items: Array.isArray(raw?.items) ? raw.items.map(sanitizeItem) : [],
       view: {
         q: String(raw?.view?.q || ""),
         tag: String(raw?.view?.tag || ""),
-        sort: ["updated_desc","created_desc","severity_desc","title_asc"].includes(String(raw?.view?.sort)) ? String(raw.view.sort) : "updated_desc"
+        sort: ["updated_desc","created_desc","severity_desc","title_asc"].includes(String(raw?.view?.sort))
+          ? String(raw.view.sort)
+          : "updated_desc"
       },
       theme: sanitizeTheme(raw?.theme || DEFAULT_THEME),
       bg: sanitizeBg(raw?.bg || DEFAULT_BG)
     };
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function persistSnapshotSync(){
+    try{
+      appState.updatedAt = new Date().toISOString();
+      localStorage.setItem(DATA_KEY, JSON.stringify(appState));
+    }catch{}
   }
 
   async function persistState(message){
@@ -1231,31 +1285,14 @@
     appState = sanitizeState(saved || DEFAULT_STATE);
   }
 
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  const nowISO = () => new Date().toISOString();
-
-  const normalizeTags = (raw) => {
-    if (!raw) return [];
-    const src = Array.isArray(raw) ? raw.join(",") : String(raw);
-    const parts = src.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-    return [...new Set(parts)].slice(0, 14);
-  };
-
   const severityIcon = (n) => {
     const map = { 1: "·", 2: "∘", 3: "◦", 4: "◎", 5: "◉" };
     return map[n] || "◦";
   };
 
-  function loadPresets(){
-    return Storage.getJSON(PRESETS_KEY);
+  async function loadPresets(){
+    const result = await Storage.getJSON(PRESETS_KEY);
+    return Array.isArray(result) ? result : [];
   }
 
   async function getPresets(){
@@ -1354,7 +1391,9 @@
     document.documentElement.style.setProperty("--board-image", x.imageDataUrl ? `url("${x.imageDataUrl}")` : "none");
     document.documentElement.style.setProperty("--board-blur", `${x.blur}px`);
 
-    if(els.mmBgTint) els.mmBgTint.style.background = hexToRgba(tint, a);
+    if(els.mmBgTint) {
+      els.mmBgTint.style.background = hexToRgba(tint, a);
+    }
 
     const dot = document.querySelector("[data-mm-bg-module] .mmBgDot");
     if(dot){
@@ -1395,7 +1434,7 @@
     const dataUrl = await fileToDataUrl(file);
     const img = await loadImage(dataUrl);
 
-    const maxDim = 1800;
+    const maxDim = 1400;
     const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
     const width = Math.max(1, Math.round(img.width * ratio));
     const height = Math.max(1, Math.round(img.height * ratio));
@@ -1404,13 +1443,15 @@
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
+    if (!ctx) return dataUrl;
+
     ctx.drawImage(img, 0, 0, width, height);
 
     let out;
     try{
-      out = canvas.toDataURL("image/webp", 0.88);
+      out = canvas.toDataURL("image/webp", 0.82);
     }catch{
-      out = canvas.toDataURL("image/jpeg", 0.88);
+      out = canvas.toDataURL("image/jpeg", 0.82);
     }
     return out;
   }
@@ -1451,13 +1492,13 @@
   }
 
   function sanitizePresetList(parsed){
-    if(!Array.isArray(parsed)) return null;
+    if(!Array.isArray(parsed)) return [];
     return parsed.filter(Boolean).map(p => ({
       id: String(p.id || uid()),
       name: String(p.name || "Imported"),
       ns: String(p.ns || PRESET_NAMESPACE),
-      theme: (p.theme && typeof p.theme === "object") ? sanitizeTheme(p.theme) : sanitizeTheme(DEFAULT_THEME),
-      bg: (p.bg && typeof p.bg === "object") ? sanitizeBg(p.bg) : sanitizeBg(DEFAULT_BG)
+      theme: sanitizeTheme(p.theme),
+      bg: sanitizeBg(p.bg)
     }));
   }
 
@@ -1491,6 +1532,7 @@
 
     ["data-mm-theme-bg","data-mm-theme-text","data-mm-theme-muted","data-mm-theme-line","data-mm-theme-line-a","data-mm-theme-panel-a"].forEach(attr=>{
       const el = thMod.querySelector(`[${attr}]`);
+      if (!el) return;
       el.addEventListener("input", ()=>{
         const preview = themeReadInputs();
         themeApplyToCSS(preview);
@@ -1519,12 +1561,19 @@
     const bgImage = bgMod.querySelector("[data-mm-bg-image]");
     const bgClear = bgMod.querySelector("[data-mm-bg-clear]");
 
+    function getCommittedBg(){
+      return sanitizeBg(appState.bg);
+    }
+
     function getBgPreview(){
       return sanitizeBg({
         tint: bgColor.value,
         strength: Number(bgStrength.value),
         blur: Number(bgBlur.value),
-        imageDataUrl: appState.bg.imageDataUrl
+        imageDataUrl:
+          Object.prototype.hasOwnProperty.call(bgMod.dataset, "pendingImage")
+            ? (bgMod.dataset.pendingImage || null)
+            : getCommittedBg().imageDataUrl
       });
     }
 
@@ -1546,20 +1595,21 @@
     bgImage.addEventListener("change", async ()=>{
       const f = bgImage.files && bgImage.files[0];
       if(!f) return;
-      const dataUrl = await processImageFile(f);
-      const preview = getBgPreview();
-      preview.imageDataUrl = dataUrl;
-      bgApplyToCSS(preview);
-      bgStatus("");
-      bgMod.dataset.pendingImage = dataUrl;
+      bgStatus("Processing image…");
+      try{
+        const dataUrl = await processImageFile(f);
+        bgMod.dataset.pendingImage = dataUrl || "";
+        bgApplyToCSS(getBgPreview());
+        bgStatus("Image ready. Click Apply background to save it.");
+      }catch{
+        bgStatus("Could not process that image.");
+      }
     });
 
     bgClear.addEventListener("click", ()=>{
       bgImage.value = "";
       bgMod.dataset.pendingImage = "";
-      const preview = getBgPreview();
-      preview.imageDataUrl = null;
-      bgApplyToCSS(preview);
+      bgApplyToCSS(getBgPreview());
       bgStatus("Image removed from draft.");
     });
 
@@ -1568,15 +1618,18 @@
         tint: bgColor.value,
         strength: Number(bgStrength.value),
         blur: Number(bgBlur.value),
-        imageDataUrl: bgMod.dataset.pendingImage !== undefined
-          ? (bgMod.dataset.pendingImage || null)
-          : appState.bg.imageDataUrl
+        imageDataUrl:
+          Object.prototype.hasOwnProperty.call(bgMod.dataset, "pendingImage")
+            ? (bgMod.dataset.pendingImage || null)
+            : appState.bg.imageDataUrl
       });
+
       bgApplyToCSS(appState.bg);
       bgSyncInputs(appState.bg);
       await persistState("Background applied");
       bgStatus("Background applied.");
       delete bgMod.dataset.pendingImage;
+      bgImage.value = "";
     });
 
     bgMod.querySelector("[data-mm-bg-reset]").addEventListener("click", async ()=>{
@@ -1600,12 +1653,13 @@
         tint: bgColor.value,
         strength: Number(bgStrength.value),
         blur: Number(bgBlur.value),
-        imageDataUrl: bgMod.dataset.pendingImage !== undefined
-          ? (bgMod.dataset.pendingImage || null)
-          : appState.bg.imageDataUrl
+        imageDataUrl:
+          Object.prototype.hasOwnProperty.call(bgMod.dataset, "pendingImage")
+            ? (bgMod.dataset.pendingImage || null)
+            : appState.bg.imageDataUrl
       });
 
-      const list = await getPresets();
+      const list = sanitizePresetList(await getPresets());
       const entry = {
         id: uid(),
         ns: PRESET_NAMESPACE,
@@ -1613,6 +1667,7 @@
         theme: { ...currentTheme },
         bg: { ...currentBg }
       };
+
       list.unshift(entry);
       await savePresets(list);
 
@@ -1626,7 +1681,7 @@
     thMod.querySelector("[data-mm-preset-apply]").addEventListener("click", async ()=>{
       const id = thMod.querySelector("[data-mm-preset-select]").value;
       if(!id){ status("Choose a preset first."); return; }
-      const p = (await getPresets()).find(x=>x.id===id && x.ns === PRESET_NAMESPACE);
+      const p = sanitizePresetList(await getPresets()).find(x=>x.id===id && x.ns === PRESET_NAMESPACE);
       if(!p){ status("Preset not found."); return; }
       await applyPresetToThisWidget(p);
     });
@@ -1635,7 +1690,7 @@
       const sel = thMod.querySelector("[data-mm-preset-select]");
       const id = sel.value;
       if(!id){ status("Choose a preset first."); return; }
-      const list = await getPresets();
+      const list = sanitizePresetList(await getPresets());
       const next = list.filter(x => !(x.id === id && x.ns === PRESET_NAMESPACE));
       if(next.length === list.length){ status("Preset not found."); return; }
       await savePresets(next);
@@ -1780,10 +1835,9 @@
         <div class="empty">
           <div class="big" aria-hidden="true">⟡</div>
           <h2>No exhibits yet</h2>
-          <button class="btn primary" type="button" id="emptyAddBtn">＋ Add your first exhibit</button>
+          <button class="btn primary" type="button" id="emptyAddBtn" data-action="open-add">＋ Add your first exhibit</button>
         </div>
       `;
-      document.getElementById("emptyAddBtn").addEventListener("click", openAddModal);
       return;
     }
 
@@ -1796,12 +1850,15 @@
           <button class="btn" type="button" id="clearFiltersBtn">Clear filters</button>
         </div>
       `;
-      document.getElementById("clearFiltersBtn").addEventListener("click", async () => {
-        appState.view.q = "";
-        appState.view.tag = "";
-        await persistState("Saved");
-        render();
-      });
+      const clearBtn = document.getElementById("clearFiltersBtn");
+      if (clearBtn){
+        clearBtn.addEventListener("click", async () => {
+          appState.view.q = "";
+          appState.view.tag = "";
+          await persistState("Saved");
+          render();
+        });
+      }
       return;
     }
 
@@ -1968,7 +2025,10 @@
     }
   }
 
-  function openAddModal(){ resetForm(); openModal(); }
+  function openAddModal(){
+    resetForm();
+    openModal();
+  }
 
   function openEditModal(id){
     const it = appState.items.find(x => x.id === id);
@@ -2007,6 +2067,11 @@
     els.exportBtn.addEventListener("click", exportJson);
     els.clearBtn.addEventListener("click", clearAll);
 
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest('[data-action="open-add"]');
+      if (btn) openAddModal();
+    });
+
     els.closeModalBtn.addEventListener("click", closeModal);
     els.cancelBtn.addEventListener("click", closeModal);
     els.modalBackdrop.addEventListener("click", (e) => { if (e.target === els.modalBackdrop) closeModal(); });
@@ -2015,7 +2080,10 @@
       e.preventDefault();
 
       const title = els.mTitle.value.trim();
-      if (!title) return;
+      if (!title) {
+        els.mTitle.focus();
+        return;
+      }
 
       const severity = Number(els.mSeverity.value);
       const context = els.mContext.value.trim();
@@ -2087,9 +2155,20 @@
     });
 
     document.addEventListener("visibilitychange", async () => {
+      if (document.visibilityState === "hidden") {
+        persistSnapshotSync();
+      }
       if (document.visibilityState === "visible") {
         await refreshFromStorage();
       }
+    });
+
+    window.addEventListener("pagehide", () => {
+      persistSnapshotSync();
+    });
+
+    window.addEventListener("beforeunload", () => {
+      persistSnapshotSync();
     });
 
     window.addEventListener("pageshow", async () => {

@@ -748,12 +748,12 @@
 
                 <div class="field">
                   <label for="eIngredients">Ingredients</label>
-                  <textarea id="eIngredients" placeholder="• ..."></textarea>
+                  <textarea id="eIngredients" placeholder=""></textarea>
                 </div>
 
                 <div class="field">
                   <label for="eSteps">Steps</label>
-                  <textarea id="eSteps" placeholder="1) ..."></textarea>
+                  <textarea id="eSteps" placeholder=""></textarea>
                 </div>
 
                 <div class="row">
@@ -1469,7 +1469,7 @@ function initPresetsUI(){
     try{
       window.__RB__.set(KEY, JSON.stringify(state));
       emitSync("state");
-      setSaveIndicator("Saved.");
+      setSaveIndicator("");
     }catch{
       setSaveIndicator("Could not save in this browser.");
     }
@@ -1982,7 +1982,7 @@ function initPresetsUI(){
     bgApplyToCSS(bgDraft);
 
     setSaveIndicator(window.__RB__.hasLocalStorage
-      ? "Saving is active in this browser."
+      ? ""
       : "Local storage is limited in this browser."
     );
   }

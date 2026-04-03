@@ -625,7 +625,6 @@
       <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
 
       <div class="status" id="uiStatus" aria-live="polite"></div>
-      <div class="saveBadge">Background becomes permanent when you click Apply background.</div>
     </div>
 
     <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
@@ -680,7 +679,6 @@
       <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
 
       <div class="status" id="presetStatus" aria-live="polite"></div>
-      <div class="saveBadge">Presets now include theme + background + image + blur.</div>
     </div>
 
     <div class="panel" id="managePanel" role="dialog" aria-label="Manage quick links">
@@ -754,7 +752,6 @@
       <button id="resetLinksBtn" class="miniBtn danger" type="button" style="margin-top:8px;">Reset links</button>
 
       <div class="status" id="manageStatus" aria-live="polite"></div>
-      <div class="saveBadge">Links and text save automatically on this device.</div>
     </div>
 
     <div class="boardClip" id="boardClip" aria-label="Quick Links board">
@@ -1259,7 +1256,6 @@
 
     if(totalLinks === 0){
       emptyEl.style.display = "block";
-      subtitle.textContent = "Click the first button to add links.";
       return;
     }
 

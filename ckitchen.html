@@ -47,7 +47,7 @@
     .widgetBoard{
       position:relative;
       border-radius: var(--r);
-      overflow:hidden;
+      overflow:visible;
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
       background: transparent;
@@ -69,6 +69,7 @@
         contrast(1.03)
         brightness(1.01);
       opacity: var(--board-image-a);
+      border-radius: var(--r);
     }
     .widgetBoard::after{
       content:"";
@@ -81,6 +82,7 @@
       background-blend-mode: screen;
       pointer-events:none;
       z-index:0;
+      border-radius: var(--r);
     }
 
     .boardTint{
@@ -89,8 +91,14 @@
       pointer-events:none;
       z-index:1;
       background: rgba(0,0,0,0);
+      border-radius: var(--r);
     }
-    .boardContent{ position:relative; z-index:2; }
+    .boardContent{
+      position:relative;
+      z-index:2;
+      overflow:hidden;
+      border-radius: var(--r);
+    }
 
     .card{
       background:var(--card);
@@ -198,11 +206,14 @@
       -webkit-backdrop-filter: blur(2px);
       padding: 12px;
       display:none;
-      z-index: 50;
-      max-height: calc(100vh - 120px);
-      overflow:auto;
+      z-index: 100;
+      max-height: min(70vh, calc(100dvh - 80px));
+      overflow-y:auto;
+      overflow-x:hidden;
+      overscroll-behavior: contain;
     }
     .bgPanel.open{ display:block; }
+
     .bgTitle{
       margin:0 0 10px 0;
       font-size:12px;
@@ -218,7 +229,12 @@
       gap:10px;
       padding: 7px 0;
     }
-    .bgRow label{ font-size:12px; color:var(--muted); }
+    .bgRow label{
+      font-size:12px;
+      color:var(--muted);
+      flex:0 0 auto;
+    }
+
     .bgRow input[type="color"]{
       width:42px; height:32px;
       border-radius:10px;
@@ -228,7 +244,50 @@
       cursor:pointer;
       min-height:32px;
     }
-    .bgRow input[type="range"]{ width: 150px; min-height:auto; }
+
+    .bgRow input[type="range"]{
+      width:160px;
+      min-height:auto;
+      appearance:none;
+      -webkit-appearance:none;
+      background:transparent;
+      border:none;
+      padding:0;
+      margin:0;
+      accent-color: var(--ink);
+    }
+    .bgRow input[type="range"]::-webkit-slider-runnable-track{
+      height:6px;
+      border-radius:999px;
+      background: linear-gradient(90deg, rgba(233,228,221,0.95), rgba(243,239,233,1));
+      border:1px solid rgba(233,228,221,0.95);
+    }
+    .bgRow input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      appearance:none;
+      width:18px;
+      height:18px;
+      border-radius:999px;
+      background:#ffffff;
+      border:1px solid rgba(233,228,221,0.95);
+      box-shadow:0 2px 8px rgba(30,20,10,.12);
+      margin-top:-7px;
+    }
+    .bgRow input[type="range"]::-moz-range-track{
+      height:6px;
+      border-radius:999px;
+      background: linear-gradient(90deg, rgba(233,228,221,0.95), rgba(243,239,233,1));
+      border:1px solid rgba(233,228,221,0.95);
+    }
+    .bgRow input[type="range"]::-moz-range-thumb{
+      width:18px;
+      height:18px;
+      border-radius:999px;
+      background:#ffffff;
+      border:1px solid rgba(233,228,221,0.95);
+      box-shadow:0 2px 8px rgba(30,20,10,.12);
+    }
+
     .bgFile{
       width:100%;
       font-size:12px;
@@ -503,19 +562,18 @@
       .editorBody{ grid-template-columns: 1fr; }
       .recipeBook{ width:130px; }
       .cover{ width:130px; height:170px; }
-      .title{
-        align-items:flex-start;
-      }
-      .bgWrap{
-        margin-left:0;
-      }
+      .title{ align-items:flex-start; }
+      .bgWrap{ margin-left:0; }
       .shelfBar .row,
       .shelfActions,
       .editorTop{
         width:100%;
       }
-      .grid2{
-        grid-template-columns:1fr;
+      .grid2{ grid-template-columns:1fr; }
+      .bgPanel{
+        right:0;
+        width:min(340px, calc(100vw - 24px));
+        max-height:min(72vh, calc(100dvh - 60px));
       }
     }
   </style>
@@ -781,9 +839,6 @@
   </div>
 
 <script>
-/* =========================
-   Utilities
-========================= */
 (function(){
   const mem = Object.create(null);
 
@@ -965,9 +1020,6 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
-/* =========================
-   Same-browser/tab sync only
-========================= */
 const syncChannel = (() => {
   try{
     return typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("recipe-book-sync-" + WID) : null;
@@ -989,9 +1041,6 @@ function onExternalSync(handler){
   });
 }
 
-/* =========================
-   Theme
-========================= */
 const DEFAULT_THEME = {
   pageBg: "#ffffff",
   ink: "#2b2a28",
@@ -1115,9 +1164,6 @@ function initThemeUI(){
   });
 }
 
-/* =========================
-   Background
-========================= */
 const DEFAULT_BG = {
   tint:"#efe7e1",
   strength:12,
@@ -1262,9 +1308,6 @@ function initBackgroundUI(){
   });
 }
 
-/* =========================
-   Presets
-========================= */
 function loadPresets(){
   const list = loadJSON(PRESETS_KEY);
   return Array.isArray(list) ? list : [];
@@ -1380,9 +1423,6 @@ function initPresetsUI(){
   });
 }
 
-/* =========================
-   Recipe Book
-========================= */
 (function(){
   function compactMeta(r){
     const bits = [];
@@ -1962,9 +2002,6 @@ function initPresetsUI(){
   }
 })();
 
-/* =========================
-   Boot UI
-========================= */
 (function bootUI(){
   function start(){
     initThemeUI();

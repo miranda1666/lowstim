@@ -22,7 +22,6 @@
       --dotSoft: rgba(43,43,43,.48);
 
       --board-tint: #ffffff;
-      --board-tint-a: 0.35;
       --board-image: none;
       --board-blur: 0px;
     }
@@ -954,6 +953,7 @@
 
         <div class="field">
           <label for="dNotes">Notes (optional)</label>
+          <textarea class="textarea" id="dNotes" maxlength="2000" placeholder="Any extra notes..."></textarea>
         </div>
 
         <div class="modalFoot">
@@ -973,7 +973,6 @@
   "use strict";
 
   const nowISO = () => new Date().toISOString();
-
   const DAY_MS = 24 * 60 * 60 * 1000;
 
   const DEFAULT_THEME = {
@@ -1005,7 +1004,7 @@
   };
 
   const DEFAULT_STATE = {
-    version: 4,
+    version: 5,
     updatedAt: nowISO(),
     items: [],
     theme: { ...DEFAULT_THEME },
@@ -1024,11 +1023,12 @@
   }
 
   const WID = stableWidgetId();
-  const STORAGE_KEY = "deadline_horizon_state_v4__" + WID;
-  const PRESETS_KEY = "deadline_horizon_presets_v4";
+  const STORAGE_KEY = "deadline_horizon_state_v5__" + WID;
+  const PRESETS_KEY = "deadline_horizon_presets_v5__" + WID;
   const PRESET_NAMESPACE = "deadline-horizon";
-  const DB_NAME = "deadline_horizon_db_v4";
+  const DB_NAME = "deadline_horizon_db_v5";
   const STORE_NAME = "kv";
+  const IMAGE_MAX_DIM = 1800;
 
   const els = {
     viz: document.getElementById("viz"),
@@ -1117,6 +1117,7 @@
   let renderResizeTimer = null;
   let saveToastTimer = null;
   let isBooting = true;
+  let persistDebounceTimer = null;
 
   const Storage = {
     dbPromise: null,
@@ -1211,10 +1212,6 @@
     },
 
     async getJSON(key){
-      const fromLs = this.lsGet(key);
-      if (fromLs) {
-        try{ return JSON.parse(fromLs); }catch{}
-      }
       const fromDb = await this.idbGet(key);
       if (fromDb && typeof fromDb === "string") {
         try{
@@ -1223,18 +1220,26 @@
           return parsed;
         }catch{}
       }
+
+      const fromLs = this.lsGet(key);
+      if (fromLs) {
+        try{ return JSON.parse(fromLs); }catch{}
+      }
+
       return null;
     },
 
     async setJSON(key, value){
       const raw = JSON.stringify(value);
+      const idbOk = await this.idbSet(key, raw);
       this.lsSet(key, raw);
-      await this.idbSet(key, raw);
-      return true;
+      this.lsSet(key + "__sync__", String(Date.now()));
+      return idbOk;
     },
 
     async remove(key){
       this.lsRemove(key);
+      this.lsRemove(key + "__sync__");
       await this.idbRemove(key);
     }
   };
@@ -1333,16 +1338,23 @@
   }
 
   function sanitizeBackground(bg){
+    let imageDataUrl = null;
+    if (typeof bg?.imageDataUrl === "string" && /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(bg.imageDataUrl)) {
+      imageDataUrl = bg.imageDataUrl;
+    }
+
     return {
       tint: normalizeHex(bg?.tint, DEFAULT_BG.tint),
       strength: clamp(Number(bg?.strength ?? DEFAULT_BG.strength), 0, 70),
       blur: clamp(Number(bg?.blur ?? DEFAULT_BG.blur), 0, 30),
-      imageDataUrl: typeof bg?.imageDataUrl === "string" && bg.imageDataUrl ? bg.imageDataUrl : null
+      imageDataUrl
     };
   }
 
   function sanitizeView(view){
-    const rangeDays = clamp(Number(view?.rangeDays ?? DEFAULT_VIEW.rangeDays), 14, 120);
+    let rangeDays = Number(view?.rangeDays ?? DEFAULT_VIEW.rangeDays);
+    const allowed = [14, 30, 60, 120];
+    if (!allowed.includes(rangeDays)) rangeDays = DEFAULT_VIEW.rangeDays;
     return {
       q: String(view?.q ?? DEFAULT_VIEW.q),
       tag: String(view?.tag ?? DEFAULT_VIEW.tag),
@@ -1357,7 +1369,7 @@
       due: /^\d{4}-\d{2}-\d{2}$/.test(String(it?.due || "")) ? String(it.due) : "",
       course: String(it?.course || "").trim().slice(0, 70),
       tags: normalizeTags(it?.tags),
-      notes: String(it?.notes || "").trim(),
+      notes: String(it?.notes || "").trim().slice(0, 2000),
       createdAt: it?.createdAt || nowISO(),
       updatedAt: it?.updatedAt || nowISO()
     };
@@ -1365,9 +1377,9 @@
 
   function sanitizeState(raw){
     const clean = {
-      version: 4,
+      version: 5,
       updatedAt: raw?.updatedAt || nowISO(),
-      items: Array.isArray(raw?.items) ? raw.items.map(sanitizeItem) : [],
+      items: Array.isArray(raw?.items) ? raw.items.map(sanitizeItem).filter(it => it.title && it.due) : [],
       theme: sanitizeTheme(raw?.theme || DEFAULT_THEME),
       background: sanitizeBackground(raw?.background || DEFAULT_BG),
       view: sanitizeView(raw?.view || DEFAULT_VIEW)
@@ -1395,6 +1407,13 @@
     if (!isBooting) showSavedToast(message || "Saved");
   }
 
+  function persistStateSoon(message){
+    clearTimeout(persistDebounceTimer);
+    persistDebounceTimer = setTimeout(() => {
+      persistState(message).catch(() => {});
+    }, 120);
+  }
+
   async function loadState(){
     const saved = await Storage.getJSON(STORAGE_KEY);
     appState = sanitizeState(saved || DEFAULT_STATE);
@@ -1407,7 +1426,7 @@
     const list = Array.isArray(raw) ? raw : [];
     return list.filter(Boolean).map((p) => ({
       id: String(p.id || uid()),
-      name: String(p.name || "Untitled"),
+      name: String(p.name || "Untitled").trim().slice(0, 80),
       ns: String(p.ns || PRESET_NAMESPACE),
       theme: sanitizeTheme(p.theme || {}),
       bg: sanitizeBackground(p.bg || {})
@@ -1513,7 +1532,6 @@
     const b = sanitizeBackground(bg);
     const strength = clamp(b.strength / 100, 0, 0.7);
     document.documentElement.style.setProperty("--board-tint", b.tint);
-    document.documentElement.style.setProperty("--board-tint-a", String(strength));
     document.documentElement.style.setProperty("--board-blur", `${b.blur}px`);
 
     els.bgDot.style.background = b.tint;
@@ -1624,7 +1642,7 @@
     const rect = els.viz.getBoundingClientRect();
     const drect = dotEl.getBoundingClientRect();
     const x = (drect.left + drect.width/2) - rect.left;
-    const y = (drect.top) - rect.top;
+    const y = drect.top - rect.top;
 
     els.tooltip.style.left = `${x}px`;
     els.tooltip.style.top = `${y}px`;
@@ -1744,7 +1762,11 @@
 
   function renderEmpty(){
     els.viz.innerHTML = `
-      <div class="tooltip" id="tooltip" style="display:none;"></div>
+      <div class="tooltip" id="tooltip" role="status" aria-live="polite">
+        <p class="ttTitle" id="ttTitle"></p>
+        <p class="ttSub" id="ttSub"></p>
+        <div class="ttChips" id="ttChips"></div>
+      </div>
       <div class="empty" style="position:absolute; inset:0; display:grid; place-items:center;">
         <div style="display:grid; gap:12px; place-items:center; padding: 10px;">
           <div class="big" aria-hidden="true">⋯</div>
@@ -1755,6 +1777,9 @@
     `;
     els.listArea.innerHTML = "";
     els.tooltip = document.getElementById("tooltip");
+    els.ttTitle = document.getElementById("ttTitle");
+    els.ttSub = document.getElementById("ttSub");
+    els.ttChips = document.getElementById("ttChips");
     document.getElementById("emptyAddBtn").addEventListener("click", openAddModal);
   }
 
@@ -1810,8 +1835,7 @@
     const dataUrl = await readFileAsDataUrl(file);
     const img = await loadImage(dataUrl);
 
-    const maxDim = 1800;
-    const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
+    const ratio = Math.min(1, IMAGE_MAX_DIM / Math.max(img.width, img.height));
     const width = Math.max(1, Math.round(img.width * ratio));
     const height = Math.max(1, Math.round(img.height * ratio));
 
@@ -1819,6 +1843,7 @@
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas context unavailable");
     ctx.drawImage(img, 0, 0, width, height);
 
     let out;
@@ -2027,6 +2052,18 @@
     setStatus("");
   }
 
+  async function saveBackgroundDraftToState(message){
+    bgDraft = sanitizeBackground({
+      tint: els.bgColor.value,
+      strength: Number(els.bgStrength.value),
+      blur: Number(els.bgBlur.value),
+      imageDataUrl: bgDraft.imageDataUrl
+    });
+    appState.background = { ...bgDraft };
+    applyBackground(appState.background);
+    await persistState(message);
+  }
+
   function attachEvents(){
     els.addBtn.addEventListener("click", openAddModal);
     els.exportBtn.addEventListener("click", exportJson);
@@ -2062,21 +2099,21 @@
       closeModal();
     });
 
-    els.search.addEventListener("input", async () => {
+    els.search.addEventListener("input", () => {
       appState.view.q = els.search.value;
-      await persistState("Saved");
+      persistStateSoon("Saved");
       render();
     });
 
-    els.tagFilter.addEventListener("change", async () => {
+    els.tagFilter.addEventListener("change", () => {
       appState.view.tag = els.tagFilter.value;
-      await persistState("Saved");
+      persistStateSoon("Saved");
       render();
     });
 
-    els.range.addEventListener("change", async () => {
+    els.range.addEventListener("change", () => {
       appState.view.rangeDays = Number(els.range.value) || 30;
-      await persistState("Saved");
+      persistStateSoon("Saved");
       render();
     });
 
@@ -2140,23 +2177,16 @@
       }
     });
 
-    els.removeImage.addEventListener("click", () => {
+    els.removeImage.addEventListener("click", async () => {
       bgDraft.imageDataUrl = null;
       els.bgImage.value = "";
       applyBackground(bgDraft);
-      setStatus("");
+      await saveBackgroundDraftToState("Background applied");
+      setStatus("Background applied.");
     });
 
     els.bgApply.addEventListener("click", async () => {
-      bgDraft = sanitizeBackground({
-        tint: els.bgColor.value,
-        strength: Number(els.bgStrength.value),
-        blur: Number(els.bgBlur.value),
-        imageDataUrl: bgDraft.imageDataUrl
-      });
-      appState.background = { ...bgDraft };
-      applyBackground(appState.background);
-      await persistState("Background applied");
+      await saveBackgroundDraftToState("Background applied");
       setStatus("Background applied.");
     });
 
@@ -2176,18 +2206,36 @@
         return;
       }
 
+      themeDraft = readThemeUi();
+      bgDraft = sanitizeBackground({
+        tint: els.bgColor.value,
+        strength: Number(els.bgStrength.value),
+        blur: Number(els.bgBlur.value),
+        imageDataUrl: bgDraft.imageDataUrl
+      });
+
       const list = await loadPresets();
+      const presetId = uid();
+
       list.unshift({
-        id: uid(),
+        id: presetId,
         ns: PRESET_NAMESPACE,
         name,
         theme: sanitizeTheme(themeDraft),
         bg: sanitizeBackground(bgDraft)
       });
+
       await savePresets(list);
+
+      appState.theme = { ...themeDraft };
+      appState.background = { ...bgDraft };
+      applyTheme(appState.theme);
+      applyBackground(appState.background);
+      await persistState("Preset saved");
+
       els.presetName.value = "";
       await refreshPresetSelect();
-      els.presetSelect.value = list[0].id;
+      els.presetSelect.value = presetId;
       setStatus("Preset saved.");
       showSavedToast("Preset saved");
     });
@@ -2256,7 +2304,7 @@
     });
 
     window.addEventListener("storage", async (e) => {
-      if (e.key === STORAGE_KEY || e.key === PRESETS_KEY) {
+      if (e.key === STORAGE_KEY || e.key === PRESETS_KEY || e.key === STORAGE_KEY + "__sync__" || e.key === PRESETS_KEY + "__sync__") {
         await loadRefreshState();
         await refreshPresetSelect();
       }
@@ -2265,11 +2313,21 @@
     document.addEventListener("visibilitychange", async () => {
       if (document.visibilityState === "visible") {
         await loadRefreshState();
+      } else {
+        await persistState("Saved");
       }
     });
 
     window.addEventListener("pageshow", async () => {
       await loadRefreshState();
+    });
+
+    window.addEventListener("pagehide", () => {
+      persistState("Saved").catch(() => {});
+    });
+
+    window.addEventListener("beforeunload", () => {
+      persistState("Saved").catch(() => {});
     });
   }
 
@@ -2292,7 +2350,9 @@
     isBooting = false;
   }
 
-  init();
+  init().catch((err) => {
+    console.error("Deadline Horizon failed to initialize:", err);
+  });
 })();
 </script>
 </body>

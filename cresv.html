@@ -506,6 +506,7 @@
       transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.92);
       touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     .iconBtn:hover{
       transform: translateY(-1px);
@@ -885,6 +886,7 @@
 
         <div class="field">
           <label for="rDesc">Description</label>
+          <textarea class="textarea" id="rDesc" maxlength="500" placeholder="Add a short description..."></textarea>
         </div>
 
         <div class="modalFoot">
@@ -927,7 +929,7 @@
     };
 
     const DEFAULT_STATE = {
-      version: 4,
+      version: 5,
       updatedAt: new Date().toISOString(),
       items: [],
       theme: { ...DEFAULT_THEME },
@@ -946,10 +948,12 @@
     }
 
     const WID = stableWidgetId();
-    const STORAGE_KEY = "resource_vault_state_v4__" + WID;
-    const PRESETS_KEY = "resource_vault_presets_v4";
+    const STORAGE_KEY = "resource_vault_state_v5__" + WID;
+    const LEGACY_STORAGE_KEY = "resource_vault_state_v4__" + WID;
+    const PRESETS_KEY = "resource_vault_presets_v5__" + WID;
+    const LEGACY_PRESETS_KEY = "resource_vault_presets_v4";
     const PRESET_NAMESPACE = "resource-vault";
-    const DB_NAME = "resource_vault_db_v4";
+    const DB_NAME = "resource_vault_db_v5";
     const STORE_NAME = "kv";
 
     const els = {
@@ -1032,6 +1036,7 @@
     let renderResizeTimer = null;
     let saveToastTimer = null;
     let isBooting = true;
+    let latestPersistPromise = Promise.resolve();
 
     const Storage = {
       dbPromise: null,
@@ -1125,32 +1130,76 @@
         }
       },
 
-      async getJSON(key){
-        const fromLs = this.lsGet(key);
-        if (fromLs) {
-          try{ return JSON.parse(fromLs); }catch{}
+      parseEnvelope(raw){
+        if (!raw || typeof raw !== "string") return null;
+        try{
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object" && Object.prototype.hasOwnProperty.call(parsed, "payload")) {
+            return {
+              savedAt: String(parsed.savedAt || ""),
+              payload: parsed.payload
+            };
+          }
+          return {
+            savedAt: String(parsed?.updatedAt || ""),
+            payload: parsed
+          };
+        }catch{
+          return null;
         }
-        const fromDb = await this.idbGet(key);
-        if (fromDb && typeof fromDb === "string") {
-          try{
-            const parsed = JSON.parse(fromDb);
-            this.lsSet(key, fromDb);
-            return parsed;
-          }catch{}
-        }
-        return null;
+      },
+
+      newerEnvelope(a, b){
+        if (!a) return b;
+        if (!b) return a;
+        const ta = Date.parse(a.savedAt || a.payload?.updatedAt || 0) || 0;
+        const tb = Date.parse(b.savedAt || b.payload?.updatedAt || 0) || 0;
+        return tb > ta ? b : a;
+      },
+
+      async getJSON(key, legacyKey){
+        const lsCurrent = this.parseEnvelope(this.lsGet(key));
+        const dbCurrent = this.parseEnvelope(await this.idbGet(key));
+        const lsLegacy = legacyKey ? this.parseEnvelope(this.lsGet(legacyKey)) : null;
+        const dbLegacy = legacyKey ? this.parseEnvelope(await this.idbGet(legacyKey)) : null;
+
+        let best = null;
+        best = this.newerEnvelope(best, lsCurrent);
+        best = this.newerEnvelope(best, dbCurrent);
+        best = this.newerEnvelope(best, lsLegacy);
+        best = this.newerEnvelope(best, dbLegacy);
+
+        if (!best) return null;
+
+        const normalizedEnvelope = JSON.stringify({
+          savedAt: best.savedAt || new Date().toISOString(),
+          payload: best.payload
+        });
+
+        this.lsSet(key, normalizedEnvelope);
+        await this.idbSet(key, normalizedEnvelope);
+
+        return best.payload;
       },
 
       async setJSON(key, value){
-        const raw = JSON.stringify(value);
-        this.lsSet(key, raw);
-        await this.idbSet(key, raw);
-        return true;
+        const envelope = JSON.stringify({
+          savedAt: new Date().toISOString(),
+          payload: value
+        });
+
+        const lsOk = this.lsSet(key, envelope);
+        const dbOk = await this.idbSet(key, envelope);
+        return lsOk || dbOk;
       },
 
-      async remove(key){
+      async remove(key, legacyKey){
         this.lsRemove(key);
         await this.idbRemove(key);
+        if (legacyKey){
+          this.lsRemove(legacyKey);
+          await this.idbRemove(legacyKey);
+        }
       }
     };
 
@@ -1252,22 +1301,31 @@
         type: ["link","paper","lecture","dataset","book","tool","note","other"].includes(String(it?.type)) ? String(it.type) : "other",
         url: safeUrl(String(it?.url || "").trim()),
         tags: normalizeTags(it?.tags),
-        description: String(it?.description || "").trim(),
+        description: String(it?.description || "").trim().slice(0, 500),
         createdAt: it?.createdAt || nowISO(),
         updatedAt: it?.updatedAt || nowISO(),
       };
     }
 
     function sanitizeState(raw){
-      const clean = {
-        version: 4,
+      return {
+        version: 5,
         updatedAt: raw?.updatedAt || nowISO(),
         items: Array.isArray(raw?.items) ? raw.items.map(sanitizeItem) : [],
         theme: sanitizeTheme(raw?.theme || DEFAULT_THEME),
         background: sanitizeBackground(raw?.background || DEFAULT_BG),
         view: sanitizeView(raw?.view || DEFAULT_VIEW)
       };
-      return clean;
+    }
+
+    function sanitizePreset(p){
+      return {
+        id: String(p?.id || uid()),
+        name: String(p?.name || "Untitled").trim().slice(0, 80) || "Untitled",
+        ns: String(p?.ns || PRESET_NAMESPACE),
+        theme: sanitizeTheme(p?.theme || {}),
+        bg: sanitizeBackground(p?.bg || {})
+      };
     }
 
     function showSavedToast(msg="Saved"){
@@ -1281,35 +1339,31 @@
 
     async function persistState(message){
       appState.updatedAt = nowISO();
-      await Storage.setJSON(STORAGE_KEY, appState);
+      latestPersistPromise = Storage.setJSON(STORAGE_KEY, appState);
+      await latestPersistPromise;
       if (!isBooting) showSavedToast(message || "Saved");
     }
 
     async function loadState(){
-      const saved = await Storage.getJSON(STORAGE_KEY);
+      const saved = await Storage.getJSON(STORAGE_KEY, LEGACY_STORAGE_KEY);
       appState = sanitizeState(saved || DEFAULT_STATE);
       themeDraft = { ...appState.theme };
       bgDraft = { ...appState.background };
     }
 
     async function loadPresets(){
-      const raw = await Storage.getJSON(PRESETS_KEY);
+      const raw = await Storage.getJSON(PRESETS_KEY, LEGACY_PRESETS_KEY);
       const list = Array.isArray(raw) ? raw : [];
-      return list.filter(Boolean).map((p) => ({
-        id: String(p.id || uid()),
-        name: String(p.name || "Untitled"),
-        ns: String(p.ns || PRESET_NAMESPACE),
-        theme: sanitizeTheme(p.theme || {}),
-        bg: sanitizeBackground(p.bg || {})
-      }));
+      return list.filter(Boolean).map(sanitizePreset).filter(p => p.ns === PRESET_NAMESPACE);
     }
 
     async function savePresets(list){
-      await Storage.setJSON(PRESETS_KEY, list);
+      const clean = Array.isArray(list) ? list.map(sanitizePreset).filter(p => p.ns === PRESET_NAMESPACE) : [];
+      await Storage.setJSON(PRESETS_KEY, clean);
     }
 
     async function refreshPresetSelect(){
-      const list = (await loadPresets()).filter(p => p.ns === PRESET_NAMESPACE);
+      const list = await loadPresets();
       const current = els.presetSelect.value;
       els.presetSelect.innerHTML = `<option value="">—</option>`;
       for(const p of list){
@@ -1433,7 +1487,7 @@
       const dataUrl = await readFileAsDataUrl(file);
       const img = await loadImage(dataUrl);
 
-      const maxDim = 1800;
+      const maxDim = 1400;
       const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
       const width = Math.max(1, Math.round(img.width * ratio));
       const height = Math.max(1, Math.round(img.height * ratio));
@@ -1441,16 +1495,28 @@
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { alpha: false });
       ctx.drawImage(img, 0, 0, width, height);
 
-      let out;
-      try{
-        out = canvas.toDataURL("image/webp", 0.88);
-      }catch{
-        out = canvas.toDataURL("image/jpeg", 0.88);
+      let out = "";
+      const attempts = [
+        ["image/webp", 0.82],
+        ["image/webp", 0.72],
+        ["image/jpeg", 0.82],
+        ["image/jpeg", 0.72],
+        ["image/jpeg", 0.62]
+      ];
+
+      for (const [type, quality] of attempts){
+        try{
+          out = canvas.toDataURL(type, quality);
+        }catch{
+          continue;
+        }
+        if (out && out.length < 1600000) break;
       }
-      return out;
+
+      return out || null;
     }
 
     function buildTagOptions(allItems){
@@ -1517,20 +1583,20 @@
                 <p class="sub">${escapeHtml(desc)}</p>
               </div>
               <div class="cardActions">
-                <button class="iconBtn" type="button" id="open_${it.id}" aria-label="Open" ${url ? "" : "disabled"} title="${url ? "Open link" : "No URL"}" style="${url ? "" : "opacity:.5;cursor:not-allowed;"}">
+                <button class="iconBtn" type="button" data-action="open" data-id="${escapeHtml(it.id)}" aria-label="Open" ${url ? "" : "disabled"} title="${url ? "Open link" : "No URL"}" style="${url ? "" : "opacity:.5;cursor:not-allowed;"}">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M10 8h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M10 14 16 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     <path d="M8 10v8a2 2 0 0 0 2 2h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                   </svg>
                 </button>
-                <button class="iconBtn" type="button" id="edit_${it.id}" aria-label="Edit" title="Edit">
+                <button class="iconBtn" type="button" data-action="edit" data-id="${escapeHtml(it.id)}" aria-label="Edit" title="Edit">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M4 20h4l10.5-10.5a1.8 1.8 0 0 0 0-2.5l-1.5-1.5a1.8 1.8 0 0 0-2.5 0L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                     <path d="M13.5 6.5 17.5 10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                   </svg>
                 </button>
-                <button class="iconBtn" type="button" id="del_${it.id}" aria-label="Delete" title="Delete">
+                <button class="iconBtn" type="button" data-action="delete" data-id="${escapeHtml(it.id)}" aria-label="Delete" title="Delete">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M6 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -1574,7 +1640,8 @@
             <button class="btn primary" type="button" id="emptyAddBtn">＋ Add your first resource</button>
           </div>
         `;
-        document.getElementById("emptyAddBtn").addEventListener("click", openAddModal);
+        const emptyAddBtn = document.getElementById("emptyAddBtn");
+        if (emptyAddBtn) emptyAddBtn.addEventListener("click", openAddModal, { passive: true });
         return;
       }
 
@@ -1587,12 +1654,15 @@
             <button class="btn" type="button" id="clearFiltersBtn">Clear filters</button>
           </div>
         `;
-        document.getElementById("clearFiltersBtn").addEventListener("click", async () => {
-          appState.view.q = "";
-          appState.view.tag = "";
-          await persistState("Saved");
-          render();
-        });
+        const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+        if (clearFiltersBtn){
+          clearFiltersBtn.addEventListener("click", async () => {
+            appState.view.q = "";
+            appState.view.tag = "";
+            await persistState("Saved");
+            render();
+          });
+        }
         return;
       }
 
@@ -1601,16 +1671,6 @@
           ${filtered.map(cardHtml).join("")}
         </div>
       `;
-
-      filtered.forEach(it => {
-        const edit = document.getElementById(`edit_${it.id}`);
-        const del = document.getElementById(`del_${it.id}`);
-        const open = document.getElementById(`open_${it.id}`);
-
-        if (edit) edit.addEventListener("click", () => openEditModal(it.id));
-        if (del) del.addEventListener("click", () => deleteItem(it.id));
-        if (open) open.addEventListener("click", () => { if (it.url) window.open(it.url, "_blank", "noopener,noreferrer"); });
-      });
     };
 
     async function upsertItem(payload){
@@ -1794,7 +1854,7 @@
     }
 
     async function refreshFromStorage(){
-      const saved = await Storage.getJSON(STORAGE_KEY);
+      const saved = await Storage.getJSON(STORAGE_KEY, LEGACY_STORAGE_KEY);
       if (!saved) return;
       const next = sanitizeState(saved);
       if (String(next.updatedAt || "") === String(appState.updatedAt || "")) return;
@@ -1926,16 +1986,21 @@
         const file = els.bgImage.files && els.bgImage.files[0];
         if (!file) return;
         try{
+          statusBg("Processing image...");
           const dataUrl = await processImageFile(file);
+          if (!dataUrl){
+            statusBg("Could not process that image.");
+            return;
+          }
           bgDraft.imageDataUrl = dataUrl;
           applyBgToCSS(bgDraft);
-          statusBg("");
+          statusBg("Preview ready. Click Apply background to save it permanently.");
         }catch{
           statusBg("Could not read that image.");
         }
       });
 
-      els.removeImage.addEventListener("click", async () => {
+      els.removeImage.addEventListener("click", () => {
         bgDraft.imageDataUrl = null;
         els.bgImage.value = "";
         applyBgToCSS(bgDraft);
@@ -1981,6 +2046,11 @@
           imageDataUrl: bgDraft.imageDataUrl
         });
 
+        appState.theme = { ...themeDraft };
+        appState.background = { ...bgDraft };
+        applyThemeToCSS(appState.theme);
+        applyBgToCSS(appState.background);
+
         const list = await loadPresets();
         const entry = {
           id: uid(),
@@ -1991,6 +2061,7 @@
         };
         list.unshift(entry);
         await savePresets(list);
+        await persistState("Preset saved");
 
         els.presetName.value = "";
         await refreshPresetSelect();
@@ -2045,13 +2116,34 @@
         showSavedToast("Preset deleted");
       });
 
+      els.contentArea.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-action][data-id]");
+        if (!btn) return;
+        const id = btn.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+        const item = appState.items.find(x => x.id === id);
+        if (!item) return;
+
+        if (action === "open" && item.url) {
+          window.open(item.url, "_blank", "noopener,noreferrer");
+          return;
+        }
+        if (action === "edit") {
+          openEditModal(id);
+          return;
+        }
+        if (action === "delete") {
+          deleteItem(id);
+        }
+      });
+
       window.addEventListener("resize", () => {
         clearTimeout(renderResizeTimer);
         renderResizeTimer = setTimeout(render, 120);
       });
 
       window.addEventListener("storage", async (e) => {
-        if (e.key === STORAGE_KEY || e.key === PRESETS_KEY) {
+        if (e.key === STORAGE_KEY || e.key === PRESETS_KEY || e.key === LEGACY_STORAGE_KEY || e.key === LEGACY_PRESETS_KEY) {
           await refreshFromStorage();
           await refreshPresetSelect();
         }
@@ -2060,11 +2152,23 @@
       document.addEventListener("visibilitychange", async () => {
         if (document.visibilityState === "visible") {
           await refreshFromStorage();
+          await refreshPresetSelect();
+        } else {
+          await latestPersistPromise;
         }
       });
 
       window.addEventListener("pageshow", async () => {
         await refreshFromStorage();
+        await refreshPresetSelect();
+      });
+
+      window.addEventListener("pagehide", async () => {
+        await latestPersistPromise;
+      });
+
+      window.addEventListener("beforeunload", () => {
+        // No-op intentionally. State is persisted continuously.
       });
     }
 

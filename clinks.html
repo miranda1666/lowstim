@@ -541,27 +541,20 @@
   }
 
   @media (max-width: 640px){
-    body{
-      padding:12px;
-    }
-
-    .widgetShell{
-      max-width:100%;
-    }
+    body{ padding:12px; }
+    .widgetShell{ max-width:100%; }
 
     .panel{
       position:fixed;
       left:12px !important;
       right:12px !important;
-      top: max(12px, env(safe-area-inset-top)) !important;
+      top:max(12px, env(safe-area-inset-top)) !important;
       width:auto;
       max-height: calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
       border-radius:18px;
     }
 
-    .twoCol{
-      grid-template-columns: 1fr;
-    }
+    .twoCol{ grid-template-columns: 1fr; }
 
     .manageLinkRow,
     .manageGroupHead{
@@ -576,7 +569,7 @@
 
     .manageLinkTxt .t1,
     .manageLinkTxt .t2{
-      max-width: none;
+      max-width:none;
     }
   }
 </style>
@@ -625,6 +618,7 @@
       <button class="miniBtn" id="bgReset" type="button" style="margin-top:8px;">Reset background</button>
 
       <div class="status" id="uiStatus" aria-live="polite"></div>
+      <div class="saveBadge">Background becomes permanent when you click Apply background.</div>
     </div>
 
     <div class="panel" id="themePanel" role="dialog" aria-label="Theme settings">
@@ -679,6 +673,7 @@
       <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
 
       <div class="status" id="presetStatus" aria-live="polite"></div>
+      <div class="saveBadge">Presets include theme + background + image + blur.</div>
     </div>
 
     <div class="panel" id="managePanel" role="dialog" aria-label="Manage quick links">
@@ -752,6 +747,7 @@
       <button id="resetLinksBtn" class="miniBtn danger" type="button" style="margin-top:8px;">Reset links</button>
 
       <div class="status" id="manageStatus" aria-live="polite"></div>
+      <div class="saveBadge">Groups and links save automatically on this device.</div>
     </div>
 
     <div class="boardClip" id="boardClip" aria-label="Quick Links board">
@@ -761,6 +757,7 @@
           <div class="topRow">
             <div>
               <p class="label">Quick Links</p>
+              <p class="subtle" id="subtitle">Your shortcuts, neatly grouped.</p>
             </div>
 
             <div class="rightControls">
@@ -785,7 +782,7 @@
           <div id="groups" class="groups" aria-label="Groups list"></div>
 
           <div id="emptyState" class="emptyState" style="display:none;">
-            No links yet. Click the <b>first</b> button in the top-right to add groups and links.
+            No links yet. Click the first button in the top-right to add groups and links.
           </div>
         </div>
       </div>
@@ -794,10 +791,42 @@
 
 <script>
 (function(){
+  const STORAGE_KEY = "quick_links_widget_state_v5";
+
+  const DEFAULT_STATE = {
+    version: 5,
+    updatedAt: Date.now(),
+    theme: {
+      bg: "#ffffff",
+      ink: "#2f2f2f",
+      muted: "#7a7a7a",
+      stroke: "#e2dfd8",
+      cardA: 92,
+      chipA: 62
+    },
+    background: {
+      tint: "#efe7e1",
+      strength: 12,
+      imageA: 92,
+      blur: 0,
+      imageDataUrl: null
+    },
+    data: {
+      groups: []
+    },
+    presets: []
+  };
+
+  function $(id){ return document.getElementById(id); }
+
   function clamp(n, min, max){
     n = Number(n);
     if(!Number.isFinite(n)) return min;
     return Math.max(min, Math.min(max, n));
+  }
+
+  function deepClone(obj){
+    return JSON.parse(JSON.stringify(obj));
   }
 
   function normHex(hex, fallback){
@@ -807,7 +836,7 @@
 
   function hexToRgba(hex, a){
     const h = String(hex || "").replace("#","").trim();
-    const full = h.length === 3 ? h.split("").map(c => c + c).join("") : h;
+    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
     const num = parseInt(full || "efe7e1", 16);
     const r = (num >> 16) & 255;
     const g = (num >> 8) & 255;
@@ -834,8 +863,8 @@
       return url.host.replace(/^www\./, "");
     }catch{
       return String(u || "")
-        .replace(/^https?:\/\//i, "")
-        .replace(/^www\./, "")
+        .replace(/^https?:\/\//i,"")
+        .replace(/^www\./,"")
         .split("/")[0] || "";
     }
   }
@@ -884,23 +913,6 @@
     }
   }
 
-  window.__qlUtils = {
-    clamp,
-    normHex,
-    hexToRgba,
-    uid,
-    safeUrl,
-    hostFromUrl,
-    fileToDataUrl
-  };
-})();
-
-(function(){
-  const DB_NAME = "quick_links_widget_db_v4";
-  const STORE_NAME = "app";
-  const STATE_KEY = "quick_links_state_v4";
-  const LS_MIRROR_KEY = STATE_KEY + "_mirror";
-
   function canUseLocalStorage(){
     try{
       const k = "__ql_test_" + Math.random().toString(16).slice(2);
@@ -912,163 +924,49 @@
     }
   }
 
-  function openDb(){
-    return new Promise((resolve, reject) => {
-      if(!("indexedDB" in window)){
-        reject(new Error("IndexedDB unavailable"));
-        return;
-      }
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = function(){
-        const db = req.result;
-        if(!db.objectStoreNames.contains(STORE_NAME)){
-          db.createObjectStore(STORE_NAME);
-        }
-      };
-      req.onsuccess = function(){ resolve(req.result); };
-      req.onerror = function(){ reject(req.error || new Error("IndexedDB open failed")); };
-    });
-  }
-
-  async function idbGet(key){
-    const db = await openDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, "readonly");
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.get(key);
-      req.onsuccess = function(){ resolve(req.result ?? null); };
-      req.onerror = function(){ reject(req.error || new Error("IndexedDB read failed")); };
-    });
-  }
-
-  async function idbSet(key, value){
-    const db = await openDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, "readwrite");
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.put(value, key);
-      req.onsuccess = function(){ resolve(true); };
-      req.onerror = function(){ reject(req.error || new Error("IndexedDB write failed")); };
-    });
-  }
-
   const hasLS = canUseLocalStorage();
-  const channel = ("BroadcastChannel" in window) ? new BroadcastChannel("quick_links_widget_sync_v4") : null;
-  const subscribers = [];
 
-  function emit(state, source){
-    subscribers.forEach(fn => {
-      try{ fn(state, source); }catch{}
-    });
-  }
-
-  const Store = {
-    async load(){
-      let fromIdb = null;
-      try{
-        fromIdb = await idbGet(STATE_KEY);
-      }catch{}
-
-      if(fromIdb && typeof fromIdb === "object") return fromIdb;
-
-      if(hasLS){
-        try{
-          const raw = localStorage.getItem(LS_MIRROR_KEY);
-          if(raw) return JSON.parse(raw);
-        }catch{}
-      }
+  function loadRawState(){
+    if(!hasLS) return null;
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch{
       return null;
-    },
-
-    async save(state, source){
-      const payload = JSON.parse(JSON.stringify(state));
-      try{ await idbSet(STATE_KEY, payload); }catch{}
-      if(hasLS){
-        try{ localStorage.setItem(LS_MIRROR_KEY, JSON.stringify(payload)); }catch{}
-      }
-      if(channel){
-        try{ channel.postMessage({ type:"state", source: source || "self", state: payload }); }catch{}
-      }
-      emit(payload, source || "self");
-      return true;
-    },
-
-    subscribe(fn){
-      if(typeof fn === "function") subscribers.push(fn);
     }
-  };
-
-  if(channel){
-    channel.onmessage = function(ev){
-      const data = ev && ev.data;
-      if(!data || data.type !== "state" || !data.state) return;
-      emit(data.state, data.source || "broadcast");
-    };
   }
 
-  if(hasLS){
-    window.addEventListener("storage", function(e){
-      if(e.key !== LS_MIRROR_KEY || !e.newValue) return;
-      try{
-        const parsed = JSON.parse(e.newValue);
-        emit(parsed, "storage");
-      }catch{}
-    });
+  function saveRawState(state){
+    if(!hasLS) return false;
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      return true;
+    }catch{
+      return false;
+    }
   }
 
-  window.__QL_STORE__ = Store;
-})();
+  function sanitizeState(src){
+    const base = deepClone(DEFAULT_STATE);
+    const s = (src && typeof src === "object") ? src : {};
 
-(function(){
-  const { clamp, normHex, uid, safeUrl, hostFromUrl, fileToDataUrl, hexToRgba } = window.__qlUtils;
-  const Store = window.__QL_STORE__;
+    const st = s.theme || {};
+    base.theme.bg = normHex(st.bg, base.theme.bg);
+    base.theme.ink = normHex(st.ink, base.theme.ink);
+    base.theme.muted = normHex(st.muted, base.theme.muted);
+    base.theme.stroke = normHex(st.stroke, base.theme.stroke);
+    base.theme.cardA = clamp(st.cardA == null ? base.theme.cardA : st.cardA, 35, 100);
+    base.theme.chipA = clamp(st.chipA == null ? base.theme.chipA : st.chipA, 35, 100);
 
-  const DEFAULTS = {
-    version: 4,
-    updatedAt: Date.now(),
-    theme: {
-      bg:"#ffffff",
-      ink:"#2f2f2f",
-      muted:"#7a7a7a",
-      stroke:"#e2dfd8",
-      cardA:92,
-      chipA:62
-    },
-    background: {
-      tint:"#efe7e1",
-      strength:12,
-      imageA:92,
-      blur:0,
-      imageDataUrl:null
-    },
-    data: {
-      groups:[]
-    },
-    presets:[]
-  };
+    const bg = s.background || {};
+    base.background.tint = normHex(bg.tint, base.background.tint);
+    base.background.strength = clamp(bg.strength == null ? base.background.strength : bg.strength, 0, 85);
+    base.background.imageA = clamp(bg.imageA == null ? base.background.imageA : bg.imageA, 0, 100);
+    base.background.blur = clamp(bg.blur == null ? base.background.blur : bg.blur, 0, 24);
+    base.background.imageDataUrl = typeof bg.imageDataUrl === "string" ? bg.imageDataUrl : null;
 
-  function deepClone(obj){
-    return JSON.parse(JSON.stringify(obj));
-  }
-
-  function sanitizeState(state){
-    const base = deepClone(DEFAULTS);
-    const src = (state && typeof state === "object") ? state : {};
-
-    base.theme.bg = normHex(src.theme && src.theme.bg, base.theme.bg);
-    base.theme.ink = normHex(src.theme && src.theme.ink, base.theme.ink);
-    base.theme.muted = normHex(src.theme && src.theme.muted, base.theme.muted);
-    base.theme.stroke = normHex(src.theme && src.theme.stroke, base.theme.stroke);
-    base.theme.cardA = clamp(src.theme && src.theme.cardA, 35, 100);
-    base.theme.chipA = clamp(src.theme && src.theme.chipA, 35, 100);
-
-    base.background.tint = normHex(src.background && src.background.tint, base.background.tint);
-    base.background.strength = clamp(src.background && src.background.strength, 0, 85);
-    base.background.imageA = clamp(src.background && src.background.imageA, 0, 100);
-    base.background.blur = clamp(src.background && src.background.blur, 0, 24);
-    base.background.imageDataUrl = src.background && typeof src.background.imageDataUrl === "string" ? src.background.imageDataUrl : null;
-
-    const groups = src.data && Array.isArray(src.data.groups) ? src.data.groups : [];
+    const data = s.data || {};
+    const groups = Array.isArray(data.groups) ? data.groups : [];
     base.data.groups = groups.filter(Boolean).map(g => ({
       id: String(g.id || uid()),
       name: String(g.name || "Untitled"),
@@ -1081,7 +979,7 @@
       })).filter(l => !!l.url) : []
     }));
 
-    const presets = Array.isArray(src.presets) ? src.presets : [];
+    const presets = Array.isArray(s.presets) ? s.presets : [];
     base.presets = presets.filter(Boolean).map(p => ({
       id: String(p.id || uid()),
       name: String(p.name || "Untitled"),
@@ -1090,38 +988,35 @@
         ink: normHex(p.theme && p.theme.ink, base.theme.ink),
         muted: normHex(p.theme && p.theme.muted, base.theme.muted),
         stroke: normHex(p.theme && p.theme.stroke, base.theme.stroke),
-        cardA: clamp(p.theme && p.theme.cardA, 35, 100),
-        chipA: clamp(p.theme && p.theme.chipA, 35, 100)
+        cardA: clamp(p.theme && p.theme.cardA == null ? base.theme.cardA : p.theme.cardA, 35, 100),
+        chipA: clamp(p.theme && p.theme.chipA == null ? base.theme.chipA : p.theme.chipA, 35, 100)
       },
       background: {
         tint: normHex(p.background && p.background.tint, base.background.tint),
-        strength: clamp(p.background && p.background.strength, 0, 85),
-        imageA: clamp(p.background && p.background.imageA, 0, 100),
-        blur: clamp(p.background && p.background.blur, 0, 24),
+        strength: clamp(p.background && p.background.strength == null ? base.background.strength : p.background.strength, 0, 85),
+        imageA: clamp(p.background && p.background.imageA == null ? base.background.imageA : p.background.imageA, 0, 100),
+        blur: clamp(p.background && p.background.blur == null ? base.background.blur : p.background.blur, 0, 24),
         imageDataUrl: p.background && typeof p.background.imageDataUrl === "string" ? p.background.imageDataUrl : null
       }
     }));
 
-    base.updatedAt = Number(src.updatedAt) || Date.now();
-    base.version = 4;
+    base.updatedAt = Number(s.updatedAt) || Date.now();
+    base.version = 5;
     return base;
   }
 
-  let state = sanitizeState(DEFAULTS);
+  let state = sanitizeState(loadRawState() || DEFAULT_STATE);
   let themeDraft = deepClone(state.theme);
   let backgroundDraft = deepClone(state.background);
   let editing = { linkId: null };
-  let applyingRemoteState = false;
-
-  const $ = id => document.getElementById(id);
 
   const groupsEl = $("groups");
   const emptyEl = $("emptyState");
   const subtitle = $("subtitle");
 
-  const bgPanel = $("bgPanel");
-  const themePanel = $("themePanel");
-  const managePanel = $("managePanel");
+  const boardTintEl = $("boardTint");
+  const bgDot = $("bgDot");
+  const themeDot = $("themeDot");
 
   const bgColor = $("bgColor");
   const bgStrength = $("bgStrength");
@@ -1131,8 +1026,6 @@
   const bgRemove = $("bgRemove");
   const bgApply = $("bgApply");
   const bgReset = $("bgReset");
-  const bgDot = $("bgDot");
-  const boardTintEl = $("boardTint");
 
   const tBg = $("tBg");
   const tInk = $("tInk");
@@ -1142,7 +1035,6 @@
   const tChipA = $("tChipA");
   const tApply = $("tApply");
   const tReset = $("tReset");
-  const themeDot = $("themeDot");
 
   const presetName = $("presetName");
   const presetSelect = $("presetSelect");
@@ -1169,26 +1061,27 @@
   const inlineModalCancel = $("inlineModalCancel");
   const inlineModalHint = $("inlineModalHint");
 
+  const bgPanel = $("bgPanel");
+  const themePanel = $("themePanel");
+  const managePanel = $("managePanel");
+  const shell = $("widgetShell");
+  const bgBtn = $("bgBtn");
+  const themeBtn = $("themeBtn");
+  const manageBtn = $("manageBtn");
+
   function setStatus(id, msg){
     const el = $(id);
     if(el) el.textContent = msg || "";
   }
 
-  function renderThemeDraftToInputs(){
-    tBg.value = normHex(themeDraft.bg, DEFAULTS.theme.bg);
-    tInk.value = normHex(themeDraft.ink, DEFAULTS.theme.ink);
-    tMuted.value = normHex(themeDraft.muted, DEFAULTS.theme.muted);
-    tStroke.value = normHex(themeDraft.stroke, DEFAULTS.theme.stroke);
-    tCardA.value = String(clamp(themeDraft.cardA, 35, 100));
-    tChipA.value = String(clamp(themeDraft.chipA, 35, 100));
-  }
-
-  function renderBackgroundDraftToInputs(){
-    bgColor.value = normHex(backgroundDraft.tint, DEFAULTS.background.tint);
-    bgStrength.value = String(clamp(backgroundDraft.strength, 0, 85));
-    bgImageA.value = String(clamp(backgroundDraft.imageA, 0, 100));
-    bgBlur.value = String(clamp(backgroundDraft.blur, 0, 24));
-    bgImage.value = "";
+  function persist(sourceMsgId, sourceMsg){
+    state = sanitizeState(state);
+    state.updatedAt = Date.now();
+    const ok = saveRawState(state);
+    if(sourceMsgId){
+      setStatus(sourceMsgId, ok ? sourceMsg : "Could not save on this device.");
+    }
+    return ok;
   }
 
   function applyTheme(theme){
@@ -1197,13 +1090,15 @@
     document.documentElement.style.setProperty("--ink", x.ink);
     document.documentElement.style.setProperty("--muted", x.muted);
     document.documentElement.style.setProperty("--stroke", x.stroke);
-    document.documentElement.style.setProperty("--card", "rgba(247,245,240," + (x.cardA/100) + ")");
-    document.documentElement.style.setProperty("--chip", "rgba(255,255,255," + (x.chipA/100) + ")");
-    document.documentElement.style.setProperty("--chip-hover", "rgba(255,255,255," + Math.min(0.98, (x.chipA + 16)/100) + ")");
+    document.documentElement.style.setProperty("--card", "rgba(247,245,240," + (x.cardA / 100) + ")");
+    document.documentElement.style.setProperty("--chip", "rgba(255,255,255," + (x.chipA / 100) + ")");
+    document.documentElement.style.setProperty("--chip-hover", "rgba(255,255,255," + Math.min(0.98, (x.chipA + 16) / 100) + ")");
     document.documentElement.style.setProperty("--focus", hexToRgba(x.ink, 0.10));
 
-    themeDot.style.background = x.ink;
-    themeDot.style.boxShadow = "0 0 0 6px rgba(243,239,233," + Math.min(0.32, 0.10 + (x.cardA / 300)) + ")";
+    if(themeDot){
+      themeDot.style.background = x.ink;
+      themeDot.style.boxShadow = "0 0 0 6px rgba(243,239,233," + Math.min(0.32, 0.10 + (x.cardA / 300)) + ")";
+    }
   }
 
   function applyBackground(bg){
@@ -1214,14 +1109,48 @@
     document.documentElement.style.setProperty("--board-image-blur", x.blur + "px");
     document.documentElement.style.setProperty("--board-image", x.imageDataUrl ? 'url("' + x.imageDataUrl + '")' : "none");
 
-    boardTintEl.style.background = hexToRgba(x.tint, x.strength / 100);
-    bgDot.style.background = x.tint;
-    bgDot.style.boxShadow = "0 0 0 6px " + hexToRgba(x.tint, Math.min(0.28, (x.strength / 100) + 0.10));
+    if(boardTintEl) boardTintEl.style.background = hexToRgba(x.tint, x.strength / 100);
+    if(bgDot){
+      bgDot.style.background = x.tint;
+      bgDot.style.boxShadow = "0 0 0 6px " + hexToRgba(x.tint, Math.min(0.28, (x.strength / 100) + 0.10));
+    }
   }
 
-  function ensureGroupOptions(){
+  function renderThemeInputs(){
+    tBg.value = themeDraft.bg;
+    tInk.value = themeDraft.ink;
+    tMuted.value = themeDraft.muted;
+    tStroke.value = themeDraft.stroke;
+    tCardA.value = String(themeDraft.cardA);
+    tChipA.value = String(themeDraft.chipA);
+  }
+
+  function renderBackgroundInputs(){
+    bgColor.value = backgroundDraft.tint;
+    bgStrength.value = String(backgroundDraft.strength);
+    bgImageA.value = String(backgroundDraft.imageA);
+    bgBlur.value = String(backgroundDraft.blur);
+    bgImage.value = "";
+  }
+
+  function refreshPresetSelect(){
+    const current = presetSelect.value;
+    presetSelect.innerHTML = '<option value="">—</option>';
+    state.presets.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name || "Untitled";
+      presetSelect.appendChild(opt);
+    });
+    if(current && state.presets.some(p => p.id === current)){
+      presetSelect.value = current;
+    }
+  }
+
+  function ensureGroupOptions(selectedId){
     linkGroup.innerHTML = "";
-    const groups = state.data.groups;
+    const groups = state.data.groups || [];
+
     if(groups.length === 0){
       const opt = document.createElement("option");
       opt.value = "";
@@ -1230,13 +1159,21 @@
       linkGroup.disabled = true;
       return;
     }
+
     linkGroup.disabled = false;
+
     groups.forEach(g => {
       const opt = document.createElement("option");
       opt.value = g.id;
       opt.textContent = g.name || "Untitled";
       linkGroup.appendChild(opt);
     });
+
+    const targetId = selectedId && groups.some(g => g.id === selectedId)
+      ? selectedId
+      : groups[0].id;
+
+    linkGroup.value = targetId;
   }
 
   function clearForm(){
@@ -1246,24 +1183,25 @@
     linkUrl.value = "";
     linkIconFile.value = "";
     saveLinkBtn.textContent = "Save link";
-    setStatus("manageStatus", "");
   }
 
   function renderBoard(){
     groupsEl.innerHTML = "";
-    const totalLinks = state.data.groups.reduce((n, g) => n + (Array.isArray(g.links) ? g.links.length : 0), 0);
+    const groups = state.data.groups || [];
+    const totalLinks = groups.reduce((n, g) => n + ((g.links || []).length), 0);
 
     if(totalLinks === 0){
       emptyEl.style.display = "block";
+      subtitle.textContent = "Click the first button in the top-right to add links.";
       return;
     }
 
     emptyEl.style.display = "none";
     subtitle.textContent = "Your shortcuts, neatly grouped.";
 
-    state.data.groups.forEach(g => {
+    groups.forEach(g => {
       const links = Array.isArray(g.links) ? g.links : [];
-      if(links.length === 0) return;
+      if(!links.length) return;
 
       const wrap = document.createElement("div");
 
@@ -1303,7 +1241,7 @@
         }else{
           const span = document.createElement("span");
           span.className = "iconEmoji";
-          span.textContent = (l.emoji && String(l.emoji).trim()) ? String(l.emoji).trim() : "↗";
+          span.textContent = l.emoji && String(l.emoji).trim() ? String(l.emoji).trim() : "↗";
           icon.appendChild(span);
         }
 
@@ -1379,8 +1317,9 @@
 
   function renderManage(){
     manageList.innerHTML = "";
+    const groups = state.data.groups || [];
 
-    if(state.data.groups.length === 0){
+    if(groups.length === 0){
       const empty = document.createElement("div");
       empty.className = "emptyState";
       empty.textContent = "No groups yet. Add a group above, then add links to it.";
@@ -1388,7 +1327,7 @@
       return;
     }
 
-    state.data.groups.forEach(g => {
+    groups.forEach(g => {
       const block = document.createElement("div");
       block.className = "manageBlock";
 
@@ -1415,9 +1354,8 @@
         });
         if(next === null) return;
         g.name = String(next).trim() || "Untitled";
-        await saveState("rename-group");
-        syncUI();
-        setStatus("manageStatus", "Group renamed.");
+        persist("manageStatus", "Group renamed.");
+        syncUI(g.id);
       });
 
       const delBtn = document.createElement("button");
@@ -1438,9 +1376,8 @@
         }
 
         state.data.groups = state.data.groups.filter(x => x.id !== g.id);
-        await saveState("delete-group");
+        persist("manageStatus", "Group deleted.");
         syncUI();
-        setStatus("manageStatus", "Group deleted.");
       });
 
       btns.appendChild(renameBtn);
@@ -1479,7 +1416,7 @@
           }else{
             const sp = document.createElement("span");
             sp.className = "iconEmoji";
-            sp.textContent = (l.emoji && String(l.emoji).trim()) ? String(l.emoji).trim() : "↗";
+            sp.textContent = l.emoji && String(l.emoji).trim() ? String(l.emoji).trim() : "↗";
             icon.appendChild(sp);
           }
 
@@ -1508,8 +1445,7 @@
           editBtn.textContent = "Edit";
           editBtn.addEventListener("click", function(){
             editing.linkId = l.id;
-            ensureGroupOptions();
-            linkGroup.value = g.id;
+            ensureGroupOptions(g.id);
             linkTitle.value = l.title || "";
             linkEmoji.value = l.emoji || "";
             linkUrl.value = l.url || "";
@@ -1531,10 +1467,9 @@
             if(String(typed).trim().toUpperCase() !== "REMOVE") return;
 
             g.links = (g.links || []).filter(x => x.id !== l.id);
-            await saveState("remove-link");
-            syncUI();
-            setStatus("manageStatus", "Link removed.");
+            persist("manageStatus", "Link removed.");
             if(editing.linkId === l.id) clearForm();
+            syncUI(g.id);
           });
 
           rowBtns.appendChild(editBtn);
@@ -1552,305 +1487,22 @@
     });
   }
 
-  function refreshPresetSelect(){
-    const current = presetSelect.value;
-    presetSelect.innerHTML = '<option value="">—</option>';
-    state.presets.forEach(p => {
-      const opt = document.createElement("option");
-      opt.value = p.id;
-      opt.textContent = p.name || "Untitled";
-      presetSelect.appendChild(opt);
-    });
-    if(current && state.presets.some(p => p.id === current)){
-      presetSelect.value = current;
-    }
-  }
+  function syncUI(selectedGroupId){
+    state = sanitizeState(state);
+    themeDraft = sanitizeState({ theme: themeDraft }).theme;
+    backgroundDraft = sanitizeState({ background: backgroundDraft }).background;
 
-  function syncUI(){
     applyTheme(state.theme);
     applyBackground(state.background);
-    renderThemeDraftToInputs();
-    renderBackgroundDraftToInputs();
-    ensureGroupOptions();
+    renderThemeInputs();
+    renderBackgroundInputs();
+    refreshPresetSelect();
+    ensureGroupOptions(selectedGroupId);
     renderBoard();
     renderManage();
-    refreshPresetSelect();
-  }
-
-  async function saveState(source){
-    state.updatedAt = Date.now();
-    await Store.save(sanitizeState(state), source || "save");
-  }
-
-  function readThemeDraftFromInputs(){
-    themeDraft = {
-      bg: tBg.value,
-      ink: tInk.value,
-      muted: tMuted.value,
-      stroke: tStroke.value,
-      cardA: Number(tCardA.value),
-      chipA: Number(tChipA.value)
-    };
-  }
-
-  function readBackgroundDraftFromInputs(){
-    backgroundDraft.tint = bgColor.value;
-    backgroundDraft.strength = Number(bgStrength.value);
-    backgroundDraft.imageA = Number(bgImageA.value);
-    backgroundDraft.blur = Number(bgBlur.value);
-  }
-
-  function bindPanelDrafts(){
-    [tBg, tInk, tMuted, tStroke, tCardA, tChipA].forEach(el => {
-      el.addEventListener("input", function(){
-        readThemeDraftFromInputs();
-        applyTheme(themeDraft);
-        setStatus("presetStatus", "");
-      });
-    });
-
-    [bgColor, bgStrength, bgImageA, bgBlur].forEach(el => {
-      el.addEventListener("input", function(){
-        readBackgroundDraftFromInputs();
-        applyBackground(backgroundDraft);
-        setStatus("uiStatus", "");
-      });
-    });
-
-    bgImage.addEventListener("change", async function(){
-      const file = bgImage.files && bgImage.files[0];
-      if(!file) return;
-      try{
-        backgroundDraft.imageDataUrl = await fileToDataUrl(file, { maxSide: 1600, quality: 0.9 });
-        applyBackground(backgroundDraft);
-        setStatus("uiStatus", "Image loaded. Click Apply background to save permanently.");
-      }catch{
-        setStatus("uiStatus", "Could not read that image.");
-      }
-    });
-
-    bgRemove.addEventListener("click", function(){
-      backgroundDraft.imageDataUrl = null;
-      bgImage.value = "";
-      applyBackground(backgroundDraft);
-      setStatus("uiStatus", "Image removed. Click Apply background to save permanently.");
-    });
-
-    bgApply.addEventListener("click", async function(){
-      readBackgroundDraftFromInputs();
-      state.background = deepClone(backgroundDraft);
-      await saveState("apply-background");
-      setStatus("uiStatus", "Background applied.");
-    });
-
-    bgReset.addEventListener("click", async function(){
-      backgroundDraft = deepClone(DEFAULTS.background);
-      state.background = deepClone(DEFAULTS.background);
-      renderBackgroundDraftToInputs();
-      applyBackground(backgroundDraft);
-      await saveState("reset-background");
-      setStatus("uiStatus", "Background reset.");
-    });
-
-    tApply.addEventListener("click", async function(){
-      readThemeDraftFromInputs();
-      state.theme = deepClone(themeDraft);
-      await saveState("apply-theme");
-      setStatus("presetStatus", "Theme applied.");
-    });
-
-    tReset.addEventListener("click", async function(){
-      themeDraft = deepClone(DEFAULTS.theme);
-      state.theme = deepClone(DEFAULTS.theme);
-      renderThemeDraftToInputs();
-      applyTheme(themeDraft);
-      await saveState("reset-theme");
-      setStatus("presetStatus", "Theme reset.");
-    });
-
-    presetSave.addEventListener("click", async function(){
-      const name = String(presetName.value || "").trim();
-      if(!name){
-        setStatus("presetStatus", "Type a preset name first.");
-        return;
-      }
-
-      readThemeDraftFromInputs();
-      readBackgroundDraftFromInputs();
-
-      const entry = {
-        id: uid(),
-        name: name,
-        theme: deepClone(themeDraft),
-        background: deepClone(backgroundDraft)
-      };
-
-      state.presets.unshift(entry);
-      await saveState("save-preset");
-      refreshPresetSelect();
-      presetSelect.value = entry.id;
-      presetName.value = "";
-      setStatus("presetStatus", "Preset saved.");
-    });
-
-    presetApply.addEventListener("click", async function(){
-      const id = presetSelect.value || "";
-      if(!id){
-        setStatus("presetStatus", "Choose a preset first.");
-        return;
-      }
-
-      const p = state.presets.find(x => x.id === id);
-      if(!p){
-        setStatus("presetStatus", "Preset not found.");
-        return;
-      }
-
-      state.theme = deepClone(p.theme);
-      state.background = deepClone(p.background);
-      themeDraft = deepClone(p.theme);
-      backgroundDraft = deepClone(p.background);
-
-      syncUI();
-      await saveState("apply-preset");
-      setStatus("presetStatus", "Preset applied.");
-      setStatus("uiStatus", "Background applied from preset.");
-    });
-
-    presetDelete.addEventListener("click", async function(){
-      const id = presetSelect.value || "";
-      if(!id){
-        setStatus("presetStatus", "Choose a preset first.");
-        return;
-      }
-      const before = state.presets.length;
-      state.presets = state.presets.filter(x => x.id !== id);
-      if(state.presets.length === before){
-        setStatus("presetStatus", "Preset not found.");
-        return;
-      }
-      await saveState("delete-preset");
-      refreshPresetSelect();
-      presetSelect.value = "";
-      setStatus("presetStatus", "Preset deleted.");
-    });
-
-    addGroupBtn.addEventListener("click", async function(){
-      const name = String(newGroupName.value || "").trim();
-      if(!name){
-        setStatus("manageStatus", "Type a group name first.");
-        return;
-      }
-      state.data.groups.unshift({ id: uid(), name: name, links: [] });
-      newGroupName.value = "";
-      await saveState("add-group");
-      syncUI();
-      setStatus("manageStatus", "Group added.");
-    });
-
-    clearLinkFormBtn.addEventListener("click", function(){
-      clearForm();
-    });
-
-    saveLinkBtn.addEventListener("click", async function(){
-      if(state.data.groups.length === 0){
-        setStatus("manageStatus", "Create a group first.");
-        return;
-      }
-
-      const groupId = linkGroup.value || "";
-      const g = state.data.groups.find(x => x.id === groupId);
-      if(!g){
-        setStatus("manageStatus", "Select a valid group.");
-        return;
-      }
-
-      const title = String(linkTitle.value || "").trim();
-      const emoji = String(linkEmoji.value || "").trim();
-      const url = safeUrl(linkUrl.value || "");
-
-      if(!url){
-        setStatus("manageStatus", "Please enter a URL.");
-        return;
-      }
-
-      let iconImageDataUrl = null;
-      const file = linkIconFile.files && linkIconFile.files[0];
-      if(file){
-        try{
-          iconImageDataUrl = await fileToDataUrl(file, { maxSide: 512, quality: 0.9 });
-        }catch{}
-      }
-
-      if(editing.linkId){
-        let movedTarget = null;
-
-        state.data.groups.forEach(group => {
-          const idx = (group.links || []).findIndex(x => x.id === editing.linkId);
-          if(idx !== -1){
-            movedTarget = group.links[idx];
-            group.links.splice(idx, 1);
-          }
-        });
-
-        if(!movedTarget){
-          setStatus("manageStatus", "Could not find link to update.");
-          editing.linkId = null;
-          return;
-        }
-
-        movedTarget.title = title;
-        movedTarget.emoji = emoji;
-        movedTarget.url = url;
-        if(iconImageDataUrl){
-          movedTarget.iconImageDataUrl = iconImageDataUrl;
-        }
-        g.links.unshift(movedTarget);
-
-        await saveState("update-link");
-        syncUI();
-        clearForm();
-        setStatus("manageStatus", "Link updated.");
-        return;
-      }
-
-      g.links.unshift({
-        id: uid(),
-        title: title,
-        emoji: emoji,
-        url: url,
-        iconImageDataUrl: iconImageDataUrl || null
-      });
-
-      await saveState("add-link");
-      syncUI();
-      clearForm();
-      setStatus("manageStatus", "Link saved.");
-    });
-
-    resetLinksBtn.addEventListener("click", async function(){
-      const typed = await askInline({
-        title: "Type RESET to clear all groups and links",
-        placeholder: "RESET",
-        okText: "Reset",
-        hint: "This cannot be undone."
-      });
-      if(String(typed).trim().toUpperCase() !== "RESET") return;
-
-      state.data = deepClone(DEFAULTS.data);
-      clearForm();
-      await saveState("reset-links");
-      syncUI();
-      setStatus("manageStatus", "Links reset.");
-    });
   }
 
   function setupPanels(){
-    const shell = $("widgetShell");
-    const bgBtn = $("bgBtn");
-    const themeBtn = $("themeBtn");
-    const manageBtn = $("manageBtn");
-
     [bgPanel, themePanel, managePanel].forEach(p => {
       p.addEventListener("click", e => e.stopPropagation());
       p.addEventListener("pointerdown", e => e.stopPropagation());
@@ -1918,54 +1570,272 @@
         e.target.closest("#bgPanel") || e.target.closest("#bgBtn") ||
         e.target.closest("#themePanel") || e.target.closest("#themeBtn") ||
         e.target.closest("#managePanel") || e.target.closest("#manageBtn");
-
       if(!inside) closeAll(null);
     });
   }
 
-  async function init(){
-    const loaded = await Store.load();
-    state = sanitizeState(loaded || DEFAULTS);
-    themeDraft = deepClone(state.theme);
-    backgroundDraft = deepClone(state.background);
+  [tBg, tInk, tMuted, tStroke, tCardA, tChipA].forEach(el => {
+    el.addEventListener("input", function(){
+      themeDraft = {
+        bg: normHex(tBg.value, "#ffffff"),
+        ink: normHex(tInk.value, "#2f2f2f"),
+        muted: normHex(tMuted.value, "#7a7a7a"),
+        stroke: normHex(tStroke.value, "#e2dfd8"),
+        cardA: clamp(tCardA.value, 35, 100),
+        chipA: clamp(tChipA.value, 35, 100)
+      };
+      applyTheme(themeDraft);
+      setStatus("presetStatus", "");
+    });
+  });
 
+  [bgColor, bgStrength, bgImageA, bgBlur].forEach(el => {
+    el.addEventListener("input", function(){
+      backgroundDraft.tint = normHex(bgColor.value, "#efe7e1");
+      backgroundDraft.strength = clamp(bgStrength.value, 0, 85);
+      backgroundDraft.imageA = clamp(bgImageA.value, 0, 100);
+      backgroundDraft.blur = clamp(bgBlur.value, 0, 24);
+      applyBackground(backgroundDraft);
+      setStatus("uiStatus", "");
+    });
+  });
+
+  bgImage.addEventListener("change", async function(){
+    const file = bgImage.files && bgImage.files[0];
+    if(!file) return;
+    try{
+      backgroundDraft.imageDataUrl = await fileToDataUrl(file, { maxSide: 1600, quality: 0.9 });
+      applyBackground(backgroundDraft);
+      setStatus("uiStatus", "Image loaded. Click Apply background to save permanently.");
+    }catch{
+      setStatus("uiStatus", "Could not read that image.");
+    }
+  });
+
+  bgRemove.addEventListener("click", function(){
+    backgroundDraft.imageDataUrl = null;
+    bgImage.value = "";
+    applyBackground(backgroundDraft);
+    setStatus("uiStatus", "Image removed. Click Apply background to save permanently.");
+  });
+
+  bgApply.addEventListener("click", function(){
+    state.background = deepClone(backgroundDraft);
+    persist("uiStatus", "Background applied.");
     syncUI();
-    bindPanelDrafts();
-    setupPanels();
+  });
 
-    Store.subscribe(function(nextState, source){
-      if(!nextState || applyingRemoteState) return;
+  bgReset.addEventListener("click", function(){
+    backgroundDraft = deepClone(DEFAULT_STATE.background);
+    state.background = deepClone(DEFAULT_STATE.background);
+    persist("uiStatus", "Background reset.");
+    syncUI();
+  });
 
-      const sanitized = sanitizeState(nextState);
-      if((sanitized.updatedAt || 0) <= (state.updatedAt || 0)) return;
+  tApply.addEventListener("click", function(){
+    state.theme = deepClone(themeDraft);
+    persist("presetStatus", "Theme applied.");
+    syncUI();
+  });
 
-      applyingRemoteState = true;
-      state = sanitized;
-      themeDraft = deepClone(state.theme);
-      backgroundDraft = deepClone(state.background);
-      syncUI();
-      applyingRemoteState = false;
+  tReset.addEventListener("click", function(){
+    themeDraft = deepClone(DEFAULT_STATE.theme);
+    state.theme = deepClone(DEFAULT_STATE.theme);
+    persist("presetStatus", "Theme reset.");
+    syncUI();
+  });
 
-      if(source === "storage" || source === "broadcast"){
-        setStatus("manageStatus", "Synced from another tab/window.");
+  presetSave.addEventListener("click", function(){
+    const name = String(presetName.value || "").trim();
+    if(!name){
+      setStatus("presetStatus", "Type a preset name first.");
+      return;
+    }
+
+    const entry = {
+      id: uid(),
+      name: name,
+      theme: deepClone(themeDraft),
+      background: deepClone(backgroundDraft)
+    };
+
+    state.presets.unshift(entry);
+    persist("presetStatus", "Preset saved.");
+    presetName.value = "";
+    syncUI();
+    presetSelect.value = entry.id;
+  });
+
+  presetApply.addEventListener("click", function(){
+    const id = presetSelect.value || "";
+    if(!id){
+      setStatus("presetStatus", "Choose a preset first.");
+      return;
+    }
+
+    const p = state.presets.find(x => x.id === id);
+    if(!p){
+      setStatus("presetStatus", "Preset not found.");
+      return;
+    }
+
+    state.theme = deepClone(p.theme);
+    state.background = deepClone(p.background);
+    themeDraft = deepClone(p.theme);
+    backgroundDraft = deepClone(p.background);
+    persist("presetStatus", "Preset applied.");
+    setStatus("uiStatus", "Background applied from preset.");
+    syncUI();
+  });
+
+  presetDelete.addEventListener("click", function(){
+    const id = presetSelect.value || "";
+    if(!id){
+      setStatus("presetStatus", "Choose a preset first.");
+      return;
+    }
+
+    const before = state.presets.length;
+    state.presets = state.presets.filter(x => x.id !== id);
+    if(state.presets.length === before){
+      setStatus("presetStatus", "Preset not found.");
+      return;
+    }
+
+    persist("presetStatus", "Preset deleted.");
+    syncUI();
+    presetSelect.value = "";
+  });
+
+  addGroupBtn.addEventListener("click", function(){
+    const name = String(newGroupName.value || "").trim();
+    if(!name){
+      setStatus("manageStatus", "Type a group name first.");
+      return;
+    }
+
+    const group = { id: uid(), name: name, links: [] };
+    state.data.groups.unshift(group);
+    newGroupName.value = "";
+    persist("manageStatus", "Group added.");
+    syncUI(group.id);
+  });
+
+  clearLinkFormBtn.addEventListener("click", function(){
+    clearForm();
+    ensureGroupOptions();
+    setStatus("manageStatus", "");
+  });
+
+  saveLinkBtn.addEventListener("click", async function(){
+    const groups = state.data.groups || [];
+    if(!groups.length){
+      setStatus("manageStatus", "Create a group first.");
+      return;
+    }
+
+    const groupId = linkGroup.value || "";
+    const targetGroup = groups.find(g => g.id === groupId);
+
+    if(!targetGroup){
+      setStatus("manageStatus", "Select a valid group.");
+      return;
+    }
+
+    const title = String(linkTitle.value || "").trim();
+    const emoji = String(linkEmoji.value || "").trim();
+    const url = safeUrl(linkUrl.value || "");
+
+    if(!url){
+      setStatus("manageStatus", "Please enter a URL.");
+      return;
+    }
+
+    let iconImageDataUrl = null;
+    const file = linkIconFile.files && linkIconFile.files[0];
+    if(file){
+      try{
+        iconImageDataUrl = await fileToDataUrl(file, { maxSide: 512, quality: 0.9 });
+      }catch{}
+    }
+
+    if(editing.linkId){
+      let found = null;
+      state.data.groups.forEach(g => {
+        const idx = (g.links || []).findIndex(l => l.id === editing.linkId);
+        if(idx !== -1){
+          found = g.links[idx];
+          g.links.splice(idx, 1);
+        }
+      });
+
+      if(!found){
+        setStatus("manageStatus", "Could not find link to update.");
+        editing.linkId = null;
+        return;
       }
+
+      found.title = title;
+      found.emoji = emoji;
+      found.url = url;
+      if(iconImageDataUrl){
+        found.iconImageDataUrl = iconImageDataUrl;
+      }
+
+      targetGroup.links.unshift(found);
+      persist("manageStatus", "Link updated.");
+      clearForm();
+      syncUI(targetGroup.id);
+      return;
+    }
+
+    const newLink = {
+      id: uid(),
+      title: title,
+      emoji: emoji,
+      url: url,
+      iconImageDataUrl: iconImageDataUrl || null
+    };
+
+    if(!Array.isArray(targetGroup.links)) targetGroup.links = [];
+    targetGroup.links.unshift(newLink);
+
+    persist("manageStatus", "Link saved.");
+    clearForm();
+    syncUI(targetGroup.id);
+  });
+
+  resetLinksBtn.addEventListener("click", async function(){
+    const typed = await askInline({
+      title: "Type RESET to clear all groups and links",
+      placeholder: "RESET",
+      okText: "Reset",
+      hint: "This cannot be undone."
     });
 
-    document.addEventListener("visibilitychange", async function(){
-      if(document.visibilityState !== "visible") return;
-      const fresh = await Store.load();
-      if(!fresh) return;
-      const incoming = sanitizeState(fresh);
+    if(String(typed).trim().toUpperCase() !== "RESET") return;
+
+    state.data = { groups: [] };
+    clearForm();
+    persist("manageStatus", "Links reset.");
+    syncUI();
+  });
+
+  window.addEventListener("storage", function(e){
+    if(e.key !== STORAGE_KEY || !e.newValue) return;
+    try{
+      const incoming = sanitizeState(JSON.parse(e.newValue));
       if((incoming.updatedAt || 0) > (state.updatedAt || 0)){
         state = incoming;
         themeDraft = deepClone(state.theme);
         backgroundDraft = deepClone(state.background);
         syncUI();
       }
-    });
-  }
+    }catch{}
+  });
 
-  init();
+  setupPanels();
+  syncUI();
 })();
 </script>
 </body>

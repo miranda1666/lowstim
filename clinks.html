@@ -279,8 +279,7 @@
   .textInput,
   .selectInput,
   .presetName,
-  .presetSelect,
-  .presetArea{
+  .presetSelect{
     width:100%;
     border:1px solid var(--stroke);
     background: rgba(255,255,255,0.96);
@@ -296,15 +295,6 @@
   .presetSelect{
     height:40px;
     padding: 8px 12px;
-  }
-
-  .presetArea{
-    min-height:92px;
-    resize:vertical;
-    line-height:1.35;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-    white-space: pre;
-    overflow: auto;
   }
 
   .groups{
@@ -761,9 +751,6 @@
 
       <div class="pDiv"></div>
 
-      <button id="exportBtn" class="miniBtn" type="button">Copy links JSON</button>
-      <textarea class="presetArea" id="importArea" placeholder='Paste links JSON here, then click "Import links".'></textarea>
-      <button id="importBtn" class="miniBtn" type="button" style="margin-top:8px;">Import links</button>
       <button id="resetLinksBtn" class="miniBtn danger" type="button" style="margin-top:8px;">Reset links</button>
 
       <div class="status" id="manageStatus" aria-live="polite"></div>
@@ -810,9 +797,6 @@
   </div>
 
 <script>
-/* =========================================================
-   Utilities
-========================================================= */
 (function(){
   function clamp(n, min, max){
     n = Number(n);
@@ -857,29 +841,6 @@
         .replace(/^https?:\/\//i, "")
         .replace(/^www\./, "")
         .split("/")[0] || "";
-    }
-  }
-
-  async function copyText(text){
-    try{
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        await navigator.clipboard.writeText(text);
-        return true;
-      }
-    }catch{}
-    try{
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      return !!ok;
-    }catch{
-      return false;
     }
   }
 
@@ -934,17 +895,10 @@
     uid,
     safeUrl,
     hostFromUrl,
-    copyText,
     fileToDataUrl
   };
 })();
 
-/* =========================================================
-   Persistent Store
-   - IndexedDB first
-   - localStorage mirror fallback
-   - cross-tab sync on same browser
-========================================================= */
 (function(){
   const DB_NAME = "quick_links_widget_db_v4";
   const STORE_NAME = "app";
@@ -1069,11 +1023,8 @@
   window.__QL_STORE__ = Store;
 })();
 
-/* =========================================================
-   State
-========================================================= */
 (function(){
-  const { clamp, normHex, uid, safeUrl, hostFromUrl, copyText, fileToDataUrl, hexToRgba } = window.__qlUtils;
+  const { clamp, normHex, uid, safeUrl, hostFromUrl, fileToDataUrl, hexToRgba } = window.__qlUtils;
   const Store = window.__QL_STORE__;
 
   const DEFAULTS = {
@@ -1213,9 +1164,6 @@
   const saveLinkBtn = $("saveLinkBtn");
   const clearLinkFormBtn = $("clearLinkFormBtn");
   const manageList = $("manageList");
-  const exportBtn = $("exportBtn");
-  const importArea = $("importArea");
-  const importBtn = $("importBtn");
   const resetLinksBtn = $("resetLinksBtn");
 
   const inlineModal = $("inlineModal");
@@ -1883,39 +1831,6 @@
       syncUI();
       clearForm();
       setStatus("manageStatus", "Link saved.");
-    });
-
-    exportBtn.addEventListener("click", async function(){
-      const payload = JSON.stringify(state.data, null, 2);
-      const ok = await copyText(payload);
-      if(ok){
-        setStatus("manageStatus", "Links JSON copied.");
-      }else{
-        importArea.value = payload;
-        importArea.focus();
-        importArea.select();
-        setStatus("manageStatus", "Could not copy automatically — JSON placed in the box to copy manually.");
-      }
-    });
-
-    importBtn.addEventListener("click", async function(){
-      const raw = String(importArea.value || "").trim();
-      if(!raw){
-        setStatus("manageStatus", "Paste links JSON first.");
-        return;
-      }
-
-      try{
-        const parsed = JSON.parse(raw);
-        const nextData = sanitizeState({ data: parsed }).data;
-        state.data = nextData;
-        importArea.value = "";
-        await saveState("import-links");
-        syncUI();
-        setStatus("manageStatus", "Links imported.");
-      }catch{
-        setStatus("manageStatus", "Invalid JSON.");
-      }
     });
 
     resetLinksBtn.addEventListener("click", async function(){

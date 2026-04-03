@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Recipe Book</title>
   <style>
     :root{
-      /* Base theme tokens */
       --bg:#ffffff;
       --card: rgba(255,255,255,0.86);
       --stroke:#e9e4dd;
@@ -16,38 +15,42 @@
       --shadow:0 10px 30px rgba(30,20,10,.06);
       --r:18px;
 
-      /* Board background controls */
       --board-tint:#efe7e1;
       --board-tint-a:0.12;
       --board-image:none;
+      --board-image-a:0.92;
+      --board-blur:0px;
 
-      /* NEW: override-friendly “whites” + panel bg */
       --panel-bg: rgba(255,255,255,0.88);
       --field-bg: #ffffff;
+      --surface-strong: rgba(255,255,255,0.92);
+      --surface-soft: rgba(243,239,233,0.75);
 
-      /* NEW: theme dot color */
       --theme-dot: var(--ink);
     }
 
     *{ box-sizing:border-box; }
+    html, body { width:100%; }
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
       color:var(--ink);
       background:var(--bg);
       padding:28px 18px;
+      -webkit-text-size-adjust:100%;
+      text-rendering:optimizeLegibility;
     }
     .wrap{ max-width:1100px; margin:0 auto; }
     h1{ margin:0; font-size:18px; }
     .sub{ margin:6px 0 14px; color:var(--muted); font-size:13px; line-height:1.35; }
 
-    /* Board */
     .widgetBoard{
       position:relative;
       border-radius: var(--r);
       overflow:hidden;
       border:1px solid var(--stroke);
       box-shadow: var(--shadow);
+      background: transparent;
     }
     .widgetBoard::before{
       content:"";
@@ -60,17 +63,21 @@
       transform: scale(1.01);
       z-index:0;
       pointer-events:none;
-      filter: saturate(1.1) contrast(1.06) brightness(1.03);
+      filter:
+        blur(var(--board-blur))
+        saturate(1.05)
+        contrast(1.03)
+        brightness(1.01);
+      opacity: var(--board-image-a);
     }
-    /* NEW: subtle highlight overlay (matches the other widgets) */
     .widgetBoard::after{
       content:"";
       position:absolute;
       inset:0;
       background:
-        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.35), transparent 60%),
-        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.22), transparent 62%),
-        rgba(255,255,255,0.22);
+        radial-gradient(900px 520px at 16% 22%, rgba(255,255,255,0.25), transparent 60%),
+        radial-gradient(760px 520px at 84% 30%, rgba(255,255,255,0.16), transparent 62%),
+        rgba(255,255,255,0.12);
       background-blend-mode: screen;
       pointer-events:none;
       z-index:0;
@@ -91,8 +98,8 @@
       border-radius:0;
       box-shadow:none;
       padding:14px;
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
     }
 
     .title{
@@ -120,9 +127,22 @@
       padding:10px 12px;
       outline:none;
       -webkit-tap-highlight-color: transparent;
+      appearance:none;
+      -webkit-appearance:none;
     }
-    textarea{ width:100%; resize:vertical; min-height:90px; }
-    button{ cursor:pointer; user-select:none; }
+    input, select, textarea{
+      min-height:44px;
+    }
+    textarea{
+      width:100%;
+      resize:vertical;
+      min-height:90px;
+    }
+    button{
+      cursor:pointer;
+      user-select:none;
+      min-height:44px;
+    }
     button.soft{ background:var(--soft); }
     button.primary{ background: rgba(239,231,225,0.92); }
     button.danger{ border-color:#efc2c2; }
@@ -137,13 +157,13 @@
       padding:8px 12px;
       font-size:13px;
       white-space:nowrap;
+      min-height:44px;
     }
     .tiny{ font-size:12px; color:var(--muted); }
 
-    /* Background settings + Theme settings */
     .bgWrap{ position:relative; margin-left:auto; display:flex; gap:10px; align-items:center; }
-    .bgBtn{
-      width:34px; height:34px;
+    .bgBtn, .themeBtn{
+      width:38px; height:38px;
       border-radius:999px;
       border:1px solid var(--stroke);
       background: rgba(255,255,255,0.92);
@@ -151,39 +171,25 @@
       display:grid;
       place-items:center;
       box-shadow: 0 3px 12px rgba(30,20,10,.08);
+      min-height:38px;
     }
-    .bgDot{
+    .bgDot, .themeDot{
       width:14px; height:14px;
       border-radius:999px;
       border:1px solid rgba(233,228,221,0.95);
       background: var(--board-tint);
       box-shadow: 0 0 0 6px rgba(239,231,225,0.22);
     }
-
-    /* NEW: Theme button */
-    .themeBtn{
-      width:34px; height:34px;
-      border-radius:999px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.92);
-      padding:0;
-      display:grid;
-      place-items:center;
-      box-shadow: 0 3px 12px rgba(30,20,10,.08);
-    }
     .themeDot{
-      width:14px; height:14px;
-      border-radius:999px;
-      border:1px solid rgba(233,228,221,0.95);
       background: var(--theme-dot);
       box-shadow: 0 0 0 6px rgba(233,228,221,0.35);
     }
 
     .bgPanel{
       position:absolute;
-      top: 44px;
+      top: 48px;
       right: 0;
-      width: 290px;
+      width: min(340px, calc(100vw - 36px));
       border-radius: 16px;
       border: 1px solid var(--stroke);
       background: var(--panel-bg);
@@ -193,6 +199,8 @@
       padding: 12px;
       display:none;
       z-index: 50;
+      max-height: calc(100vh - 120px);
+      overflow:auto;
     }
     .bgPanel.open{ display:block; }
     .bgTitle{
@@ -212,31 +220,55 @@
     }
     .bgRow label{ font-size:12px; color:var(--muted); }
     .bgRow input[type="color"]{
-      width:36px; height:28px;
+      width:42px; height:32px;
       border-radius:10px;
       padding:0;
       border:1px solid var(--stroke);
       background: transparent;
       cursor:pointer;
+      min-height:32px;
     }
-    .bgRow input[type="range"]{ width: 150px; }
-    .bgFile{ width:100%; font-size:12px; color: rgba(43,42,40,0.75); }
+    .bgRow input[type="range"]{ width: 150px; min-height:auto; }
+    .bgFile{
+      width:100%;
+      font-size:12px;
+      color: rgba(43,42,40,0.75);
+      min-height:auto;
+      padding:6px 0;
+      border:none;
+      background:transparent;
+    }
     .bgMiniBtn{
       width:100%;
       border-radius:12px;
       border:1px solid var(--stroke);
       background: rgba(255,255,255,0.97);
-      padding:9px 10px;
+      padding:10px 10px;
       font-weight:700;
       letter-spacing:.06em;
       text-transform:uppercase;
       font-size:11px;
       color: rgba(43,42,40,0.82);
       box-shadow: 0 2px 8px rgba(30,20,10,.06);
+      min-height:44px;
     }
     .bgDiv{ height:1px; background: var(--stroke); margin: 8px 0; }
 
-    /* Shelf layout */
+    .presetName{
+      width:100%;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.97);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+    }
+    .status{
+      font-size:12px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height:1.4;
+    }
+
     .shelfBar{
       display:flex;
       align-items:center;
@@ -253,7 +285,7 @@
     .shelf{
       border:1px solid var(--stroke);
       border-radius:16px;
-      background: rgba(255,255,255,0.92);
+      background: var(--surface-strong);
       overflow:hidden;
     }
     .shelfHead{
@@ -262,7 +294,7 @@
       align-items:center;
       justify-content:space-between;
       padding:10px 12px;
-      background: rgba(243,239,233,0.75);
+      background: var(--surface-soft);
       border-bottom:1px solid var(--stroke);
     }
     .shelfName{
@@ -286,7 +318,6 @@
       flex-wrap:wrap;
     }
 
-    /* Recipe "books" on a shelf */
     .recipesRow{
       display:flex;
       gap:12px;
@@ -294,6 +325,7 @@
       overflow:auto;
       scroll-snap-type:x mandatory;
       align-items:flex-start;
+      -webkit-overflow-scrolling: touch;
     }
     .recipeBook{
       width:140px;
@@ -364,16 +396,16 @@
       font-size:11px;
       border:1px solid var(--stroke);
       background: rgba(243,239,233,0.9);
+      min-height:34px;
     }
     .miniBtn.danger{ border-color:#efc2c2; }
 
-    /* Internal editor / reader */
     .editor{
       display:none;
       margin-top:12px;
       border:1px solid var(--stroke);
       border-radius:16px;
-      background: rgba(255,255,255,0.92);
+      background: var(--surface-strong);
       overflow:hidden;
     }
     .editor.open{ display:block; }
@@ -383,7 +415,7 @@
       align-items:center;
       justify-content:space-between;
       padding:10px 12px;
-      background: rgba(243,239,233,0.75);
+      background: var(--surface-soft);
       border-bottom:1px solid var(--stroke);
     }
     .editorTitle{
@@ -405,6 +437,7 @@
       border-radius:14px;
       background:var(--field-bg);
       padding:10px;
+      min-width:0;
     }
     .panel h3{
       margin:0 0 8px 0;
@@ -442,7 +475,6 @@
       white-space:nowrap;
     }
 
-    /* internal reset confirm */
     .confirm{
       display:none;
       margin-top:10px;
@@ -467,9 +499,24 @@
     }
 
     @media (max-width: 920px){
+      body{ padding:16px 12px; }
       .editorBody{ grid-template-columns: 1fr; }
       .recipeBook{ width:130px; }
       .cover{ width:130px; height:170px; }
+      .title{
+        align-items:flex-start;
+      }
+      .bgWrap{
+        margin-left:0;
+      }
+      .shelfBar .row,
+      .shelfActions,
+      .editorTop{
+        width:100%;
+      }
+      .grid2{
+        grid-template-columns:1fr;
+      }
     }
   </style>
 </head>
@@ -488,12 +535,10 @@
             </div>
 
             <div class="bgWrap" id="bgWrap">
-              <!-- Background settings -->
               <button class="bgBtn" id="bgBtn" type="button" aria-label="Background settings" title="Background settings">
                 <span class="bgDot" id="bgDot" aria-hidden="true"></span>
               </button>
 
-              <!-- NEW: Theme settings -->
               <button class="themeBtn" id="themeBtn" type="button" aria-label="Theme settings" title="Theme settings">
                 <span class="themeDot" id="themeDot" aria-hidden="true"></span>
               </button>
@@ -507,8 +552,18 @@
                 </div>
 
                 <div class="bgRow">
-                  <label for="bgStrength">Strength</label>
+                  <label for="bgStrength">Tint strength</label>
                   <input id="bgStrength" type="range" min="0" max="70" value="12" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgImageA">Image visibility</label>
+                  <input id="bgImageA" type="range" min="20" max="100" value="92" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="bgBlur">Image blur</label>
+                  <input id="bgBlur" type="range" min="0" max="20" value="0" />
                 </div>
 
                 <div class="bgDiv"></div>
@@ -521,9 +576,13 @@
                 <div class="bgRow">
                   <button id="bgRemove" class="bgMiniBtn" type="button">Remove image</button>
                 </div>
+
+                <div class="bgDiv"></div>
+
+                <button id="bgApply" class="bgMiniBtn" type="button">Apply background</button>
+                <button id="bgReset" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset background</button>
               </div>
 
-              <!-- NEW: Theme panel -->
               <div class="bgPanel" id="themePanel" role="dialog" aria-label="Theme settings">
                 <div class="bgTitle">Theme</div>
 
@@ -555,25 +614,44 @@
                 </div>
 
                 <div class="bgRow">
+                  <label for="tCardA">Card opacity</label>
+                  <input id="tCardA" type="range" min="20" max="95" value="86" />
+                </div>
+
+                <div class="bgRow">
                   <label for="tSoft">Soft</label>
                   <input id="tSoft" type="color" value="#f3efe9" />
                 </div>
 
                 <div class="bgDiv"></div>
 
-                <div class="bgRow">
-                  <button id="resetTheme" class="bgMiniBtn" type="button">Reset theme</button>
+                <button id="themeApply" class="bgMiniBtn" type="button">Apply theme</button>
+                <button id="resetTheme" class="bgMiniBtn" type="button" style="margin-top:8px;">Reset theme</button>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgTitle" style="margin-top:0;">Presets</div>
+
+                <div class="bgRow" style="flex-direction:column; align-items:stretch; gap:10px;">
+                  <input id="presetName" class="presetName" placeholder="Preset name" />
+                  <button id="presetSave" class="bgMiniBtn" type="button">Save current as preset</button>
                 </div>
 
-                <div class="hint" style="margin-top:6px;">
+                <div class="bgRow">
+                  <label for="presetSelect">Choose</label>
+                  <select id="presetSelect" style="width:160px;"></select>
                 </div>
+
+                <button id="presetApply" class="bgMiniBtn" type="button">Apply preset</button>
+                <button id="presetDelete" class="bgMiniBtn" type="button" style="margin-top:8px;">Delete preset</button>
+
+                <div class="status" id="presetStatus" aria-live="polite"></div>
               </div>
             </div>
           </div>
 
           <div class="divider"></div>
 
-          <!-- Add recipe -->
           <div class="shelfBar" aria-label="Add recipe">
             <div class="row" style="flex:1; min-width:260px;">
               <input id="recipeTitle" style="flex:1; min-width:220px;" placeholder="Recipe title (e.g., Jollof Rice)..." />
@@ -603,10 +681,8 @@
 
           <div class="divider"></div>
 
-          <!-- Shelves -->
           <div class="shelves" id="shelves"></div>
 
-          <!-- Internal editor -->
           <div class="editor" id="editor" aria-label="Recipe editor">
             <div class="editorTop">
               <div class="editorTitle" id="editorTitle">Recipe</div>
@@ -676,7 +752,6 @@
                       </div>
                     </div>
                     <div style="flex:1; min-width:220px;">
-                      <div class="tiny" style="margin-bottom:10px;"></div>
                       <div class="field">
                         <label for="coverInput">Upload cover image</label>
                         <input id="coverInput" type="file" accept="image/*" />
@@ -690,7 +765,6 @@
 
                       <h3 style="margin-top:0;">Details</h3>
                       <div class="chips" id="chips"></div>
-                      <div class="tiny" style="margin-top:10px;"></div>
                     </div>
                   </div>
                 </div>
@@ -700,272 +774,623 @@
           </div>
 
           <div class="divider"></div>
-          <div class="tiny"></div>
+          <div class="tiny" id="saveIndicator"></div>
         </section>
       </div>
     </div>
   </div>
 
 <script>
-/* --------------------------
-   Theme settings module (NEW)
---------------------------- */
+/* =========================
+   Utilities
+========================= */
 (function(){
-  const THEME_KEY = "kitchen_recipe_book_theme_v1";
-  const $ = (id)=>document.getElementById(id);
+  const mem = Object.create(null);
 
-  function hexToRgba(hex, a){
-    const h = String(hex || "").replace("#","").trim();
-    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-    const num = parseInt(full || "e9e4dd", 16);
-    const r = (num >> 16) & 255;
-    const g = (num >> 8) & 255;
-    const b = num & 255;
-    return `rgba(${r},${g},${b},${a})`;
+  function canUseStorage(area){
+    try{
+      const k = "__t__" + Math.random().toString(16).slice(2);
+      area.setItem(k, "1");
+      area.removeItem(k);
+      return true;
+    }catch{
+      return false;
+    }
   }
 
-  const DEFAULT_THEME = {
-    pageBg: "#ffffff",
-    ink: "#2b2a28",
-    muted: "#6a665f",
-    stroke: "#e9e4dd",
-    cardBase: "#ffffff",
-    soft: "#f3efe9"
+  const hasLS = canUseStorage(window.localStorage);
+  const hasSS = canUseStorage(window.sessionStorage);
+
+  function storageGet(key){
+    try{ return hasLS ? localStorage.getItem(key) : (mem[key] ?? null); }
+    catch{ return mem[key] ?? null; }
+  }
+  function storageSet(key, value){
+    try{
+      if(hasLS) localStorage.setItem(key, value);
+      else mem[key] = String(value);
+    }catch{
+      mem[key] = String(value);
+    }
+  }
+  function storageRemove(key){
+    try{
+      if(hasLS) localStorage.removeItem(key);
+      else delete mem[key];
+    }catch{
+      delete mem[key];
+    }
+  }
+
+  function sessionGet(key){
+    try{ return hasSS ? sessionStorage.getItem(key) : null; }
+    catch{ return null; }
+  }
+  function sessionSet(key, value){
+    try{ if(hasSS) sessionStorage.setItem(key, value); }
+    catch{}
+  }
+
+  function slugify(value){
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "main";
+  }
+
+  function getWidgetId(){
+    try{
+      const sp = new URLSearchParams(location.search);
+      const wid = slugify(sp.get("wid"));
+      if(wid) return wid;
+    }catch{}
+
+    const cached = sessionGet("recipe_book_wid");
+    if(cached) return cached;
+
+    const fromPath = slugify(location.pathname || "recipe-book");
+    sessionSet("recipe_book_wid", fromPath);
+    return fromPath;
+  }
+
+  window.__RB__ = {
+    wid: getWidgetId(),
+    get: storageGet,
+    set: storageSet,
+    remove: storageRemove,
+    hasLocalStorage: hasLS
   };
-
-  function loadTheme(){
-    try{
-      const raw = localStorage.getItem(THEME_KEY);
-      if(raw) return JSON.parse(raw) || null;
-    }catch{}
-    return null;
-  }
-  function saveTheme(t){
-    try{ localStorage.setItem(THEME_KEY, JSON.stringify(t)); }catch{}
-  }
-
-  function applyTheme(t){
-    document.documentElement.style.setProperty("--bg", t.pageBg);
-    document.documentElement.style.setProperty("--ink", t.ink);
-    document.documentElement.style.setProperty("--muted", t.muted);
-    document.documentElement.style.setProperty("--soft", t.soft);
-
-    document.documentElement.style.setProperty("--stroke", hexToRgba(t.stroke, 0.95));
-    document.documentElement.style.setProperty("--card", hexToRgba(t.cardBase, 0.86));
-
-    document.documentElement.style.setProperty("--theme-dot", t.ink);
-
-    const dot = $("themeDot");
-    if(dot){
-      dot.style.background = t.ink;
-      dot.style.boxShadow = `0 0 0 6px ${hexToRgba(t.stroke, 0.35)}`;
-      dot.style.borderColor = hexToRgba(t.stroke, 0.95);
-    }
-  }
-
-  function init(){
-    const themeBtn = $("themeBtn");
-    const themePanel = $("themePanel");
-    const bgPanel = $("bgPanel");
-
-    const tPageBg = $("tPageBg");
-    const tText = $("tText");
-    const tMuted = $("tMuted");
-    const tStroke = $("tStroke");
-    const tCard = $("tCard");
-    const tSoft = $("tSoft");
-    const resetTheme = $("resetTheme");
-
-    if(!themeBtn || !themePanel || !tPageBg || !tText || !tMuted || !tStroke || !tCard || !tSoft || !resetTheme) return;
-
-    const themeState = { ...DEFAULT_THEME, ...(loadTheme() || {}) };
-
-    tPageBg.value = themeState.pageBg;
-    tText.value = themeState.ink;
-    tMuted.value = themeState.muted;
-    tStroke.value = themeState.stroke;
-    tCard.value = themeState.cardBase;
-    tSoft.value = themeState.soft;
-
-    applyTheme(themeState);
-
-    function wire(el, key){
-      el.addEventListener("input", () => {
-        themeState[key] = el.value;
-        applyTheme(themeState);
-        saveTheme(themeState);
-      });
-    }
-
-    wire(tPageBg, "pageBg");
-    wire(tText, "ink");
-    wire(tMuted, "muted");
-    wire(tStroke, "stroke");
-    wire(tCard, "cardBase");
-    wire(tSoft, "soft");
-
-    resetTheme.addEventListener("click", () => {
-      Object.assign(themeState, DEFAULT_THEME);
-
-      tPageBg.value = themeState.pageBg;
-      tText.value = themeState.ink;
-      tMuted.value = themeState.muted;
-      tStroke.value = themeState.stroke;
-      tCard.value = themeState.cardBase;
-      tSoft.value = themeState.soft;
-
-      applyTheme(themeState);
-      saveTheme(themeState);
-    });
-
-    themeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      themePanel.classList.toggle("open");
-      if(bgPanel) bgPanel.classList.remove("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      if(!themePanel.classList.contains("open")) return;
-      const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
-      if(!inside) themePanel.classList.remove("open");
-    });
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init);
-  }else{
-    init();
-  }
 })();
 
-/* --------------------------
-   Background settings module
---------------------------- */
-(function(){
-  const BG_KEY = "kitchen_recipe_book_bg_v1";
+const WID = window.__RB__?.wid || "main";
 
-  const $ = (id)=>document.getElementById(id);
+const KEY_BASE = "kitchen_recipe_book_v2";
+const THEME_KEY_BASE = "kitchen_recipe_book_theme_v4";
+const BG_KEY_BASE = "kitchen_recipe_book_bg_v4";
+const PRESETS_KEY_BASE = "kitchen_recipe_book_presets_v4";
 
-  function hexToRgba(hex, a){
-    const h = String(hex || "").replace("#","").trim();
-    const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-    const num = parseInt(full || "efe7e1", 16);
-    const r = (num >> 16) & 255;
-    const g = (num >> 8) & 255;
-    const b = num & 255;
-    return `rgba(${r},${g},${b},${a})`;
-  }
-  function loadBg(){
-    try{
-      const raw = localStorage.getItem(BG_KEY);
-      if(raw) return JSON.parse(raw) || null;
-    }catch{}
+const KEY = KEY_BASE + "__" + WID;
+const THEME_KEY = THEME_KEY_BASE + "__" + WID;
+const BG_KEY = BG_KEY_BASE + "__" + WID;
+const PRESETS_KEY = PRESETS_KEY_BASE + "__" + WID;
+
+const $ = (id)=>document.getElementById(id);
+
+function uid(){
+  return Math.random().toString(16).slice(2) + Date.now().toString(16);
+}
+function clamp(n, min, max){
+  const x = Number(n);
+  if(!Number.isFinite(x)) return min;
+  return Math.max(min, Math.min(max, x));
+}
+function normHex(hex, fallback){
+  const s = String(hex || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : fallback;
+}
+function hexToRgbTuple(hex){
+  const h = normHex(hex, "#ffffff").slice(1);
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  return `${r},${g},${b}`;
+}
+function hexToRgba(hex, a){
+  const [r,g,b] = hexToRgbTuple(hex).split(",").map(Number);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function loadJSON(key){
+  try{
+    const raw = window.__RB__.get(key);
+    return raw ? JSON.parse(raw) : null;
+  }catch{
     return null;
   }
-  function saveBg(bg){
-    try{ localStorage.setItem(BG_KEY, JSON.stringify(bg)); }catch{}
-  }
-  function fileToDataUrl(file){
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
-
-  function init(){
-    const boardTintEl = $("boardTint");
-    const bgBtn = $("bgBtn");
-    const bgPanel = $("bgPanel");
-    const bgColor = $("bgColor");
-    const bgStrength = $("bgStrength");
-    const bgImage = $("bgImage");
-    const bgRemove = $("bgRemove");
-    const bgDot = $("bgDot");
-    const themePanel = document.getElementById("themePanel");
-
-    if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImage || !bgRemove || !boardTintEl) return;
-
-    const bgState = loadBg() || { tint:"#efe7e1", strength:12, imageDataUrl:null };
-
-    function applyBg(){
-      const tint = bgState.tint || "#efe7e1";
-      const strength = Math.max(0, Math.min(70, Number(bgState.strength || 0))) / 100;
-
-      document.documentElement.style.setProperty("--board-tint", tint);
-      document.documentElement.style.setProperty("--board-tint-a", String(strength));
-      document.documentElement.style.setProperty("--board-image", bgState.imageDataUrl ? `url("${bgState.imageDataUrl}")` : "none");
-
-      boardTintEl.style.background = hexToRgba(tint, strength);
-
-      if(bgDot){
-        bgDot.style.background = tint;
-        bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+}
+function saveJSON(key, val){
+  try{
+    window.__RB__.set(key, JSON.stringify(val));
+  }catch{}
+}
+function setStatus(msg){
+  const el = $("presetStatus");
+  if(el) el.textContent = msg || "";
+}
+function setSaveIndicator(msg){
+  const el = $("saveIndicator");
+  if(el) el.textContent = msg || "";
+}
+function debounce(fn, wait){
+  let t = null;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(()=>fn.apply(this, args), wait);
+  };
+}
+function throttle(fn, wait){
+  let inFlight = false;
+  let lastArgs = null;
+  return function(...args){
+    if(inFlight){
+      lastArgs = args;
+      return;
+    }
+    inFlight = true;
+    fn.apply(this, args);
+    setTimeout(()=>{
+      inFlight = false;
+      if(lastArgs){
+        const a = lastArgs;
+        lastArgs = null;
+        fn.apply(this, a);
       }
-    }
+    }, wait);
+  };
+}
+function fileToDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+function escapeHtml(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
 
-    bgColor.value = bgState.tint;
-    bgStrength.value = String(bgState.strength);
-    applyBg();
-
-    bgBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      bgPanel.classList.toggle("open");
-      if(themePanel) themePanel.classList.remove("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      if(!bgPanel.classList.contains("open")) return;
-      const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
-      if(!inside) bgPanel.classList.remove("open");
-    });
-
-    bgColor.addEventListener("input", () => {
-      bgState.tint = bgColor.value;
-      applyBg();
-      saveBg(bgState);
-    });
-
-    bgStrength.addEventListener("input", () => {
-      bgState.strength = Number(bgStrength.value);
-      applyBg();
-      saveBg(bgState);
-    });
-
-    bgImage.addEventListener("change", async () => {
-      const file = bgImage.files && bgImage.files[0];
-      if(!file) return;
-      const dataUrl = await fileToDataUrl(file);
-      bgState.imageDataUrl = dataUrl;
-      applyBg();
-      saveBg(bgState);
-    });
-
-    bgRemove.addEventListener("click", () => {
-      bgState.imageDataUrl = null;
-      bgImage.value = "";
-      applyBg();
-      saveBg(bgState);
-    });
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init);
-  }else{
-    init();
+/* =========================
+   Same-browser/tab sync only
+========================= */
+const syncChannel = (() => {
+  try{
+    return typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("recipe-book-sync-" + WID) : null;
+  }catch{
+    return null;
   }
 })();
+function emitSync(type){
+  try{
+    if(syncChannel) syncChannel.postMessage({ type, t: Date.now() });
+  }catch{}
+}
+function onExternalSync(handler){
+  if(syncChannel){
+    syncChannel.addEventListener("message", (e) => handler(e?.data?.type || "refresh"));
+  }
+  window.addEventListener("storage", (e) => {
+    if([KEY, THEME_KEY, BG_KEY, PRESETS_KEY].includes(e.key)) handler("refresh");
+  });
+}
 
+/* =========================
+   Theme
+========================= */
+const DEFAULT_THEME = {
+  pageBg: "#ffffff",
+  ink: "#2b2a28",
+  muted: "#6a665f",
+  stroke: "#e9e4dd",
+  cardBase: "#ffffff",
+  cardA: 86,
+  soft: "#f3efe9"
+};
 
-/* --------------------------
-   Kitchen Recipe Book module
---------------------------- */
+function themeLoad(){ return loadJSON(THEME_KEY); }
+function themeSave(t){
+  saveJSON(THEME_KEY, t);
+  emitSync("theme");
+}
+function themeApplyToCSS(t){
+  const x = Object.assign({}, DEFAULT_THEME, t || {});
+  const pageBg = normHex(x.pageBg, DEFAULT_THEME.pageBg);
+  const ink = normHex(x.ink, DEFAULT_THEME.ink);
+  const muted = normHex(x.muted, DEFAULT_THEME.muted);
+  const stroke = normHex(x.stroke, DEFAULT_THEME.stroke);
+  const cardBase = normHex(x.cardBase, DEFAULT_THEME.cardBase);
+  const soft = normHex(x.soft, DEFAULT_THEME.soft);
+  const cardA = clamp(x.cardA, 20, 95) / 100;
+
+  document.documentElement.style.setProperty("--bg", pageBg);
+  document.documentElement.style.setProperty("--ink", ink);
+  document.documentElement.style.setProperty("--muted", muted);
+  document.documentElement.style.setProperty("--soft", soft);
+
+  document.documentElement.style.setProperty("--stroke", hexToRgba(stroke, 0.95));
+  document.documentElement.style.setProperty("--card", hexToRgba(cardBase, cardA));
+
+  document.documentElement.style.setProperty("--panel-bg", hexToRgba(cardBase, Math.min(0.98, cardA + 0.02)));
+  document.documentElement.style.setProperty("--field-bg", "#ffffff");
+  document.documentElement.style.setProperty("--surface-strong", hexToRgba(cardBase, Math.min(0.98, cardA + 0.06)));
+  document.documentElement.style.setProperty("--surface-soft", hexToRgba(soft, Math.max(0.35, Math.min(0.92, cardA - 0.11))));
+  document.documentElement.style.setProperty("--theme-dot", ink);
+
+  const dot = $("themeDot");
+  if(dot){
+    dot.style.background = ink;
+    dot.style.boxShadow = `0 0 0 6px ${hexToRgba(stroke, 0.35)}`;
+    dot.style.borderColor = hexToRgba(stroke, 0.95);
+  }
+}
+function themeSyncInputs(t){
+  const x = Object.assign({}, DEFAULT_THEME, t || {});
+  if($("tPageBg")) $("tPageBg").value = normHex(x.pageBg, DEFAULT_THEME.pageBg);
+  if($("tText")) $("tText").value = normHex(x.ink, DEFAULT_THEME.ink);
+  if($("tMuted")) $("tMuted").value = normHex(x.muted, DEFAULT_THEME.muted);
+  if($("tStroke")) $("tStroke").value = normHex(x.stroke, DEFAULT_THEME.stroke);
+  if($("tCard")) $("tCard").value = normHex(x.cardBase, DEFAULT_THEME.cardBase);
+  if($("tCardA")) $("tCardA").value = String(clamp(x.cardA, 20, 95));
+  if($("tSoft")) $("tSoft").value = normHex(x.soft, DEFAULT_THEME.soft);
+}
+function themeReadFromInputs(){
+  return {
+    pageBg: $("tPageBg")?.value,
+    ink: $("tText")?.value,
+    muted: $("tMuted")?.value,
+    stroke: $("tStroke")?.value,
+    cardBase: $("tCard")?.value,
+    cardA: Number($("tCardA")?.value),
+    soft: $("tSoft")?.value
+  };
+}
+
+let themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+
+function initThemeUI(){
+  const themeBtn = $("themeBtn");
+  const themePanel = $("themePanel");
+  const bgPanel = $("bgPanel");
+  const resetTheme = $("resetTheme");
+  const themeApply = $("themeApply");
+  if(!themeBtn || !themePanel || !resetTheme || !themeApply) return;
+
+  themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+  themeSyncInputs(themeDraft);
+  themeApplyToCSS(themeDraft);
+
+  const ids = ["tPageBg","tText","tMuted","tStroke","tCard","tCardA","tSoft"];
+  ids.forEach(id => {
+    const el = $(id);
+    if(!el) return;
+    el.addEventListener("input", () => {
+      themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+      themeApplyToCSS(themeDraft);
+      setStatus("");
+    }, { passive:true });
+  });
+
+  themeApply.addEventListener("click", () => {
+    themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+    themeSave(themeDraft);
+    setStatus("Theme applied.");
+    setSaveIndicator("Theme saved.");
+  });
+
+  resetTheme.addEventListener("click", () => {
+    window.__RB__.remove(THEME_KEY);
+    themeDraft = Object.assign({}, DEFAULT_THEME);
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+    emitSync("theme");
+    setStatus("Theme reset.");
+    setSaveIndicator("Theme reset.");
+  });
+
+  themeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    themePanel.classList.toggle("open");
+    if(bgPanel) bgPanel.classList.remove("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(!themePanel.classList.contains("open")) return;
+    const inside = e.target.closest("#themePanel") || e.target.closest("#themeBtn");
+    if(!inside) themePanel.classList.remove("open");
+  });
+}
+
+/* =========================
+   Background
+========================= */
+const DEFAULT_BG = {
+  tint:"#efe7e1",
+  strength:12,
+  imageA:92,
+  blur:0,
+  imageDataUrl:null
+};
+
+function bgLoad(){ return loadJSON(BG_KEY); }
+function bgSave(bg){
+  saveJSON(BG_KEY, bg);
+  emitSync("bg");
+}
+let bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+
+function bgApplyToCSS(bg){
+  const x = Object.assign({}, DEFAULT_BG, bg || {});
+  const tint = normHex(x.tint, DEFAULT_BG.tint);
+  const strength = clamp(Number(x.strength), 0, 70) / 100;
+  const imageA = clamp(Number(x.imageA), 20, 100) / 100;
+  const blur = clamp(Number(x.blur), 0, 20);
+
+  document.documentElement.style.setProperty("--board-tint", tint);
+  document.documentElement.style.setProperty("--board-tint-a", String(strength));
+  document.documentElement.style.setProperty("--board-image", x.imageDataUrl ? `url("${x.imageDataUrl}")` : "none");
+  document.documentElement.style.setProperty("--board-image-a", String(imageA));
+  document.documentElement.style.setProperty("--board-blur", `${blur}px`);
+
+  const boardTintEl = $("boardTint");
+  if(boardTintEl){
+    boardTintEl.style.background = hexToRgba(tint, strength);
+  }
+
+  const bgDot = $("bgDot");
+  if(bgDot){
+    bgDot.style.background = tint;
+    bgDot.style.boxShadow = `0 0 0 6px ${hexToRgba(tint, Math.min(0.28, strength + 0.10))}`;
+  }
+}
+function bgSyncInputs(bg){
+  const x = Object.assign({}, DEFAULT_BG, bg || {});
+  if($("bgColor")) $("bgColor").value = normHex(x.tint, DEFAULT_BG.tint);
+  if($("bgStrength")) $("bgStrength").value = String(clamp(x.strength, 0, 70));
+  if($("bgImageA")) $("bgImageA").value = String(clamp(x.imageA, 20, 100));
+  if($("bgBlur")) $("bgBlur").value = String(clamp(x.blur, 0, 20));
+}
+
+function initBackgroundUI(){
+  const bgBtn = $("bgBtn");
+  const bgPanel = $("bgPanel");
+  const bgColor = $("bgColor");
+  const bgStrength = $("bgStrength");
+  const bgImageA = $("bgImageA");
+  const bgBlur = $("bgBlur");
+  const bgImage = $("bgImage");
+  const bgRemove = $("bgRemove");
+  const bgApply = $("bgApply");
+  const bgReset = $("bgReset");
+  const themePanel = $("themePanel");
+
+  if(!bgBtn || !bgPanel || !bgColor || !bgStrength || !bgImageA || !bgBlur || !bgImage || !bgRemove || !bgApply || !bgReset) return;
+
+  bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+  bgSyncInputs(bgDraft);
+  bgApplyToCSS(bgDraft);
+
+  bgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    bgPanel.classList.toggle("open");
+    if(themePanel) themePanel.classList.remove("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if(!bgPanel.classList.contains("open")) return;
+    const inside = e.target.closest("#bgPanel") || e.target.closest("#bgBtn");
+    if(!inside) bgPanel.classList.remove("open");
+  });
+
+  bgColor.addEventListener("input", () => {
+    bgDraft.tint = bgColor.value;
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  }, { passive:true });
+
+  bgStrength.addEventListener("input", () => {
+    bgDraft.strength = Number(bgStrength.value);
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  }, { passive:true });
+
+  bgImageA.addEventListener("input", () => {
+    bgDraft.imageA = Number(bgImageA.value);
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  }, { passive:true });
+
+  bgBlur.addEventListener("input", () => {
+    bgDraft.blur = Number(bgBlur.value);
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  }, { passive:true });
+
+  bgImage.addEventListener("change", async () => {
+    const file = bgImage.files && bgImage.files[0];
+    if(!file) return;
+    try{
+      const dataUrl = await fileToDataUrl(file);
+      bgDraft.imageDataUrl = dataUrl;
+      bgApplyToCSS(bgDraft);
+      setStatus("Image ready. Click “Apply background” to save it permanently.");
+    }catch{
+      setStatus("Could not read that image.");
+    }
+  });
+
+  bgRemove.addEventListener("click", () => {
+    bgDraft.imageDataUrl = null;
+    bgImage.value = "";
+    bgApplyToCSS(bgDraft);
+    setStatus("");
+  });
+
+  bgApply.addEventListener("click", () => {
+    bgDraft.tint = bgColor.value;
+    bgDraft.strength = Number(bgStrength.value);
+    bgDraft.imageA = Number(bgImageA.value);
+    bgDraft.blur = Number(bgBlur.value);
+    bgSave(bgDraft);
+    setStatus("Background applied.");
+    setSaveIndicator("Background saved.");
+  });
+
+  bgReset.addEventListener("click", () => {
+    window.__RB__.remove(BG_KEY);
+    bgDraft = Object.assign({}, DEFAULT_BG);
+    bgSyncInputs(bgDraft);
+    if(bgImage) bgImage.value = "";
+    bgApplyToCSS(bgDraft);
+    emitSync("bg");
+    setStatus("Background reset.");
+    setSaveIndicator("Background reset.");
+  });
+}
+
+/* =========================
+   Presets
+========================= */
+function loadPresets(){
+  const list = loadJSON(PRESETS_KEY);
+  return Array.isArray(list) ? list : [];
+}
+function savePresets(list){
+  saveJSON(PRESETS_KEY, list);
+  emitSync("presets");
+}
+function refreshPresetSelect(){
+  const sel = $("presetSelect");
+  if(!sel) return;
+  const list = loadPresets();
+  const current = sel.value;
+  sel.innerHTML = `<option value="">—</option>`;
+  for(const p of list){
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name || "Untitled";
+    sel.appendChild(opt);
+  }
+  if(current && list.some(x => x.id === current)) sel.value = current;
+}
+function initPresetsUI(){
+  const presetName = $("presetName");
+  const presetSaveBtn = $("presetSave");
+  const presetSelect = $("presetSelect");
+  const presetApplyBtn = $("presetApply");
+  const presetDeleteBtn = $("presetDelete");
+
+  if(!presetName || !presetSaveBtn || !presetSelect || !presetApplyBtn || !presetDeleteBtn) return;
+
+  refreshPresetSelect();
+
+  presetSaveBtn.addEventListener("click", () => {
+    const name = (presetName.value || "").trim();
+    if(!name){
+      setStatus("Type a preset name first.");
+      return;
+    }
+
+    themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+    bgDraft.tint = $("bgColor")?.value || bgDraft.tint;
+    bgDraft.strength = Number($("bgStrength")?.value ?? bgDraft.strength);
+    bgDraft.imageA = Number($("bgImageA")?.value ?? bgDraft.imageA);
+    bgDraft.blur = Number($("bgBlur")?.value ?? bgDraft.blur);
+
+    const list = loadPresets();
+    const entry = {
+      id: uid(),
+      name,
+      theme: { ...themeDraft },
+      bg: { ...bgDraft }
+    };
+    list.unshift(entry);
+    savePresets(list);
+
+    presetName.value = "";
+    refreshPresetSelect();
+    presetSelect.value = entry.id;
+    setStatus("Preset saved.");
+    setSaveIndicator("Preset saved.");
+  });
+
+  presetApplyBtn.addEventListener("click", () => {
+    const id = presetSelect.value;
+    if(!id){
+      setStatus("Choose a preset first.");
+      return;
+    }
+
+    const list = loadPresets();
+    const p = list.find(x => x.id === id);
+    if(!p){
+      setStatus("Preset not found.");
+      return;
+    }
+
+    themeDraft = Object.assign({}, DEFAULT_THEME, p.theme || {});
+    bgDraft = Object.assign({}, DEFAULT_BG, p.bg || {});
+
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+
+    bgSyncInputs(bgDraft);
+    if($("bgImage")) $("bgImage").value = "";
+    bgApplyToCSS(bgDraft);
+
+    themeSave(themeDraft);
+    bgSave(bgDraft);
+
+    setStatus("Preset applied.");
+    setSaveIndicator("Preset applied.");
+  });
+
+  presetDeleteBtn.addEventListener("click", () => {
+    const id = presetSelect.value;
+    if(!id){
+      setStatus("Choose a preset first.");
+      return;
+    }
+    let list = loadPresets();
+    const before = list.length;
+    list = list.filter(x => x.id !== id);
+    if(list.length === before){
+      setStatus("Preset not found.");
+      return;
+    }
+    savePresets(list);
+    refreshPresetSelect();
+    presetSelect.value = "";
+    setStatus("Preset deleted.");
+    setSaveIndicator("Preset deleted.");
+  });
+}
+
+/* =========================
+   Recipe Book
+========================= */
 (function(){
-  const KEY = "kitchen_recipe_book_v1";
-  const $ = (id)=>document.getElementById(id);
-
-  function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+  function compactMeta(r){
+    const bits = [];
+    if((r.time||"").trim()) bits.push(r.time.trim());
+    if((r.serves||"").trim()) bits.push(`serves ${r.serves.trim()}`);
+    if(r.tags && r.tags.length) bits.push(r.tags.slice(0,2).join(" · "));
+    return bits.join(" · ") || "Kitchen";
+  }
 
   function defaultState(){
     const s1 = uid(), s2 = uid(), s3 = uid();
@@ -980,32 +1405,78 @@
     };
   }
 
+  function sanitizeState(parsed){
+    const base = defaultState();
+    const out = {
+      shelves: Array.isArray(parsed?.shelves) && parsed.shelves.length ? parsed.shelves : base.shelves,
+      recipes: Array.isArray(parsed?.recipes) ? parsed.recipes : [],
+      ui: { openId: parsed?.ui?.openId || null }
+    };
+
+    out.shelves = out.shelves
+      .filter(Boolean)
+      .map(s => ({
+        id: String(s.id || uid()),
+        name: String(s.name || "Shelf")
+      }));
+
+    const shelfIds = new Set(out.shelves.map(s => s.id));
+    const fallbackShelfId = out.shelves[0]?.id || uid();
+
+    out.recipes = out.recipes
+      .filter(Boolean)
+      .map(r => ({
+        id: String(r.id || uid()),
+        shelfId: shelfIds.has(r.shelfId) ? r.shelfId : fallbackShelfId,
+        title: String(r.title || ""),
+        time: String(r.time || ""),
+        serves: String(r.serves || ""),
+        tags: Array.isArray(r.tags) ? r.tags.map(x => String(x)).slice(0, 12) : [],
+        ingredients: String(r.ingredients || ""),
+        steps: String(r.steps || ""),
+        coverDataUrl: typeof r.coverDataUrl === "string" ? r.coverDataUrl : null,
+        createdAt: Number(r.createdAt || Date.now()),
+        updatedAt: Number(r.updatedAt || r.createdAt || Date.now())
+      }));
+
+    if(out.ui.openId && !out.recipes.some(r => r.id === out.ui.openId)){
+      out.ui.openId = null;
+    }
+    return out;
+  }
+
   function load(){
     try{
-      const raw = localStorage.getItem(KEY);
+      const raw = window.__RB__.get(KEY);
       if(!raw) return defaultState();
-      const parsed = JSON.parse(raw) || {};
-      const base = defaultState();
-
-      base.shelves = Array.isArray(parsed.shelves) && parsed.shelves.length ? parsed.shelves : base.shelves;
-      base.recipes = Array.isArray(parsed.recipes) ? parsed.recipes : [];
-      base.ui.openId = parsed?.ui?.openId || null;
-
-      return base;
+      const parsed = JSON.parse(raw);
+      return sanitizeState(parsed);
     }catch{
       return defaultState();
     }
   }
 
   let state = load();
+  let isApplyingExternalSync = false;
 
-  function save(){
-    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch{}
-  }
+  const saveNow = throttle(() => {
+    try{
+      window.__RB__.set(KEY, JSON.stringify(state));
+      emitSync("state");
+      setSaveIndicator("Saved.");
+    }catch{
+      setSaveIndicator("Could not save in this browser.");
+    }
+  }, 80);
 
-  /* ---------- rendering ---------- */
+  const saveSoon = debounce(() => {
+    saveNow();
+  }, 180);
+
   function renderShelfSelect(){
     const sel = $("shelfSelect");
+    if(!sel) return;
+    const current = sel.value;
     sel.innerHTML = "";
     for(const s of state.shelves){
       const o = document.createElement("option");
@@ -1013,10 +1484,13 @@
       o.textContent = s.name || "Shelf";
       sel.appendChild(o);
     }
+    if(state.shelves.some(s => s.id === current)) sel.value = current;
   }
 
   function renderEditorShelfSelect(){
     const sel = $("eShelf");
+    if(!sel) return;
+    const current = sel.value;
     sel.innerHTML = "";
     for(const s of state.shelves){
       const o = document.createElement("option");
@@ -1024,10 +1498,16 @@
       o.textContent = s.name || "Shelf";
       sel.appendChild(o);
     }
+    if(state.shelves.some(s => s.id === current)) sel.value = current;
+  }
+
+  function currentRecipe(){
+    return state.recipes.find(r => r.id === state.ui.openId) || null;
   }
 
   function renderShelves(){
     const root = $("shelves");
+    if(!root) return;
     root.innerHTML = "";
 
     for(const shelf of state.shelves){
@@ -1044,11 +1524,17 @@
       const nameInput = document.createElement("input");
       nameInput.value = shelf.name || "";
       nameInput.placeholder = "Shelf name";
-      nameInput.addEventListener("change", () => {
+      nameInput.addEventListener("input", () => {
         shelf.name = nameInput.value.trim() || "Shelf";
-        save();
         renderShelfSelect();
         renderEditorShelfSelect();
+        saveSoon();
+      });
+      nameInput.addEventListener("change", () => {
+        shelf.name = nameInput.value.trim() || "Shelf";
+        renderShelfSelect();
+        renderEditorShelfSelect();
+        saveNow();
       });
 
       const count = document.createElement("span");
@@ -1068,19 +1554,21 @@
       delShelf.textContent = "Remove shelf";
       delShelf.addEventListener("click", () => {
         if(state.shelves.length <= 1) return;
-
         const target = state.shelves.find(x => x.id !== shelf.id);
+        if(!target) return;
         for(const r of state.recipes){
           if(r.shelfId === shelf.id) r.shelfId = target.id;
         }
         state.shelves = state.shelves.filter(x => x.id !== shelf.id);
-
-        save();
+        if(state.ui.openId){
+          const open = currentRecipe();
+          if(open && open.shelfId === shelf.id) open.shelfId = target.id;
+        }
+        saveNow();
         renderAll();
       });
 
       actions.appendChild(delShelf);
-
       head.appendChild(nameWrap);
       head.appendChild(actions);
 
@@ -1160,107 +1648,9 @@
     }
   }
 
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  function compactMeta(r){
-    const bits = [];
-    if((r.time||"").trim()) bits.push(r.time.trim());
-    if((r.serves||"").trim()) bits.push(`serves ${r.serves.trim()}`);
-    if(r.tags && r.tags.length) bits.push(r.tags.slice(0,2).join(" · "));
-    return bits.join(" · ") || "Kitchen";
-  }
-
-  function renderAll(){
-    renderShelfSelect();
-    renderEditorShelfSelect();
-    renderShelves();
-    renderEditor();
-    save();
-  }
-
-  /* ---------- add shelf/recipe ---------- */
-  function addShelf(){
-    state.shelves.push({ id: uid(), name: `Shelf ${state.shelves.length + 1}` });
-    save();
-    renderAll();
-    $("shelfSelect").value = state.shelves[state.shelves.length - 1].id;
-  }
-
-  function addRecipe(){
-    const title = ($("recipeTitle").value || "").trim();
-    if(!title) return;
-
-    const shelfId = $("shelfSelect").value;
-    const id = uid();
-    const now = Date.now();
-
-    state.recipes.unshift({
-      id,
-      shelfId,
-      title,
-      time:"",
-      serves:"",
-      tags: [],
-      ingredients:"",
-      steps:"",
-      coverDataUrl:null,
-      createdAt: now,
-      updatedAt: now
-    });
-
-    $("recipeTitle").value = "";
-    save();
-    renderAll();
-    openEditor(id);
-  }
-
-  /* ---------- internal reset ---------- */
-  function showReset(){
-    $("resetConfirm").classList.add("open");
-    const bgPanel = document.getElementById("bgPanel");
-    const themePanel = document.getElementById("themePanel");
-    if(bgPanel) bgPanel.classList.remove("open");
-    if(themePanel) themePanel.classList.remove("open");
-  }
-  function hideReset(){
-    $("resetConfirm").classList.remove("open");
-  }
-  function doReset(){
-    localStorage.removeItem(KEY);
-    state = defaultState();
-    hideReset();
-    renderAll();
-  }
-
-  /* ---------- editor ---------- */
-  function currentRecipe(){
-    return state.recipes.find(r => r.id === state.ui.openId) || null;
-  }
-
-  function openEditor(id){
-    state.ui.openId = id;
-    save();
-    renderEditor();
-    document.getElementById("editor").classList.add("open");
-  }
-
-  function closeEditor(){
-    state.ui.openId = null;
-    save();
-    renderEditor();
-    document.getElementById("editor").classList.remove("open");
-    $("coverInput").value = "";
-  }
-
   function renderEditor(){
     const editor = $("editor");
+    if(!editor) return;
     const r = currentRecipe();
     if(!r){
       editor.classList.remove("open");
@@ -1268,7 +1658,6 @@
     }
 
     $("editorTitle").textContent = r.title || "Recipe";
-
     $("eTitle").value = r.title || "";
     $("eShelf").value = r.shelfId || (state.shelves[0]?.id || "");
     $("eTags").value = (r.tags || []).join(", ");
@@ -1284,7 +1673,7 @@
       img.style.display = "block";
       fb.style.display = "none";
     }else{
-      img.src = "";
+      img.removeAttribute("src");
       img.style.display = "none";
       fb.style.display = "flex";
       $("coverFallbackTitle").textContent = r.title || "Recipe";
@@ -1308,52 +1697,128 @@
     editor.classList.add("open");
   }
 
-  function saveRecipe(){
+  function renderAll(){
+    renderShelfSelect();
+    renderEditorShelfSelect();
+    renderShelves();
+    renderEditor();
+  }
+
+  function addShelf(){
+    state.shelves.push({ id: uid(), name: `Shelf ${state.shelves.length + 1}` });
+    renderAll();
+    saveNow();
+    $("shelfSelect").value = state.shelves[state.shelves.length - 1].id;
+  }
+
+  function addRecipe(){
+    const title = ($("recipeTitle").value || "").trim();
+    if(!title) return;
+
+    const shelfId = $("shelfSelect").value || state.shelves[0]?.id;
+    const id = uid();
+    const now = Date.now();
+
+    state.recipes.unshift({
+      id,
+      shelfId,
+      title,
+      time:"",
+      serves:"",
+      tags: [],
+      ingredients:"",
+      steps:"",
+      coverDataUrl:null,
+      createdAt: now,
+      updatedAt: now
+    });
+
+    $("recipeTitle").value = "";
+    renderAll();
+    saveNow();
+    openEditor(id);
+  }
+
+  function showReset(){
+    $("resetConfirm").classList.add("open");
+    const bgPanel = $("bgPanel");
+    const themePanel = $("themePanel");
+    if(bgPanel) bgPanel.classList.remove("open");
+    if(themePanel) themePanel.classList.remove("open");
+  }
+
+  function hideReset(){
+    $("resetConfirm").classList.remove("open");
+  }
+
+  function doReset(){
+    window.__RB__.remove(KEY);
+    state = defaultState();
+    hideReset();
+    renderAll();
+    emitSync("state");
+    setSaveIndicator("Kitchen reset.");
+  }
+
+  function openEditor(id){
+    state.ui.openId = id;
+    renderEditor();
+    $("editor").classList.add("open");
+    saveSoon();
+  }
+
+  function closeEditor(){
+    state.ui.openId = null;
+    renderEditor();
+    $("editor").classList.remove("open");
+    if($("coverInput")) $("coverInput").value = "";
+    saveSoon();
+  }
+
+  function saveCurrentRecipeFromInputs(){
     const r = currentRecipe();
     if(!r) return;
 
     const title = ($("eTitle").value || "").trim();
-    if(!title) return;
-
-    r.title = title;
+    r.title = title || "Untitled recipe";
     r.shelfId = $("eShelf").value || r.shelfId;
-
-    const tagsRaw = ($("eTags").value || "").split(",").map(x => x.trim()).filter(Boolean);
-    r.tags = tagsRaw.slice(0, 12);
-
+    r.tags = ($("eTags").value || "")
+      .split(",")
+      .map(x => x.trim())
+      .filter(Boolean)
+      .slice(0,12);
     r.time = ($("eTime").value || "").trim();
     r.serves = ($("eServes").value || "").trim();
     r.ingredients = ($("eIngredients").value || "").trim();
     r.steps = ($("eSteps").value || "").trim();
     r.updatedAt = Date.now();
 
-    save();
-    renderAll();
+    renderShelves();
+    renderEditor();
+  }
+
+  function saveRecipe(){
+    const r = currentRecipe();
+    if(!r) return;
+    saveCurrentRecipeFromInputs();
+    saveNow();
   }
 
   function removeRecipe(id){
     state.recipes = state.recipes.filter(x => x.id !== id);
     if(state.ui.openId === id){
-      closeEditor();
+      state.ui.openId = null;
+      $("editor").classList.remove("open");
+      if($("coverInput")) $("coverInput").value = "";
     }
-    save();
     renderAll();
+    saveNow();
   }
 
   function deleteCurrent(){
     const r = currentRecipe();
     if(!r) return;
     removeRecipe(r.id);
-  }
-
-  /* ---------- cover handling (internal) ---------- */
-  function fileToDataUrl(file){
-    return new Promise((resolve, reject) => {
-      const fr = new FileReader();
-      fr.onload = () => resolve(String(fr.result));
-      fr.onerror = reject;
-      fr.readAsDataURL(file);
-    });
   }
 
   async function setCover(){
@@ -1367,10 +1832,10 @@
       r.coverDataUrl = await fileToDataUrl(f);
       r.updatedAt = Date.now();
       $("coverInput").value = "";
-      save();
       renderAll();
+      saveNow();
     }catch{
-      // silent fail
+      setSaveIndicator("Could not save that cover image.");
     }
   }
 
@@ -1380,11 +1845,50 @@
     r.coverDataUrl = null;
     r.updatedAt = Date.now();
     $("coverInput").value = "";
-    save();
     renderAll();
+    saveNow();
   }
 
-  /* ---------- init ---------- */
+  function syncFromStorage(){
+    if(isApplyingExternalSync) return;
+    isApplyingExternalSync = true;
+    try{
+      const nextState = load();
+      state = nextState;
+      themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+      bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+      themeSyncInputs(themeDraft);
+      themeApplyToCSS(themeDraft);
+      bgSyncInputs(bgDraft);
+      bgApplyToCSS(bgDraft);
+      refreshPresetSelect();
+      renderAll();
+      setSaveIndicator("Updated from another open copy.");
+    }finally{
+      isApplyingExternalSync = false;
+    }
+  }
+
+  function forcePersistBeforeLeave(){
+    try{
+      saveCurrentRecipeFromInputs();
+    }catch{}
+    try{
+      saveNow();
+    }catch{}
+    try{
+      themeDraft = Object.assign({}, themeDraft, themeReadFromInputs());
+      themeSave(themeDraft);
+    }catch{}
+    try{
+      bgDraft.tint = $("bgColor")?.value || bgDraft.tint;
+      bgDraft.strength = Number($("bgStrength")?.value ?? bgDraft.strength);
+      bgDraft.imageA = Number($("bgImageA")?.value ?? bgDraft.imageA);
+      bgDraft.blur = Number($("bgBlur")?.value ?? bgDraft.blur);
+      bgSave(bgDraft);
+    }catch{}
+  }
+
   function init(){
     const required = [
       "recipeTitle","shelfSelect","addRecipe","addShelf","resetAll","resetConfirm","resetYes","resetNo",
@@ -1392,12 +1896,19 @@
       "eIngredients","eSteps","saveRecipe","deleteRecipe","coverInput","setCover","clearCover","chips",
       "coverPreview","coverFallback","coverFallbackTitle","coverFallbackMeta"
     ];
-    for(const id of required){ if(!$(id)) return; }
+    for(const id of required){
+      if(!$(id)) return;
+    }
+
+    renderAll();
 
     $("addShelf").addEventListener("click", addShelf);
     $("addRecipe").addEventListener("click", addRecipe);
     $("recipeTitle").addEventListener("keydown", (e)=> {
-      if(e.key === "Enter"){ e.preventDefault(); addRecipe(); }
+      if(e.key === "Enter"){
+        e.preventDefault();
+        addRecipe();
+      }
     });
 
     $("resetAll").addEventListener("click", ()=> {
@@ -1407,25 +1918,76 @@
     $("resetYes").addEventListener("click", doReset);
 
     $("editorClose").addEventListener("click", closeEditor);
-
     $("saveRecipe").addEventListener("click", saveRecipe);
     $("deleteRecipe").addEventListener("click", deleteCurrent);
-
     $("setCover").addEventListener("click", setCover);
     $("clearCover").addEventListener("click", clearCover);
 
     const autos = ["eTitle","eShelf","eTags","eTime","eServes","eIngredients","eSteps"];
-    for(const id of autos){
-      $(id).addEventListener("change", saveRecipe);
-    }
+    autos.forEach(id => {
+      const el = $(id);
+      if(!el) return;
+      el.addEventListener("input", () => {
+        if(!currentRecipe()) return;
+        saveCurrentRecipeFromInputs();
+        saveSoon();
+      });
+      el.addEventListener("change", () => {
+        if(!currentRecipe()) return;
+        saveCurrentRecipeFromInputs();
+        saveNow();
+      });
+      el.addEventListener("blur", () => {
+        if(!currentRecipe()) return;
+        saveCurrentRecipeFromInputs();
+        saveNow();
+      }, true);
+    });
 
-    renderAll();
+    window.addEventListener("pagehide", forcePersistBeforeLeave);
+    window.addEventListener("beforeunload", forcePersistBeforeLeave);
+    document.addEventListener("visibilitychange", () => {
+      if(document.hidden) forcePersistBeforeLeave();
+    });
+
+    onExternalSync(() => {
+      syncFromStorage();
+    });
   }
 
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", init);
   }else{
     init();
+  }
+})();
+
+/* =========================
+   Boot UI
+========================= */
+(function bootUI(){
+  function start(){
+    initThemeUI();
+    initBackgroundUI();
+    initPresetsUI();
+
+    themeDraft = Object.assign({}, DEFAULT_THEME, themeLoad() || {});
+    bgDraft = Object.assign({}, DEFAULT_BG, bgLoad() || {});
+    themeSyncInputs(themeDraft);
+    themeApplyToCSS(themeDraft);
+    bgSyncInputs(bgDraft);
+    bgApplyToCSS(bgDraft);
+
+    setSaveIndicator(window.__RB__.hasLocalStorage
+      ? "Saving is active in this browser."
+      : "Local storage is limited in this browser."
+    );
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", start);
+  }else{
+    start();
   }
 })();
 </script>

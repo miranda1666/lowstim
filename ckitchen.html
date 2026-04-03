@@ -96,14 +96,14 @@
     .boardContent{
       position:relative;
       z-index:2;
-      overflow:hidden;
+      overflow:visible;
       border-radius: var(--r);
     }
 
     .card{
       background:var(--card);
       border:0;
-      border-radius:0;
+      border-radius:inherit;
       box-shadow:none;
       padding:14px;
       backdrop-filter: blur(0px);
@@ -207,7 +207,7 @@
       padding: 12px;
       display:none;
       z-index: 100;
-      max-height: min(70vh, calc(100dvh - 80px));
+      max-height: min(78vh, calc(100dvh - 60px));
       overflow-y:auto;
       overflow-x:hidden;
       overscroll-behavior: contain;
@@ -234,7 +234,6 @@
       color:var(--muted);
       flex:0 0 auto;
     }
-
     .bgRow input[type="color"]{
       width:42px; height:32px;
       border-radius:10px;
@@ -244,48 +243,9 @@
       cursor:pointer;
       min-height:32px;
     }
-
     .bgRow input[type="range"]{
       width:160px;
       min-height:auto;
-      appearance:none;
-      -webkit-appearance:none;
-      background:transparent;
-      border:none;
-      padding:0;
-      margin:0;
-      accent-color: var(--ink);
-    }
-    .bgRow input[type="range"]::-webkit-slider-runnable-track{
-      height:6px;
-      border-radius:999px;
-      background: linear-gradient(90deg, rgba(233,228,221,0.95), rgba(243,239,233,1));
-      border:1px solid rgba(233,228,221,0.95);
-    }
-    .bgRow input[type="range"]::-webkit-slider-thumb{
-      -webkit-appearance:none;
-      appearance:none;
-      width:18px;
-      height:18px;
-      border-radius:999px;
-      background:#ffffff;
-      border:1px solid rgba(233,228,221,0.95);
-      box-shadow:0 2px 8px rgba(30,20,10,.12);
-      margin-top:-7px;
-    }
-    .bgRow input[type="range"]::-moz-range-track{
-      height:6px;
-      border-radius:999px;
-      background: linear-gradient(90deg, rgba(233,228,221,0.95), rgba(243,239,233,1));
-      border:1px solid rgba(233,228,221,0.95);
-    }
-    .bgRow input[type="range"]::-moz-range-thumb{
-      width:18px;
-      height:18px;
-      border-radius:999px;
-      background:#ffffff;
-      border:1px solid rgba(233,228,221,0.95);
-      box-shadow:0 2px 8px rgba(30,20,10,.12);
     }
 
     .bgFile{
@@ -573,7 +533,7 @@
       .bgPanel{
         right:0;
         width:min(340px, calc(100vw - 24px));
-        max-height:min(72vh, calc(100dvh - 60px));
+        max-height:min(82vh, calc(100dvh - 40px));
       }
     }
   </style>

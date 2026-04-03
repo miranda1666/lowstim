@@ -190,8 +190,8 @@
   .miniBtn:focus-visible,
   .presetName:focus-visible,
   .presetSelect:focus-visible,
-  .pRow input:focus-visible,
-  .uploadBtn:focus-visible{
+  .pFile:focus-visible,
+  .pRow input:focus-visible{
     outline:2px solid rgba(100,100,100,.35);
     outline-offset:2px;
   }
@@ -273,48 +273,10 @@
     flex-shrink:0;
   }
 
-  .pRowStack{
-    display:block;
-    padding:7px 0;
-  }
-
-  .pRowStack label{
-    display:block;
-    margin:0 0 8px 0;
-    font-size:12px;
-    color: rgba(106,102,95,1);
-  }
-
-  .hiddenFileInput{
-    position:absolute !important;
-    width:1px !important;
-    height:1px !important;
-    padding:0 !important;
-    margin:-1px !important;
-    overflow:hidden !important;
-    clip:rect(0,0,0,0) !important;
-    white-space:nowrap !important;
-    border:0 !important;
-  }
-
-  .uploadBtn{
+  .pFile{
     width:100%;
-    border-radius:12px;
-    border:1px solid var(--stroke);
-    background: rgba(255,255,255,0.96);
-    padding:10px 12px;
-    font-weight:700;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    font-size:11px;
-    color: rgba(43,42,40,0.82);
-    box-shadow: 0 2px 8px rgba(30,20,10,.06);
-    cursor:pointer;
-    touch-action: manipulation;
-  }
-
-  .uploadBtn:active{
-    transform: translateY(1px);
+    font-size:12px;
+    color: rgba(43,42,40,0.75);
   }
 
   .miniBtn{
@@ -372,7 +334,6 @@
     font-size:11px;
     color: var(--muted);
     line-height:1.35;
-    word-break: break-word;
   }
 
   @media (max-width: 480px){
@@ -465,11 +426,9 @@
 
       <div class="pDiv"></div>
 
-      <div class="pRowStack">
+      <div class="pRow" style="align-items:flex-start;">
         <label for="bgImage">Image</label>
-        <input id="bgImage" class="hiddenFileInput" type="file" accept="image/*" />
-        <button id="bgUploadBtn" class="uploadBtn" type="button">Upload image</button>
-        <div id="bgFileName" class="tinyNote">No image selected</div>
+        <input id="bgImage" class="pFile" type="file" accept="image/*" />
       </div>
 
       <div class="pRow">
@@ -532,7 +491,7 @@
       <button class="miniBtn" id="presetDelete" type="button" style="margin-top:8px;">Delete preset</button>
 
       <div class="tinyNote">
-        Presets save theme, tint, image visibility, blur, and the background image itself.
+        Presets now save theme, tint, image visibility, blur, and the background image itself.
       </div>
 
       <div class="status" id="presetStatus" aria-live="polite"></div>
@@ -571,6 +530,9 @@
   </div>
 
 <script>
+/* =========================================================
+   Utility
+========================================================= */
 (function(){
   function hexToRgba(hex, a){
     const h = String(hex || "").replace("#","").trim();
@@ -600,27 +562,21 @@
 
   function debounce(fn, wait){
     let t = null;
-    const wrapped = function(){
+    return function(){
       const args = arguments;
       clearTimeout(t);
-      t = setTimeout(() => {
-        t = null;
-        fn.apply(this, args);
-      }, wait);
+      t = setTimeout(() => fn.apply(this, args), wait);
     };
-    wrapped.flush = function(){
-      if(t){
-        clearTimeout(t);
-        t = null;
-        fn();
-      }
-    };
-    return wrapped;
   }
 
   window.__wotdUtils = { hexToRgba, clamp, normHex, uid, debounce };
 })();
 
+/* =========================================================
+   Strong persistence: localStorage + IndexedDB
+   - localStorage stores settings/state
+   - IndexedDB stores image data more reliably than localStorage
+========================================================= */
 const WOTDStore = (function(){
   const STATE_KEY = "word_of_day_state_v4";
   const DB_NAME = "word_of_day_widget_db";
@@ -754,6 +710,9 @@ const WOTDStore = (function(){
   };
 })();
 
+/* =========================================================
+   App state
+========================================================= */
 const WOTDApp = (function(){
   const { hexToRgba, clamp, normHex, uid, debounce } = window.__wotdUtils;
 
@@ -786,7 +745,6 @@ const WOTDApp = (function(){
 
   let pendingImageDataUrl = null;
   let pendingImageChanged = false;
-  let pendingImageFileName = "";
 
   const els = {};
   let initialized = false;
@@ -803,7 +761,6 @@ const WOTDApp = (function(){
     [
       "widgetShell","boardTint","bgDot","themeDot",
       "bgColor","bgStrength","bgImageA","bgBlur","bgImage","bgRemove","bgApply","bgReset","uiStatus",
-      "bgUploadBtn","bgFileName",
       "tBg","tInk","tMuted","tStroke","tCardA","tApply","tReset",
       "presetName","presetSave","presetSelect","presetApply","presetDelete","presetStatus",
       "bgBtn","themeBtn","bgPanel","themePanel",
@@ -822,12 +779,6 @@ const WOTDApp = (function(){
   function clearStatuses(){
     setBgStatus("");
     setPresetStatus("");
-  }
-
-  function updateFileNameLabel(name){
-    if(els.bgFileName){
-      els.bgFileName.textContent = name || "No image selected";
-    }
   }
 
   function cleanTheme(input){
@@ -968,7 +919,6 @@ const WOTDApp = (function(){
     await applyThemePreview(themeDraft);
     await applyBgPreview(bgDraft);
     refreshPresetSelect();
-    updateFileNameLabel(pendingImageFileName);
   }
 
   function refreshPresetSelect(){
@@ -1092,7 +1042,6 @@ const WOTDApp = (function(){
 
     pendingImageChanged = false;
     pendingImageDataUrl = null;
-    pendingImageFileName = preset.bg.imageKey ? "Image loaded from preset" : "";
 
     bgDraft = cleanBg(preset.bg);
     state.bg = cleanBg(preset.bg);
@@ -1100,7 +1049,6 @@ const WOTDApp = (function(){
     await applyBgPreview(bgDraft);
 
     persistState();
-    updateFileNameLabel(pendingImageFileName);
     setPresetStatus("Preset applied.");
     setBgStatus("Background applied.");
   }
@@ -1128,7 +1076,6 @@ const WOTDApp = (function(){
   async function resetBackground(){
     pendingImageChanged = true;
     pendingImageDataUrl = null;
-    pendingImageFileName = "";
 
     if(state.bg.imageKey){
       WOTDStore.deleteImage(state.bg.imageKey).catch(() => {});
@@ -1139,7 +1086,6 @@ const WOTDApp = (function(){
     syncBgInputs(bgDraft);
     persistState();
     await applyBgPreview(bgDraft, null);
-    updateFileNameLabel("");
     setBgStatus("Background reset.");
   }
 
@@ -1199,12 +1145,6 @@ const WOTDApp = (function(){
       });
     }
 
-    if(els.bgUploadBtn && els.bgImage){
-      els.bgUploadBtn.addEventListener("click", () => {
-        els.bgImage.click();
-      });
-    }
-
     if(els.bgImage){
       els.bgImage.addEventListener("change", async () => {
         const file = els.bgImage.files && els.bgImage.files[0];
@@ -1213,12 +1153,9 @@ const WOTDApp = (function(){
           const dataUrl = await fileToDataUrl(file);
           pendingImageDataUrl = dataUrl;
           pendingImageChanged = true;
-          pendingImageFileName = file.name || "Selected image";
-          updateFileNameLabel(pendingImageFileName);
           await applyBgPreview(bgDraft, dataUrl);
           clearStatuses();
         }catch{
-          updateFileNameLabel("Failed to load image");
           setBgStatus("Could not load that image.");
         }
       });
@@ -1228,9 +1165,6 @@ const WOTDApp = (function(){
       els.bgRemove.addEventListener("click", async () => {
         pendingImageDataUrl = null;
         pendingImageChanged = true;
-        pendingImageFileName = "";
-        updateFileNameLabel("");
-        if(els.bgImage) els.bgImage.value = "";
         await applyBgPreview(bgDraft, null);
         clearStatuses();
       });
@@ -1239,10 +1173,6 @@ const WOTDApp = (function(){
     if(els.bgApply){
       els.bgApply.addEventListener("click", async () => {
         await commitBackgroundDraftToState();
-        if(state.bg.imageKey && !pendingImageFileName){
-          pendingImageFileName = "Image applied";
-          updateFileNameLabel(pendingImageFileName);
-        }
         setBgStatus("Background applied.");
       });
     }
@@ -1318,7 +1248,6 @@ const WOTDApp = (function(){
           panel.style.right = "";
           panel.style.bottom = "";
           panel.style.position = "";
-          panel.style.transform = "";
         }
       });
       document.body.style.paddingBottom = "";
@@ -1404,7 +1333,6 @@ const WOTDApp = (function(){
       bgDraft = structuredCloneSafe(state.bg);
       pendingImageChanged = false;
       pendingImageDataUrl = null;
-      pendingImageFileName = state.bg.imageKey ? "Saved image loaded" : "";
       await renderAll();
     });
 
@@ -1434,7 +1362,6 @@ const WOTDApp = (function(){
 
     themeDraft = structuredCloneSafe(state.theme);
     bgDraft = structuredCloneSafe(state.bg);
-    pendingImageFileName = state.bg.imageKey ? "Saved image loaded" : "";
 
     await renderAll();
     attachPreviewListeners();
@@ -1449,6 +1376,33 @@ const WOTDApp = (function(){
   };
 })();
 
+/* small helper to support flush-style use if needed */
+(function(){
+  const originalDebounce = window.__wotdUtils.debounce;
+  window.__wotdUtils.debounce = function(fn, wait){
+    let t = null;
+    const wrapped = function(){
+      const args = arguments;
+      clearTimeout(t);
+      t = setTimeout(() => {
+        t = null;
+        fn.apply(this, args);
+      }, wait);
+    };
+    wrapped.flush = function(){
+      if(t){
+        clearTimeout(t);
+        t = null;
+        fn();
+      }
+    };
+    return wrapped;
+  };
+})();
+
+/* =========================================================
+   Word of the Day
+========================================================= */
 (function(){
   const fallbackWords = [
     "serendipity","resilient","ephemeral","luminous","eloquent","solace","clarity","intentional",
@@ -1506,6 +1460,9 @@ const WOTDApp = (function(){
     .catch(setFallback);
 })();
 
+/* =========================================================
+   Start app
+========================================================= */
 WOTDApp.init();
 </script>
 </body>

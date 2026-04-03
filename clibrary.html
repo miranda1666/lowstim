@@ -28,6 +28,15 @@
       --panel-bg: rgba(255,255,255,0.88);
       --field-bg:#ffffff;
       --theme-dot: var(--ink);
+
+      /* Reader theme */
+      --reader-shell-bg:#f7f4ef;
+      --reader-top-bg:#f3efe9;
+      --reader-panel-bg:#ffffff;
+      --reader-border:#e9e4dd;
+      --reader-btn:#f3efe9;
+      --reader-btn-text:#2b2a28;
+      --reader-muted:#6a665f;
     }
 
     *{ box-sizing:border-box; }
@@ -94,8 +103,6 @@
       border-radius:0;
       box-shadow:none;
       padding:14px;
-      backdrop-filter:none;
-      -webkit-backdrop-filter:none;
     }
 
     .title{
@@ -156,6 +163,7 @@
       font-size:13px;
       white-space:nowrap;
       min-height:38px;
+      line-height:1;
     }
     .tiny{ font-size:12px; color:var(--muted); line-height:1.35; }
 
@@ -195,7 +203,7 @@
       position:absolute;
       top:44px;
       right:0;
-      width:min(310px, calc(100vw - 36px));
+      width:min(330px, calc(100vw - 36px));
       border-radius:16px;
       border:1px solid var(--stroke);
       background:var(--panel-bg);
@@ -331,35 +339,35 @@
     }
     .shelfHead{
       display:flex;
-      gap:10px;
+      gap:12px;
       align-items:center;
       justify-content:space-between;
       padding:10px 12px;
       background:rgba(243,239,233,0.75);
       border-bottom:1px solid var(--stroke);
-      flex-wrap:wrap;
+      flex-wrap:nowrap;
     }
-    .shelfName{
+    .shelfLeft{
       display:flex;
-      gap:10px;
       align-items:center;
-      min-width:0;
+      gap:10px;
       flex:1;
-      flex-wrap:wrap;
+      min-width:0;
     }
-    .shelfName input{
+    .shelfLeft input{
       border-radius:10px;
       padding:8px 10px;
       width:100%;
-      min-width:180px;
+      min-width:0;
       background:var(--field-bg);
       min-height:38px;
+      flex:1;
     }
-    .shelfActions{
+    .shelfRight{
       display:flex;
-      gap:8px;
       align-items:center;
-      flex-wrap:wrap;
+      gap:10px;
+      flex:0 0 auto;
     }
     .shelfActions button{
       min-height:38px;
@@ -383,7 +391,7 @@
       padding:8px 2px;
       min-height:148px;
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:flex-start;
     }
 
@@ -496,9 +504,9 @@
       justify-content:space-between;
       gap:10px;
       padding:10px 12px;
-      border-bottom:1px solid var(--stroke);
-      background:rgba(243,239,233,0.75);
-      flex-wrap:wrap;
+      border-bottom:1px solid var(--reader-border);
+      background:var(--reader-top-bg);
+      flex-wrap:nowrap;
     }
     .modalTitle{
       font-weight:800;
@@ -506,11 +514,11 @@
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
-      max-width:70%;
+      max-width:72%;
     }
     .modalBody{
       flex:1;
-      background:var(--field-bg);
+      background:var(--reader-panel-bg);
       min-height:0;
       position:relative;
     }
@@ -520,29 +528,47 @@
       display:flex;
       flex-direction:column;
       min-height:0;
+      background:var(--reader-panel-bg);
     }
     .pdfToolbar{
       display:flex;
       align-items:center;
-      gap:8px;
-      padding:10px 12px;
-      border-bottom:1px solid var(--stroke);
-      background:rgba(243,239,233,0.55);
-      flex-wrap:wrap;
+      gap:6px;
+      padding:8px 10px;
+      border-bottom:1px solid var(--reader-border);
+      background:var(--reader-top-bg);
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      overflow-y:hidden;
+      white-space:nowrap;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:thin;
     }
-    .pdfToolbar .spacer{ flex:1; }
-    .pdfToolbar button{
-      min-height:36px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
+    .pdfToolbar::-webkit-scrollbar{ height:6px; }
+    .pdfToolbar button,
+    .pdfToolbar select{
+      flex:0 0 auto;
+      min-height:32px;
+      height:32px;
+      padding:6px 10px;
+      font-size:11px;
+      border-radius:10px;
+      border:1px solid var(--reader-border);
+      background:var(--reader-btn);
+      color:var(--reader-btn-text);
     }
     .pdfInfo{
-      font-size:12px;
-      color:var(--muted);
-      min-width:82px;
+      font-size:11px;
+      color:var(--reader-muted);
+      min-width:auto;
       text-align:center;
-      line-height:1.35;
+      line-height:1.2;
+      flex:0 0 auto;
+      padding:0 2px;
+    }
+    .pdfToolbar .spacer{
+      flex:1 0 16px;
+      min-width:8px;
     }
     .pdfViewport{
       flex:1;
@@ -551,13 +577,13 @@
       display:flex;
       justify-content:center;
       align-items:flex-start;
-      background:#f7f4ef;
+      background:var(--reader-shell-bg);
       -webkit-overflow-scrolling:touch;
       min-height:0;
     }
     .pdfCanvasWrap{
-      background:#fff;
-      border:1px solid var(--stroke);
+      background:var(--reader-panel-bg);
+      border:1px solid var(--reader-border);
       border-radius:12px;
       box-shadow:0 12px 28px rgba(0,0,0,.08);
       overflow:hidden;
@@ -573,48 +599,13 @@
       z-index:1;
     }
 
-    .textLayer{
-      position:absolute;
-      inset:0;
-      overflow:hidden;
-      opacity:1;
-      line-height:1;
-      z-index:2;
-      transform-origin:0 0;
-      user-select:text;
-      -webkit-user-select:text;
-      color:transparent;
-    }
-    .textLayer span,
-    .textLayer br{
-      color:transparent;
-      position:absolute;
-      white-space:pre;
-      cursor:text;
-      transform-origin:0 0;
-    }
-    .textLayer ::selection{
-      background:rgba(255,226,120,0.45);
-    }
-    .pdfHighlightLayer{
-      position:absolute;
-      inset:0;
-      z-index:1.5;
-      pointer-events:none;
-    }
-    .pdfHighlight{
-      position:absolute;
-      background:rgba(255,226,120,0.55);
-      border-radius:3px;
-      mix-blend-mode:multiply;
-    }
-
     .readerFallback{
       width:100%;
       height:100%;
       overflow:auto;
       padding:16px;
       -webkit-overflow-scrolling:touch;
+      background:var(--reader-panel-bg);
     }
     .readerFallback img{
       display:block;
@@ -631,12 +622,13 @@
     }
     .readerEmpty{
       padding:16px;
-      color:var(--muted);
+      color:var(--reader-muted);
       font-size:13px;
       line-height:1.45;
     }
 
-    .modalCard.moveCard{
+    .modalCard.moveCard,
+    .modalCard.bookmarkCard{
       width:min(520px, 96vw);
       height:auto;
       max-height:92vh;
@@ -651,7 +643,8 @@
       color:var(--muted);
       margin-bottom:6px;
     }
-    .moveBody select{
+    .moveBody select,
+    .moveBody input{
       width:100%;
       margin-bottom:10px;
       min-height:42px;
@@ -665,10 +658,11 @@
       .bgWrap{ margin-left:0; }
       .modal{ padding:10px; }
       .modalCard{ width:100%; height:min(92vh, 100%); }
-      .pdfToolbar{ padding:8px; }
       .pdfViewport{ padding:10px; }
-      .modalTitle{ max-width:100%; }
+      .modalTitle{ max-width:62%; }
       .books{ min-height:206px; }
+      .shelfHead{ flex-wrap:wrap; align-items:flex-start; }
+      .shelfRight{ width:100%; justify-content:space-between; }
     }
   </style>
 </head>
@@ -761,18 +755,57 @@
                 </div>
 
                 <div class="bgRow">
-                  <label for="tCard">Card</label>
+                  <label for="tCard">Main panel</label>
                   <input id="tCard" type="color" value="#ffffff" />
                 </div>
 
                 <div class="bgRow">
-                  <label for="tCardA">Card opacity</label>
+                  <label for="tCardA">Main panel opacity</label>
                   <input id="tCardA" type="range" min="40" max="95" value="84" />
                 </div>
 
                 <div class="bgRow">
                   <label for="tSoft">Buttons</label>
                   <input id="tSoft" type="color" value="#f3efe9" />
+                </div>
+
+                <div class="bgDiv"></div>
+
+                <div class="bgTitle" style="margin-top:0;">Book reader</div>
+
+                <div class="bgRow">
+                  <label for="tReaderShellBg">Reader bg</label>
+                  <input id="tReaderShellBg" type="color" value="#f7f4ef" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tReaderTopBg">Reader top bar</label>
+                  <input id="tReaderTopBg" type="color" value="#f3efe9" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tReaderPanelBg">Reader page area</label>
+                  <input id="tReaderPanelBg" type="color" value="#ffffff" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tReaderBorder">Reader borders</label>
+                  <input id="tReaderBorder" type="color" value="#e9e4dd" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tReaderBtn">Reader buttons</label>
+                  <input id="tReaderBtn" type="color" value="#f3efe9" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tReaderBtnText">Reader button text</label>
+                  <input id="tReaderBtnText" type="color" value="#2b2a28" />
+                </div>
+
+                <div class="bgRow">
+                  <label for="tReaderMuted">Reader muted text</label>
+                  <input id="tReaderMuted" type="color" value="#6a665f" />
                 </div>
 
                 <div class="bgDiv"></div>
@@ -861,7 +894,7 @@
     <div class="modalCard">
       <div class="modalTop">
         <div class="modalTitle" id="readerTitle">—</div>
-        <div class="row" style="gap:8px;">
+        <div class="row" style="gap:8px; flex:0 0 auto;">
           <button id="readerClose" class="soft" type="button">Close</button>
         </div>
       </div>
@@ -883,6 +916,25 @@
         <div class="row" style="justify-content:flex-end;">
           <button id="moveCancel" class="soft" type="button">Cancel</button>
           <button id="moveConfirm" class="primary" type="button">Move</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="bookmarkModal" role="dialog" aria-label="Bookmark page">
+    <div class="modalCard bookmarkCard">
+      <div class="modalTop">
+        <div class="modalTitle">Save bookmark</div>
+        <div class="row" style="gap:8px;">
+          <button id="bookmarkClose" class="soft" type="button">Close</button>
+        </div>
+      </div>
+      <div class="moveBody">
+        <label for="bookmarkName">Bookmark name</label>
+        <input id="bookmarkName" type="text" placeholder="Example: Chapter three" />
+        <div class="row" style="justify-content:flex-end;">
+          <button id="bookmarkCancel" class="soft" type="button">Cancel</button>
+          <button id="bookmarkSave" class="primary" type="button">Save bookmark</button>
         </div>
       </div>
     </div>
@@ -978,10 +1030,10 @@
 })();
 
 const WID = window.__LW__?.wid || "default";
-const META_KEY = `library_widget_meta_v4__${WID}`;
-const THEME_KEY = `library_widget_theme_v4__${WID}`;
-const BG_KEY = `library_widget_bg_v4__${WID}`;
-const PRESETS_KEY = `library_widget_presets_v4__${WID}`;
+const META_KEY = `library_widget_meta_v5__${WID}`;
+const THEME_KEY = `library_widget_theme_v5__${WID}`;
+const BG_KEY = `library_widget_bg_v5__${WID}`;
+const PRESETS_KEY = `library_widget_presets_v5__${WID}`;
 
 const $ = (id)=>document.getElementById(id);
 
@@ -1058,7 +1110,15 @@ const DEFAULT_THEME = {
   stroke:"#e9e4dd",
   cardBase:"#ffffff",
   cardA:84,
-  soft:"#f3efe9"
+  soft:"#f3efe9",
+
+  readerShellBg:"#f7f4ef",
+  readerTopBg:"#f3efe9",
+  readerPanelBg:"#ffffff",
+  readerBorder:"#e9e4dd",
+  readerBtn:"#f3efe9",
+  readerBtnText:"#2b2a28",
+  readerMuted:"#6a665f"
 };
 
 function themeLoad(){ return loadJSON(THEME_KEY); }
@@ -1090,6 +1150,14 @@ function themeApplyToCSS(t){
   document.documentElement.style.setProperty("--field-bg", "#ffffff");
   document.documentElement.style.setProperty("--theme-dot", ink);
 
+  document.documentElement.style.setProperty("--reader-shell-bg", normHex(x.readerShellBg, DEFAULT_THEME.readerShellBg));
+  document.documentElement.style.setProperty("--reader-top-bg", normHex(x.readerTopBg, DEFAULT_THEME.readerTopBg));
+  document.documentElement.style.setProperty("--reader-panel-bg", normHex(x.readerPanelBg, DEFAULT_THEME.readerPanelBg));
+  document.documentElement.style.setProperty("--reader-border", normHex(x.readerBorder, DEFAULT_THEME.readerBorder));
+  document.documentElement.style.setProperty("--reader-btn", normHex(x.readerBtn, DEFAULT_THEME.readerBtn));
+  document.documentElement.style.setProperty("--reader-btn-text", normHex(x.readerBtnText, DEFAULT_THEME.readerBtnText));
+  document.documentElement.style.setProperty("--reader-muted", normHex(x.readerMuted, DEFAULT_THEME.readerMuted));
+
   const dot = $("themeDot");
   if(dot){
     dot.style.background = ink;
@@ -1106,6 +1174,14 @@ function themeSyncInputs(t){
   if($("tCard")) $("tCard").value = normHex(x.cardBase, DEFAULT_THEME.cardBase);
   if($("tCardA")) $("tCardA").value = String(clamp(x.cardA, 40, 95));
   if($("tSoft")) $("tSoft").value = normHex(x.soft, DEFAULT_THEME.soft);
+
+  if($("tReaderShellBg")) $("tReaderShellBg").value = normHex(x.readerShellBg, DEFAULT_THEME.readerShellBg);
+  if($("tReaderTopBg")) $("tReaderTopBg").value = normHex(x.readerTopBg, DEFAULT_THEME.readerTopBg);
+  if($("tReaderPanelBg")) $("tReaderPanelBg").value = normHex(x.readerPanelBg, DEFAULT_THEME.readerPanelBg);
+  if($("tReaderBorder")) $("tReaderBorder").value = normHex(x.readerBorder, DEFAULT_THEME.readerBorder);
+  if($("tReaderBtn")) $("tReaderBtn").value = normHex(x.readerBtn, DEFAULT_THEME.readerBtn);
+  if($("tReaderBtnText")) $("tReaderBtnText").value = normHex(x.readerBtnText, DEFAULT_THEME.readerBtnText);
+  if($("tReaderMuted")) $("tReaderMuted").value = normHex(x.readerMuted, DEFAULT_THEME.readerMuted);
 }
 function themeReadFromInputs(){
   return {
@@ -1115,7 +1191,15 @@ function themeReadFromInputs(){
     stroke: $("tStroke")?.value,
     cardBase: $("tCard")?.value,
     cardA: Number($("tCardA")?.value),
-    soft: $("tSoft")?.value
+    soft: $("tSoft")?.value,
+
+    readerShellBg: $("tReaderShellBg")?.value,
+    readerTopBg: $("tReaderTopBg")?.value,
+    readerPanelBg: $("tReaderPanelBg")?.value,
+    readerBorder: $("tReaderBorder")?.value,
+    readerBtn: $("tReaderBtn")?.value,
+    readerBtnText: $("tReaderBtnText")?.value,
+    readerMuted: $("tReaderMuted")?.value
   };
 }
 
@@ -1220,7 +1304,11 @@ function initThemeUI(){
   themeSyncInputs(themeDraft);
   themeApplyToCSS(themeDraft);
 
-  ["tPageBg","tText","tMuted","tStroke","tCard","tCardA","tSoft"].forEach(id => {
+  [
+    "tPageBg","tText","tMuted","tStroke","tCard","tCardA","tSoft",
+    "tReaderShellBg","tReaderTopBg","tReaderPanelBg","tReaderBorder",
+    "tReaderBtn","tReaderBtnText","tReaderMuted"
+  ].forEach(id => {
     const el = $(id);
     if(!el) return;
     el.addEventListener("input", () => {
@@ -1481,7 +1569,7 @@ function initPresetsUI(){
       .replaceAll("'","&#039;");
   }
 
-  const DB_NAME = "library_widget_books_v3";
+  const DB_NAME = "library_widget_books_v4";
   const DB_STORE = "books";
 
   function storageIdForBook(bookId){
@@ -1570,21 +1658,17 @@ function initPresetsUI(){
 
   function normalizeReaderState(readerState){
     const x = readerState || {};
+    const bookmarks = Array.isArray(x.bookmarks)
+      ? x.bookmarks.map(b => ({
+          id: String(b.id || uid()),
+          page: clamp(Number(b.page || 1), 1, 999999),
+          name: String(b.name || `Page ${clamp(Number(b.page || 1), 1, 999999)}`)
+        }))
+      : [];
+
     return {
       lastPage: clamp(Number(x.lastPage || 1), 1, 999999),
-      bookmarks: Array.isArray(x.bookmarks)
-        ? Array.from(new Set(x.bookmarks.map(n => clamp(Number(n), 1, 999999)))).sort((a,b)=>a-b)
-        : [],
-      highlights: Array.isArray(x.highlights)
-        ? x.highlights.filter(Boolean).map(h => ({
-            id: String(h.id || uid()),
-            page: clamp(Number(h.page || 1), 1, 999999),
-            startIndex: clamp(Number(h.startIndex || 0), 0, 999999),
-            startOffset: clamp(Number(h.startOffset || 0), 0, 999999),
-            endIndex: clamp(Number(h.endIndex || 0), 0, 999999),
-            endOffset: clamp(Number(h.endOffset || 0), 0, 999999)
-          }))
-        : []
+      bookmarks
     };
   }
 
@@ -1718,6 +1802,7 @@ function initPresetsUI(){
   }
 
   let moveBookId = null;
+  let pendingBookmark = null;
 
   function openMoveModal(bookId){
     const book = state.books.find(b => b.id === bookId);
@@ -1758,6 +1843,46 @@ function initPresetsUI(){
     closeMoveModal();
   }
 
+  function openBookmarkModal(bookId, page){
+    pendingBookmark = { bookId, page };
+    $("bookmarkName").value = "";
+    $("bookmarkModal").classList.add("open");
+    setTimeout(() => $("bookmarkName")?.focus(), 20);
+  }
+
+  function closeBookmarkModal(){
+    $("bookmarkModal").classList.remove("open");
+    pendingBookmark = null;
+  }
+
+  function saveBookmarkFromModal(){
+    if(!pendingBookmark) return;
+    const book = getBook(pendingBookmark.bookId);
+    if(!book) return closeBookmarkModal();
+
+    const name = ($("bookmarkName").value || "").trim() || `Page ${pendingBookmark.page}`;
+    const rs = ensureBookReaderState(book);
+
+    const existing = rs.bookmarks.find(b => b.page === pendingBookmark.page);
+    if(existing){
+      existing.name = name;
+    }else{
+      rs.bookmarks.push({
+        id: uid(),
+        page: pendingBookmark.page,
+        name
+      });
+      rs.bookmarks.sort((a,b)=>a.page-b.page);
+    }
+
+    saveState();
+    closeBookmarkModal();
+
+    if(currentPdfState && currentPdfState.bookId === book.id && typeof currentPdfState.refreshBookmarksUI === "function"){
+      currentPdfState.refreshBookmarksUI();
+    }
+  }
+
   function renderShelves(){
     const root = $("shelves");
     root.innerHTML = "";
@@ -1770,8 +1895,8 @@ function initPresetsUI(){
       const head = document.createElement("div");
       head.className = "shelfHead";
 
-      const nameWrap = document.createElement("div");
-      nameWrap.className = "shelfName";
+      const left = document.createElement("div");
+      left.className = "shelfLeft";
 
       const nameInput = document.createElement("input");
       nameInput.value = shelf.name || "";
@@ -1788,16 +1913,15 @@ function initPresetsUI(){
         renderShelfSelect();
       });
 
+      left.appendChild(nameInput);
+
+      const right = document.createElement("div");
+      right.className = "shelfRight";
+
       const count = document.createElement("span");
       count.className = "pill";
       const n = state.books.filter(b => b.shelfId === shelf.id).length;
       count.innerHTML = `<span class="tiny">${n} book${n===1?"":"s"}</span>`;
-
-      nameWrap.appendChild(nameInput);
-      nameWrap.appendChild(count);
-
-      const actions = document.createElement("div");
-      actions.className = "shelfActions";
 
       const delShelf = document.createElement("button");
       delShelf.className = "soft";
@@ -1820,9 +1944,11 @@ function initPresetsUI(){
         renderAll();
       });
 
-      actions.appendChild(delShelf);
-      head.appendChild(nameWrap);
-      head.appendChild(actions);
+      right.appendChild(count);
+      right.appendChild(delShelf);
+
+      head.appendChild(left);
+      head.appendChild(right);
 
       const booksRow = document.createElement("div");
       booksRow.className = "books";
@@ -1937,10 +2063,6 @@ function initPresetsUI(){
     currentPdfState = null;
   }
 
-  function getReaderStateForBook(book){
-    return ensureBookReaderState(book);
-  }
-
   function updateReaderState(bookId, patch){
     const book = getBook(bookId);
     if(!book) return;
@@ -1950,156 +2072,39 @@ function initPresetsUI(){
     saveState();
   }
 
-  function buildHighlightLayerRects(textLayer, highlight){
-    const spans = Array.from(textLayer.querySelectorAll("span[data-idx]"));
-    const startIndex = Number(highlight.startIndex);
-    const endIndex = Number(highlight.endIndex);
-    const startOffset = Number(highlight.startOffset);
-    const endOffset = Number(highlight.endOffset);
-
-    if(!Number.isFinite(startIndex) || !Number.isFinite(endIndex)) return [];
-    if(startIndex > endIndex) return [];
-
-    const layerRect = textLayer.getBoundingClientRect();
-    const rects = [];
-
-    for(let i=startIndex;i<=endIndex;i++){
-      const span = spans.find(s => Number(s.dataset.idx) === i);
-      if(!span) continue;
-
-      const text = span.textContent || "";
-      const len = text.length;
-      let from = 0;
-      let to = len;
-
-      if(i === startIndex) from = clamp(startOffset, 0, len);
-      if(i === endIndex) to = clamp(endOffset, 0, len);
-      if(to <= from) continue;
-
-      const range = document.createRange();
-      try{
-        const node = span.firstChild || span;
-        range.setStart(node, Math.min(from, node.textContent?.length ?? len));
-        range.setEnd(node, Math.min(to, node.textContent?.length ?? len));
-        const clientRects = Array.from(range.getClientRects());
-        for(const r of clientRects){
-          rects.push({
-            left: r.left - layerRect.left,
-            top: r.top - layerRect.top,
-            width: r.width,
-            height: r.height
-          });
-        }
-      }catch{}
-    }
-
-    return rects;
-  }
-
-  function drawPageHighlights(textLayer, pageHighlights){
-    const highlightLayer = $("pdfHighlightLayer");
-    if(!highlightLayer || !textLayer) return;
-    highlightLayer.innerHTML = "";
-
-    for(const h of pageHighlights){
-      const rects = buildHighlightLayerRects(textLayer, h);
-      for(const r of rects){
-        const el = document.createElement("div");
-        el.className = "pdfHighlight";
-        el.style.left = `${r.left}px`;
-        el.style.top = `${r.top}px`;
-        el.style.width = `${r.width}px`;
-        el.style.height = `${r.height}px`;
-        highlightLayer.appendChild(el);
-      }
-    }
-  }
-
-  function serializeSelectionInTextLayer(textLayer){
-    const sel = window.getSelection();
-    if(!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
-
-    const range = sel.getRangeAt(0);
-    if(!textLayer.contains(range.startContainer) || !textLayer.contains(range.endContainer)) return null;
-
-    const spans = Array.from(textLayer.querySelectorAll("span[data-idx]"));
-    if(!spans.length) return null;
-
-    function getSpanInfo(node, offset){
-      let current = node.nodeType === 3 ? node.parentElement : node;
-      const span = current?.closest?.("span[data-idx]");
-      if(!span) return null;
-
-      const idx = Number(span.dataset.idx);
-      if(!Number.isFinite(idx)) return null;
-
-      let computedOffset = offset;
-      if(node.nodeType !== 3){
-        const textNode = span.firstChild;
-        computedOffset = Math.min(offset, textNode?.textContent?.length || span.textContent.length);
-      }
-      return {
-        idx,
-        offset: Math.max(0, computedOffset)
-      };
-    }
-
-    const start = getSpanInfo(range.startContainer, range.startOffset);
-    const end = getSpanInfo(range.endContainer, range.endOffset);
-    if(!start || !end) return null;
-
-    let startIndex = start.idx;
-    let startOffset = start.offset;
-    let endIndex = end.idx;
-    let endOffset = end.offset;
-
-    if(startIndex > endIndex || (startIndex === endIndex && startOffset > endOffset)){
-      [startIndex, endIndex] = [endIndex, startIndex];
-      [startOffset, endOffset] = [endOffset, startOffset];
-    }
-
-    return {
-      startIndex,
-      startOffset,
-      endIndex,
-      endOffset
-    };
-  }
-
   async function openPdfReader(book, rec){
     await destroyPdfViewer();
 
-    const rs = getReaderStateForBook(book);
+    const rs = ensureBookReaderState(book);
     const startPage = clamp(Number(rs.lastPage || 1), 1, 999999);
 
     $("readerBody").innerHTML = `
       <div class="pdfShell">
         <div class="pdfToolbar">
-          <button type="button" class="soft" id="pdfPrev">Prev</button>
+          <button type="button" id="pdfPrev">Prev</button>
           <div class="pdfInfo" id="pdfPageInfo">Page 1 / 1</div>
-          <button type="button" class="soft" id="pdfNext">Next</button>
+          <button type="button" id="pdfNext">Next</button>
 
-          <button type="button" class="soft" id="pdfSavePage">Save page</button>
-          <button type="button" class="soft" id="pdfBookmark">Bookmark page</button>
-          <button type="button" class="soft" id="pdfHighlightsBtn">Highlight selection</button>
-          <button type="button" class="soft" id="pdfClearPageHighlights">Clear page highlights</button>
+          <button type="button" id="pdfSavePage">Save page</button>
+          <button type="button" id="pdfBookmark">Add bookmark</button>
 
           <div class="spacer"></div>
 
-          <label class="pdfInfo" for="pdfBookmarkJump" style="min-width:auto;">Bookmarks</label>
-          <select id="pdfBookmarkJump" style="min-height:36px; min-width:90px;"></select>
-          <button type="button" class="soft" id="pdfGoBookmark">Go</button>
+          <div class="pdfInfo">Bookmarks</div>
+          <select id="pdfBookmarkJump"></select>
+          <button type="button" id="pdfGoBookmark">Go</button>
+          <button type="button" id="pdfDeleteBookmark">Delete</button>
 
-          <button type="button" class="soft" id="pdfZoomOut">−</button>
+          <div class="spacer"></div>
+
+          <button type="button" id="pdfZoomOut">−</button>
           <div class="pdfInfo" id="pdfZoomInfo">100%</div>
-          <button type="button" class="soft" id="pdfZoomIn">+</button>
+          <button type="button" id="pdfZoomIn">+</button>
         </div>
 
         <div class="pdfViewport" id="pdfViewport">
           <div class="pdfCanvasWrap" id="pdfCanvasWrap">
             <canvas id="pdfCanvas" class="pdfCanvas"></canvas>
-            <div id="pdfHighlightLayer" class="pdfHighlightLayer"></div>
-            <div id="pdfTextLayer" class="textLayer"></div>
           </div>
         </div>
       </div>
@@ -2108,33 +2113,34 @@ function initPresetsUI(){
     const data = await rec.blob.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data }).promise;
     currentPdfDoc = pdf;
-    currentPdfState = {
-      bookId: book.id,
-      page: clamp(startPage, 1, pdf.numPages),
-      pages: pdf.numPages,
-      scale:1.2
-    };
 
     const canvas = $("pdfCanvas");
     const ctx = canvas.getContext("2d");
-    const textLayer = $("pdfTextLayer");
     const canvasWrap = $("pdfCanvasWrap");
 
     function refreshBookmarksUI(){
       const bookNow = getBook(book.id);
       if(!bookNow) return;
-      const stateNow = getReaderStateForBook(bookNow);
+      const stateNow = ensureBookReaderState(bookNow);
       const sel = $("pdfBookmarkJump");
       sel.innerHTML = `<option value="">—</option>`;
-      for(const page of stateNow.bookmarks){
-        if(page <= currentPdfState.pages){
+      for(const bm of stateNow.bookmarks){
+        if(bm.page <= currentPdfState.pages){
           const opt = document.createElement("option");
-          opt.value = String(page);
-          opt.textContent = `Page ${page}`;
+          opt.value = String(bm.id);
+          opt.textContent = `${bm.name} (p. ${bm.page})`;
           sel.appendChild(opt);
         }
       }
     }
+
+    currentPdfState = {
+      bookId: book.id,
+      page: clamp(startPage, 1, pdf.numPages),
+      pages: pdf.numPages,
+      scale:1.2,
+      refreshBookmarksUI
+    };
 
     async function renderPdfPage(){
       if(!currentPdfDoc || !currentPdfState) return;
@@ -2150,10 +2156,6 @@ function initPresetsUI(){
 
       canvasWrap.style.width = `${Math.floor(viewport.width)}px`;
       canvasWrap.style.height = `${Math.floor(viewport.height)}px`;
-      textLayer.style.width = `${Math.floor(viewport.width)}px`;
-      textLayer.style.height = `${Math.floor(viewport.height)}px`;
-      $("pdfHighlightLayer").style.width = `${Math.floor(viewport.width)}px`;
-      $("pdfHighlightLayer").style.height = `${Math.floor(viewport.height)}px`;
 
       ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
       currentPdfRenderTask = page.render({ canvasContext:ctx, viewport });
@@ -2163,37 +2165,7 @@ function initPresetsUI(){
         if(e?.name !== "RenderingCancelledException") throw e;
       }
 
-      textLayer.innerHTML = "";
-      const textContent = await page.getTextContent();
-      const textViewport = viewport.clone({ dontFlip: true });
-
-      let idx = 0;
-      for(const item of textContent.items){
-        const tx = pdfjsLib.Util.transform(textViewport.transform, item.transform);
-        const angle = Math.atan2(tx[1], tx[0]);
-        const fontHeight = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
-        const left = tx[4];
-        const top = tx[5] - fontHeight;
-
-        const span = document.createElement("span");
-        span.textContent = item.str || "";
-        span.dataset.idx = String(idx++);
-        span.style.left = `${left}px`;
-        span.style.top = `${top}px`;
-        span.style.fontSize = `${fontHeight}px`;
-        span.style.fontFamily = item.fontName || "sans-serif";
-        span.style.transform = `rotate(${angle}rad)`;
-        textLayer.appendChild(span);
-      }
-
-      const bookNow = getBook(book.id);
-      if(bookNow){
-        const stateNow = getReaderStateForBook(bookNow);
-        updateReaderState(book.id, { lastPage: currentPdfState.page });
-        const pageHighlights = stateNow.highlights.filter(h => h.page === currentPdfState.page);
-        drawPageHighlights(textLayer, pageHighlights);
-      }
-
+      updateReaderState(book.id, { lastPage: currentPdfState.page });
       $("pdfPageInfo").textContent = `Page ${currentPdfState.page} / ${currentPdfState.pages}`;
       $("pdfZoomInfo").textContent = `${Math.round(currentPdfState.scale * 100)}%`;
       refreshBookmarksUI();
@@ -2228,63 +2200,30 @@ function initPresetsUI(){
     });
 
     $("pdfBookmark").addEventListener("click", () => {
-      const bookNow = getBook(book.id);
-      if(!bookNow) return;
-      const rsNow = getReaderStateForBook(bookNow);
-      const set = new Set(rsNow.bookmarks);
-      if(set.has(currentPdfState.page)){
-        set.delete(currentPdfState.page);
-      }else{
-        set.add(currentPdfState.page);
-      }
-      updateReaderState(book.id, { bookmarks: Array.from(set).sort((a,b)=>a-b) });
-      refreshBookmarksUI();
+      openBookmarkModal(book.id, currentPdfState.page);
     });
 
     $("pdfGoBookmark").addEventListener("click", async () => {
-      const val = Number($("pdfBookmarkJump").value);
-      if(!val) return;
-      currentPdfState.page = clamp(val, 1, currentPdfState.pages);
+      const id = $("pdfBookmarkJump").value;
+      if(!id) return;
+      const bookNow = getBook(book.id);
+      if(!bookNow) return;
+      const rsNow = ensureBookReaderState(bookNow);
+      const bm = rsNow.bookmarks.find(x => x.id === id);
+      if(!bm) return;
+      currentPdfState.page = clamp(bm.page, 1, currentPdfState.pages);
       await renderPdfPage();
     });
 
-    $("pdfHighlightsBtn").addEventListener("click", async () => {
-      const selData = serializeSelectionInTextLayer(textLayer);
-      if(!selData) return;
-
+    $("pdfDeleteBookmark").addEventListener("click", () => {
+      const id = $("pdfBookmarkJump").value;
+      if(!id) return;
       const bookNow = getBook(book.id);
       if(!bookNow) return;
-      const rsNow = getReaderStateForBook(bookNow);
-
-      rsNow.highlights.push({
-        id: uid(),
-        page: currentPdfState.page,
-        startIndex: selData.startIndex,
-        startOffset: selData.startOffset,
-        endIndex: selData.endIndex,
-        endOffset: selData.endOffset
-      });
-
-      bookNow.readerState = normalizeReaderState(rsNow);
+      const rsNow = ensureBookReaderState(bookNow);
+      rsNow.bookmarks = rsNow.bookmarks.filter(x => x.id !== id);
       saveState();
-
-      const pageHighlights = bookNow.readerState.highlights.filter(h => h.page === currentPdfState.page);
-      drawPageHighlights(textLayer, pageHighlights);
-
-      try{
-        const selection = window.getSelection();
-        if(selection) selection.removeAllRanges();
-      }catch{}
-    });
-
-    $("pdfClearPageHighlights").addEventListener("click", () => {
-      const bookNow = getBook(book.id);
-      if(!bookNow) return;
-      const rsNow = getReaderStateForBook(bookNow);
-      rsNow.highlights = rsNow.highlights.filter(h => h.page !== currentPdfState.page);
-      bookNow.readerState = normalizeReaderState(rsNow);
-      saveState();
-      drawPageHighlights(textLayer, []);
+      refreshBookmarksUI();
     });
 
     await renderPdfPage();
@@ -2544,7 +2483,8 @@ function initPresetsUI(){
       "fileInput","coverInput","bookTitle","shelfSelect","addBook",
       "addShelf","resetAll","resetConfirm","resetYes","resetNo",
       "shelves","readerModal","readerTitle","readerBody","readerClose",
-      "moveModal","moveShelfSelect","moveConfirm","moveCancel","moveClose"
+      "moveModal","moveShelfSelect","moveConfirm","moveCancel","moveClose",
+      "bookmarkModal","bookmarkName","bookmarkSave","bookmarkCancel","bookmarkClose"
     ];
     for(const id of required){
       if(!$(id)) return;
@@ -2569,6 +2509,13 @@ function initPresetsUI(){
     $("moveConfirm").addEventListener("click", confirmMove);
     $("moveModal").addEventListener("click", (e) => {
       if(e.target && e.target.id === "moveModal") closeMoveModal();
+    });
+
+    $("bookmarkClose").addEventListener("click", closeBookmarkModal);
+    $("bookmarkCancel").addEventListener("click", closeBookmarkModal);
+    $("bookmarkSave").addEventListener("click", saveBookmarkFromModal);
+    $("bookmarkModal").addEventListener("click", (e) => {
+      if(e.target && e.target.id === "bookmarkModal") closeBookmarkModal();
     });
 
     document.addEventListener("visibilitychange", () => {
